@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.84
+
+- **Update script:** no longer stops silently when a code folder is missing or when there is nothing to remove; if it ever stops, it now says which step failed. Scripts in the download can be run directly as `./scripts/update.sh`.
+
 ## V5.2.83
 
 - **Updating a server that was set up by copying files** (for example with FileZilla) now works cleanly: the first `./scripts/update.sh` removes leftover code files the new version no longer has, keeps a copy of the old code to put back if anything fails, and never touches settings, device files or backups.

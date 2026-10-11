@@ -33,6 +33,8 @@ as_docker() {
 CURRENT="$(cat VERSION 2>/dev/null || echo "an older version")"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
+# Never stop silently: say which step failed.
+trap 'printf "\033[1;31m X\033[0m  The update stopped at line %s (%s). Nothing after that step was changed.\n" "$LINENO" "$BASH_COMMAND" >&2' ERR
 mkdir -p "$TMP/new"
 
 say "Getting the latest Nexternel…"
@@ -53,7 +55,7 @@ say "Updating $CURRENT → $NEW"
 # Files the user (or Nexternel at run time) owns: never replaced by a release.
 KEEP_IF_PRESENT=(go2rtc/go2rtc.yaml mosquitto/config/mosquitto.conf)
 for f in "${KEEP_IF_PRESENT[@]}"; do
-  [ -f "$f" ] && rm -f "$TMP/new/$f"
+  if [ -f "$f" ]; then rm -f "$TMP/new/$f"; fi
 done
 
 # 1. Safety copy of settings (some files are written by Nexternel's services, so read them via Docker).
@@ -67,8 +69,12 @@ as_docker "docker run --rm -v '$DIR':/n alpine:3.20 tar -czf /n/backups/pre-upda
 # and so are private skin packs.
 CODE_DIRS=(apps packages db)
 list_code_files() {
-  find "${CODE_DIRS[@]}" -type f -not -path "*/node_modules/*" -not -path "*/dist/*" \
-    -not -path "apps/ui/src/skins/local/*" 2>/dev/null | sort -u
+  # Only folders that exist (an installation made by copying files may lack some, e.g. db/).
+  local dirs=() d
+  for d in "${CODE_DIRS[@]}"; do [ -d "$d" ] && dirs+=("$d"); done
+  [ "${#dirs[@]}" -gt 0 ] || return 0
+  { find "${dirs[@]}" -type f -not -path "*/node_modules/*" -not -path "*/dist/*" \
+      -not -path "apps/ui/src/skins/local/*" 2>/dev/null || true; } | sort -u
 }
 
 # 2. Copy of the current release files, to put back if the update fails.
@@ -93,7 +99,7 @@ OBSOLETE="$(
   } | sort -u
 )"
 printf '%s\n' "$OBSOLETE" | while IFS= read -r f; do
-  [ -n "$f" ] && [ -f "$f" ] && rm -f -- "$f"
+  if [ -n "$f" ] && [ -f "$f" ]; then rm -f -- "$f"; fi
 done
 tar -C "$TMP/new" -cf - . | tar -C "$DIR" -xf -
 
@@ -115,7 +121,7 @@ fi
 if [ -f "$TMP/previous.tar.gz" ]; then
   say "The update failed — putting $CURRENT back…"
   comm -23 <(sort -u "$TMP/new/.release-files") <(tar -tzf "$TMP/previous.tar.gz" | sort -u) | while IFS= read -r f; do
-    [ -n "$f" ] && [ -f "$f" ] && rm -f -- "$f"
+    if [ -n "$f" ] && [ -f "$f" ]; then rm -f -- "$f"; fi
   done
   tar -xzf "$TMP/previous.tar.gz" -C "$DIR"
   as_docker "docker compose build api ui && docker compose up -d --remove-orphans" && die "Update to $NEW failed; $CURRENT is running again."
