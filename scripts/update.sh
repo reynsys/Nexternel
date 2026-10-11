@@ -13,6 +13,8 @@
 # Your home data lives in the databases; Nexternel's automatic backups protect it.
 # =============================================================================
 set -euo pipefail
+# Plain byte order for sort and comm, whatever the machine's language settings.
+export LC_ALL=C
 
 RELEASE_URL="https://github.com/reynsys/nexternel/releases/latest/download/nexternel.tar.gz"
 SOURCE="${NEXTERNEL_SOURCE:-$RELEASE_URL}"
