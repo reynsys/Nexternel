@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.83
+
+- **Updating a server that was set up by copying files** (for example with FileZilla) now works cleanly: the first `./scripts/update.sh` removes leftover code files the new version no longer has, keeps a copy of the old code to put back if anything fails, and never touches settings, device files or backups.
+
 ## V5.2.82 — first public release
 
 Everything Nexternel does today:

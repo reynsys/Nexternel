@@ -62,17 +62,35 @@ mkdir -p backups
 as_docker "docker run --rm -v '$DIR':/n alpine tar -czf /n/backups/pre-update-$STAMP.tar.gz -C /n .env mosquitto/config esphome go2rtc" \
   && say "Settings saved in backups/pre-update-$STAMP.tar.gz"
 
+# Nexternel's code folders belong to the release (never your data). Build output is left alone,
+# and so are private skin packs.
+CODE_DIRS=(apps packages db)
+list_code_files() {
+  find "${CODE_DIRS[@]}" -type f -not -path "*/node_modules/*" -not -path "*/dist/*" \
+    -not -path "apps/ui/src/skins/local/*" 2>/dev/null | sort -u
+}
+
 # 2. Copy of the current release files, to put back if the update fails.
 if [ -f .release-files ]; then
-  tar -czf "$TMP/previous.tar.gz" --ignore-failed-read -T .release-files .release-files 2>/dev/null || true
+  CURRENT_FILES="$(cat .release-files)"
+else
+  # First update of an installation made from copied files (e.g. FileZilla): it has no file list yet,
+  # so take everything in the code folders plus the release's top-level files.
+  CURRENT_FILES="$(list_code_files; ls -1 docker-compose.yml install.sh package.json package-lock.json 2>/dev/null)"
 fi
+printf '%s\n' "$CURRENT_FILES" > "$TMP/current-files"
+tar -czf "$TMP/previous.tar.gz" --ignore-failed-read -T "$TMP/current-files" 2>/dev/null || true
 
 # 3. Remove files the new release no longer has, then copy the new release in.
 if [ -f .release-files ]; then
-  comm -23 <(sort -u .release-files) <(sort -u "$TMP/new/.release-files") | while IFS= read -r f; do
-    [ -n "$f" ] && [ -f "$f" ] && rm -f -- "$f"
-  done
+  OBSOLETE="$(comm -23 <(sort -u .release-files) <(sort -u "$TMP/new/.release-files"))"
+else
+  # Copied files leave old ones behind (copying never deletes): remove code files the release lacks.
+  OBSOLETE="$(comm -23 <(list_code_files) <(sort -u "$TMP/new/.release-files"))"
 fi
+printf '%s\n' "$OBSOLETE" | while IFS= read -r f; do
+  [ -n "$f" ] && [ -f "$f" ] && rm -f -- "$f"
+done
 tar -C "$TMP/new" -cf - . | tar -C "$DIR" -xf -
 
 # 4. Rebuild and restart; on failure, go back.
@@ -92,7 +110,7 @@ fi
 
 if [ -f "$TMP/previous.tar.gz" ]; then
   say "The update failed — putting $CURRENT back…"
-  comm -23 <(sort -u .release-files) <(tar -tzf "$TMP/previous.tar.gz" | sort -u) | while IFS= read -r f; do
+  comm -23 <(sort -u "$TMP/new/.release-files") <(tar -tzf "$TMP/previous.tar.gz" | sort -u) | while IFS= read -r f; do
     [ -n "$f" ] && [ -f "$f" ] && rm -f -- "$f"
   done
   tar -xzf "$TMP/previous.tar.gz" -C "$DIR"
