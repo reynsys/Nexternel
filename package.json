@@ -16,6 +16,6 @@
     "build:packages": "npm run build -w @nexternel/domain && npm run build -w @nexternel/plugin-sdk",
     "build:api": "npm run build -w @nexternel/api",
     "build:ui": "npm run build -w @nexternel/ui",
-    "verify": "npm run build -w @nexternel/domain && npm test -w @nexternel/domain && npm test -w @nexternel/ui && npm run build -w @nexternel/ui && npm run typecheck -w @nexternel/api"
+    "verify": "npm run build:packages && npm test -w @nexternel/domain && npm test -w @nexternel/ui && npm run build -w @nexternel/ui && npm run typecheck -w @nexternel/api"
   }
 }
