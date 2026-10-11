@@ -1,0 +1,6 @@
+# Every Nexternel board includes this file.
+# MQTT is the connection the dashboard uses.
+# The native API stays available so ESPHome can install updates and show logs.
+# An idle API must not restart the board.
+api:
+  reboot_timeout: 0s

@@ -1,0 +1,5 @@
+# Ignore paid / private skin packs — keep README + gitkeep
+*
+!.gitignore
+!.gitkeep
+!README.md

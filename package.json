@@ -1,0 +1,21 @@
+{
+  "name": "nexternel",
+  "private": true,
+  "description": "Nexternel monorepo \u2014 V3 workspaces (api, ui, packages).",
+  "workspaces": [
+    "apps/api",
+    "apps/ui",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev:api": "npm run dev -w @nexternel/api",
+    "dev:ui": "npm run dev -w @nexternel/ui",
+    "build:packages": "npm run build -w @nexternel/domain && npm run build -w @nexternel/plugin-sdk",
+    "build:api": "npm run build -w @nexternel/api",
+    "build:ui": "npm run build -w @nexternel/ui",
+    "verify": "npm run build -w @nexternel/domain && npm test -w @nexternel/domain && npm test -w @nexternel/ui && npm run build -w @nexternel/ui && npm run typecheck -w @nexternel/api"
+  }
+}

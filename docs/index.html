@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nexternel — your home, on your own server</title>
+<meta name="description" content="Nexternel brings your sensors, switches, cameras and energy readings together on dashboards you arrange yourself. Self-hosted, no cloud account, installs with one command.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Nexternel's own look: deep navy, its blue accent, IBM Plex. Single dark look, like the app's default. */
+:root {
+  color-scheme: dark;
+  --ground: #050b16;
+  --raised: #0c1424;
+  --line: #1c2840;
+  --ink: #e8edf6;
+  --soft: #9aa6bd;
+  --accent: #1a73e8;
+  --accent-soft: #4f97f2;
+  --font: "IBM Plex Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--ground); color: var(--ink); }
+body {
+  font-family: var(--font); font-size: 17px; line-height: 1.55;
+  background:
+    radial-gradient(circle at 15% 10%, rgba(26,115,232,.22), transparent 42%),
+    radial-gradient(circle at 90% 30%, rgba(0,200,220,.10), transparent 40%),
+    var(--ground);
+  padding-inline: 20px;
+}
+a { color: var(--accent-soft); }
+:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 3px; }
+.wrap { max-width: 1120px; margin: 0 auto; }
+header { display: flex; align-items: center; gap: 12px; padding-block: 22px; }
+.logo { width: 28px; height: 28px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #8cc0ff, var(--accent)); }
+.brand { font-weight: 600; font-size: 1.15rem; }
+header nav { margin-left: auto; display: flex; gap: 18px; flex-wrap: wrap; }
+header nav a { color: var(--soft); text-decoration: none; font-size: .95rem; }
+header nav a:hover { color: var(--ink); }
+
+.hero { display: grid; gap: 22px; padding-block: 40px 28px; max-width: 760px; }
+.hero h1 { font-size: clamp(2.1rem, 5vw, 3.4rem); line-height: 1.08; margin: 0; letter-spacing: -.02em; text-wrap: balance; }
+.hero p { margin: 0; color: var(--soft); font-size: 1.15rem; max-width: 60ch; }
+.cmd { display: flex; align-items: stretch; border: 1px solid var(--line); border-radius: 12px; background: #030812; overflow: hidden; max-width: 640px; }
+.cmd code { flex: 1; min-width: 0; font-family: var(--mono); font-size: .95rem; padding: 14px 16px; overflow-x: auto; white-space: nowrap; color: #cfe1ff; }
+.cmd code::before { content: "$ "; color: var(--soft); }
+.cmd button { border: 0; border-left: 1px solid var(--line); background: var(--accent); color: #fff; font: 600 .95rem var(--font); padding: 0 18px; cursor: pointer; }
+.cmd button:hover { background: #2a82f0; }
+.hint { color: var(--soft); font-size: .92rem; margin: 0; }
+
+.shot { margin-block: 18px 56px; border-radius: 14px; border: 1px solid var(--line); overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,.45); }
+.shot img { display: block; width: 100%; height: auto; }
+
+h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -.01em; text-wrap: balance; }
+.features { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 64px; }
+.feature { background: var(--raised); border: 1px solid var(--line); border-radius: 12px; padding: 18px 18px 16px; }
+.feature h3 { margin: 0 0 6px; font-size: 1.05rem; }
+.feature p { margin: 0; color: var(--soft); font-size: .97rem; }
+
+.split { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 36px; align-items: center; margin-bottom: 64px; }
+.split img { width: 100%; height: auto; border-radius: 22px; border: 1px solid var(--line); display: block; }
+.split ul { margin: 0; padding-left: 1.1em; color: var(--soft); display: grid; gap: 8px; }
+.split li strong { color: var(--ink); }
+@media (max-width: 760px) { .split { grid-template-columns: minmax(0, 1fr); } .split img { max-width: 300px; } }
+
+.steps { counter-reset: s; display: grid; gap: 14px; margin: 0 0 64px; padding: 0; list-style: none; max-width: 760px; }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 12px; }
+.steps li::before { content: counter(s); width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--raised); border: 1px solid var(--line); font-weight: 600; }
+.steps p { margin: 4px 0 0; color: var(--soft); }
+.steps strong { color: var(--ink); }
+
+footer { border-top: 1px solid var(--line); padding-block: 26px 40px; color: var(--soft); font-size: .9rem; display: flex; gap: 16px; flex-wrap: wrap; justify-content: space-between; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="logo" aria-hidden="true"></span><span class="brand">Nexternel</span>
+    <nav>
+      <a href="https://github.com/reynsys/nexternel/blob/main/INSTALL.md">Install guide</a>
+      <a href="https://github.com/reynsys/nexternel/blob/main/CHANGELOG.md">What's new</a>
+      <a href="https://github.com/reynsys/nexternel">Source code</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <h1>Your home, on your own server.</h1>
+    <p>Nexternel brings your sensors, switches, cameras and energy readings together on dashboards you arrange yourself. It runs on a small Linux machine at home. There's no cloud account, and your data stays with you.</p>
+    <div class="cmd">
+      <code id="cmd">curl -fsSL https://www.reynsys.com/install.sh | bash</code>
+      <button type="button" id="copy">Copy</button>
+    </div>
+    <p class="hint">Run it on a 64-bit Ubuntu, Debian or Raspberry Pi OS machine, then open the address it shows.</p>
+  </section>
+
+  <div class="shot"><img src="images/dashboard.jpg" width="1600" height="1000" alt="A Nexternel dashboard with clock, calendar, weather, temperature and humidity gauges, power use and a light switch"></div>
+
+  <h2>What it does</h2>
+  <div class="features">
+    <div class="feature"><h3>Dashboards your way</h3><p>Readings, switches, charts, gauges, cameras, weather, clock and calendar. The layout flows to fit a laptop, a phone or a wall tablet.</p></div>
+    <div class="feature"><h3>Your devices</h3><p>ESP32 boards with ESPHome, built and flashed from the browser. Shelly switches, Octopus Energy and live cameras.</p></div>
+    <div class="feature"><h3>History kept</h3><p>Every reading is stored, so charts show the last hour, day or week at a glance.</p></div>
+    <div class="feature"><h3>Moves house with you</h3><p>An encrypted backup every day. Restore it on a new server and every device, dashboard and account comes back, and the devices reconnect by themselves.</p></div>
+  </div>
+
+  <section class="split">
+    <div>
+      <h2>Made to be looked at</h2>
+      <ul>
+        <li><strong>Light or dark</strong>, with your own accent colour.</li>
+        <li><strong>Soft-glow and gradient backgrounds</strong>, and calm effects like snow, fireflies or aurora.</li>
+        <li><strong>Names and icons you choose</strong> for every panel and every reading.</li>
+        <li><strong>Phones and tablets</strong> get the same dashboards, rearranged to fit.</li>
+      </ul>
+    </div>
+    <img src="images/phone.jpg" width="600" height="1298" alt="Nexternel on a phone: clock, calendar and weather panels" loading="lazy">
+  </section>
+
+  <h2>Getting started</h2>
+  <ol class="steps">
+    <li><div><strong>Run the install command</strong><p>It installs Docker if needed, sets up every service with its own random password, and starts Nexternel. This takes a few minutes the first time.</p></div></li>
+    <li><div><strong>Open the address it shows</strong><p>Choose <em>Start fresh</em> and create your account, or <em>Restore from backup</em> to bring over a home you already have.</p></div></li>
+    <li><div><strong>Reserve the address in your router</strong><p>Your devices find Nexternel by its address, so keep it fixed. The <a href="https://github.com/reynsys/nexternel/blob/main/INSTALL.md">install guide</a> shows how.</p></div></li>
+  </ol>
+
+  <footer>
+    <span>Nexternel · free software under the GNU GPL v3 · © 2026 Rey Osman</span>
+    <a href="https://github.com/reynsys/nexternel">github.com/reynsys/nexternel</a>
+  </footer>
+</div>
+<script>
+  document.getElementById("copy").addEventListener("click", async (e) => {
+    const text = document.getElementById("cmd").textContent;
+    try { await navigator.clipboard.writeText(text); e.target.textContent = "Copied"; }
+    catch { const r = document.createRange(); r.selectNodeContents(document.getElementById("cmd")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); e.target.textContent = "Press Ctrl+C"; }
+    setTimeout(() => (e.target.textContent = "Copy"), 2000);
+  });
+</script>
+</body>
+</html>

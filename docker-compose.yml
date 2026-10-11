@@ -1,0 +1,162 @@
+# Nexternel stack — package version: see VERSION at repo root
+services:
+  postgres:
+    image: postgres:16.15-alpine
+    container_name: nexternel-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      TZ: ${TZ}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    ports:
+      # Only this server — Nexternel's own services reach the database over Docker's network.
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  influxdb:
+    image: influxdb:2.7.12-alpine
+    container_name: nexternel-influxdb
+    restart: unless-stopped
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUXDB_USER}
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUXDB_PASSWORD}
+      DOCKER_INFLUXDB_INIT_ORG: ${INFLUXDB_ORG}
+      DOCKER_INFLUXDB_INIT_BUCKET: ${INFLUXDB_BUCKET}
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUXDB_TOKEN}
+      DOCKER_INFLUXDB_INIT_RETENTION: 30d
+      TZ: ${TZ}
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+    ports:
+      # Only this server (sensor history). Open it to the network only if you need InfluxDB's own UI.
+      - "127.0.0.1:8086:8086"
+    healthcheck:
+      test: ["CMD", "influx", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mosquitto:
+    image: eclipse-mosquitto:2.1.2-alpine
+    container_name: nexternel-mosquitto
+    restart: unless-stopped
+    volumes:
+      - ./mosquitto/config:/mosquitto/config:ro
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+
+  esphome:
+    image: ghcr.io/esphome/esphome:2026.9.1
+    container_name: nexternel-esphome
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./esphome:/config
+    environment:
+      TZ: ${TZ}
+      # Use ping instead of mDNS for online/offline (mDNS often fails in Docker)
+      ESPHOME_DASHBOARD_USE_PING: "true"
+    # Optional: plug ESP32 into the Ubuntu server USB and uncomment for direct flash:
+    # privileged: true
+    # devices:
+    #   - /dev/ttyUSB0:/dev/ttyUSB0
+
+  # --- Nexternel (api + ui) — V2 Next.js `web` retired in Phase 10 ---
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: nexternel-api
+    restart: unless-stopped
+    environment:
+      PORT: 4000
+      HOST: 0.0.0.0
+      TZ: ${TZ}
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${NEXTAUTH_SECRET}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      MQTT_BROKER: ${MQTT_BROKER}
+      MQTT_USERNAME: ${MQTT_USERNAME}
+      MQTT_PASSWORD: ${MQTT_PASSWORD}
+      MQTT_TOPIC_PREFIX: ${MQTT_TOPIC_PREFIX}
+      INFLUXDB_URL: ${INFLUXDB_URL}
+      INFLUXDB_ORG: ${INFLUXDB_ORG}
+      INFLUXDB_BUCKET: ${INFLUXDB_BUCKET}
+      INFLUXDB_TOKEN: ${INFLUXDB_TOKEN}
+      SERVER_IP: ${SERVER_IP}
+      GO2RTC_URL: ${GO2RTC_URL:-http://go2rtc:1984}
+      GO2RTC_PUBLIC_URL: ${GO2RTC_PUBLIC_URL:-}
+      MOSQUITTO_CONFIG_DIR: /mosquitto-config
+      BACKUP_JOBS_DIR: /backup-jobs
+      ALLOW_DOCKER_RESTART: "true"
+    volumes:
+      # ESPHome YAML (rw so System → Adopt can write device configs)
+      - ./esphome:/esphome
+      # Mosquitto credentials (backup / restore)
+      - ./mosquitto/config:/mosquitto-config
+      # Backup job working files
+      - backup_jobs:/backup-jobs
+      # Automatic backups — on the server in ~/nexternel/backups (copy off regularly).
+      - ./backups:/backups
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Host CPU thermal zones for System Information widget (read-only)
+      - /sys/class/thermal:/sys/class/thermal:ro
+    ports:
+      - "${API_PORT:-4000}:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
+      influxdb:
+        condition: service_healthy
+      go2rtc:
+        condition: service_started
+
+  ui:
+    build:
+      context: .
+      dockerfile: apps/ui/Dockerfile
+    container_name: nexternel-ui
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ}
+    ports:
+      - "${UI_PORT:-8080}:80"
+    depends_on:
+      - api
+      - go2rtc
+
+  # RTSP → browser-friendly live streams (HLS / MSE / WebRTC)
+  go2rtc:
+    image: alexxit/go2rtc:1.9.9
+    container_name: nexternel-go2rtc
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ}
+    volumes:
+      - ./go2rtc:/config
+    ports:
+      - "${GO2RTC_PORT:-1984}:1984"
+
+volumes:
+  postgres_data:
+  influxdb_data:
+  mosquitto_data:
+  mosquitto_log:
+  backup_jobs:

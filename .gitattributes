@@ -1,0 +1,8 @@
+# Ensure shell scripts always use Unix line endings (LF), even on Windows
+*.sh text eol=lf
+*.bash text eol=lf
+
+# Docker and config files
+docker-compose.yml text eol=lf
+Dockerfile text eol=lf
+.env.example text eol=lf

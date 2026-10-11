@@ -1,0 +1,23 @@
+# Nexternel — GitHub publish copy (generated; do not edit here)
+# Package version: see VERSION at repo root
+node_modules/
+.next/
+out/
+dist/
+build/
+.env
+.env.local
+.env.*.local
+esphome/secrets.yaml
+esphome/.esphome/
+mosquitto/config/passwd
+*.code-workspace
+*.log
+data/
+.DS_Store
+Thumbs.db
+# Paid / private UI skin packs (local import only)
+apps/ui/src/skins/local/**
+!apps/ui/src/skins/local/README.md
+!apps/ui/src/skins/local/.gitkeep
+!apps/ui/src/skins/local/.gitignore

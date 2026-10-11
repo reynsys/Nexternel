@@ -1,0 +1,307 @@
+import { useEffect, useState, type ReactNode } from "react";
+import { Link as RouterLink, Navigate, Route, Routes } from "react-router-dom";
+import { Alert, Button, CircularProgress, Stack } from "@mui/material";
+import { AppLayout } from "./layout/AppLayout";
+import { LoginPage } from "./pages/LoginPage";
+import { SetupPage } from "./pages/SetupPage";
+import { DashboardsPage } from "./pages/DashboardsPage";
+import { DashboardPage } from "./pages/DashboardPage";
+import { SettingsLayout } from "./pages/admin/settings/SettingsLayout";
+import { SettingsIndexRedirect } from "./pages/admin/settings/SettingsIndexRedirect";
+import { AppearanceSettingsPage } from "./pages/admin/settings/AppearanceSettingsPage";
+import { SystemStatusPage } from "./pages/admin/settings/SystemStatusPage";
+import { PluginsSettingsPage } from "./pages/admin/settings/PluginsSettingsPage";
+import { BackupSettingsPage } from "./pages/admin/settings/BackupSettingsPage";
+import { UsersPage } from "./pages/admin/UsersPage";
+import { RolesPage } from "./pages/admin/RolesPage";
+import { AreasPage } from "./pages/admin/AreasPage";
+import { DevicesPage } from "./pages/admin/DevicesPage";
+import { CamerasPage } from "./pages/admin/CamerasPage";
+import { api, getStoredAccessToken, lastKnownUser, type User } from "./api";
+import {
+  hasPermission,
+  type PermissionKey,
+} from "./lib/permissions";
+import { PluginHostProvider } from "./plugins/PluginHostContext";
+
+function RequireAuth({ children }: { children: ReactNode }) {
+  if (!getStoredAccessToken()) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+}
+
+function RequirePermission({
+  permission,
+  children,
+}: {
+  permission: PermissionKey;
+  children: ReactNode;
+}) {
+  const [user, setUser] = useState<User | null | undefined>(() => lastKnownUser() ?? undefined);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    let retryTimer: number | undefined;
+    const load = () => {
+      void api
+        .me()
+        .then((r) => {
+          if (cancelled) return;
+          setUser(r.user);
+          setFailed(false);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          // Still holding a login: the server was unreachable, not a rejected login. Retry.
+          if (getStoredAccessToken()) {
+            retryTimer = window.setTimeout(load, 3000);
+            return;
+          }
+          setUser(null);
+          setFailed(true);
+        });
+    };
+    load();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(retryTimer);
+    };
+  }, []);
+
+  if (user === undefined) {
+    return (
+      <Stack alignItems="center" justifyContent="center" sx={{ py: 8 }}>
+        <CircularProgress size={28} />
+      </Stack>
+    );
+  }
+  if (failed || !user) {
+    return <Navigate to="/login" replace />;
+  }
+  const ok = hasPermission(
+    user.permissions,
+    permission,
+    Boolean(user.isAdmin ?? user.role === "admin")
+  );
+  if (!ok) {
+    return (
+      <Stack alignItems="center" justifyContent="center" sx={{ py: 8 }} spacing={2}>
+        <Alert severity="warning" sx={{ maxWidth: 480 }}>
+          Your account does not have permission to open this page.
+        </Alert>
+        <Button component={RouterLink} to="/admin/users" variant="contained">
+          Open Users
+        </Button>
+      </Stack>
+    );
+  }
+  return children;
+}
+
+function SetupGate({ children }: { children: ReactNode }) {
+  const [state, setState] = useState<"loading" | "needs" | "ready">("loading");
+
+  useEffect(() => {
+    void api
+      .setupStatus()
+      .then((status) => setState(status.needsSetup ? "needs" : "ready"))
+      .catch(() => setState("ready"));
+  }, []);
+
+  if (state === "loading") {
+    return (
+      <Stack alignItems="center" justifyContent="center" sx={{ py: 8 }}>
+        <CircularProgress size={28} />
+      </Stack>
+    );
+  }
+  if (state === "needs") {
+    return <Navigate to="/setup" replace />;
+  }
+  return children;
+}
+
+export function App() {
+  return (
+    <PluginHostProvider>
+    <Routes>
+      <Route element={<AppLayout />}>
+        <Route path="setup" element={<SetupPage />} />
+        <Route
+          path="login"
+          element={
+            <SetupGate>
+              <LoginPage />
+            </SetupGate>
+          }
+        />
+        {/* Retired developer pages (Troubleshoot, panel preview): the diagnostic report lives in Settings → System. */}
+        <Route path="troubleshoot/*" element={<Navigate to="/admin/settings/system" replace />} />
+        <Route path="panels" element={<Navigate to="/admin/settings/system" replace />} />
+
+        <Route
+          index
+          element={
+            <SetupGate>
+              <RequireAuth>
+                <RequirePermission permission="viewDashboards">
+                  <DashboardPage />
+                </RequirePermission>
+              </RequireAuth>
+            </SetupGate>
+          }
+        />
+        <Route
+          path="d/:slug"
+          element={
+            <RequireAuth>
+              <RequirePermission permission="viewDashboards">
+                <DashboardPage />
+              </RequirePermission>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="dashboards/:id"
+          element={
+            <RequireAuth>
+              <RequirePermission permission="viewDashboards">
+                <DashboardPage />
+              </RequirePermission>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="dashboards"
+          element={
+            <RequireAuth>
+              <RequirePermission permission="viewDashboards">
+                <DashboardPage />
+              </RequirePermission>
+            </RequireAuth>
+          }
+        />
+
+        <Route path="views" element={<Navigate to="/admin/settings/system" replace />} />
+
+        <Route
+          path="manage/dashboards"
+          element={
+            <RequireAuth>
+              <RequirePermission permission="editDashboards">
+                <DashboardsPage />
+              </RequirePermission>
+            </RequireAuth>
+          }
+        />
+
+        <Route path="live" element={<Navigate to="/" replace />} />
+
+        <Route
+          path="admin/settings"
+          element={
+            <RequireAuth>
+              <SettingsLayout />
+            </RequireAuth>
+          }
+        >
+          <Route index element={<SettingsIndexRedirect />} />
+          <Route
+            path="appearance"
+            element={
+              <RequirePermission permission="viewSystem">
+                <AppearanceSettingsPage />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="system"
+            element={
+              <RequirePermission permission="viewSystem">
+                <SystemStatusPage />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="plugins"
+            element={
+              <RequirePermission permission="viewSystem">
+                <PluginsSettingsPage />
+              </RequirePermission>
+            }
+          />
+          <Route path="configuration" element={<Navigate to="/admin/settings/backup" replace />} />
+          <Route
+            path="backup"
+            element={
+              <RequirePermission permission="manageUsers">
+                <BackupSettingsPage />
+              </RequirePermission>
+            }
+          />
+          <Route path="advanced" element={<Navigate to="/admin/settings/backup" replace />} />
+          <Route path="automations" element={<Navigate to="/admin/settings/backup" replace />} />
+        </Route>
+
+        <Route path="admin/system" element={<Navigate to="/admin/settings/system" replace />} />
+        <Route path="admin/profile" element={<Navigate to="/admin/users" replace />} />
+
+        <Route
+          path="admin/users"
+          element={
+            <RequireAuth>
+              <RequirePermission permission="manageUsers">
+                <UsersPage />
+              </RequirePermission>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="admin/roles"
+          element={
+            <RequireAuth>
+              <RequirePermission permission="manageRoles">
+                <RolesPage />
+              </RequirePermission>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="admin/areas"
+          element={
+            <RequireAuth>
+              <RequirePermission permission="viewAreas">
+                <AreasPage />
+              </RequirePermission>
+            </RequireAuth>
+          }
+        />
+        <Route path="admin/rooms" element={<Navigate to="/admin/areas" replace />} />
+        <Route
+          path="admin/devices"
+          element={
+            <RequireAuth>
+              <RequirePermission permission="viewDevices">
+                <DevicesPage />
+              </RequirePermission>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="admin/cameras"
+          element={
+            <RequireAuth>
+              <RequirePermission permission="viewDevices">
+                <CamerasPage />
+              </RequirePermission>
+            </RequireAuth>
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Route>
+    </Routes>
+    </PluginHostProvider>
+  );
+}

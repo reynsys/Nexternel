@@ -1,0 +1,96 @@
+openapi: 3.0.3
+info:
+  title: Nexternel API
+  description: >
+    Backend API for Nexternel. Frontend must use this API only —
+    never MQTT, InfluxDB, or PostgreSQL directly.
+  version: 3.1.2
+servers:
+  - url: http://localhost:4000
+    description: Direct API
+  - url: http://localhost:8080
+    description: Via UI nginx proxy
+paths:
+  /api/v1/health:
+    get:
+      summary: Health check
+      operationId: getHealth
+      tags: [System]
+      responses:
+        "200":
+          description: Service health
+  /api/v1/auth/login:
+    post:
+      summary: Login
+      operationId: login
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username: { type: string }
+                password: { type: string }
+      responses:
+        "200":
+          description: Logged in (sets HTTP-only cookies)
+        "401":
+          description: Invalid credentials
+  /api/v1/auth/logout:
+    post:
+      summary: Logout
+      operationId: logout
+      tags: [Auth]
+      responses:
+        "200":
+          description: Cookies cleared
+  /api/v1/auth/refresh:
+    post:
+      summary: Refresh access token
+      operationId: refresh
+      tags: [Auth]
+      responses:
+        "200":
+          description: New cookies issued
+  /api/v1/auth/me:
+    get:
+      summary: Current user
+      operationId: me
+      tags: [Auth]
+      security: [{ cookieAuth: [] }]
+      responses:
+        "200":
+          description: Current user
+        "401":
+          description: Unauthorized
+  /api/v1/rooms:
+    get:
+      summary: List rooms
+      operationId: listRooms
+      tags: [Config]
+      security: [{ cookieAuth: [] }]
+      responses:
+        "200":
+          description: Room list
+  /api/v1/devices:
+    get:
+      summary: List devices
+      operationId: listDevices
+      tags: [Config]
+      security: [{ cookieAuth: [] }]
+      responses:
+        "200":
+          description: Device list
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: nexternel_access
+tags:
+  - name: System
+  - name: Auth
+  - name: Config

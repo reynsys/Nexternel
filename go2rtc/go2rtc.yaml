@@ -1,0 +1,9 @@
+# Nexternel — go2rtc restreamer
+# Do not use `streams: {}` — go2rtc's config patcher cannot add the first
+# stream under an empty flow map (HTTP 400 yaml parse error).
+# Cameras are registered at runtime by the Nexternel API.
+
+api:
+  listen: ":1984"
+  # Allow browser / proxy access to HLS & stream APIs
+  origin: "*"
