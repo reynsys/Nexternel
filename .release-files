@@ -166,6 +166,9 @@ apps/api/src/shelly/topics.ts
 apps/api/src/shelly/validate.test.ts
 apps/api/src/shelly/validate.ts
 apps/api/src/system/host-ip.ts
+apps/api/src/system/https-routes.ts
+apps/api/src/system/https.test.ts
+apps/api/src/system/https.ts
 apps/api/src/system/repair-live-data.test.ts
 apps/api/src/system/repair-mqtt.ts
 apps/api/src/systems/ensure-schema.ts
@@ -349,6 +352,7 @@ apps/ui/src/pages/admin/sections/ProfileSection.tsx
 apps/ui/src/pages/admin/settings/AppearanceSettingsPage.tsx
 apps/ui/src/pages/admin/settings/BackupSettingsPage.tsx
 apps/ui/src/pages/admin/settings/DiagnosticReportCard.tsx
+apps/ui/src/pages/admin/settings/HttpsCard.tsx
 apps/ui/src/pages/admin/settings/plugins/PluginActivityView.tsx
 apps/ui/src/pages/admin/settings/plugins/PluginPermissionsForm.tsx
 apps/ui/src/pages/admin/settings/plugins/PluginSettingsForm.tsx
@@ -512,6 +516,7 @@ apps/ui/src/widgets/switch/useSwitchControl.ts
 apps/ui/tsconfig.json
 apps/ui/tsconfig.node.json
 apps/ui/vite.config.ts
+caddy/Caddyfile
 CHANGELOG.md
 COPYRIGHT.md
 db/init.sql

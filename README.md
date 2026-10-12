@@ -34,7 +34,7 @@ On a 64-bit Ubuntu, Debian or Raspberry Pi OS machine:
 curl -fsSL https://www.reynsys.com/install.sh | bash
 ```
 
-Then open the address it shows (for example `http://192.168.1.20:8080`) and choose
+Then open the address it shows (for example `https://192.168.1.20`) and choose
 **Start fresh** or **Restore from backup**.
 
 The full guide covers what you need, giving the server a fixed address, moving to a new server,

@@ -24,3 +24,6 @@ apps/ui/src/skins/local/**
 
 /plugins/*
 !/plugins/.gitkeep
+
+/caddy/*
+!/caddy/Caddyfile

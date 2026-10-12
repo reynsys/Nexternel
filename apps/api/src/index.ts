@@ -48,6 +48,8 @@ import { pluginPanelRoutes } from "./plugins/panels.js";
 import { ensureHostKey } from "./plugins/packages.js";
 import { notificationsRoutes } from "./notifications/routes.js";
 import { updateRoutes } from "./system/update-routes.js";
+import { httpsRoutes } from "./system/https-routes.js";
+import { applyHttps } from "./system/https.js";
 import { ensureUpdateSchema, startUpdateChecks } from "./system/updates.js";
 import { v4Routes } from "./v4/routes.js";
 import { panelApiRoutes } from "./panels/api-routes.js";
@@ -102,6 +104,7 @@ await app.register(async (api) => {
   await api.register(pluginPanelRoutes);
   await api.register(notificationsRoutes);
   await api.register(updateRoutes);
+  await api.register(httpsRoutes);
   await api.register(migrateRoutes);
   await api.register(backupRoutes);
   await api.register(setupRoutes);
@@ -141,6 +144,10 @@ try {
   const { refreshHostIpAtStartup } = await import("./system/host-ip.js");
   const hostIp = await refreshHostIpAtStartup();
   app.log.info({ hostIp, envServerIp: process.env.SERVER_IP || null }, "server address on the home network");
+  // The secure front door (Caddy) needs the server's address for its certificate.
+  void applyHttps(true)
+    .then((problem) => (problem ? app.log.warn({ problem }, "secure connection") : app.log.info("secure connection configured")))
+    .catch((err) => app.log.warn({ err }, "secure connection not configured"));
   const installState = await bootstrapInstallationState();
   app.log.info(installState, "installation bootstrap");
   let adminSeed: "created" | "exists" | "skipped" = "skipped";

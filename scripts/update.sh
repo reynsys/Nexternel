@@ -53,7 +53,7 @@ fi
 say "Updating $CURRENT → $NEW"
 
 # Files the user (or Nexternel at run time) owns: never replaced by a release.
-KEEP_IF_PRESENT=(go2rtc/go2rtc.yaml mosquitto/config/mosquitto.conf)
+KEEP_IF_PRESENT=(go2rtc/go2rtc.yaml mosquitto/config/mosquitto.conf caddy/Caddyfile)
 for f in "${KEEP_IF_PRESENT[@]}"; do
   if [ -f "$f" ]; then rm -f "$TMP/new/$f"; fi
 done

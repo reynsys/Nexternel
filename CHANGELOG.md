@@ -2,6 +2,13 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.88
+
+- **Secure connection (https):** Nexternel is now reached at `https://<your server>`, encrypted with its own **home certificate**. The old address with `:8080` forwards there automatically.
+  - Each phone, tablet or computer trusts the home certificate once: **Settings → System → Secure connection → Download home certificate**, with short steps for iPhone, Android, Windows, Mac and Linux. Until then the browser shows a warning you can continue past.
+  - Optional: use **your own domain** by adding its certificate there.
+  - Needed later for voice commands from the browser.
+
 ## V5.2.87
 
 - **Update Nexternel from the screen:** **Settings → System → Updates** shows when a new version is available (Nexternel checks once a day and tells you in the bell), what is new, and **Check for update**, **Download** and **Update** buttons. Your settings are kept, a copy is saved first, and if anything goes wrong the previous version is put back by itself. No terminal needed.

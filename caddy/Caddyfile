@@ -1,0 +1,16 @@
+# Starting point only. Nexternel replaces this file with the secure configuration
+# (Settings → System → Secure connection) as soon as it starts.
+{
+	skip_install_trust
+	# Caddy creates the home certificate on its first start, so it is named here too.
+	pki {
+		ca local {
+			name "Nexternel Home"
+			root_cn "Nexternel Home Certificate"
+		}
+	}
+}
+
+http://:80, http://:8080 {
+	reverse_proxy ui:80
+}

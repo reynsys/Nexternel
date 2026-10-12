@@ -1373,6 +1373,18 @@ export const api = {
   startUpdate: () => apiFetch<UpdateStatus>("/api/v1/system/update/start", { method: "POST" }),
   dismissUpdate: () => apiFetch<UpdateStatus>("/api/v1/system/update/dismiss", { method: "POST" }),
 
+  httpsStatus: () => apiFetch<HttpsStatus>("/api/v1/system/https"),
+  saveHttps: (body: { enabled?: boolean; extraNames?: string[] }) =>
+    apiFetch<HttpsStatus>("/api/v1/system/https", { method: "PUT", body: JSON.stringify(body) }),
+  setHttpsDomain: (domain: string, certificate: File, key: File) => {
+    const form = new FormData();
+    form.append("domain", domain);
+    form.append("certificate", certificate);
+    form.append("key", key);
+    return apiFetch<HttpsStatus>("/api/v1/system/https/domain", { method: "POST", body: form });
+  },
+  removeHttpsDomain: () => apiFetch<HttpsStatus>("/api/v1/system/https/domain", { method: "DELETE" }),
+
   notifications: (limit = 30) => apiFetch<NotificationsResponse>(`/api/v1/notifications?limit=${limit}`),
 
   markNotificationsRead: () => apiFetch<{ ok: true }>("/api/v1/notifications/read", { method: "POST" }),
@@ -1902,6 +1914,14 @@ export type PluginManifestInfo = {
 export type PluginActivity = {
   logs: { t: string; stream: "stdout" | "stderr"; line: string }[];
   actions: { action: string; detail: Record<string, unknown>; at: string }[];
+};
+
+export type HttpsStatus = {
+  settings: { enabled: boolean; extraNames: string[]; domain: string | null };
+  httpsPort: number;
+  addresses: string[];
+  homeCertificate: { name: string; validTo: string; fingerprint: string } | null;
+  domainCertificate: { validTo: string; issuer: string } | null;
 };
 
 export type UpdateStatus = {

@@ -51,6 +51,9 @@ export function UpdatesCard() {
   const [showNotes, setShowNotes] = useState(false);
   const [showLog, setShowLog] = useState(false);
   const [restarting, setRestarting] = useState(false);
+  // When contact was lost (Nexternel restarting); after a while the page may need the secure address.
+  const [lostSince, setLostSince] = useState<number | null>(null);
+  const [now, setNow] = useState(Date.now());
   const target = useRef<string | null>(null);
 
   const load = useCallback(async () => {
@@ -70,6 +73,7 @@ export function UpdatesCard() {
     const timer = setInterval(async () => {
       try {
         const health = await api.health();
+        setLostSince(null);
         if (target.current && health.version === target.current) {
           window.location.reload();
           return;
@@ -78,7 +82,9 @@ export function UpdatesCard() {
         if (s.run.state !== "updating") setRestarting(false);
       } catch {
         setRestarting(true); // Nexternel is restarting; keep waiting
+        setLostSince((t) => t ?? Date.now());
       }
+      setNow(Date.now());
     }, 5000);
     return () => clearInterval(timer);
   }, [updating, load]);
@@ -144,6 +150,13 @@ export function UpdatesCard() {
                 <Alert severity="info" icon={<CircularProgress size={18} color="inherit" />}>
                   Updating to {target.current ?? "the new version"}. This takes a few minutes; Nexternel restarts on the
                   way and this page reloads by itself when it is done.
+                  {window.location.protocol === "http:" && lostSince && now - lostSince > 90_000 ? (
+                    <Box component="span" sx={{ display: "block", mt: 1 }}>
+                      Since V5.2.88 Nexternel uses a secure address. If this page does not come back, open{" "}
+                      <a href={`https://${window.location.hostname}/admin/settings/system`}>https://{window.location.hostname}</a>{" "}
+                      (the browser warns once: choose to continue, then trust the home certificate under Secure connection).
+                    </Box>
+                  ) : null}
                 </Alert>
               ) : null}
               {run_?.state === "succeeded" && !updating ? (
