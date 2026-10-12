@@ -135,6 +135,7 @@ apps/api/src/plugins/events.ts
 apps/api/src/plugins/host-routes.ts
 apps/api/src/plugins/manifest.test.ts
 apps/api/src/plugins/packages.ts
+apps/api/src/plugins/panels.ts
 apps/api/src/plugins/secrets.test.ts
 apps/api/src/plugins/secrets.ts
 apps/api/src/plugins/service.ts
@@ -168,6 +169,8 @@ apps/api/src/system/host-ip.ts
 apps/api/src/system/repair-live-data.test.ts
 apps/api/src/system/repair-mqtt.ts
 apps/api/src/systems/ensure-schema.ts
+apps/api/src/system/update-routes.ts
+apps/api/src/system/updates.ts
 apps/api/src/telemetry/esphome-topics.test.ts
 apps/api/src/telemetry/esphome-topics.ts
 apps/api/src/telemetry/mqtt-observer.ts
@@ -355,6 +358,7 @@ apps/ui/src/pages/admin/settings/SettingsLayout.tsx
 apps/ui/src/pages/admin/settings/settings-nav.ts
 apps/ui/src/pages/admin/settings/SystemDiagnosticsSection.tsx
 apps/ui/src/pages/admin/settings/SystemStatusPage.tsx
+apps/ui/src/pages/admin/settings/UpdatesCard.tsx
 apps/ui/src/pages/admin/UsersPage.tsx
 apps/ui/src/pages/DashboardPage.tsx
 apps/ui/src/pages/DashboardsPage.tsx
@@ -422,6 +426,8 @@ apps/ui/src/panels/SystemPanel.tsx
 apps/ui/src/panels/use-resolved-panel.test.ts
 apps/ui/src/panels/useResolvedPanel.ts
 apps/ui/src/panels/WeatherPanel.tsx
+apps/ui/src/plugins/blocks/ConversationPanel.tsx
+apps/ui/src/plugins/blocks/TextPanel.tsx
 apps/ui/src/plugins/loadContributions.ts
 apps/ui/src/plugins/PluginHostContext.tsx
 apps/ui/src/plugins/PluginUnavailable.tsx

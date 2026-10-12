@@ -1,3 +1,4 @@
+import { getPanelRegistration } from "../panels/registry/store";
 import type { CameraRecord, Capability } from "../api";
 import { visiblePanelCameras } from "./panel-cameras";
 import type { RuntimePanelInstance } from "./panel-compatibility/types";
@@ -79,6 +80,10 @@ function singlePurposeTitle(panel: PanelHeadingSource): { title: string; area: s
   if (kind === "panel.system") return { title: "System information", area: null };
   if (kind === "panel.devices") return { title: "Devices", area: null };
   if (kind === "panel.charts") return { title: "Charts", area: null };
+  if (kind.startsWith("plugin.")) {
+    const label = getPanelRegistration(kind)?.descriptor.label;
+    return label ? { title: label, area: null } : null;
+  }
   return null;
 }
 

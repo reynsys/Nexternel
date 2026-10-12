@@ -1,6 +1,7 @@
 import type {
   PluginGrants,
   PluginManifest,
+  PluginPanelDef,
   PluginPermissionRequests,
   PluginSettingField,
 } from "@nexternel/plugin-sdk";
@@ -22,6 +23,10 @@ import { decryptSecret, encryptSecret, hashToken, isEncryptedSecret, newPluginTo
 import { nexternelVersionAtLeast } from "./validate.js";
 
 export type PluginSource = "catalog" | "file";
+
+export function pluginPanelType(pluginId: string, panelId: string): string {
+  return `plugin.${pluginId}.${panelId}`;
+}
 /** What the plugin container says about the plugin's process. */
 export type PluginRunState = "running" | "starting" | "stopped" | "crashed" | "waiting";
 
@@ -45,8 +50,8 @@ export type PluginRecord = {
   settingsFields: PluginSettingField[];
   settings: Record<string, PluginSettingValue>;
   missingSettings: string[];
-  /** Dashboard panel types the plugin adds (from Stage 2). */
-  panels: string[];
+  /** Dashboard panels the plugin offers; type = plugin.<id>.<panel id>. */
+  panels: (PluginPanelDef & { type: string })[];
   installedAt: string;
 };
 
@@ -128,7 +133,7 @@ function rowToRecord(row: DbRow): PluginRecord {
     settingsFields: fields,
     settings,
     missingSettings: missingRequiredSettings(fields, row.settings),
-    panels: m.contributes?.panels ?? [],
+    panels: (m.panels ?? []).map((p) => ({ ...p, type: pluginPanelType(m.id, p.id) })),
     installedAt: row.installed_at.toISOString(),
   };
 }
@@ -341,6 +346,7 @@ export async function removePlugin(id: string): Promise<boolean> {
   if ((res.rowCount ?? 0) === 0) return false;
   clearPluginEvents(id);
   logs.delete(id);
+  await getPool().query(`DELETE FROM plugin_panel_content WHERE plugin_id = $1`, [id]);
   await removePluginDevices(id);
   await removePackages(id);
   await logPluginAction(id, "removed");

@@ -58,6 +58,19 @@ export interface PluginGrants {
   notify: boolean;
 }
 
+/** Panel building blocks a plugin can offer; Nexternel draws them so they match every other panel. */
+export type PluginPanelBlock = "conversation" | "text";
+
+/** A dashboard panel a plugin offers. Its panel type is plugin.<pluginId>.<id>. */
+export interface PluginPanelDef {
+  id: string;
+  label: string;
+  block: PluginPanelBlock;
+  description?: string;
+  /** Size when added, in grid squares. */
+  defaultSize?: { w: number; h: number };
+}
+
 export interface PluginManifest {
   id: string;
   version: string;
@@ -71,6 +84,8 @@ export interface PluginManifest {
   minNexternel?: string;
   permissions?: PluginPermissionRequests;
   settings?: PluginSettingField[];
+  /** Dashboard panels this plugin offers. */
+  panels?: PluginPanelDef[];
   contributes?: PluginContributions;
 }
 

@@ -105,6 +105,7 @@ services:
       BACKUP_JOBS_DIR: /backup-jobs
       PLUGINS_DIR: /plugins
       PLUGIN_CATALOG_URL: ${PLUGIN_CATALOG_URL:-}
+      UPDATE_FEED_URL: ${UPDATE_FEED_URL:-}
       ALLOW_DOCKER_RESTART: "true"
     volumes:
       # ESPHome YAML (rw so System → Adopt can write device configs)

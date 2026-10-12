@@ -2,6 +2,12 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.87
+
+- **Update Nexternel from the screen:** **Settings → System → Updates** shows when a new version is available (Nexternel checks once a day and tells you in the bell), what is new, and **Check for update**, **Download** and **Update** buttons. Your settings are kept, a copy is saved first, and if anything goes wrong the previous version is put back by itself. No terminal needed.
+- **Plugin panels:** plugins can add their own dashboard panels, drawn by Nexternel so they look like every other panel.
+- **New official plugin: AI assistant** — ask questions about your home in plain words, get a morning summary, and hear about unusual readings, using an AI server on your own network (Ollama), so your data stays at home. Install it from Settings → Plugins.
+
 ## V5.2.86
 
 - **Plugins:** add-ons that bring new abilities into Nexternel. Find them in **Settings → Plugins**.

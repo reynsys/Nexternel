@@ -34,6 +34,48 @@ async function call(method, route, body) {
 }
 
 const commandHandlers = [];
+const panelHandlers = [];
+
+/** Lets a plugin write its answer bit by bit; Nexternel shows it as it grows. */
+function panelAnswer(id) {
+  let last = 0;
+  let pending = null;
+  let finished = false;
+  const send = (body) => call("POST", `/panel-replies/${id}`, body).catch((err) => console.error("Could not send answer:", err.message));
+  return {
+    write(textSoFar) {
+      if (finished) return;
+      pending = textSoFar;
+      const wait = Math.max(0, 400 - (Date.now() - last));
+      if (wait === 0) {
+        last = Date.now();
+        send({ text: pending });
+        pending = null;
+      } else if (!this._timer) {
+        this._timer = setTimeout(() => {
+          this._timer = null;
+          if (pending !== null && !finished) {
+            last = Date.now();
+            send({ text: pending });
+            pending = null;
+          }
+        }, wait);
+      }
+    },
+    done(finalText) {
+      if (finished) return;
+      finished = true;
+      clearTimeout(this._timer);
+      return send({ text: finalText, done: true });
+    },
+    fail(message) {
+      if (finished) return;
+      finished = true;
+      clearTimeout(this._timer);
+      return send({ error: String(message || "Something went wrong") });
+    },
+  };
+}
 let pending = [];
 let flushTimer = null;
 
@@ -54,6 +96,19 @@ async function listen() {
     try {
       const { events } = await call("GET", "/events?wait=25");
       for (const ev of events ?? []) {
+        if (ev.type === "panel-request") {
+          const handler = panelHandlers.find((h) => h.panel === ev.panel);
+          const answer = panelAnswer(ev.id);
+          if (!handler) {
+            answer.fail("This plugin cannot answer on this panel.");
+            continue;
+          }
+          // Answers can take a while; do not hold up other messages (such as switch presses).
+          Promise.resolve()
+            .then(() => handler.fn({ text: ev.text, history: ev.history, user: ev.user }, answer))
+            .catch((err) => answer.fail(err?.message ?? err));
+          continue;
+        }
         if (ev.type !== "command") continue;
         const cmd = { device: ev.deviceKey, item: ev.itemKey, action: ev.action };
         for (const handler of commandHandlers) {
@@ -98,6 +153,17 @@ const nx = Object.freeze({
   onCommand(handler) {
     commandHandlers.push(handler);
   },
+
+  /**
+   * Answer questions typed on one of this plugin's conversation panels:
+   * handler({ text, history, user }, answer) — call answer.write(textSoFar) as it grows,
+   * then answer.done(finalText), or answer.fail(message).
+   */
+  onPanelRequest(panelId, handler) {
+    panelHandlers.push({ panel: panelId, fn: handler });
+  },
+  /** Replace what one of this plugin's text panels shows. */
+  setPanelContent: (panelId, { title = "", body = "" }) => call("PUT", `/panels/${encodeURIComponent(panelId)}/content`, { title, body }),
 
   /** Current readings this plugin may see. */
   readings: () => call("GET", "/capabilities").then((r) => r.capabilities),

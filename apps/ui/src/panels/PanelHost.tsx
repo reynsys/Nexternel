@@ -119,7 +119,7 @@ function PanelHostBody({
 
   if (resolved.availability === "plugin_missing" && isPluginPanelType(panel.type)) {
     const record = pluginHost?.plugins.find((p) =>
-      p.panels.some((t) => t === panel.type || t === panel.compatibility.sourceType)
+      p.panels.some((t) => t.type === panel.type || t.type === panel.compatibility.sourceType)
     );
     return wrap(
       <PluginUnavailable

@@ -44,8 +44,11 @@ import { pluginsRoutes } from "./routes/plugins.js";
 import { ensurePluginSchema } from "./plugins/ensure-schema.js";
 import { pluginDoorwayRoutes } from "./plugins/doorway.js";
 import { pluginHostRoutes } from "./plugins/host-routes.js";
+import { pluginPanelRoutes } from "./plugins/panels.js";
 import { ensureHostKey } from "./plugins/packages.js";
 import { notificationsRoutes } from "./notifications/routes.js";
+import { updateRoutes } from "./system/update-routes.js";
+import { ensureUpdateSchema, startUpdateChecks } from "./system/updates.js";
 import { v4Routes } from "./v4/routes.js";
 import { panelApiRoutes } from "./panels/api-routes.js";
 import { wsRoutes } from "./telemetry/ws.js";
@@ -96,7 +99,9 @@ await app.register(async (api) => {
   await api.register(pluginsRoutes);
   await api.register(pluginDoorwayRoutes);
   await api.register(pluginHostRoutes);
+  await api.register(pluginPanelRoutes);
   await api.register(notificationsRoutes);
+  await api.register(updateRoutes);
   await api.register(migrateRoutes);
   await api.register(backupRoutes);
   await api.register(setupRoutes);
@@ -129,6 +134,7 @@ try {
   } catch (err) {
     app.log.warn({ err }, "plugin folder not writable — plugins cannot run");
   }
+  await ensureUpdateSchema();
   await ensureCameraSchema();
   await ensureOctopusSchema();
   await ensureBackupScheduleSchema();
@@ -268,6 +274,7 @@ try {
   app.log.info(getMqttLogSafe(), "telemetry started");
   const { startOctopusPoller } = await import("./octopus/poll.js");
   startOctopusPoller();
+  startUpdateChecks();
   startBackupScheduler(app.log);
   app.log.info("octopus poller started");
 

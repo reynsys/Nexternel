@@ -9,6 +9,7 @@ import { getLiveState } from "../telemetry/state-cache.js";
 import { APP_VERSION } from "../version.js";
 import { definePluginDevices, parseDeviceDefs, recordPluginReadings } from "./devices.js";
 import { waitForPluginEvents } from "./events.js";
+import { replyToPanelRequest, setPanelContent } from "./panels.js";
 import { pluginIdFromToken, tokenMatches } from "./secrets.js";
 import { logPluginAction, normalizeGrants, pluginSettingsForRuntime } from "./service.js";
 
@@ -192,6 +193,26 @@ export const pluginDoorwayRoutes: FastifyPluginAsync = async (app) => {
     });
     return { ok: true, id: n.id };
   });
+
+  /** The answer to a question asked on one of this plugin's panels (send the full text so far). */
+  app.post<{ Params: { id: string }; Body: { text?: unknown; done?: unknown; error?: unknown } }>(
+    "/api/v1/plugin-api/panel-replies/:id",
+    async (request, reply) => {
+      const ok = replyToPanelRequest(request.plugin!.id, request.params.id, request.body ?? {});
+      if (!ok) return reply.code(404).send({ error: { code: "not_found", message: "Unknown, finished or expired question" } });
+      return { ok: true };
+    }
+  );
+
+  app.put<{ Params: { panelId: string }; Body: { title?: unknown; body?: unknown } }>(
+    "/api/v1/plugin-api/panels/:panelId/content",
+    async (request, reply) => {
+      const p = request.plugin!;
+      const error = await setPanelContent(p.id, request.params.panelId, p.manifest, request.body ?? {});
+      if (error) return reply.code(400).send({ error: { code: "bad_request", message: error } });
+      return { ok: true };
+    }
+  );
 
   app.post<{ Body: { state?: string; message?: string } }>("/api/v1/plugin-api/status", async (request) => {
     const p = request.plugin!;

@@ -28,6 +28,7 @@ import { useSkin } from "../../../skins/SkinProvider";
 import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
 import { SystemDiagnosticsSection } from "./SystemDiagnosticsSection";
 import { DiagnosticReportCard } from "./DiagnosticReportCard";
+import { UpdatesCard } from "./UpdatesCard";
 
 
 
@@ -149,6 +150,8 @@ export function SystemStatusPage() {
   return (
 
     <Stack spacing={2}>
+
+      <UpdatesCard />
 
       <Card sx={surfaceSx}>
 

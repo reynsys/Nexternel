@@ -35,6 +35,15 @@ CREATE TABLE IF NOT EXISTS plugin_action_log (
 );
 CREATE INDEX IF NOT EXISTS idx_plugin_action_log_plugin ON plugin_action_log(plugin_id, created_at DESC);
 
+CREATE TABLE IF NOT EXISTS plugin_panel_content (
+    plugin_id       VARCHAR(100) NOT NULL,
+    panel_id        VARCHAR(40) NOT NULL,
+    title           VARCHAR(200) NOT NULL DEFAULT '',
+    body            TEXT NOT NULL DEFAULT '',
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (plugin_id, panel_id)
+);
+
 CREATE TABLE IF NOT EXISTS notifications (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     source          VARCHAR(120) NOT NULL,

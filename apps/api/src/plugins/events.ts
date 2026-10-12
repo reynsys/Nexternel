@@ -4,7 +4,15 @@
  */
 export type PluginEvent =
   | { type: "command"; id: string; deviceKey: string; itemKey: string; action: "on" | "off" }
-  | { type: "settings-changed" };
+  | { type: "settings-changed" }
+  | {
+      type: "panel-request";
+      id: string;
+      panel: string;
+      text: string;
+      history: { role: "user" | "assistant"; text: string }[];
+      user: string;
+    };
 
 type Waiter = { resolve: (events: PluginEvent[]) => void; timer: NodeJS.Timeout };
 

@@ -2,6 +2,7 @@ import {
   PLUGIN_PERMISSION_KEYS,
   type PluginApiVersion,
   type PluginManifest,
+  type PluginPanelDef,
   type PluginPermissionRequests,
   type PluginSettingField,
   type PluginSettingType,
@@ -77,6 +78,42 @@ function validateSettings(raw: unknown, errors: string[]): PluginSettingField[] 
   return fields;
 }
 
+const PANEL_BLOCKS = ["conversation", "text"] as const;
+const PANEL_ID_RE = /^[a-z][a-z0-9-]{0,29}$/;
+
+function validatePanels(raw: unknown, errors: string[]): PluginPanelDef[] {
+  if (raw === undefined) return [];
+  if (!Array.isArray(raw) || raw.length > 10) {
+    errors.push("panels must be a list of at most 10");
+    return [];
+  }
+  const seen = new Set<string>();
+  const out: PluginPanelDef[] = [];
+  for (const item of raw) {
+    if (!isRecord(item) || typeof item.id !== "string" || !PANEL_ID_RE.test(item.id)) {
+      errors.push("each panel needs an id of lowercase letters, digits or dashes");
+      continue;
+    }
+    if (seen.has(item.id)) errors.push(`panel id "${item.id}" is listed twice`);
+    seen.add(item.id);
+    const label = text(item.label, 60);
+    if (!label) errors.push(`panel "${item.id}" needs a label`);
+    if (!PANEL_BLOCKS.includes(item.block as (typeof PANEL_BLOCKS)[number])) {
+      errors.push(`panel "${item.id}" block must be one of: ${PANEL_BLOCKS.join(", ")}`);
+    }
+    const panel: PluginPanelDef = { id: item.id, label: label ?? item.id, block: item.block as PluginPanelDef["block"] };
+    const description = text(item.description, 200);
+    if (description) panel.description = description;
+    if (isRecord(item.defaultSize)) {
+      const w = Number(item.defaultSize.w);
+      const h = Number(item.defaultSize.h);
+      if (Number.isInteger(w) && Number.isInteger(h) && w >= 1 && w <= 12 && h >= 1 && h <= 12) panel.defaultSize = { w, h };
+    }
+    out.push(panel);
+  }
+  return out;
+}
+
 function validatePermissions(raw: unknown, errors: string[]): PluginPermissionRequests {
   if (raw === undefined) return {};
   if (!isRecord(raw)) {
@@ -136,6 +173,7 @@ export function validatePluginManifest(raw: unknown): ManifestValidationResult {
 
   const permissions = validatePermissions(raw.permissions, errors);
   const settings = validateSettings(raw.settings, errors);
+  const panels = validatePanels(raw.panels, errors);
 
   let contributes: PluginManifest["contributes"];
   if (raw.contributes !== undefined) {
@@ -170,6 +208,7 @@ export function validatePluginManifest(raw: unknown): ManifestValidationResult {
     minNexternel,
     permissions,
     settings,
+    panels,
     contributes,
   };
   return { ok: true, manifest };

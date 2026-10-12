@@ -1348,6 +1348,31 @@ export const api = {
       method: "DELETE",
     }),
 
+  pluginPanelAsk: (
+    pluginId: string,
+    panelId: string,
+    text: string,
+    history: { role: "user" | "assistant"; text: string }[]
+  ) =>
+    apiFetch<{ requestId: string }>(
+      `/api/v1/plugin-panels/${encodeURIComponent(pluginId)}/${encodeURIComponent(panelId)}/ask`,
+      { method: "POST", body: JSON.stringify({ text, history }) }
+    ),
+
+  pluginPanelAnswer: (requestId: string, since: number) =>
+    apiFetch<PluginPanelAnswer>(`/api/v1/plugin-panels/requests/${encodeURIComponent(requestId)}?since=${since}`),
+
+  pluginPanelContent: (pluginId: string, panelId: string) =>
+    apiFetch<{ content: { title: string; body: string; updatedAt: string } | null }>(
+      `/api/v1/plugin-panels/${encodeURIComponent(pluginId)}/${encodeURIComponent(panelId)}/content`
+    ),
+
+  updateStatus: () => apiFetch<UpdateStatus>("/api/v1/system/update"),
+  checkForUpdate: () => apiFetch<UpdateStatus>("/api/v1/system/update/check", { method: "POST" }),
+  downloadUpdate: () => apiFetch<UpdateStatus>("/api/v1/system/update/download", { method: "POST" }),
+  startUpdate: () => apiFetch<UpdateStatus>("/api/v1/system/update/start", { method: "POST" }),
+  dismissUpdate: () => apiFetch<UpdateStatus>("/api/v1/system/update/dismiss", { method: "POST" }),
+
   notifications: (limit = 30) => apiFetch<NotificationsResponse>(`/api/v1/notifications?limit=${limit}`),
 
   markNotificationsRead: () => apiFetch<{ ok: true }>("/api/v1/notifications/read", { method: "POST" }),
@@ -1829,9 +1854,21 @@ export type PluginInfo = {
   settingsFields: PluginSettingField[];
   settings: Record<string, PluginSettingValue>;
   missingSettings: string[];
-  panels: string[];
+  /** Dashboard panels the plugin offers; type is plugin.<id>.<panel id>. */
+  panels: PluginPanelInfo[];
   installedAt: string;
 };
+
+export type PluginPanelInfo = {
+  id: string;
+  type: string;
+  label: string;
+  block: "conversation" | "text";
+  description?: string;
+  defaultSize?: { w: number; h: number };
+};
+
+export type PluginPanelAnswer = { text: string; done: boolean; error: string | null };
 
 export type PluginsResponse = {
   plugins: PluginInfo[];
@@ -1865,6 +1902,17 @@ export type PluginManifestInfo = {
 export type PluginActivity = {
   logs: { t: string; stream: "stdout" | "stderr"; line: string }[];
   actions: { action: string; detail: Record<string, unknown>; at: string }[];
+};
+
+export type UpdateStatus = {
+  current: string;
+  latest: { version: string; notes: string; publishedAt: string | null; size: number | null } | null;
+  updateAvailable: boolean;
+  lastCheckedAt: string | null;
+  lastCheckError: string | null;
+  downloaded: string | null;
+  run: { state: "idle" | "updating" | "succeeded" | "failed"; target: string | null; log: string };
+  canUpdate: boolean;
 };
 
 export type NotificationItem = {
