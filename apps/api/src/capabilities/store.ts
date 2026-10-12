@@ -85,7 +85,7 @@ export async function listStateTopicBindings(): Promise<
      JOIN devices d ON d.id = c.device_id
      WHERE b.state_topic IS NOT NULL AND b.state_topic <> ''
        AND c.is_enabled = TRUE
-       AND COALESCE(d.firmware_type, 'esphome') <> 'octopus'`
+       AND COALESCE(d.firmware_type, 'esphome') NOT IN ('octopus', 'plugin')`
   );
   return result.rows;
 }
@@ -94,7 +94,7 @@ export async function listDevicePrefixes(): Promise<string[]> {
   const result = await getPool().query<{ mqtt_topic_prefix: string }>(
     `SELECT DISTINCT mqtt_topic_prefix FROM devices
      WHERE mqtt_topic_prefix IS NOT NULL AND mqtt_topic_prefix <> ''
-       AND COALESCE(firmware_type, 'esphome') <> 'octopus'`
+       AND COALESCE(firmware_type, 'esphome') NOT IN ('octopus', 'plugin')`
   );
   return result.rows.map((r) => r.mqtt_topic_prefix);
 }
@@ -172,7 +172,7 @@ export async function listEsphomeLiveEntities(): Promise<
      LEFT JOIN relays r ON c.source_type = 'relay' AND r.id = c.source_id
      WHERE c.is_enabled = TRUE
        AND COALESCE(d.is_enabled, TRUE) = TRUE
-       AND COALESCE(d.firmware_type, 'esphome') NOT IN ('shelly', 'octopus')
+       AND COALESCE(d.firmware_type, 'esphome') NOT IN ('shelly', 'octopus', 'plugin')
        AND d.mqtt_topic_prefix IS NOT NULL AND d.mqtt_topic_prefix <> ''`
   );
 
@@ -226,7 +226,7 @@ export async function listEsphomeCanonicalStateTopics(): Promise<
      LEFT JOIN relays r ON c.source_type = 'relay' AND r.id = c.source_id
      WHERE c.is_enabled = TRUE
        AND COALESCE(d.is_enabled, TRUE) = TRUE
-       AND COALESCE(d.firmware_type, 'esphome') NOT IN ('shelly', 'octopus')
+       AND COALESCE(d.firmware_type, 'esphome') NOT IN ('shelly', 'octopus', 'plugin')
        AND d.mqtt_topic_prefix IS NOT NULL AND d.mqtt_topic_prefix <> ''`
   );
 

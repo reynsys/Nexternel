@@ -105,7 +105,7 @@ tar -C "$TMP/new" -cf - . | tar -C "$DIR" -xf -
 
 # 4. Rebuild and restart; on failure, go back.
 say "Rebuilding and restarting (this takes a few minutes)…"
-if as_docker "docker compose build api ui && docker compose up -d --remove-orphans"; then
+if as_docker "docker compose build && docker compose up -d --remove-orphans"; then
   API_PORT="$(grep -E '^API_PORT=' .env | tail -1 | cut -d= -f2 | tr -d '\r"' || true)"
   for _ in $(seq 1 60); do
     if curl -sf -m 3 "http://127.0.0.1:${API_PORT:-4000}/api/v1/health" >/dev/null 2>&1; then
@@ -124,6 +124,6 @@ if [ -f "$TMP/previous.tar.gz" ]; then
     if [ -n "$f" ] && [ -f "$f" ]; then rm -f -- "$f"; fi
   done
   tar -xzf "$TMP/previous.tar.gz" -C "$DIR"
-  as_docker "docker compose build api ui && docker compose up -d --remove-orphans" && die "Update to $NEW failed; $CURRENT is running again."
+  as_docker "docker compose build && docker compose up -d --remove-orphans" && die "Update to $NEW failed; $CURRENT is running again."
 fi
 die "Update to $NEW failed. Your settings copy is in backups/pre-update-$STAMP.tar.gz."

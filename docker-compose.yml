@@ -103,6 +103,8 @@ services:
       GO2RTC_PUBLIC_URL: ${GO2RTC_PUBLIC_URL:-}
       MOSQUITTO_CONFIG_DIR: /mosquitto-config
       BACKUP_JOBS_DIR: /backup-jobs
+      PLUGINS_DIR: /plugins
+      PLUGIN_CATALOG_URL: ${PLUGIN_CATALOG_URL:-}
       ALLOW_DOCKER_RESTART: "true"
     volumes:
       # ESPHome YAML (rw so System → Adopt can write device configs)
@@ -116,6 +118,11 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       # Host CPU thermal zones for System Information widget (read-only)
       - /sys/class/thermal:/sys/class/thermal:ro
+      # Installed plugins (shared with the plugin container)
+      - ./plugins:/plugins
+    networks:
+      - default
+      - plugins
     ports:
       - "${API_PORT:-4000}:4000"
     depends_on:
@@ -153,6 +160,30 @@ services:
       - ./go2rtc:/config
     ports:
       - "${GO2RTC_PORT:-1984}:1984"
+
+  # Plugins run here, each as its own user. On its own network, the only Nexternel service
+  # it can reach is the API's plugin doorway (plus the home network and internet).
+  plugins:
+    build:
+      context: .
+      dockerfile: apps/plugin-host/Dockerfile
+    container_name: nexternel-plugins
+    restart: unless-stopped
+    init: true
+    environment:
+      TZ: ${TZ}
+      NEXTERNEL_API: http://api:4000
+      PLUGINS_DIR: /plugins
+    volumes:
+      - ./plugins:/plugins
+    networks:
+      - plugins
+    depends_on:
+      - api
+
+networks:
+  default:
+  plugins:
 
 volumes:
   postgres_data:

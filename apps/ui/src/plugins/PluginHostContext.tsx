@@ -70,7 +70,7 @@ export function PluginHostProvider({ children }: { children: ReactNode }) {
   const panelTypeToPluginId = useMemo(() => {
     const map = new Map<string, string>();
     for (const p of plugins) {
-      for (const t of p.contributes.widgets ?? []) {
+      for (const t of p.panels) {
         map.set(t, p.id);
       }
     }

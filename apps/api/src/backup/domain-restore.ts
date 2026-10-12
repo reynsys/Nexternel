@@ -1,3 +1,4 @@
+import { encryptSecret } from "../plugins/secrets.js";
 import type { PoolClient } from "pg";
 import { getPool } from "../db.js";
 import { syncCapabilitiesFromLegacy } from "../capabilities/sync.js";
@@ -340,6 +341,42 @@ async function upsertOctopus(client: PoolClient, domain: DomainExport) {
   );
 }
 
+/** Plugins come back set up; their files are downloaded again when the plugin container asks. */
+async function upsertPlugins(client: PoolClient, domain: DomainExport, roomRemap: Map<string, string>) {
+  for (const p of domain.integrations.plugins ?? []) {
+    const settings: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(p.settings ?? {})) {
+      if (value && typeof value === "object" && "secret" in value) {
+        const plain = (value as { secret: unknown }).secret;
+        if (typeof plain === "string") settings[key] = encryptSecret(plain);
+      } else {
+        settings[key] = value;
+      }
+    }
+    const grants = { ...p.grants };
+    if (Array.isArray(grants.read)) {
+      grants.read = grants.read.map((id) => (typeof id === "string" ? roomRemap.get(id) ?? id : id));
+    }
+    await client.query(
+      `INSERT INTO installed_plugins (id, enabled, builtin, source, package_path, manifest, grants, settings, status, token_hash)
+       VALUES ($1, $2, FALSE, $3, $4, $5::jsonb, $6::jsonb, $7::jsonb, 'waiting', NULL)
+       ON CONFLICT (id) DO UPDATE SET
+         enabled = EXCLUDED.enabled, source = EXCLUDED.source, package_path = EXCLUDED.package_path,
+         manifest = EXCLUDED.manifest, grants = EXCLUDED.grants, settings = EXCLUDED.settings,
+         config_rev = installed_plugins.config_rev + 1, token_hash = NULL, updated_at = NOW()`,
+      [
+        p.id,
+        p.enabled,
+        p.source === "file" ? "file" : "catalog",
+        `packages/${p.id}/${p.manifest.version}`,
+        JSON.stringify(p.manifest),
+        JSON.stringify(grants),
+        JSON.stringify(settings),
+      ]
+    );
+  }
+}
+
 export async function restoreDomain(
   domain: DomainExport,
   opts?: { preserveAdminUsername?: string }
@@ -385,6 +422,7 @@ export async function restoreDomain(
     await upsertRoles(client, clean);
     await upsertUsers(client, clean, opts);
     await upsertOctopus(client, clean);
+    await upsertPlugins(client, clean, roomRemap);
     await client.query("COMMIT");
   } catch (err) {
     await client.query("ROLLBACK");

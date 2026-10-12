@@ -136,7 +136,7 @@ export async function normalizeEsphomeMqttTopics(): Promise<{
          updated_at = NOW()
      FROM devices d
      WHERE s.device_id = d.id
-       AND COALESCE(d.firmware_type, 'esphome') NOT IN ('shelly', 'octopus')
+       AND COALESCE(d.firmware_type, 'esphome') NOT IN ('shelly', 'octopus', 'plugin')
        AND d.mqtt_topic_prefix IS NOT NULL AND d.mqtt_topic_prefix <> ''`
   );
   const relays = await pool.query(
@@ -148,7 +148,7 @@ export async function normalizeEsphomeMqttTopics(): Promise<{
          updated_at = NOW()
      FROM devices d
      WHERE r.device_id = d.id
-       AND COALESCE(d.firmware_type, 'esphome') NOT IN ('shelly', 'octopus')
+       AND COALESCE(d.firmware_type, 'esphome') NOT IN ('shelly', 'octopus', 'plugin')
        AND d.mqtt_topic_prefix IS NOT NULL AND d.mqtt_topic_prefix <> ''`
   );
   return {

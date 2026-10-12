@@ -1,3 +1,5 @@
+import { NotificationBell } from "../../../components/NotificationBell";
+import { hasPermission } from "../../../lib/permissions";
 import { useState } from "react";
 import { styled } from "@mui/material/styles";
 import AppBar from "@mui/material/AppBar";
@@ -84,6 +86,9 @@ export function AppNavbar({
               Nexternel
             </Typography>
           </Stack>
+          {signedIn ? (
+            <NotificationBell canClear={hasPermission(permissions ?? null, "manageUsers", isAdmin)} />
+          ) : null}
           <IconButton aria-label="menu" onClick={() => setOpen(true)} color="inherit">
             <MenuRoundedIcon />
           </IconButton>

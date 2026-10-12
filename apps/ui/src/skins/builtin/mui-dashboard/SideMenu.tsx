@@ -13,6 +13,8 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { Link as RouterLink } from "react-router-dom";
 import { APP_VERSION } from "../../../version";
 import { MenuContent } from "./MenuContent";
+import { NotificationBell } from "../../../components/NotificationBell";
+import { hasPermission } from "../../../lib/permissions";
 import type { User } from "../../../api";
 import type { RolePermissions } from "../../../lib/permissions";
 import { getBrandLogo } from "../../brandLogo";
@@ -145,11 +147,19 @@ export function SideMenu({
       >
         <BrandMark logo={logo} size={collapsed ? 32 : 28} />
         {!collapsed && (
-          <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2, flex: 1 }}>
             Nexternel
           </Typography>
         )}
+        {signedIn && !collapsed ? (
+          <NotificationBell canClear={hasPermission(permissions ?? null, "manageUsers", isAdmin)} />
+        ) : null}
       </Box>
+      {signedIn && collapsed ? (
+        <Box sx={{ display: "flex", justifyContent: "center", pb: 1 }}>
+          <NotificationBell canClear={hasPermission(permissions ?? null, "manageUsers", isAdmin)} />
+        </Box>
+      ) : null}
       <Divider />
       <Box
         sx={{

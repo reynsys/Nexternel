@@ -9,6 +9,8 @@ import {
   Typography,
 } from "@mui/material";
 import { APP_VERSION } from "../../../version";
+import { NotificationBell } from "../../../components/NotificationBell";
+import { hasPermission } from "../../../lib/permissions";
 import { filterNav, MAIN_NAV, navItemActive, SECONDARY_NAV } from "../../nav";
 import { useShellAuth } from "../../useShellAuth";
 import { useSkin } from "../../SkinProvider";
@@ -78,6 +80,7 @@ export function ClassicLayout() {
               );
             })}
           </Stack>
+          {signedIn ? <NotificationBell canClear={hasPermission(permissions ?? null, "manageUsers", isAdmin)} /> : null}
           {signedIn ? (
             <Button color="inherit" size="small" onClick={() => void logout()}>
               Sign out

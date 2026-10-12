@@ -7,7 +7,7 @@ export const SETTINGS_TABS: {
 }[] = [
   { label: "Appearance", segment: "appearance", permission: "viewSystem" },
   { label: "System", segment: "system", permission: "viewSystem" },
-  // Plugins is hidden until there is something to install (only a stale example entry exists).
+  { label: "Plugins", segment: "plugins", permission: "viewSystem" },
   { label: "Backup & Restore", segment: "backup", permission: "manageUsers" },
 ];
 

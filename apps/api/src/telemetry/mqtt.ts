@@ -230,7 +230,7 @@ async function staleCapabilitiesForPrefix(prefix: string) {
     `SELECT c.id FROM capabilities c
      JOIN devices d ON d.id = c.device_id
      WHERE d.mqtt_topic_prefix = $1
-       AND COALESCE(d.firmware_type, 'esphome') <> 'octopus'`,
+       AND COALESCE(d.firmware_type, 'esphome') NOT IN ('octopus', 'plugin')`,
     [prefix]
   );
   for (const row of caps.rows) {
@@ -866,6 +866,14 @@ export async function publishSwitchCommand(
     next = current?.value !== true;
   } else {
     next = action === "on";
+  }
+
+  if (cap.firmware_type === "plugin") {
+    const { sendPluginSwitchCommand } = await import("../plugins/devices.js");
+    await sendPluginSwitchCommand(capabilityId, next);
+    // Optimistic; the plugin confirms by sending the switch's new state.
+    applyLiveCapability(capabilityId, next, false, "switch");
+    return { value: next };
   }
 
   const shelly =

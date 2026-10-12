@@ -42,7 +42,10 @@ import { shellyRoutes } from "./routes/shelly.js";
 import { octopusRoutes } from "./routes/octopus.js";
 import { pluginsRoutes } from "./routes/plugins.js";
 import { ensurePluginSchema } from "./plugins/ensure-schema.js";
-import { seedBuiltinPlugins } from "./plugins/service.js";
+import { pluginDoorwayRoutes } from "./plugins/doorway.js";
+import { pluginHostRoutes } from "./plugins/host-routes.js";
+import { ensureHostKey } from "./plugins/packages.js";
+import { notificationsRoutes } from "./notifications/routes.js";
 import { v4Routes } from "./v4/routes.js";
 import { panelApiRoutes } from "./panels/api-routes.js";
 import { wsRoutes } from "./telemetry/ws.js";
@@ -91,6 +94,9 @@ await app.register(async (api) => {
   await api.register(rolesRoutes);
   await api.register(systemRoutes);
   await api.register(pluginsRoutes);
+  await api.register(pluginDoorwayRoutes);
+  await api.register(pluginHostRoutes);
+  await api.register(notificationsRoutes);
   await api.register(migrateRoutes);
   await api.register(backupRoutes);
   await api.register(setupRoutes);
@@ -118,8 +124,11 @@ try {
   app.log.info(v4Domain, "V4 domain schema ensured");
   await ensureDashboardSchema();
   await ensurePluginSchema();
-  const pluginsSeeded = await seedBuiltinPlugins();
-  app.log.info({ pluginsSeeded }, "plugin registry seeded");
+  try {
+    await ensureHostKey();
+  } catch (err) {
+    app.log.warn({ err }, "plugin folder not writable — plugins cannot run");
+  }
   await ensureCameraSchema();
   await ensureOctopusSchema();
   await ensureBackupScheduleSchema();

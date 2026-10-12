@@ -15,13 +15,63 @@ export interface PluginContributions {
   themes?: string[];
 }
 
+/** What a plugin asks to be allowed to do; the person installing it approves each one. */
+export interface PluginPermissionRequests {
+  /** Add its own devices and readings, and receive commands for its own switches. */
+  devices?: string;
+  /** Read current readings and history (all areas, or the areas the person chooses). */
+  read?: string;
+  /** Switch other devices on or off (only the ones the person ticks). */
+  control?: string;
+  /** Post messages to Nexternel's notifications. */
+  notify?: string;
+}
+
+export type PluginPermissionKey = keyof PluginPermissionRequests;
+
+export const PLUGIN_PERMISSION_KEYS: readonly PluginPermissionKey[] = ["devices", "read", "control", "notify"];
+
+export type PluginSettingType = "text" | "secret" | "number" | "select" | "toggle" | "time";
+
+/** One field on the plugin's settings page (drawn by Nexternel). */
+export interface PluginSettingField {
+  key: string;
+  label: string;
+  type: PluginSettingType;
+  help?: string;
+  required?: boolean;
+  default?: string | number | boolean;
+  /** select only */
+  options?: { value: string; label: string }[];
+  /** number only */
+  min?: number;
+  max?: number;
+}
+
+/** What the person granted, stored with the installed plugin. */
+export interface PluginGrants {
+  devices: boolean;
+  /** null = not granted; "all" = every area; otherwise the chosen area ids. */
+  read: null | "all" | string[];
+  /** Capability ids the plugin may switch. Empty = not granted. */
+  control: string[];
+  notify: boolean;
+}
+
 export interface PluginManifest {
   id: string;
   version: string;
   pluginApi: PluginApiVersion;
   name?: string;
   description?: string;
-  contributes: PluginContributions;
+  author?: string;
+  /** Entry file inside the package (default main.mjs). */
+  main?: string;
+  /** Oldest Nexternel version the plugin works with, e.g. "V5.2.86". */
+  minNexternel?: string;
+  permissions?: PluginPermissionRequests;
+  settings?: PluginSettingField[];
+  contributes?: PluginContributions;
 }
 
 /** Catalog group for Add Panel picker (contributed panels). */

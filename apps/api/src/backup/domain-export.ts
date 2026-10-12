@@ -1,3 +1,5 @@
+import type { PluginManifest } from "@nexternel/plugin-sdk";
+import { decryptSecret, isEncryptedSecret } from "../plugins/secrets.js";
 import { getPool } from "../db.js";
 import { buildConfigPayload } from "../migrate/export-config.js";
 import type { ExportedDashboard } from "../migrate/types.js";
@@ -85,8 +87,32 @@ export type DomainExport = {
   roles: ExportedRole[];
   integrations: {
     octopus: ExportedOctopus | null;
+    /** Installed plugins (V5.2.86+). Secret settings are stored readable here — the backup itself is encrypted. */
+    plugins?: ExportedPlugin[];
   };
 };
+
+export type ExportedPlugin = {
+  id: string;
+  source: string;
+  enabled: boolean;
+  manifest: PluginManifest;
+  grants: Record<string, unknown>;
+  settings: Record<string, unknown>;
+};
+
+async function loadPlugins(): Promise<ExportedPlugin[]> {
+  const r = await getPool().query<{
+    id: string; source: string; enabled: boolean; manifest: PluginManifest; grants: Record<string, unknown>; settings: Record<string, unknown>;
+  }>(`SELECT id, source, enabled, manifest, grants, settings FROM installed_plugins ORDER BY id`);
+  return r.rows.map((row) => {
+    const settings: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(row.settings)) {
+      settings[key] = isEncryptedSecret(value) ? { secret: decryptSecret(value) } : value;
+    }
+    return { id: row.id, source: row.source, enabled: row.enabled, manifest: row.manifest, grants: row.grants, settings };
+  });
+}
 
 async function loadCapabilities(): Promise<ExportedCapability[]> {
   const r = await getPool().query<{
@@ -256,7 +282,7 @@ async function loadOctopus(): Promise<ExportedOctopus | null> {
 
 export async function exportDomain(): Promise<DomainExport> {
   const base = await buildConfigPayload();
-  const [capabilities, capabilityBindings, groups, users, roles, octopus] =
+  const [capabilities, capabilityBindings, groups, users, roles, octopus, plugins] =
     await Promise.all([
       loadCapabilities(),
       loadCapabilityBindings(),
@@ -264,6 +290,7 @@ export async function exportDomain(): Promise<DomainExport> {
       loadUsers(),
       loadRoles(),
       loadOctopus(),
+      loadPlugins(),
     ]);
   return sanitizeDomainExport({
     exportVersion: DOMAIN_EXPORT_VERSION,
@@ -276,6 +303,6 @@ export async function exportDomain(): Promise<DomainExport> {
     groups,
     users,
     roles,
-    integrations: { octopus },
+    integrations: { octopus, plugins },
   });
 }

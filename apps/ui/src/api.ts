@@ -180,7 +180,7 @@ async function postWelcomeBackup<T>(path: string, opts: { file: File; password: 
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
-  if (!headers.has("Content-Type") && init?.body) {
+  if (!headers.has("Content-Type") && init?.body && !(init.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
   const access = getStoredAccessToken();
@@ -216,7 +216,7 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
     }
     if (refreshed === "ok") {
       const retryHeaders = new Headers(init?.headers);
-      if (!retryHeaders.has("Content-Type") && init?.body) {
+      if (!retryHeaders.has("Content-Type") && init?.body && !(init.body instanceof FormData)) {
         retryHeaders.set("Content-Type", "application/json");
       }
       const nextAccess = getStoredAccessToken();
@@ -1296,7 +1296,31 @@ export const api = {
       method: "POST",
     }),
 
-  plugins: () => apiFetch<{ plugins: PluginInfo[] }>("/api/v1/plugins"),
+  plugins: () => apiFetch<PluginsResponse>("/api/v1/plugins"),
+
+  pluginCatalog: (refresh = false) =>
+    apiFetch<{ plugins: PluginCatalogEntry[] }>(`/api/v1/plugins/catalog${refresh ? "?refresh=1" : ""}`),
+
+  installPlugin: (id: string, grants: PluginGrants) =>
+    apiFetch<{ plugin: PluginInfo }>("/api/v1/plugins/install", {
+      method: "POST",
+      body: JSON.stringify({ id, grants }),
+    }),
+
+  inspectPluginFile: (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return apiFetch<{ manifest: PluginManifestInfo }>("/api/v1/plugins/inspect-file", { method: "POST", body: form });
+  },
+
+  installPluginFile: (file: File, grants: PluginGrants) => {
+    // Fields must come before the file: the server reads them as it reaches the file.
+    const form = new FormData();
+    form.append("acceptUnofficial", "yes");
+    form.append("grants", JSON.stringify(grants));
+    form.append("file", file);
+    return apiFetch<{ plugin: PluginInfo }>("/api/v1/plugins/install-file", { method: "POST", body: form });
+  },
 
   setPluginEnabled: (id: string, enabled: boolean) =>
     apiFetch<{ plugin: PluginInfo }>(`/api/v1/plugins/${encodeURIComponent(id)}`, {
@@ -1304,22 +1328,31 @@ export const api = {
       body: JSON.stringify({ enabled }),
     }),
 
-  validatePluginManifest: (manifest: unknown) =>
-    apiFetch<{ ok: true; manifest: PluginInfo } | { ok: false; errors: string[] }>(
-      "/api/v1/plugins/validate",
-      { method: "POST", body: JSON.stringify({ manifest }) }
-    ),
-
-  installPluginManifest: (manifest: unknown, packagePath?: string | null) =>
-    apiFetch<InstallPluginResponse>("/api/v1/plugins/install", {
-      method: "POST",
-      body: JSON.stringify({ manifest, packagePath }),
+  setPluginGrants: (id: string, grants: PluginGrants) =>
+    apiFetch<{ plugin: PluginInfo }>(`/api/v1/plugins/${encodeURIComponent(id)}/grants`, {
+      method: "PUT",
+      body: JSON.stringify({ grants }),
     }),
+
+  savePluginSettings: (id: string, settings: Record<string, unknown>) =>
+    apiFetch<{ plugin: PluginInfo }>(`/api/v1/plugins/${encodeURIComponent(id)}/settings`, {
+      method: "PUT",
+      body: JSON.stringify({ settings }),
+    }),
+
+  pluginActivity: (id: string) =>
+    apiFetch<PluginActivity>(`/api/v1/plugins/${encodeURIComponent(id)}/activity`),
 
   removePlugin: (id: string) =>
     apiFetch<{ ok: true }>(`/api/v1/plugins/${encodeURIComponent(id)}`, {
       method: "DELETE",
     }),
+
+  notifications: (limit = 30) => apiFetch<NotificationsResponse>(`/api/v1/notifications?limit=${limit}`),
+
+  markNotificationsRead: () => apiFetch<{ ok: true }>("/api/v1/notifications/read", { method: "POST" }),
+
+  clearNotifications: () => apiFetch<{ ok: true }>("/api/v1/notifications", { method: "DELETE" }),
 
   configStatus: () =>
     apiFetch<ConfigStatusResponse>("/api/v1/system/config/status"),
@@ -1751,32 +1784,105 @@ export type SystemInfo = {
   measuredAt?: string;
 };
 
-export type PluginInfo = {
-  id: string;
-  version: string;
-  pluginApi: number;
-  name: string;
-  description: string;
-  enabled: boolean;
-  builtin: boolean;
-  source: "builtin" | "package";
-  packagePath: string | null;
-  runtimeLoaded: boolean;
-  contributes: {
-    widgets?: string[];
-    drivers?: string[];
-    services?: string[];
-    navigation?: string[];
-    themes?: string[];
-  };
+export type PluginPermissionKey = "devices" | "read" | "control" | "notify";
+
+export type PluginGrants = {
+  devices: boolean;
+  /** null = not allowed; "all" = every area; otherwise the chosen area ids. */
+  read: null | "all" | string[];
+  /** Items the plugin may switch on or off. */
+  control: string[];
+  notify: boolean;
 };
 
-export type InstallPluginResponse = {
-  ok: true;
-  plugin: PluginInfo;
-  runtimeLoadSupported: false;
-  message: string;
+export type PluginSettingField = {
+  key: string;
+  label: string;
+  type: "text" | "secret" | "number" | "select" | "toggle" | "time";
+  help?: string;
+  required?: boolean;
+  default?: string | number | boolean;
+  options?: { value: string; label: string }[];
+  min?: number;
+  max?: number;
 };
+
+export type PluginSettingValue =
+  | { type: "secret"; isSet: boolean; unreadable?: boolean }
+  | { type: Exclude<PluginSettingField["type"], "secret">; value: string | number | boolean | null };
+
+export type PluginRunState = "running" | "starting" | "stopped" | "crashed" | "waiting";
+
+export type PluginInfo = {
+  id: string;
+  name: string;
+  version: string;
+  description: string;
+  author: string;
+  source: "catalog" | "file";
+  enabled: boolean;
+  status: PluginRunState;
+  statusMessage: string | null;
+  statusAt: string | null;
+  permissions: Partial<Record<PluginPermissionKey, string>>;
+  grants: PluginGrants;
+  settingsFields: PluginSettingField[];
+  settings: Record<string, PluginSettingValue>;
+  missingSettings: string[];
+  panels: string[];
+  installedAt: string;
+};
+
+export type PluginsResponse = {
+  plugins: PluginInfo[];
+  host: { connected: boolean; lastContact: string | null };
+  officialCatalog: boolean;
+};
+
+export type PluginCatalogEntry = {
+  id: string;
+  name: string;
+  version: string;
+  description: string;
+  author: string;
+  minNexternel?: string;
+  permissions: Partial<Record<PluginPermissionKey, string>>;
+  installedVersion: string | null;
+  updateAvailable: boolean;
+  compatible: boolean;
+};
+
+/** What a plugin file says about itself, before installing. */
+export type PluginManifestInfo = {
+  id: string;
+  name?: string;
+  version: string;
+  description?: string;
+  author?: string;
+  permissions?: Partial<Record<PluginPermissionKey, string>>;
+};
+
+export type PluginActivity = {
+  logs: { t: string; stream: "stdout" | "stderr"; line: string }[];
+  actions: { action: string; detail: Record<string, unknown>; at: string }[];
+};
+
+export type NotificationItem = {
+  id: string;
+  source: string;
+  sourceName: string;
+  level: "info" | "warning" | "alert";
+  title: string;
+  body: string;
+  createdAt: string;
+};
+
+export type NotificationsResponse = {
+  items: NotificationItem[];
+  unreadCount: number;
+  lastReadAt: string | null;
+};
+
 
 export type BackupJob = {
   id: string;

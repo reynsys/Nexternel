@@ -21,3 +21,6 @@ apps/ui/src/skins/local/**
 !apps/ui/src/skins/local/README.md
 !apps/ui/src/skins/local/.gitkeep
 !apps/ui/src/skins/local/.gitignore
+
+/plugins/*
+!/plugins/.gitkeep

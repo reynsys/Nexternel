@@ -27,7 +27,7 @@ export function registerWidget(contribution: PanelContribution) {
 export function unregisterPlugin(id: string) {
   const manifest = manifestsById.get(id);
   manifestsById.delete(id);
-  for (const t of manifest?.contributes.widgets ?? []) {
+  for (const t of manifest?.contributes?.panels ?? manifest?.contributes?.widgets ?? []) {
     unregisterContributionPanel(t);
   }
 }
@@ -83,5 +83,7 @@ export function getPluginManifest(id: string): PluginManifest | undefined {
 export function getPluginManifestForWidgetType(
   type: string
 ): PluginManifest | undefined {
-  return listPluginManifests().find((m) => m.contributes.widgets?.includes(type));
+  return listPluginManifests().find(
+    (m) => m.contributes?.panels?.includes(type) || m.contributes?.widgets?.includes(type)
+  );
 }
