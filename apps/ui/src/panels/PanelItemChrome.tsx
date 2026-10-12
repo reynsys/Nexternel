@@ -1,4 +1,4 @@
-import { Box, alpha } from "@mui/material";
+import { Box } from "@mui/material";
 import type { SvgIconComponent } from "@mui/icons-material";
 import type { SxProps, Theme } from "@mui/material/styles";
 import type { ReactNode } from "react";
@@ -52,8 +52,6 @@ type Props = {
   icon?: SvgIconComponent;
   /** Item id for this panel's own name / icon (defaults to the reading's id). */
   itemId?: string;
-  /** Lay the name over the content's top-left corner (video) instead of above it. */
-  overlay?: boolean;
   children: ReactNode;
   contentSx?: SxProps<Theme>;
 };
@@ -71,7 +69,6 @@ export function PanelItemChrome({
   showContext = true,
   icon,
   itemId,
-  overlay = false,
   children,
   contentSx,
 }: Props) {
@@ -92,7 +89,10 @@ export function PanelItemChrome({
   let areaText = reserveArea
     ? (contextLabel !== undefined ? contextLabel : cap ? panelItemContextLine(cap) : null)?.trim() || null
     : null;
-  if (areaText && areaText.toLowerCase() === panelArea) areaText = null;
+  // Same rule as the title strip: an area that repeats the panel's area or the item's own name adds nothing.
+  if (areaText && (areaText.toLowerCase() === panelArea || areaText.toLowerCase() === nameText?.trim().toLowerCase())) {
+    areaText = null;
+  }
   const iconSx = { fontSize: 16, mt: "1px", flexShrink: 0, color: "primary.main" } as const;
   const overrideIcon = itemId ? itemDisplay.overrides[itemId]?.icon : undefined;
   let iconNode: ReactNode = null;
@@ -125,29 +125,8 @@ export function PanelItemChrome({
 
   return (
     <PanelTile>
-      {heading && !overlay ? (
-        <Box sx={{ flexShrink: 0, px: "10px", pt: "8px" }}>{heading}</Box>
-      ) : null}
+      {heading ? <Box sx={{ flexShrink: 0, px: "10px", pt: "8px" }}>{heading}</Box> : null}
       <Box sx={panelContentRootSx(contentSx)}>{children}</Box>
-      {heading && overlay ? (
-        <Box
-          sx={(theme) => ({
-            position: "absolute",
-            top: 8,
-            left: 8,
-            maxWidth: "calc(100% - 16px)",
-            px: "8px",
-            py: "4px",
-            borderRadius: 1,
-            bgcolor: alpha(theme.palette.background.default, 0.72),
-            backdropFilter: "blur(4px)",
-            pointerEvents: "none",
-            zIndex: 1,
-          })}
-        >
-          {heading}
-        </Box>
-      ) : null}
     </PanelTile>
   );
 }

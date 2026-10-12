@@ -111,7 +111,6 @@ export function CameraPanel({
           contextLabel={cam.areaName?.trim() || null}
           icon={VideocamIcon}
           itemId={cam.id}
-          overlay
           contentSx={{ minHeight: 0 }}
         >
           <CameraWidget widget={cameraTileWidget(cam)} />

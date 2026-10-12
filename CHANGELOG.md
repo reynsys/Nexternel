@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.85
+
+- **One labelling rule for every panel:** a panel with one item names it in its title only; a panel with several items labels each item's tile the same way, with its icon and name at the top. Switches now show **On / Off** like a reading instead of drawing their own power symbol, and camera names sit at the top of their tile instead of floating over the video.
+- An item's area is no longer repeated under its name when both are the same word.
+
 ## V5.2.84
 
 - **Update script:** no longer stops silently when a code folder is missing or when there is nothing to remove; if it ever stops, it now says which step failed. Scripts in the download can be run directly as `./scripts/update.sh`.

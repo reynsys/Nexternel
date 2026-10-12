@@ -7,7 +7,7 @@ import {
   alpha,
   useTheme,
 } from "@mui/material";
-import PowerSettingsNewOutlinedIcon from "@mui/icons-material/PowerSettingsNewOutlined";
+import { AdaptiveReading } from "../../components/AdaptiveReading";
 import type { PanelAppearanceLayout } from "../../lib/panel-appearance";
 import { useSwitchControl } from "../../widgets/switch/useSwitchControl";
 import { useDashboardTileChrome } from "../../lib/dashboard-tile-context";
@@ -43,7 +43,7 @@ export function SemanticCapabilityTile({ item, showSecondary }: Props) {
           cap={cap}
           title={itemTitle}
           showContext={showArea}
-          contentSx={{ p: 0, flex: 1 }}
+          contentSx={{ p: 0, flex: 1, containerType: "size" }}
         >
           <CardActionArea
             onClick={() => toggle()}
@@ -51,7 +51,12 @@ export function SemanticCapabilityTile({ item, showSecondary }: Props) {
             sx={{ flex: 1, minHeight: 0, p: 1.5, height: "100%" }}
           >
             <Stack spacing={1} alignItems="center" justifyContent="center" sx={{ flex: 1 }}>
-              <PowerSettingsNewOutlinedIcon sx={{ fontSize: 32, color: on ? accent : muted }} />
+              {/* The item's icon lives in its heading (or the title tile); the tile shows the state like any reading. */}
+              <AdaptiveReading
+                value={on ? "On" : "Off"}
+                valueColor={on ? accent : muted}
+                sx={{ "& > div": { fontSize: "clamp(1.25rem, 18cqi, 3.75rem)" } }}
+              />
               <Switch
                 size="small"
                 checked={on}
