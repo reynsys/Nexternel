@@ -1923,6 +1923,7 @@ export type HttpsStatus = {
   settings: { enabled: boolean; extraNames: string[]; domain: string | null };
   httpsPort: number;
   addresses: string[];
+  localAddresses: string[];
   homeCertificate: { name: string; validTo: string; fingerprint: string } | null;
   domainCertificate: { validTo: string; issuer: string } | null;
 };
@@ -1941,7 +1942,13 @@ export type UpdateStatus = {
   lastCheckedAt: string | null;
   lastCheckError: string | null;
   downloaded: string | null;
-  run: { state: "idle" | "updating" | "succeeded" | "failed"; target: string | null; step: string | null; log: string };
+  run: {
+    state: "idle" | "updating" | "succeeded" | "failed";
+    target: string | null;
+    startedAt: string | null;
+    step: string | null;
+    log: string;
+  };
   /** Local time of the nightly check, "01:15". */
   nightlyCheck: string;
   canUpdate: boolean;

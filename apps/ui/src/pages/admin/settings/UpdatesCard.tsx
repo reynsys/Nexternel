@@ -51,9 +51,6 @@ export function UpdatesCard() {
   const [showNotes, setShowNotes] = useState(false);
   const [showLog, setShowLog] = useState(false);
   const [restarting, setRestarting] = useState(false);
-  // When contact was lost (Nexternel restarting); after a while the page may need the secure address.
-  const [lostSince, setLostSince] = useState<number | null>(null);
-  const [now, setNow] = useState(Date.now());
   const target = useRef<string | null>(null);
 
   const load = useCallback(async () => {
@@ -73,7 +70,6 @@ export function UpdatesCard() {
     const timer = setInterval(async () => {
       try {
         const health = await api.health();
-        setLostSince(null);
         if (target.current && health.version === target.current) {
           window.location.reload();
           return;
@@ -82,9 +78,7 @@ export function UpdatesCard() {
         if (s.run.state !== "updating") setRestarting(false);
       } catch {
         setRestarting(true); // Nexternel is restarting; keep waiting
-        setLostSince((t) => t ?? Date.now());
       }
-      setNow(Date.now());
     }, 5000);
     return () => clearInterval(timer);
   }, [updating, load]);
@@ -157,30 +151,18 @@ export function UpdatesCard() {
                       Now: {run_.step}
                     </Box>
                   ) : null}
-                  {window.location.protocol === "http:" && lostSince && now - lostSince > 90_000 ? (
-                    <Box component="span" sx={{ display: "block", mt: 1 }}>
-                      Since V5.2.88 Nexternel uses a secure address. If this page does not come back, open{" "}
-                      <a href={`https://${window.location.hostname}/admin/settings/system`}>https://{window.location.hostname}</a>{" "}
-                      (the browser warns once: choose to continue, then trust the home certificate under Secure connection).
-                    </Box>
-                  ) : null}
                 </Alert>
               ) : null}
-              {run_?.state === "succeeded" && !updating ? (
-                <Alert
-                  severity="success"
-                  action={canManage ? <Button color="inherit" size="small" onClick={() => void run("check", api.dismissUpdate)}>OK</Button> : undefined}
-                >
-                  Updated to {run_.target}.
-                </Alert>
+              {run_?.state === "succeeded" && !updating && run_.target ? (
+                <Typography variant="body2" color="text.secondary">
+                  Last update: {run_.target}
+                  {run_.startedAt ? `, installed on ${when(run_.startedAt)}` : ""}.
+                </Typography>
               ) : null}
               {run_?.state === "failed" && !updating ? (
-                <Alert
-                  severity="error"
-                  action={canManage ? <Button color="inherit" size="small" onClick={() => void run("check", api.dismissUpdate)}>OK</Button> : undefined}
-                >
-                  The update to {run_.target} did not finish. Nexternel put the previous version back. The details below
-                  show where it stopped.
+                <Alert severity="error">
+                  The update to {run_.target} did not finish, so Nexternel put the previous version back. You can try again
+                  with Update; "Show details" below shows where it stopped.
                 </Alert>
               ) : null}
               {error ? <Alert severity="error">{error}</Alert> : null}

@@ -35,14 +35,11 @@ something like:
 ```
    Open this address in a browser on any device at home:
 
-      https://192.168.1.20
+      http://nexternel.local      (or http://192.168.1.20)
 ```
 
-The first time, the browser warns that the connection is not private. That is because
-Nexternel uses its own **home certificate**, which your devices don't know yet: continue past
-the warning this once (usually *Advanced → Continue*). Then, on each phone, tablet or computer,
-open **Settings → System → Secure connection → Download home certificate** and follow the short
-steps shown for that device. After that the warning is gone and the connection is encrypted.
+`nexternel.local` works on phones, tablets and computers on your home network. If a device
+can't find it, use the number address.
 
 ## 2. Start fresh, or restore your home
 
@@ -103,8 +100,9 @@ Nexternel makes an encrypted backup every day (03:00 by default) and keeps the l
 
 | Port | Used by | Open to |
 |------|---------|---------|
-| 443 | Nexternel in your browser (secure, https) | your home network |
-| 80, 8080 | Forward to the secure address; home certificate download | your home network |
+| 80, 8080 | Nexternel in your browser | your home network |
+| 443 | Secure address (https), when one is set up | your home network |
+| 5353 (UDP) | Announces the name nexternel.local | your home network |
 | 4000 | Nexternel's server (API) | your home network |
 | 1883 | MQTT: devices send readings here | your home network |
 | 6052 | ESPHome dashboard (device firmware) | your home network |

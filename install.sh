@@ -97,11 +97,7 @@ for _ in $(seq 1 120); do
     echo
     echo "   Open this address in a browser on any device at home:"
     echo
-    echo "      https://${SERVER_IP:-this-machine}"
-    echo
-    echo "   The browser warns that the connection is not trusted until the device trusts"
-    echo "   Nexternel's home certificate: continue past the warning this once, then use"
-    echo "   Settings → System → Secure connection → Download home certificate."
+    echo "      http://nexternel.local      (or http://${SERVER_IP:-this-machine})"
     echo
     echo "   Then choose \"Start fresh\" or \"Restore from backup\"."
     echo

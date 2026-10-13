@@ -13,12 +13,18 @@ test("home certificate covers the server address, nexternel.local and localhost"
   ]);
 });
 
-test("secure on: https sites, default name for bare-address connections, http forwards", () => {
+test("plain http is the normal address; the home certificate is offered but never forced", () => {
   const c = buildCaddyfile(base, "192.0.2.10", false);
   assert.match(c, /default_sni 192\.0\.2\.10/);
   assert.match(c, /https:\/\/192\.0\.2\.10, https:\/\/nexternel\.local, https:\/\/localhost \{\n\ttls internal/);
-  assert.match(c, /redir https:\/\/\{host\}\{uri\} permanent/);
-  assert.match(c, /handle \/nexternel-home-certificate\.crt/);
+  assert.doesNotMatch(c, /\tredir /);
+  assert.match(c, /auto_https disable_redirects/);
+  assert.match(c, /http:\/\/:80, http:\/\/:8080 \{[\s\S]*reverse_proxy ui:80/);
+});
+
+test("with a trusted name, plain http forwards to it", () => {
+  const c = buildCaddyfile({ ...base, domain: "smith.example.net" }, "192.0.2.10", true);
+  assert.match(c, /redir https:\/\/smith\.example\.net\{uri\} permanent/);
 });
 
 test("secure off: plain http only, still offering the certificate", () => {

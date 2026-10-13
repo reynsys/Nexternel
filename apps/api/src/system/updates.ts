@@ -49,7 +49,13 @@ export type UpdateStatus = {
   lastCheckError: string | null;
   downloaded: string | null;
   /** idle | updating | succeeded | failed */
-  run: { state: "idle" | "updating" | "succeeded" | "failed"; target: string | null; step: string | null; log: string };
+  run: {
+    state: "idle" | "updating" | "succeeded" | "failed";
+    target: string | null;
+    startedAt: string | null;
+    step: string | null;
+    log: string;
+  };
   /** Local time of the nightly check, "01:15". */
   nightlyCheck: string;
   canUpdate: boolean;
@@ -312,7 +318,13 @@ export async function updateStatus(): Promise<UpdateStatus> {
     lastCheckError: row.last_error,
     downloaded,
     // The update script colours its output for terminals; strip that for the page.
-    run: { state, target: row.run_target, step: currentStep(log), log: log.split("\n").slice(-40).join("\n") },
+    run: {
+      state,
+      target: row.run_target,
+      startedAt: row.run_started_at ? row.run_started_at.toISOString() : null,
+      step: currentStep(log),
+      log: log.split("\n").slice(-40).join("\n"),
+    },
     nightlyCheck: `${String(NIGHTLY_CHECK.hour).padStart(2, "0")}:${String(NIGHTLY_CHECK.minute).padStart(2, "0")}`,
     canUpdate: process.env.ALLOW_DOCKER_RESTART === "true",
   };

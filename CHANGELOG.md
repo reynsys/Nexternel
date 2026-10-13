@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.90
+
+- **Simple addresses at home:** open Nexternel at **http://nexternel.local** (or the server's number address) on any device at home. No certificate warnings and nothing to install. A secure address that every device trusts automatically is on the way.
+- The Updates section shows when the last update was installed, without a separate OK button.
+
 ## V5.2.89
 
 - **Maintenance mode:** while Nexternel is updating or restoring a backup, a banner says so and settings, dashboards, devices and plugins can't be changed until it finishes. Lights and switches keep working. When an update finishes, the banner offers to reload the page.

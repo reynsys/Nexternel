@@ -195,6 +195,8 @@ apps/api/src/v4/systems-in-scope.ts
 apps/api/src/v4/types.ts
 apps/api/src/version.ts
 apps/api/tsconfig.json
+apps/local-name/Dockerfile
+apps/local-name/responder.mjs
 apps/plugin-host/Dockerfile
 apps/plugin-host/host.mjs
 apps/plugin-host/runner.mjs

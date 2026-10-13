@@ -77,6 +77,8 @@ export function buildCaddyfile(settings: HttpsSettings, serverIp: string | null,
     "# Written by Nexternel (Settings → System → Secure connection). Changes made here are replaced.",
     "{",
     "\tskip_install_trust",
+    "\t# Plain http is answered by the block below (forwarding only once a trusted name exists).",
+    "\tauto_https disable_redirects",
   ];
   if (serverIp) lines.push(`\t# Connections made to the bare address name no site; use the server's.`, `\tdefault_sni ${serverIp}`);
   lines.push(
@@ -116,11 +118,15 @@ export function buildCaddyfile(settings: HttpsSettings, serverIp: string | null,
       ""
     );
   }
+  // Plain http stays the normal address: it only forwards once a name with a certificate every
+  // device trusts exists. The home certificate is never forced on anyone (it needs installing on
+  // each device), but keeps working for those who already trusted it.
+  const trusted = settings.domain && hasDomainCert ? settings.domain : null;
   lines.push(
     "http://:80, http://:8080 {",
     ...certHandle,
     "\thandle {",
-    `\t\tredir https://{host}${portSuffix}{uri} permanent`,
+    trusted ? `\t\tredir https://${trusted}${portSuffix}{uri} permanent` : "\t\treverse_proxy ui:80",
     "\t}",
     "}",
     ""
@@ -240,6 +246,8 @@ export type HttpsStatus = {
   httpsPort: number;
   /** Secure addresses to use, best first. */
   addresses: string[];
+  /** Plain addresses at home: the announced local name and the server's address. */
+  localAddresses: string[];
   homeCertificate: { name: string; validTo: string; fingerprint: string } | null;
   domainCertificate: { validTo: string; issuer: string } | null;
 };
@@ -260,10 +268,12 @@ export async function httpsStatus(): Promise<HttpsStatus> {
   const addresses = settings.enabled
     ? [...(settings.domain && domainCert ? [settings.domain] : []), ...names].map((n) => `https://${n}${suffix}`)
     : [];
+  const localName = `${(process.env.LOCAL_NAME || "nexternel").toLowerCase()}.local`;
   return {
     settings,
     httpsPort: port,
     addresses,
+    localAddresses: [`http://${localName}`, ...(ip ? [`http://${ip}`] : [])],
     homeCertificate: home,
     domainCertificate: domainCert ? { validTo: new Date(domainCert.validTo).toISOString(), issuer: domainCert.issuer.split("\n").find((l) => l.startsWith("O="))?.slice(2) ?? domainCert.issuer } : null,
   };

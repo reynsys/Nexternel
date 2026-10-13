@@ -107,6 +107,7 @@ services:
       PLUGIN_CATALOG_URL: ${PLUGIN_CATALOG_URL:-}
       UPDATE_FEED_URL: ${UPDATE_FEED_URL:-}
       HTTPS_PORT: ${HTTPS_PORT:-443}
+      LOCAL_NAME: ${LOCAL_NAME:-nexternel}
       ALLOW_DOCKER_RESTART: "true"
     volumes:
       # ESPHome YAML (rw so System → Adopt can write device configs)
@@ -155,8 +156,20 @@ services:
       - api
       - go2rtc
 
-  # Secure front door: https with Nexternel's own home certificate (and your own domain if
-  # you add one). Plain http on 80 and 8080 forwards to https. Configured by Nexternel.
+  # Answers "nexternel.local" on the home network, so devices at home can open
+  # http://nexternel.local (becomes nexternel-2.local if another machine already uses the name).
+  local-name:
+    build:
+      context: .
+      dockerfile: apps/local-name/Dockerfile
+    container_name: nexternel-local-name
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      NEXTERNEL_LOCAL_NAME: ${LOCAL_NAME:-nexternel}
+
+  # Front door for browsers: plain http on 80 and 8080 (the normal address), and https once a
+  # name with a trusted certificate is set up. Configured by Nexternel.
   caddy:
     image: caddy:2.11.4-alpine
     container_name: nexternel-caddy

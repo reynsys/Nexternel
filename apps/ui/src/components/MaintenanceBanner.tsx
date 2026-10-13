@@ -50,15 +50,12 @@ export function MaintenanceBanner() {
 
   if (newVersion) {
     return (
-      <Alert
-        severity="success"
-        action={
-          <Button color="inherit" size="small" onClick={() => window.location.reload()}>
-            Reload
-          </Button>
-        }
-      >
-        Nexternel was updated to {newVersion}. Reload the page to use it.
+      <Alert severity="success">
+        Nexternel was updated to {newVersion}.{" "}
+        {/* The button sits with its sentence, not at the far edge of the screen. */}
+        <Button size="small" variant="outlined" color="inherit" sx={{ ml: 1, py: 0 }} onClick={() => window.location.reload()}>
+          Reload the page
+        </Button>
       </Alert>
     );
   }
