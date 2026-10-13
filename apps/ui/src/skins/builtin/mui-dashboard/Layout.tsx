@@ -2,6 +2,7 @@ import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import { Outlet } from "react-router-dom";
 import { useShellAuth } from "../../useShellAuth";
+import { MaintenanceBanner } from "../../../components/MaintenanceBanner";
 import { useSkin } from "../../SkinProvider";
 import { isGradientActive } from "../../surfaceStyles";
 import { SideMenu, useSideMenuCollapsed } from "./SideMenu";
@@ -53,6 +54,7 @@ export function MuiDashboardLayout() {
             pt: { xs: 10, md: 3 },
           }}
         >
+          {signedIn ? <MaintenanceBanner /> : null}
           <Outlet />
         </Stack>
       </Box>

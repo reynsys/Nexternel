@@ -15,7 +15,8 @@ import { APP_VERSION } from "../version.js";
 const execFileAsync = promisify(execFile);
 
 const RELEASES_API = "https://api.github.com/repos/reynsys/Nexternel/releases/latest";
-const CHECK_EVERY_MS = 24 * 3_600_000;
+/** Nexternel looks for a new version every night at this local time (and when asked). */
+export const NIGHTLY_CHECK = { hour: 1, minute: 15 };
 const UPDATER_IMAGE = "docker:27.5.1-cli";
 const UPDATER_NAME = "nexternel-updater";
 
@@ -48,7 +49,9 @@ export type UpdateStatus = {
   lastCheckError: string | null;
   downloaded: string | null;
   /** idle | updating | succeeded | failed */
-  run: { state: "idle" | "updating" | "succeeded" | "failed"; target: string | null; log: string };
+  run: { state: "idle" | "updating" | "succeeded" | "failed"; target: string | null; step: string | null; log: string };
+  /** Local time of the nightly check, "01:15". */
+  nightlyCheck: string;
   canUpdate: boolean;
 };
 
@@ -59,6 +62,7 @@ type Row = {
   notified_version: string | null;
   downloaded_version: string | null;
   run_target: string | null;
+  run_started_at: Date | null;
 };
 
 export async function ensureUpdateSchema(): Promise<void> {
@@ -72,13 +76,14 @@ export async function ensureUpdateSchema(): Promise<void> {
       downloaded_version VARCHAR(20),
       run_target         VARCHAR(20)
     );
+    ALTER TABLE system_update ADD COLUMN IF NOT EXISTS run_started_at TIMESTAMPTZ;
     INSERT INTO system_update (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
   `);
 }
 
 async function getRow(): Promise<Row> {
   const res = await getPool().query<Row>(
-    `SELECT last_check_at, last_error, latest, notified_version, downloaded_version, run_target FROM system_update WHERE id = 1`
+    `SELECT last_check_at, last_error, latest, notified_version, downloaded_version, run_target, run_started_at FROM system_update WHERE id = 1`
   );
   return res.rows[0]!;
 }
@@ -253,25 +258,49 @@ export async function startUpdate(): Promise<UpdateStatus> {
     ],
     { timeout: 5 * 60_000 }
   );
-  await setRow({ run_target: version });
+  await setRow({ run_target: version, run_started_at: new Date() });
+  const { clearMaintenanceCache } = await import("./maintenance.js");
+  clearMaintenanceCache();
   return updateStatus();
+}
+
+// An update that has not finished after this long has stopped without saying so.
+const UPDATE_GIVE_UP_MS = 45 * 60_000;
+
+async function readLog(): Promise<string> {
+  try {
+    return (await readFile(logFile(), "utf8")).replace(/\x1b\[[0-9;]*m/g, "");
+  } catch {
+    return "";
+  }
+}
+
+/** The step the update is on, from the update script's "==>" lines. */
+function currentStep(log: string): string | null {
+  const steps = log.split("\n").filter((l) => l.startsWith("==> ")).map((l) => l.slice(4).trim());
+  return steps.at(-1) ?? (log.trim() ? "Preparing…" : null);
+}
+
+async function runState(row: Row, log: string): Promise<UpdateStatus["run"]["state"]> {
+  if (!row.run_target) return "idle";
+  if (row.run_target === APP_VERSION) return "succeeded";
+  const exit = /UPDATE-EXIT (\d+)/.exec(log);
+  if (exit) return exit[1] === "0" ? "succeeded" : "failed";
+  if (row.run_started_at && Date.now() - row.run_started_at.getTime() > UPDATE_GIVE_UP_MS) return "failed";
+  return (await updaterRunning()) ? "updating" : "failed";
+}
+
+/** For maintenance mode: is an update running, to which version, since when. */
+export async function updateRunInfo(): Promise<{ state: UpdateStatus["run"]["state"]; target: string | null; since: string | null }> {
+  const row = await getRow();
+  if (!row.run_target) return { state: "idle", target: null, since: null };
+  return { state: await runState(row, await readLog()), target: row.run_target, since: row.run_started_at?.toISOString() ?? null };
 }
 
 export async function updateStatus(): Promise<UpdateStatus> {
   const row = await getRow();
-  let log = "";
-  try {
-    log = await readFile(logFile(), "utf8");
-  } catch {
-    /* no update has run */
-  }
-  const exit = /UPDATE-EXIT (\d+)/.exec(log);
-  let state: UpdateStatus["run"]["state"] = "idle";
-  if (row.run_target) {
-    if (row.run_target === APP_VERSION) state = "succeeded";
-    else if (exit) state = exit[1] === "0" ? "succeeded" : "failed";
-    else state = (await updaterRunning()) ? "updating" : "failed";
-  }
+  const log = await readLog();
+  const state = await runState(row, log);
   const latest = row.latest;
   const downloaded =
     row.downloaded_version && isNewer(row.downloaded_version) ? row.downloaded_version : null;
@@ -283,7 +312,8 @@ export async function updateStatus(): Promise<UpdateStatus> {
     lastCheckError: row.last_error,
     downloaded,
     // The update script colours its output for terminals; strip that for the page.
-    run: { state, target: row.run_target, log: log.replace(/\x1b\[[0-9;]*m/g, "").split("\n").slice(-40).join("\n") },
+    run: { state, target: row.run_target, step: currentStep(log), log: log.split("\n").slice(-40).join("\n") },
+    nightlyCheck: `${String(NIGHTLY_CHECK.hour).padStart(2, "0")}:${String(NIGHTLY_CHECK.minute).padStart(2, "0")}`,
     canUpdate: process.env.ALLOW_DOCKER_RESTART === "true",
   };
 }
@@ -296,21 +326,29 @@ export async function dismissUpdateRun(): Promise<UpdateStatus> {
   return updateStatus();
 }
 
-/** Daily check, starting a minute after Nexternel starts. */
+/** The most recent nightly check time that has passed (local time). */
+export function lastNightlySlot(now = new Date()): Date {
+  const slot = new Date(now);
+  slot.setHours(NIGHTLY_CHECK.hour, NIGHTLY_CHECK.minute, 0, 0);
+  if (slot > now) slot.setDate(slot.getDate() - 1);
+  return slot;
+}
+
+/** Check every night at 01:15 (or as soon as Nexternel is running again after that time). */
 export function startUpdateChecks(): void {
   const tick = async () => {
     try {
       const row = await getRow();
-      if (!row.last_check_at || Date.now() - row.last_check_at.getTime() > CHECK_EVERY_MS) await checkForUpdate();
+      if (!row.last_check_at || row.last_check_at < lastNightlySlot()) await checkForUpdate();
       // A finished update: the new version is running, so its download is no longer needed.
       if (row.downloaded_version && !isNewer(row.downloaded_version)) {
         await rm(packageFile(row.downloaded_version), { force: true });
         await setRow({ downloaded_version: null });
       }
     } catch {
-      /* try again next hour */
+      /* try again on the next tick */
     }
   };
   setTimeout(() => void tick(), 60_000).unref?.();
-  setInterval(() => void tick(), 3_600_000).unref?.();
+  setInterval(() => void tick(), 5 * 60_000).unref?.();
 }

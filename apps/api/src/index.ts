@@ -51,6 +51,7 @@ import { updateRoutes } from "./system/update-routes.js";
 import { httpsRoutes } from "./system/https-routes.js";
 import { applyHttps } from "./system/https.js";
 import { ensureUpdateSchema, startUpdateChecks } from "./system/updates.js";
+import { maintenanceGuard } from "./system/maintenance.js";
 import { v4Routes } from "./v4/routes.js";
 import { panelApiRoutes } from "./panels/api-routes.js";
 import { wsRoutes } from "./telemetry/ws.js";
@@ -83,6 +84,8 @@ await app.register(async (api) => {
   api.addHook("onRequest", async (request) => {
     await attachUser(request);
   });
+  // While Nexternel is updating or restoring, changes are refused (reading and switching still work).
+  api.addHook("preHandler", maintenanceGuard);
   await api.register(multipart, {
     limits: { fileSize: 2 * 1024 * 1024 * 1024, files: 1 },
   });

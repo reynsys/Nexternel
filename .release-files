@@ -169,6 +169,8 @@ apps/api/src/system/host-ip.ts
 apps/api/src/system/https-routes.ts
 apps/api/src/system/https.test.ts
 apps/api/src/system/https.ts
+apps/api/src/system/maintenance.test.ts
+apps/api/src/system/maintenance.ts
 apps/api/src/system/repair-live-data.test.ts
 apps/api/src/system/repair-mqtt.ts
 apps/api/src/systems/ensure-schema.ts
@@ -220,6 +222,7 @@ apps/ui/src/components/DashboardTileBody.tsx
 apps/ui/src/components/DevicesTabs.tsx
 apps/ui/src/components/IconPicker.tsx
 apps/ui/src/components/ItemOverrideFields.tsx
+apps/ui/src/components/MaintenanceBanner.tsx
 apps/ui/src/components/ManageDashboardsPanel.tsx
 apps/ui/src/components/NotificationBell.tsx
 apps/ui/src/components/PanelCameraContentFields.tsx

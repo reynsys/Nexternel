@@ -13,6 +13,7 @@ import { NotificationBell } from "../../../components/NotificationBell";
 import { hasPermission } from "../../../lib/permissions";
 import { filterNav, MAIN_NAV, navItemActive, SECONDARY_NAV } from "../../nav";
 import { useShellAuth } from "../../useShellAuth";
+import { MaintenanceBanner } from "../../../components/MaintenanceBanner";
 import { useSkin } from "../../SkinProvider";
 import { isGradientActive } from "../../surfaceStyles";
 
@@ -96,6 +97,7 @@ export function ClassicLayout() {
         </Toolbar>
       </AppBar>
       <Container maxWidth="lg" sx={{ py: 3, flex: 1 }}>
+        {signedIn ? <MaintenanceBanner /> : null}
         <Outlet />
       </Container>
     </Box>

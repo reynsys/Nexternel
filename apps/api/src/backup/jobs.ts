@@ -1,3 +1,4 @@
+import { markRestore } from "../system/maintenance.js";
 import fs from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
@@ -68,6 +69,8 @@ export function createJob(type: BackupJob["type"]): BackupJob {
   };
   jobs.set(job.id, job);
   persist(job);
+  // Restores switch maintenance mode on until they finish.
+  if (type === "restore") markRestore(job.id, true);
   return job;
 }
 
@@ -83,6 +86,7 @@ export function updateJob(
   if (!job) return null;
   Object.assign(job, patch, { updatedAt: new Date().toISOString() });
   persist(job);
+  if (job.type === "restore") markRestore(job.id, !["completed", "failed", "expired", "ready"].includes(job.status));
   return job;
 }
 

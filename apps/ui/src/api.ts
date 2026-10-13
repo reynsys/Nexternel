@@ -243,6 +243,8 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   if (!res.ok) {
+    // Maintenance mode: tell the banner straight away.
+    if (res.status === 503) window.dispatchEvent(new Event("nexternel:maintenance"));
     const message = await parseErrorMessage(res);
     pushDiagnosticError({
       kind: "api",
@@ -1368,6 +1370,7 @@ export const api = {
     ),
 
   updateStatus: () => apiFetch<UpdateStatus>("/api/v1/system/update"),
+  maintenance: () => apiFetch<Maintenance>("/api/v1/system/maintenance"),
   checkForUpdate: () => apiFetch<UpdateStatus>("/api/v1/system/update/check", { method: "POST" }),
   downloadUpdate: () => apiFetch<UpdateStatus>("/api/v1/system/update/download", { method: "POST" }),
   startUpdate: () => apiFetch<UpdateStatus>("/api/v1/system/update/start", { method: "POST" }),
@@ -1924,6 +1927,13 @@ export type HttpsStatus = {
   domainCertificate: { validTo: string; issuer: string } | null;
 };
 
+export type Maintenance = {
+  active: boolean;
+  reason: "update" | "restore" | null;
+  detail: string | null;
+  since: string | null;
+};
+
 export type UpdateStatus = {
   current: string;
   latest: { version: string; notes: string; publishedAt: string | null; size: number | null } | null;
@@ -1931,7 +1941,9 @@ export type UpdateStatus = {
   lastCheckedAt: string | null;
   lastCheckError: string | null;
   downloaded: string | null;
-  run: { state: "idle" | "updating" | "succeeded" | "failed"; target: string | null; log: string };
+  run: { state: "idle" | "updating" | "succeeded" | "failed"; target: string | null; step: string | null; log: string };
+  /** Local time of the nightly check, "01:15". */
+  nightlyCheck: string;
   canUpdate: boolean;
 };
 

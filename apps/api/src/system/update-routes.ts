@@ -1,11 +1,15 @@
 import type { FastifyPluginAsync } from "fastify";
 import { requirePermission } from "../auth/rbac.js";
 import { checkForUpdate, dismissUpdateRun, downloadUpdate, startUpdate, updateStatus } from "./updates.js";
+import { currentMaintenance } from "./maintenance.js";
 
 export const updateRoutes: FastifyPluginAsync = async (app) => {
   const failed = (err: unknown) => ({
     error: { code: "update_failed", message: err instanceof Error ? err.message : "Something went wrong" },
   });
+
+  /** Whether maintenance mode is on (shown as a banner to everyone signed in). */
+  app.get("/api/v1/system/maintenance", async () => currentMaintenance());
 
   app.get("/api/v1/system/update", async (request, reply) => {
     if (!requirePermission(request, reply, "viewSystem")) return;

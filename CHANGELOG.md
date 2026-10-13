@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.89
+
+- **Maintenance mode:** while Nexternel is updating or restoring a backup, a banner says so and settings, dashboards, devices and plugins can't be changed until it finishes. Lights and switches keep working. When an update finishes, the banner offers to reload the page.
+- **Updates:** Nexternel looks for a new version every night at 01:15. The buttons are now simply **Download** and **Update**, and the update screen shows the step it is on.
+
 ## V5.2.88
 
 - **Secure connection (https):** Nexternel is now reached at `https://<your server>`, encrypted with its own **home certificate**. The old address with `:8080` forwards there automatically.

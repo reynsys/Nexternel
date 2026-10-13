@@ -114,6 +114,8 @@ export function UpdatesCard() {
     if (!ok) return;
     target.current = status.downloaded;
     await run("start", api.startUpdate);
+    // Show the maintenance banner straight away.
+    window.dispatchEvent(new Event("nexternel:maintenance"));
   }
 
   const latest = status?.latest;
@@ -139,7 +141,7 @@ export function UpdatesCard() {
               </Typography>
               {status.lastCheckedAt ? (
                 <Typography variant="caption" color="text.secondary">
-                  Last checked {when(status.lastCheckedAt)}. Nexternel checks once a day by itself.
+                  Last checked {when(status.lastCheckedAt)}. Nexternel checks by itself every night at {status.nightlyCheck}.
                 </Typography>
               ) : null}
               {status.lastCheckError ? (
@@ -150,6 +152,11 @@ export function UpdatesCard() {
                 <Alert severity="info" icon={<CircularProgress size={18} color="inherit" />}>
                   Updating to {target.current ?? "the new version"}. This takes a few minutes; Nexternel restarts on the
                   way and this page reloads by itself when it is done.
+                  {run_?.step ? (
+                    <Box component="span" sx={{ display: "block", mt: 0.5 }}>
+                      Now: {run_.step}
+                    </Box>
+                  ) : null}
                   {window.location.protocol === "http:" && lostSince && now - lostSince > 90_000 ? (
                     <Box component="span" sx={{ display: "block", mt: 1 }}>
                       Since V5.2.88 Nexternel uses a secure address. If this page does not come back, open{" "}
@@ -185,7 +192,7 @@ export function UpdatesCard() {
                   </Button>
                   {status.updateAvailable && latest && status.downloaded !== latest.version ? (
                     <Button variant="contained" disabled={busy !== null || updating} onClick={() => void run("download", api.downloadUpdate)}>
-                      {busy === "download" ? "Downloading…" : `Download ${latest.version}`}
+                      {busy === "download" ? "Downloading…" : "Download"}
                     </Button>
                   ) : null}
                   {status.downloaded ? (
@@ -195,7 +202,7 @@ export function UpdatesCard() {
                       disabled={busy !== null || updating || !status.canUpdate}
                       onClick={() => void update()}
                     >
-                      {busy === "start" ? "Starting…" : `Update to ${status.downloaded}`}
+                      {busy === "start" ? "Starting…" : "Update"}
                     </Button>
                   ) : null}
                 </Stack>
