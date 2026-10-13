@@ -13,6 +13,7 @@ import {
 import { api } from "../../../api";
 import { IconPicker } from "../../../components/IconPicker";
 import { ItemIcon } from "../../../lib/icons/ItemIcon";
+import { StatusLimitsDialog, readingCanHaveLight } from "../../../components/status-light/StatusLightFields";
 
 export type ReadingToEdit = {
   capabilityId: string;
@@ -21,6 +22,7 @@ export type ReadingToEdit = {
   customName: string | null;
   icon: string | null;
   kind: string;
+  unit?: string | null;
 };
 
 /**
@@ -39,6 +41,7 @@ export function ReadingSettingsDialog({
   const [name, setName] = useState("");
   const [icon, setIcon] = useState("auto");
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [limitsOpen, setLimitsOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -102,6 +105,16 @@ export function ReadingSettingsDialog({
           <Typography variant="caption" color="text.secondary">
             Used on every dashboard. A panel can still give it its own name or icon in its editor.
           </Typography>
+          {reading && readingCanHaveLight(reading.kind) ? (
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
+                Status light: when this reading shows green, amber or red, and when the bell rings.
+              </Typography>
+              <Button size="small" onClick={() => setLimitsOpen(true)} sx={{ flex: "none" }}>
+                Change limits
+              </Button>
+            </Stack>
+          ) : null}
           {error && <Alert severity="error">{error}</Alert>}
         </Stack>
       </DialogContent>
@@ -121,6 +134,17 @@ export function ReadingSettingsDialog({
         onChange={setIcon}
         onClose={() => setPickerOpen(false)}
       />
+      {limitsOpen && reading ? (
+        <StatusLimitsDialog
+          reading={{
+            id: reading.capabilityId,
+            name: name.trim() || reading.originalName,
+            unit: reading.unit ?? null,
+            kind: reading.kind,
+          }}
+          onClose={() => setLimitsOpen(false)}
+        />
+      ) : null}
     </Dialog>
   );
 }

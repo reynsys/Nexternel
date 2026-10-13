@@ -24,7 +24,14 @@ import {
   gradientCss,
   isGlowId,
 } from "./gradientPalettes";
-import { PRIMARY_SWATCHES, normalizeAccentHex, type ThemePrefs } from "./themePrefs";
+import {
+  DEFAULT_STATUS_LIGHT_PREFS,
+  PRIMARY_SWATCHES,
+  normalizeAccentHex,
+  normalizeStatusLightPrefs,
+  type StatusLightPrefs,
+  type ThemePrefs,
+} from "./themePrefs";
 import { isGradientActive } from "./surfaceStyles";
 import {
   BACKGROUND_EFFECTS,
@@ -119,6 +126,8 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
   const background = getGradientPalette(themePrefs.gradientId);
   const effectId = themePrefs.effectId ?? "off";
   const set = (patch: Partial<ThemePrefs>) => onThemeChange({ ...themePrefs, ...patch });
+  const statusLight = normalizeStatusLightPrefs(themePrefs.statusLight);
+  const setLight = (patch: Partial<StatusLightPrefs>) => set({ statusLight: { ...statusLight, ...patch } });
 
   useEffect(() => setCustomHex(themePrefs.primary), [themePrefs.primary]);
   useEffect(() => setKind(kindOf(themePrefs.gradientId)), [themePrefs.gradientId]);
@@ -366,6 +375,98 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
           ]}
           onChange={(v) => set({ solidContentPanels: v === "solid" })}
         />
+      </Section>
+
+      <Divider />
+
+      <Section
+        title="Status lights"
+        hint="The light on a reading: green is normal, amber means keep an eye on it, red means act now, grey means no recent reading. Each panel can choose its own style in its Edit menu."
+      >
+        <Stack spacing={1.25}>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Typography variant="body2" color="text.secondary" sx={{ width: 64, flexShrink: 0 }}>
+              Style
+            </Typography>
+            <Segmented<StatusLightPrefs["style"]>
+              label="Status light style"
+              value={statusLight.style}
+              options={[
+                { value: "pill", label: "Rounded rectangle" },
+                { value: "bar", label: "Bar" },
+                { value: "dots", label: "Dots" },
+                { value: "glow", label: "Glowing border" },
+                { value: "off", label: "Off" },
+              ]}
+              onChange={(v) => setLight({ style: v })}
+            />
+          </Stack>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Typography variant="body2" color="text.secondary" sx={{ width: 64, flexShrink: 0 }}>
+              Where
+            </Typography>
+            <Segmented<StatusLightPrefs["position"]>
+              label="Status light position"
+              value={statusLight.position}
+              disabled={statusLight.style === "off"}
+              options={[
+                { value: "title", label: "In the title" },
+                { value: "reading", label: "Under the reading" },
+              ]}
+              onChange={(v) => setLight({ position: v })}
+            />
+          </Stack>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Typography variant="body2" color="text.secondary" sx={{ width: 64, flexShrink: 0 }}>
+              Blink
+            </Typography>
+            <Segmented<"on" | "off">
+              label="Blink on act now"
+              value={statusLight.blink ? "on" : "off"}
+              disabled={statusLight.style === "off"}
+              options={[
+                { value: "on", label: "Blink on act now" },
+                { value: "off", label: "Steady" },
+              ]}
+              onChange={(v) => setLight({ blink: v === "on" })}
+            />
+          </Stack>
+          <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap>
+            <Typography variant="body2" color="text.secondary" sx={{ width: 64, flexShrink: 0 }}>
+              Colours
+            </Typography>
+            {(
+              [
+                ["ok", "Normal"],
+                ["watch", "Keep an eye on it"],
+                ["alert", "Act now"],
+              ] as const
+            ).map(([key, label]) => (
+              <Box
+                key={key}
+                component="label"
+                sx={{ display: "inline-flex", alignItems: "center", gap: 0.75, cursor: "pointer" }}
+              >
+                <Box
+                  component="input"
+                  type="color"
+                  aria-label={`${label} colour`}
+                  value={statusLight.colours[key]}
+                  onChange={(e) =>
+                    setLight({
+                      colours: { ...statusLight.colours, [key]: (e.target as HTMLInputElement).value.toUpperCase() },
+                    })
+                  }
+                  sx={{ width: 28, height: 28, p: 0, border: 0, bgcolor: "transparent", cursor: "pointer" }}
+                />
+                <Typography variant="body2">{label}</Typography>
+              </Box>
+            ))}
+            <Button size="small" onClick={() => set({ statusLight: { ...statusLight, colours: DEFAULT_STATUS_LIGHT_PREFS.colours } })}>
+              Original colours
+            </Button>
+          </Stack>
+        </Stack>
       </Section>
 
       <Divider />

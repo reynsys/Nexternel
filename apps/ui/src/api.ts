@@ -275,6 +275,7 @@ export type UserThemePrefs = {
   effectAmount?: number;
   effectSpeed?: number;
   effectColour?: "white" | "accent" | "scene";
+  statusLight?: import("./skins/themePrefs").StatusLightPrefs;
 };
 
 export type User = {
@@ -315,6 +316,8 @@ export type Capability = {
   sourceType: string;
   sourceId?: string;
   hasCommand: boolean;
+  /** Status light (limits, colour); null = this reading has no light. */
+  statusLight?: import("./lib/dashboard-data-runtime/status-store").CapabilityStatus | null;
   systemId?: string | null;
   areaId?: string | null;
   groupId?: string | null;
@@ -1124,6 +1127,20 @@ export const api = {
 
   capabilities: () =>
     apiFetch<{ capabilities: Capability[] }>("/api/v1/capabilities"),
+
+  /** A reading's status light limits; they apply wherever the reading is shown, and to the bell. */
+  setStatusLimits: (id: string, settings: import("@nexternel/domain").StatusLightSettings) =>
+    apiFetch<{ statusLight: import("./lib/dashboard-data-runtime/status-store").CapabilityStatus | null }>(
+      `/api/v1/capabilities/${encodeURIComponent(id)}/status-limits`,
+      { method: "PUT", body: JSON.stringify(settings) }
+    ),
+
+  /** Back to the starting limits for this kind of reading. */
+  resetStatusLimits: (id: string) =>
+    apiFetch<{ statusLight: import("./lib/dashboard-data-runtime/status-store").CapabilityStatus | null }>(
+      `/api/v1/capabilities/${encodeURIComponent(id)}/status-limits`,
+      { method: "DELETE" }
+    ),
 
   command: (id: string, action: "on" | "off" | "toggle") =>
     apiFetch<{ ok: boolean; value: boolean }>(`/api/v1/capabilities/${id}/command`, {

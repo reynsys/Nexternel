@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { readPanelStatusLight, type PanelStatusLight } from "@nexternel/domain";
+import { StatusLightEditorSection } from "../../components/status-light/StatusLightFields";
 
 import {
 
@@ -203,6 +205,7 @@ export function PanelWidgetEditor({
   const [itemStyle, setItemStyle] = useState<PanelItemStyle>(readPanelItemStyle(widget.config));
   const [itemDisplay, setItemDisplay] = useState<PanelItemDisplay>(readPanelItemDisplay(widget.config));
   const [titleIcon, setTitleIcon] = useState(readTitleIcon(widget.config));
+  const [statusLight, setStatusLight] = useState<PanelStatusLight>(readPanelStatusLight(widget.config));
 
   const [chartRange, setChartRange] = useState<HistoryRange>(readPanelChartRange(widget.config));
 
@@ -304,6 +307,7 @@ export function PanelWidgetEditor({
     setItemStyle(readPanelItemStyle(widget.config));
     setItemDisplay(readPanelItemDisplay(widget.config));
     setTitleIcon(readTitleIcon(widget.config));
+    setStatusLight(readPanelStatusLight(widget.config));
 
     setChartRange(readPanelChartRange(widget.config));
 
@@ -485,6 +489,12 @@ export function PanelWidgetEditor({
         itemStyle,
       },
     };
+
+    if (statusLight.style === "default" && statusLight.position === "default" && statusLight.blink === "default") {
+      delete nextConfig.statusLight;
+    } else {
+      nextConfig.statusLight = statusLight;
+    }
 
     if (isCharts) {
       nextConfig.chartRange = chartRange;
@@ -745,6 +755,17 @@ export function PanelWidgetEditor({
                 gives it its own name or icon on this panel.
               </Typography>
             </Stack>
+          )}
+
+          {showSystemFilter && !isCamera && (
+            <StatusLightEditorSection
+              value={statusLight}
+              onChange={setStatusLight}
+              readings={(capabilityIds.length
+                ? scopeCapabilities.filter((c) => capabilityIds.includes(c.id))
+                : scopeCapabilities
+              ).map((c) => ({ id: c.id, name: c.name, unit: c.unit, kind: c.kind }))}
+            />
           )}
 
           {showSystemFilter && (

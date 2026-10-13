@@ -10,7 +10,36 @@ export type ThemePrefsDto = {
   effectAmount?: number;
   effectSpeed?: number;
   effectColour?: "white" | "accent" | "scene";
+  statusLight?: StatusLightPrefs;
 };
+
+/** How status lights look for this person (each panel can still choose its own style). */
+export type StatusLightPrefs = {
+  style: "pill" | "bar" | "dots" | "glow" | "off";
+  position: "title" | "reading";
+  blink: boolean;
+  colours: { ok: string; watch: string; alert: string };
+};
+
+const STATUS_LIGHT_DEFAULT: StatusLightPrefs = {
+  style: "pill",
+  position: "title",
+  blink: true,
+  colours: { ok: "#2fbf71", watch: "#f0a12f", alert: "#ef4d4d" },
+};
+
+function statusLightField(raw: unknown): StatusLightPrefs {
+  const o = (raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {}) as Record<string, unknown>;
+  const c = (o.colours && typeof o.colours === "object" ? o.colours : {}) as Record<string, unknown>;
+  const hex = (v: unknown, d: string) => (typeof v === "string" && HEX.test(v) ? v : d);
+  const d = STATUS_LIGHT_DEFAULT;
+  return {
+    style: ["pill", "bar", "dots", "glow", "off"].includes(o.style as string) ? (o.style as StatusLightPrefs["style"]) : d.style,
+    position: o.position === "reading" ? "reading" : "title",
+    blink: typeof o.blink === "boolean" ? o.blink : d.blink,
+    colours: { ok: hex(c.ok, d.colours.ok), watch: hex(c.watch, d.colours.watch), alert: hex(c.alert, d.colours.alert) },
+  };
+}
 
 const DEFAULT: ThemePrefsDto = {
   mode: "dark",
@@ -22,6 +51,7 @@ const DEFAULT: ThemePrefsDto = {
   effectAmount: 1,
   effectSpeed: 1,
   effectColour: "white",
+  statusLight: STATUS_LIGHT_DEFAULT,
 };
 
 const HEX = /^#[0-9A-Fa-f]{6}$/;
@@ -108,7 +138,7 @@ function effectFields(o: Record<string, unknown>) {
 }
 
 export function defaultThemePrefs(): ThemePrefsDto {
-  return { ...DEFAULT };
+  return { ...DEFAULT, statusLight: statusLightField(null) };
 }
 
 function normalizeGradientId(raw: unknown): string {
@@ -140,6 +170,7 @@ export function parseThemePrefsInput(
     gradientId: normalizeGradientId(o.gradientId),
     solidContentPanels: Boolean(o.solidContentPanels),
     ...effectFields(o),
+    statusLight: statusLightField(o.statusLight),
   };
 }
 
@@ -161,5 +192,6 @@ export function themePrefsFromDb(raw: unknown): ThemePrefsDto {
     gradientId: normalizeGradientId(o.gradientId),
     solidContentPanels: Boolean(o.solidContentPanels),
     ...effectFields(o),
+    statusLight: statusLightField(o.statusLight),
   };
 }

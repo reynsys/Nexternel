@@ -54,6 +54,8 @@ apps/api/src/capabilities/cleanup.ts
 apps/api/src/capabilities/ensure-schema.ts
 apps/api/src/capabilities/kinds.ts
 apps/api/src/capabilities/settings.ts
+apps/api/src/capabilities/status-lights.test.ts
+apps/api/src/capabilities/status-lights.ts
 apps/api/src/capabilities/store.ts
 apps/api/src/capabilities/sync.ts
 apps/api/src/config.ts
@@ -238,6 +240,8 @@ apps/ui/src/components/PanelTitleFields.tsx
 apps/ui/src/components/SectionGrid.tsx
 apps/ui/src/components/SegmentButtonNav.tsx
 apps/ui/src/components/SlotBindingFields.tsx
+apps/ui/src/components/status-light/StatusLightFields.tsx
+apps/ui/src/components/status-light/StatusLight.tsx
 apps/ui/src/components/UserAvatarField.tsx
 apps/ui/src/components/VisualizationSlot.tsx
 apps/ui/src/components/WidgetErrorBoundary.tsx
@@ -268,6 +272,7 @@ apps/ui/src/lib/dashboard-data-runtime/resolver-cache.test.ts
 apps/ui/src/lib/dashboard-data-runtime/resolver-cache.ts
 apps/ui/src/lib/dashboard-data-runtime/runtime.test.ts
 apps/ui/src/lib/dashboard-data-runtime/runtime.ts
+apps/ui/src/lib/dashboard-data-runtime/status-store.ts
 apps/ui/src/lib/dashboard-data-runtime/types.ts
 apps/ui/src/lib/dashboard-document.ts
 apps/ui/src/lib/dashboard-icons.ts
@@ -583,6 +588,8 @@ packages/domain/src/index.ts
 packages/domain/src/panel-registry.ts
 packages/domain/src/panel-scope.test.ts
 packages/domain/src/panel-scope.ts
+packages/domain/src/status-light.test.ts
+packages/domain/src/status-light.ts
 packages/domain/src/system.ts
 packages/domain/src/widget-bindings.test.ts
 packages/domain/src/widget-bindings.ts

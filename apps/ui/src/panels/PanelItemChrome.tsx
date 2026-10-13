@@ -9,6 +9,7 @@ import { useDashboardTileChrome } from "../lib/dashboard-tile-context";
 import { ItemIcon } from "../lib/icons/ItemIcon";
 import { resolveItemHeading } from "../lib/panel-item-display";
 import { panelItemContextLine } from "./panel-item-context";
+import { StatusLight, lightPlacement } from "../components/status-light/StatusLight";
 
 const ITEM_NAME_LINE_PX = 18;
 const ITEM_AREA_LINE_PX = 16;
@@ -57,8 +58,8 @@ type Props = {
 };
 
 /**
- * One item of a panel, in its own tile. With several items the tile carries the item's
- * icon, name, and (when it differs from the title strip) area in its top-left corner.
+ * One item of a panel. With several items each is a small panel of its own: the item's icon,
+ * name, area (when it differs from the title strip) and status light on top, its tile below.
  * Every item in a panel reserves the same heading height, so values line up.
  * With one item the title strip already names it, so the tile holds only the content.
  */
@@ -72,7 +73,7 @@ export function PanelItemChrome({
   children,
   contentSx,
 }: Props) {
-  const { showItemContext, titleTile, itemDisplay } = useDashboardTileChrome();
+  const { showItemContext, titleTile, itemDisplay, statusLook } = useDashboardTileChrome();
   const panelArea = titleTile?.area?.trim().toLowerCase() || null;
   // A tile with no title is the panel's only item: the title strip names it, so no heading here.
   const resolved = title?.trim()
@@ -105,6 +106,16 @@ export function PanelItemChrome({
     }
   }
 
+  // Each reading of a several-reading panel is a small panel of its own: a title row (icon,
+  // name, area, status light) above its own tile.
+  const lightCap = cap && statusLook ? cap : null;
+  const lightAt = (placement: ReturnType<typeof lightPlacement>) =>
+    placement && lightCap && statusLook ? (
+      <StatusLight capabilityId={lightCap.id} unit={lightCap.unit} look={statusLook} placement={placement} />
+    ) : null;
+  const titlePlacement = statusLook ? lightPlacement(statusLook, "title") : null;
+  const readingPlacement = statusLook ? lightPlacement(statusLook, "reading") : null;
+
   const heading = nameText || iconNode ? (
     <Box sx={{ display: "flex", alignItems: "flex-start", gap: "6px", minWidth: 0 }}>
       {iconNode}
@@ -120,13 +131,48 @@ export function PanelItemChrome({
           </Box>
         ) : null}
       </Box>
+      {titlePlacement === "inline" ? <Box sx={{ alignSelf: "center" }}>{lightAt("inline")}</Box> : null}
     </Box>
   ) : null;
 
+  if (!heading) {
+    // The panel's only item: the panel's own title tile names it and carries its light.
+    return (
+      <PanelTile>
+        <Box sx={panelContentRootSx(contentSx)}>{children}</Box>
+      </PanelTile>
+    );
+  }
+
   return (
-    <PanelTile>
-      {heading ? <Box sx={{ flexShrink: 0, px: "10px", pt: "8px" }}>{heading}</Box> : null}
-      <Box sx={panelContentRootSx(contentSx)}>{children}</Box>
-    </PanelTile>
+    <Box
+      data-nx-mini-panel
+      sx={{
+        position: "relative",
+        flex: 1,
+        width: "100%",
+        height: "100%",
+        minHeight: 0,
+        minWidth: 0,
+        boxSizing: "border-box",
+        display: "flex",
+        flexDirection: "column",
+        gap: "3px",
+        p: "3px",
+        border: "1px solid",
+        borderColor: "divider",
+        borderRadius: "12px",
+      }}
+    >
+      {titlePlacement === "frame" ? lightAt("frame") : null}
+      <Box sx={{ position: "relative", flexShrink: 0, px: "7px", pt: "5px", pb: "8px" }}>
+        {heading}
+        {titlePlacement === "under-title" ? lightAt("under-title") : null}
+      </Box>
+      <PanelTile>
+        {lightAt(readingPlacement)}
+        <Box sx={panelContentRootSx(contentSx)}>{children}</Box>
+      </PanelTile>
+    </Box>
   );
 }

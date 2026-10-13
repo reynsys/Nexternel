@@ -279,6 +279,29 @@ async function upsertCapabilities(client: PoolClient, domain: DomainExport) {
           cap.icon ?? null,
         ]
       );
+      if (cap.statusLight) {
+        const sl = cap.statusLight;
+        await client.query(
+          `INSERT INTO capability_status_limits
+             (capability_id, enabled, alert_low, watch_low, watch_high, alert_high, notify_after_min)
+           VALUES ($1::uuid, $2, $3, $4, $5, $6, $7)
+           ON CONFLICT (capability_id) DO UPDATE SET
+             enabled = EXCLUDED.enabled, alert_low = EXCLUDED.alert_low, watch_low = EXCLUDED.watch_low,
+             watch_high = EXCLUDED.watch_high, alert_high = EXCLUDED.alert_high,
+             notify_after_min = EXCLUDED.notify_after_min, updated_at = NOW()`,
+          [
+            cap.id,
+            sl.enabled !== false,
+            sl.limits?.alertLow ?? null,
+            sl.limits?.watchLow ?? null,
+            sl.limits?.watchHigh ?? null,
+            sl.limits?.alertHigh ?? null,
+            sl.notifyAfterMin ?? null,
+          ]
+        );
+      } else {
+        await client.query(`DELETE FROM capability_status_limits WHERE capability_id = $1::uuid`, [cap.id]);
+      }
     } catch (err) {
       throw new Error(`Capability "${cap.name}" failed (${pgErrMessage(err)}).`);
     }
@@ -435,6 +458,8 @@ export async function restoreDomain(
     await syncCapabilitiesFromLegacy();
     await repairDashboardCapabilityBindings();
     await refreshTelemetrySubscriptions();
+    const { statusEngine } = await import("../capabilities/status-lights.js");
+    await statusEngine.reload();
   } catch {
     /* next request will sync */
   }

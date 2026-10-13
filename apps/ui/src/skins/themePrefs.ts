@@ -39,7 +39,38 @@ export type ThemePrefs = {
   effectAmount?: number;
   effectSpeed?: number;
   effectColour?: EffectColour;
+  /** How status lights look by default (each panel can choose its own). */
+  statusLight?: StatusLightPrefs;
 };
+
+export type StatusLightPrefs = {
+  style: "pill" | "bar" | "dots" | "glow" | "off";
+  position: "title" | "reading";
+  blink: boolean;
+  colours: { ok: string; watch: string; alert: string };
+};
+
+export const DEFAULT_STATUS_LIGHT_PREFS: StatusLightPrefs = {
+  style: "pill",
+  position: "title",
+  blink: true,
+  colours: { ok: "#2FBF71", watch: "#F0A12F", alert: "#EF4D4D" },
+};
+
+export function normalizeStatusLightPrefs(raw: unknown): StatusLightPrefs {
+  const o = (raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {}) as Record<string, unknown>;
+  const c = (o.colours && typeof o.colours === "object" ? o.colours : {}) as Record<string, unknown>;
+  const d = DEFAULT_STATUS_LIGHT_PREFS;
+  const hex = (v: unknown, fallback: string) => (typeof v === "string" ? normalizeAccentHex(v) : null) ?? fallback;
+  return {
+    style: ["pill", "bar", "dots", "glow", "off"].includes(o.style as string)
+      ? (o.style as StatusLightPrefs["style"])
+      : d.style,
+    position: o.position === "reading" ? "reading" : "title",
+    blink: typeof o.blink === "boolean" ? o.blink : d.blink,
+    colours: { ok: hex(c.ok, d.colours.ok), watch: hex(c.watch, d.colours.watch), alert: hex(c.alert, d.colours.alert) },
+  };
+}
 
 /** Solid accent swatches — kept as flat colours (MUI primary needs one hex). */
 export const PRIMARY_SWATCHES: { id: string; label: string; color: string }[] = [
@@ -84,6 +115,7 @@ export const DEFAULT_THEME_PREFS: ThemePrefs = {
   effectAmount: 1,
   effectSpeed: 1,
   effectColour: "white",
+  statusLight: DEFAULT_STATUS_LIGHT_PREFS,
 };
 
 const HEX6 = /^#[0-9A-Fa-f]{6}$/;
@@ -146,6 +178,7 @@ export function normalizeThemePrefs(raw: unknown): ThemePrefs {
     effectAmount: normalizeEffectAmount(parsed.effectAmount),
     effectSpeed: normalizeEffectSpeed(parsed.effectSpeed),
     effectColour: normalizeEffectColour(parsed.effectColour),
+    statusLight: normalizeStatusLightPrefs(parsed.statusLight),
   };
 }
 
@@ -175,5 +208,6 @@ export function toAccountThemePrefs(prefs: ThemePrefs, skinId: string) {
     effectAmount: normalizeEffectAmount(prefs.effectAmount),
     effectSpeed: normalizeEffectSpeed(prefs.effectSpeed),
     effectColour: normalizeEffectColour(prefs.effectColour),
+    statusLight: normalizeStatusLightPrefs(prefs.statusLight),
   };
 }

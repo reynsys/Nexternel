@@ -3,6 +3,7 @@ import websocket from "@fastify/websocket";
 import { verifyTokenDetailed } from "../auth/tokens.js";
 import { ACCESS_COOKIE } from "../config.js";
 import { getAllLiveStates, subscribeLive } from "../telemetry/state-cache.js";
+import { statusEngine } from "../capabilities/status-lights.js";
 
 function tokenFromRequest(request: {
   headers: { authorization?: string; cookie?: string };
@@ -40,17 +41,21 @@ export const wsRoutes: FastifyPluginAsync = async (app) => {
         JSON.stringify({
           type: "hello",
           states: getAllLiveStates(),
+          statuses: statusEngine.all(),
         })
       );
 
-      const unsubscribe = subscribeLive((event) => {
+      const send = (event: unknown) => {
         if (socket.readyState === socket.OPEN) {
           socket.send(JSON.stringify(event));
         }
-      });
+      };
+      const unsubscribe = subscribeLive(send);
+      const unsubscribeStatus = statusEngine.subscribe(send);
 
       socket.on("close", () => {
         unsubscribe();
+        unsubscribeStatus();
       });
 
       socket.on("message", (raw) => {

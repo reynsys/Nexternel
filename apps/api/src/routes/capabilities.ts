@@ -4,6 +4,12 @@ import { requirePermission } from "../auth/rbac.js";
 import { listCapabilities, getCapabilityById } from "../capabilities/store.js";
 import { syncCapabilitiesFromLegacy } from "../capabilities/sync.js";
 import { updateCapabilitySettings } from "../capabilities/settings.js";
+import {
+  parseStatusSettings,
+  resetStatusSettings,
+  saveStatusSettings,
+  statusEngine,
+} from "../capabilities/status-lights.js";
 import { getLiveState, getAllLiveStates } from "../telemetry/state-cache.js";
 import {
   publishSwitchCommand,
@@ -37,6 +43,7 @@ export const capabilitiesRoutes: FastifyPluginAsync = async (app) => {
           sourceType: c.source_type,
           sourceId: c.source_id,
           hasCommand: Boolean(c.command_topic),
+          statusLight: statusEngine.get(c.id),
           state: state
             ? {
                 value: state.value,
@@ -97,6 +104,32 @@ export const capabilitiesRoutes: FastifyPluginAsync = async (app) => {
         error: { code: "validation_error", message: err instanceof Error ? err.message : "Update failed" },
       });
     }
+  });
+
+  /** A reading's status light limits. They apply wherever the reading is shown, and to the bell. */
+  app.put<{ Params: { id: string }; Body: unknown }>(
+    "/api/v1/capabilities/:id/status-limits",
+    async (request, reply) => {
+      if (!requirePermission(request, reply, "editDevices")) return;
+      if (!(await getCapabilityById(request.params.id))) {
+        return reply.code(404).send({ error: { code: "not_found", message: "Reading not found" } });
+      }
+      try {
+        await saveStatusSettings(request.params.id, parseStatusSettings(request.body));
+      } catch (err) {
+        return reply.code(400).send({
+          error: { code: "validation_error", message: err instanceof Error ? err.message : "Could not save the limits" },
+        });
+      }
+      return { statusLight: statusEngine.get(request.params.id) };
+    }
+  );
+
+  /** Back to the starting limits for this kind of reading. */
+  app.delete<{ Params: { id: string } }>("/api/v1/capabilities/:id/status-limits", async (request, reply) => {
+    if (!requirePermission(request, reply, "editDevices")) return;
+    await resetStatusSettings(request.params.id);
+    return { statusLight: statusEngine.get(request.params.id) };
   });
 
   app.post<{

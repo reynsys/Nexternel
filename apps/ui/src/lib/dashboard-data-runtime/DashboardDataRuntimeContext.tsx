@@ -19,6 +19,7 @@ import type {
   PanelActivity,
 } from "./types";
 import { panelActivityIsActive } from "./types";
+import type { CapabilityStatus } from "./status-store";
 
 const DashboardDataRuntimeContext =
   createContext<DashboardDataRuntime | null>(null);
@@ -53,6 +54,26 @@ export function DashboardDataRuntimeProvider({
       {children}
     </DashboardDataRuntimeContext.Provider>
   );
+}
+
+/** The runtime when inside a dashboard, else null (previews, editors). */
+export function useOptionalDashboardDataRuntime(): DashboardDataRuntime | null {
+  return useContext(DashboardDataRuntimeContext);
+}
+
+/** One reading's status light, kept live; null outside a dashboard or for readings without a light. */
+export function useCapabilityStatus(capabilityId: string | null | undefined): CapabilityStatus | null {
+  const runtime = useContext(DashboardDataRuntimeContext);
+  const subscribe = useCallback(
+    (listener: () => void) =>
+      runtime && capabilityId ? runtime.statuses.subscribe(capabilityId, listener) : () => undefined,
+    [runtime, capabilityId]
+  );
+  const get = useCallback(
+    () => (runtime && capabilityId ? runtime.statuses.get(capabilityId) : null),
+    [runtime, capabilityId]
+  );
+  return useSyncExternalStore(subscribe, get, get);
 }
 
 export function useDashboardDataRuntime(): DashboardDataRuntime {

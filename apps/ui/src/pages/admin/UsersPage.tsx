@@ -123,6 +123,7 @@ export function UsersPage() {
       effectAmount: theme.effectAmount,
       effectSpeed: theme.effectSpeed,
       effectColour: theme.effectColour,
+      statusLight: theme.statusLight,
     };
   }
 

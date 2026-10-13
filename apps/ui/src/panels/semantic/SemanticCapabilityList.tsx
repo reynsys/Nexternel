@@ -1,5 +1,6 @@
 import { Box, Switch, Typography } from "@mui/material";
 import { PanelTile } from "../../components/PanelTile";
+import { StatusLight } from "../../components/status-light/StatusLight";
 import { useDashboardTileChrome } from "../../lib/dashboard-tile-context";
 import { ItemIcon } from "../../lib/icons/ItemIcon";
 import { resolveItemHeading } from "../../lib/panel-item-display";
@@ -48,6 +49,14 @@ function RowShell({ item, children }: { item: SemanticCapabilityView; children: 
 function ReadingRow({ item }: { item: SemanticCapabilityView }) {
   const { valueColor } = useMetricAppearance();
   const { value, unit } = parseCapabilityReading(item.source);
+  // A row has no tile of its own, so its light always sits at the end of the row. A panel with
+  // one reading already shows its light in the title.
+  const { statusLook, titleTile } = useDashboardTileChrome();
+  const look = titleTile?.item
+    ? null
+    : statusLook?.style === "glow"
+      ? { ...statusLook, style: "pill" as const }
+      : statusLook;
   return (
     <RowShell item={item}>
       <Typography
@@ -68,6 +77,9 @@ function ReadingRow({ item }: { item: SemanticCapabilityView }) {
           </Typography>
         ) : null}
       </Typography>
+      {look && look.style !== "off" ? (
+        <StatusLight capabilityId={item.source.id} unit={item.source.unit} look={look} placement="inline" />
+      ) : null}
     </RowShell>
   );
 }

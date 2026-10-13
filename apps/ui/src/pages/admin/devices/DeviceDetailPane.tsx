@@ -437,6 +437,7 @@ function CapabilitiesTab({
                         customName: s.customName ?? null,
                         icon: s.icon ?? null,
                         kind: s.sensorType,
+                        unit: s.unit ?? null,
                       })
                     }
                   >

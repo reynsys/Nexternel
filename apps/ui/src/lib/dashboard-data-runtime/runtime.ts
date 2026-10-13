@@ -1,4 +1,5 @@
 import { CapabilityStateStore } from "./capability-store";
+import { StatusLightStore } from "./status-store";
 import {
   PanelResolverBatcher,
   type PanelResolveBatchFetch,
@@ -31,6 +32,7 @@ export type DashboardDataRuntimeDiagnostics = {
  */
 export class DashboardDataRuntime {
   readonly capabilities = new CapabilityStateStore();
+  readonly statuses = new StatusLightStore();
   readonly resolvers = new ResolverCache();
   readonly panelResolvers: PanelResolverBatcher | null;
 
@@ -93,6 +95,12 @@ export class DashboardDataRuntime {
   private applyLiveEvent(event: DashboardLiveEvent): void {
     if (event.type === "hello" && event.states) {
       this.capabilities.applyMany(event.states);
+    }
+    if (event.type === "hello" && event.statuses) {
+      this.statuses.setMany(event.statuses);
+    }
+    if (event.type === "capability.status" && event.status) {
+      this.statuses.set(event.status);
     }
     if (event.type === "capability.updated" && event.state) {
       this.capabilities.apply(event.state);

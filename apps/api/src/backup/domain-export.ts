@@ -1,4 +1,6 @@
+import type { StatusLightSettings } from "@nexternel/domain";
 import type { PluginManifest } from "@nexternel/plugin-sdk";
+import { loadCustomStatusSettings } from "../capabilities/status-lights.js";
 import { decryptSecret, isEncryptedSecret } from "../plugins/secrets.js";
 import { getPool } from "../db.js";
 import { buildConfigPayload } from "../migrate/export-config.js";
@@ -22,6 +24,8 @@ export type ExportedCapability = {
   /** Your own name and icon (absent in backups made before V5.2.79). */
   customName?: string | null;
   icon?: string | null;
+  /** Changed status light limits; absent = the starting limits (and in backups before V5.2.91). */
+  statusLight?: StatusLightSettings;
 };
 
 export type ExportedCapabilityBinding = {
@@ -138,6 +142,7 @@ async function loadCapabilities(): Promise<ExportedCapability[]> {
      INNER JOIN devices d ON d.id = c.device_id
      ORDER BY c.name`
   );
+  const statusLights = await loadCustomStatusSettings();
   return r.rows.map((row) => ({
     id: row.id,
     deviceId: row.device_id,
@@ -153,6 +158,7 @@ async function loadCapabilities(): Promise<ExportedCapability[]> {
     serviceId: row.service_id,
     customName: row.custom_name,
     icon: row.icon,
+    ...(statusLights.has(row.id) ? { statusLight: statusLights.get(row.id) } : {}),
   }));
 }
 

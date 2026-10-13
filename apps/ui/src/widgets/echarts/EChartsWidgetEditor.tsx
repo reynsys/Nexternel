@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { readPanelStatusLight, type PanelStatusLight } from "@nexternel/domain";
+import { StatusLightEditorSection } from "../../components/status-light/StatusLightFields";
 import {
   Box,
   Button,
@@ -103,6 +105,7 @@ export function EChartsWidgetEditor({
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [editScope, setEditScope] = useState<EditScope>("gauge");
   const [familyFilter, setFamilyFilter] = useState("all");
+  const [statusLight, setStatusLight] = useState<PanelStatusLight>(readPanelStatusLight(null));
 
   useEffect(() => {
     if (!open || !widget) return;
@@ -116,6 +119,7 @@ export function EChartsWidgetEditor({
     // Empty means automatic (the reading's name), shown in grey — like every other panel editor.
     setTitle(persistBoundWidgetTitle(widget.title ?? "", widget.type, cap) ?? "");
     setTitleIcon(readTitleIcon(widget.config));
+    setStatusLight(readPanelStatusLight(widget.config));
     setCapabilityId(capId);
     setMinStr(cfg.min !== undefined ? String(cfg.min) : "");
     setMaxStr(cfg.max !== undefined ? String(cfg.max) : "");
@@ -251,6 +255,9 @@ export function EChartsWidgetEditor({
           min,
           max,
           optionOverride,
+          ...(statusLight.style === "default" && statusLight.position === "default" && statusLight.blink === "default"
+            ? {}
+            : { statusLight }),
         },
         titleIcon
       ),
@@ -420,6 +427,14 @@ export function EChartsWidgetEditor({
         )}
 
         {editScope === "gauge" ? preview : null}
+
+        {cap ? (
+          <StatusLightEditorSection
+            value={statusLight}
+            onChange={setStatusLight}
+            readings={[{ id: cap.id, name: cap.name, unit: cap.unit, kind: cap.kind }]}
+          />
+        ) : null}
 
         <Stack spacing={2}>
             <Stack direction="row" spacing={1}>

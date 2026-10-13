@@ -1,7 +1,9 @@
 export {
   DashboardDataRuntimeProvider,
   useCapabilitiesWithLiveState,
+  useCapabilityStatus,
   useDashboardDataRuntime,
+  useOptionalDashboardDataRuntime,
 } from "./DashboardDataRuntimeContext";
 export { CapabilityStateStore, canonicalCapabilityIds } from "./capability-store";
 export {
@@ -29,3 +31,5 @@ export type {
   ResolverStatus,
 } from "./types";
 export { panelActivityIsActive } from "./types";
+export { StatusLightStore } from "./status-store";
+export type { CapabilityStatus } from "./status-store";

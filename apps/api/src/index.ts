@@ -6,6 +6,7 @@ import multipart from "@fastify/multipart";
 import { config } from "./config.js";
 import { attachUser } from "./auth/plugin.js";
 import { ensureCapabilitySchema } from "./capabilities/ensure-schema.js";
+import { ensureStatusLightSchema, statusEngine } from "./capabilities/status-lights.js";
 import { ensureV4DomainSchema } from "./systems/ensure-schema.js";
 import { ensureDashboardSchema } from "./dashboards/ensure-schema.js";
 import { ensureCameraSchema } from "./cameras/ensure-schema.js";
@@ -131,6 +132,7 @@ try {
   await ensureDevicesSchema();
   await ensureEsphomeBuilderSchema();
   await ensureCapabilitySchema();
+  await ensureStatusLightSchema();
   const v4Domain = await ensureV4DomainSchema();
   app.log.info(v4Domain, "V4 domain schema ensured");
   await ensureDashboardSchema();
@@ -282,6 +284,11 @@ try {
   }
   await startTelemetry();
   app.log.info(getMqttLogSafe(), "telemetry started");
+  try {
+    await statusEngine.start();
+  } catch (err) {
+    app.log.warn({ err }, "status lights skipped");
+  }
   const { startOctopusPoller } = await import("./octopus/poll.js");
   startOctopusPoller();
   startUpdateChecks();

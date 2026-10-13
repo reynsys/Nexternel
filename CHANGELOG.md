@@ -2,6 +2,14 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.91
+
+- **Status lights:** readings now show a small coloured light: green when normal, amber to keep an eye on it, red when something needs doing, grey when there is no recent reading. Hover over it to see why. It only changes colour after a reading has stayed past a limit for a minute, so it does not flicker.
+  - Sensible starting limits for temperature, humidity, CO₂ and fine dust; change them for any reading from the panel's **Edit** menu (**Status light → Change limits**) or from **Devices**. They apply wherever that reading is shown.
+  - If a reading stays red for 10 minutes the bell lets you know (the minutes can be changed or switched off), and again when it is back to normal.
+  - Choose the look (rounded rectangle, bar, dots or glowing border), where it sits, blinking and the colours in **Settings → Appearance**; each panel can have its own.
+- Panels with several readings show each reading as its own small panel, each with its own light.
+
 ## V5.2.90
 
 - **Simple addresses at home:** open Nexternel at **http://nexternel.local** (or the server's number address) on any device at home. No certificate warnings and nothing to install. A secure address that every device trusts automatically is on the way.

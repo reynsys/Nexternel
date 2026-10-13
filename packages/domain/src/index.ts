@@ -14,3 +14,4 @@ export * from "./add-panel-catalog.js";
 export * from "./contribution-panels.js";
 export * from "./widget-bindings.js";
 export * from "./esphome-builder.js";
+export * from "./status-light.js";

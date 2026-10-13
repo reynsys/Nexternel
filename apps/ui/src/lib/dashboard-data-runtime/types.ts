@@ -1,3 +1,5 @@
+import type { CapabilityStatus } from "./status-store";
+
 export type CapabilityStateSnapshot = {
   value: unknown;
   quality: string;
@@ -12,6 +14,8 @@ export type DashboardLiveEvent = {
   type: string;
   state?: LiveCapabilityUpdate;
   states?: LiveCapabilityUpdate[];
+  status?: CapabilityStatus;
+  statuses?: CapabilityStatus[];
   message?: string;
 };
 

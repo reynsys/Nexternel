@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from "react";
 import GridLayout, { type Layout } from "react-grid-layout";
 import {
   Box,
@@ -47,7 +47,13 @@ import {
   resolveDashboardEditorKind,
 } from "../lib/panel-editor-route";
 import { GeneralWidgetEditor } from "../widgets/GeneralWidgetEditor";
-import { migrateContributionPanelType, isPluginPanelType } from "@nexternel/domain";
+import { migrateContributionPanelType, isPluginPanelType, readPanelStatusLight } from "@nexternel/domain";
+import {
+  StatusLight,
+  lightPlacement,
+  resolveStatusLook,
+  useStatusLightPrefs,
+} from "./status-light/StatusLight";
 import {
   DASHBOARD_GRID_MARGIN_X,
   DASHBOARD_GRID_MARGIN_Y,
@@ -74,7 +80,10 @@ function PanelTitleTile({
   rangeNote,
   isChartsPanel,
   icon,
+  light,
 }: {
+  /** Status light for the panel's only reading (inline at the right, or a bar along the bottom). */
+  light?: ReactNode;
   tileTitle: string | null;
   areaLabel: string | null;
   rangeNote: string | null;
@@ -102,6 +111,7 @@ function PanelTitleTile({
         minWidth: 0,
         px: "8px",
         overflow: "hidden",
+        position: "relative",
       }}
     >
       {icon.iconId !== null ? (
@@ -167,6 +177,7 @@ function PanelTitleTile({
         </Box>
       ) : null}
       </Box>
+      {light}
     </Box>
   );
 }
@@ -244,6 +255,7 @@ export function SectionGrid({
   const [editPanelId, setEditPanelId] = useState<string | null>(null);
   const [dropHighlight, setDropHighlight] = useState(false);
   const gradientActive = useGradientActive();
+  const statusPrefs = useStatusLightPrefs();
   const solidContentPanels = useSolidContentPanels();
   const { confirm } = useConfirm();
 
@@ -446,6 +458,19 @@ export function SectionGrid({
             const showTitleTile = Boolean(tileTitle || areaLabel || rangeNote);
             const isChartsPanel = normalizePanelKind(w.type) === "panel.charts";
             const titleIcon = panelTitleIcon(w.type, runtimeConfigToPanelRecord(w.config), heading);
+            // Lights belong to readings: a panel with one reading shows it here; a panel with
+            // several draws one per reading in its mini panels (PanelItemChrome).
+            const statusLook = resolveStatusLook(
+              readPanelStatusLight(runtimeConfigToPanelRecord(w.config)),
+              statusPrefs
+            );
+            const lightCap = heading.item ?? null;
+            const titlePlacement = lightCap && showTitleTile ? lightPlacement(statusLook, "title") : null;
+            const readingPlacement = lightCap ? lightPlacement(statusLook, "reading") : null;
+            const lightAt = (placement: ReturnType<typeof lightPlacement>) =>
+              placement && lightCap ? (
+                <StatusLight capabilityId={lightCap.id} unit={lightCap.unit} look={statusLook} placement={placement} />
+              ) : null;
             return (
               <div
                 key={w.id}
@@ -466,9 +491,11 @@ export function SectionGrid({
                     borderRadius: 2,
                     border: "1px solid",
                     borderColor: "divider",
+                    position: "relative",
                     ...contentSurfaceSx(gradientActive, solidContentPanels),
                   }}
                 >
+                  {titlePlacement === "frame" ? lightAt("frame") : null}
                   {editMode && (
                     <Stack
                       direction="row"
@@ -575,8 +602,10 @@ export function SectionGrid({
                         rangeNote={rangeNote}
                         isChartsPanel={isChartsPanel}
                         icon={titleIcon}
+                        light={titlePlacement === "inline" ? lightAt("inline") : null}
                       />
                     ) : null}
+                    {titlePlacement === "under-title" ? lightAt("gap-bar") : null}
                     <Box
                       data-nx-main-tile
                       sx={{
@@ -586,8 +615,11 @@ export function SectionGrid({
                         display: "flex",
                         flexDirection: "column",
                         overflow: "hidden",
+                        position: "relative",
+                        borderRadius: 1.5,
                       }}
                     >
+                      {lightAt(readingPlacement)}
                       <DashboardTileContext.Provider
                         value={{
                           showBodyHeading: false,
@@ -595,6 +627,7 @@ export function SectionGrid({
                           showItemLabel: !heading.ownsItemName,
                           titleTile: { ...heading, rangeNote },
                           itemDisplay: readPanelItemDisplay(runtimeConfigToPanelRecord(w.config)),
+                          statusLook,
                         }}
                       >
                         <WidgetErrorBoundary widgetId={w.id} widgetType={w.type}>

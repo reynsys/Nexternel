@@ -190,6 +190,11 @@ export function SkinProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/** The skin context when there is one (null in isolated previews and tests). */
+export function useOptionalSkin(): SkinContextValue | null {
+  return useContext(SkinContext);
+}
+
 export function useSkin(): SkinContextValue {
   const ctx = useContext(SkinContext);
   if (!ctx) {
