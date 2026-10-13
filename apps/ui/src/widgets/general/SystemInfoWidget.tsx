@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { Box, Stack, Typography } from "@mui/material";
 import { api, type SystemInfo, type WidgetInstance } from "../../api";
 import { APP_VERSION } from "../../version";
@@ -6,6 +5,8 @@ import { panelContentRootSx } from "../../components/DashboardTileBody";
 import { useMetricAppearance } from "../../skins/useMetricAppearance";
 import { useWidgetBodyHeading } from "./heading";
 import { genericTileLinesQuerySx, genericTileLinesSize } from "./tile-type";
+import { usePanelPoll } from "../../lib/usePanelPoll";
+import { PanelNotice } from "../../components/PanelNotice";
 
 function formatUptime(seconds: number): string {
   const d = Math.floor(seconds / 86400);
@@ -31,32 +32,8 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 export function SystemInfoWidget({ widget }: { widget: WidgetInstance }) {
-  const [info, setInfo] = useState<SystemInfo | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { data: info, error } = usePanelPoll<SystemInfo>(() => api.system(), 5_000);
   const title = useWidgetBodyHeading(widget, "System");
-
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      try {
-        const res = await api.system();
-        if (!cancelled) {
-          setInfo(res);
-          setError(null);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Failed to load");
-        }
-      }
-    }
-    void load();
-    const id = window.setInterval(() => void load(), 5_000);
-    return () => {
-      cancelled = true;
-      window.clearInterval(id);
-    };
-  }, []);
 
   const mem = info?.memory;
   const memPercent =
@@ -86,11 +63,7 @@ export function SystemInfoWidget({ widget }: { widget: WidgetInstance }) {
           {title}
         </Typography>
       )}
-      {error && (
-        <Typography variant="caption" color="error">
-          {error}
-        </Typography>
-      )}
+      {error && <PanelNotice>{error}</PanelNotice>}
       <Box sx={panelContentRootSx(genericTileLinesQuerySx)}>
       <Stack spacing={0.5} sx={{ flex: 1, minHeight: 0, justifyContent: "center", p: 1.5 }}>
         <Row label="Version" value={APP_VERSION} />

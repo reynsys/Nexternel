@@ -1,40 +1,19 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Box, Chip, Stack, Typography } from "@mui/material";
 import { api, type DeviceRecord, type WidgetInstance } from "../../api";
 import { panelContentRootSx } from "../../components/DashboardTileBody";
 import { parseDeviceStatusConfig } from "./config";
 import { genericTileLinesQuerySx } from "./tile-type";
+import { usePanelPoll } from "../../lib/usePanelPoll";
+import { PanelNotice } from "../../components/PanelNotice";
 import { useWidgetBodyHeading } from "./heading";
 import { formatLastSeen, connectivityChipColor, deviceConnectivityState } from "../../lib/device-utils";
 
 export function DeviceStatusWidget({ widget }: { widget: WidgetInstance }) {
   const { offlineOnly } = parseDeviceStatusConfig(widget.config);
-  const [devices, setDevices] = useState<DeviceRecord[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const { data, error } = usePanelPoll(() => api.devices(), 30_000);
+  const devices: DeviceRecord[] = data?.devices ?? [];
   const title = useWidgetBodyHeading(widget, "Devices");
-
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      try {
-        const res = await api.devices();
-        if (!cancelled) {
-          setDevices(res.devices);
-          setError(null);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Failed to load");
-        }
-      }
-    }
-    void load();
-    const id = window.setInterval(() => void load(), 30_000);
-    return () => {
-      cancelled = true;
-      window.clearInterval(id);
-    };
-  }, []);
 
   const online = devices.filter(
     (d) => d.isEnabled && deviceConnectivityState(d) === "online"
@@ -87,11 +66,7 @@ export function DeviceStatusWidget({ widget }: { widget: WidgetInstance }) {
         <Chip size="small" color={offline ? "warning" : "default"} label={`${offline} offline`} />
         {disabled > 0 && <Chip size="small" label={`${disabled} disabled`} />}
       </Stack>
-      {error && (
-        <Typography variant="caption" color="error">
-          {error}
-        </Typography>
-      )}
+      {error && <PanelNotice>{error}</PanelNotice>}
       <Box sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
         {list.length === 0 ? (
           <Typography variant="caption" color="text.secondary">

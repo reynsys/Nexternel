@@ -178,6 +178,8 @@ async function postWelcomeBackup<T>(path: string, opts: { file: File; password: 
   return res.json() as Promise<T>;
 }
 
+export const SERVER_UNREACHABLE = "Can't reach Nexternel right now. Trying again.";
+
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
   if (!headers.has("Content-Type") && init?.body && !(init.body instanceof FormData)) {
@@ -198,13 +200,15 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
     });
   } catch (err) {
     if (err instanceof DOMException && err.name === "AbortError") throw err;
-    const message = err instanceof Error ? err.message : String(err);
+    // The browser could not reach the server at all (restarting, Wi-Fi, network). Browsers word
+    // this differently ("Failed to fetch", "Load failed", "NetworkError…"); say it plainly.
+    const raw = err instanceof Error ? err.message : String(err);
     pushDiagnosticError({
       kind: "api",
-      message,
+      message: raw,
       source: path,
     });
-    throw err instanceof Error ? err : new Error(message);
+    throw new Error(SERVER_UNREACHABLE);
   }
 
   if (res.status === 401 && shouldAttemptRefresh(path)) {

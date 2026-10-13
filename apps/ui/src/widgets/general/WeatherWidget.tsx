@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { Box, Stack, Typography } from "@mui/material";
 import { api, type WeatherResponse, type WidgetInstance } from "../../api";
 import { parseWeatherConfig, widgetTitleOr } from "./config";
@@ -6,6 +5,8 @@ import { useDashboardTileChrome } from "../../lib/dashboard-tile-context";
 import { panelContentRootSx } from "../../components/DashboardTileBody";
 import { useMetricAppearance } from "../../skins/useMetricAppearance";
 import { HumidityMark, WeatherIcon, WindMark } from "./WeatherIcon";
+import { usePanelPoll } from "../../lib/usePanelPoll";
+import { PanelNotice } from "../../components/PanelNotice";
 
 /** Weather type: sized by the tile's width and height (cqi / cqb), so it fits any tile shape. */
 const WX_READING = "clamp(1.1rem, min(9cqi, 24cqb), 3.6rem)";
@@ -24,31 +25,12 @@ function weekdayShort(isoDate: string): string {
 
 export function WeatherWidget({ widget }: { widget: WidgetInstance }) {
   const cfg = parseWeatherConfig(widget.config);
-  const [data, setData] = useState<WeatherResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      try {
-        const res = await api.weather(cfg.weatherLat, cfg.weatherLon);
-        if (!cancelled) {
-          setData(res);
-          setError(null);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Weather unavailable");
-        }
-      }
-    }
-    void load();
-    const id = window.setInterval(() => void load(), 900_000);
-    return () => {
-      cancelled = true;
-      window.clearInterval(id);
-    };
-  }, [cfg.weatherLat, cfg.weatherLon]);
+  // Every 15 minutes; quickly again after a failure, and when the screen wakes.
+  const { data, error } = usePanelPoll<WeatherResponse>(
+    () => api.weather(cfg.weatherLat, cfg.weatherLon),
+    900_000,
+    [cfg.weatherLat, cfg.weatherLon]
+  );
 
   const { showBodyHeading, showItemContext } = useDashboardTileChrome();
   const { valueSx } = useMetricAppearance();
@@ -79,11 +61,7 @@ export function WeatherWidget({ widget }: { widget: WidgetInstance }) {
           {title}
         </Typography>
       )}
-      {error && (
-        <Typography variant="caption" color="error">
-          {error}
-        </Typography>
-      )}
+      {error && <PanelNotice>{error}</PanelNotice>}
       <Box
         sx={panelContentRootSx({
           p: 1,

@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.92
+
+- Panels such as **Weather**, **System information** and **Devices** now recover by themselves within seconds if the connection to the server drops for a moment (for example while Nexternel updates), instead of showing an error until their next refresh. The message they show meanwhile is in plain words and no longer cut off.
+
 ## V5.2.91
 
 - **Status lights:** readings now show a small coloured light: green when normal, amber to keep an eye on it, red when something needs doing, grey when there is no recent reading. Hover over it to see why. It only changes colour after a reading has stayed past a limit for a minute, so it does not flicker.

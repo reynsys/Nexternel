@@ -188,6 +188,7 @@ apps/api/src/telemetry/state-cache.ts
 apps/api/src/telemetry/topic-resolver.test.ts
 apps/api/src/telemetry/topic-resolver.ts
 apps/api/src/telemetry/ws.ts
+apps/api/src/test-setup.ts
 apps/api/src/v4/capability-mapper.ts
 apps/api/src/v4/device-registry.ts
 apps/api/src/v4/drivers/esphome.ts
@@ -235,6 +236,7 @@ apps/ui/src/components/PanelCapabilityOrderList.tsx
 apps/ui/src/components/PanelChartPresetFields.tsx
 apps/ui/src/components/PanelContentFields.tsx
 apps/ui/src/components/PanelItemGrid.tsx
+apps/ui/src/components/PanelNotice.tsx
 apps/ui/src/components/PanelTile.tsx
 apps/ui/src/components/PanelTitleFields.tsx
 apps/ui/src/components/SectionGrid.tsx
@@ -330,6 +332,7 @@ apps/ui/src/lib/panel-size.ts
 apps/ui/src/lib/panel-title-icon.ts
 apps/ui/src/lib/permissions.ts
 apps/ui/src/lib/slot-bindings.ts
+apps/ui/src/lib/usePanelPoll.ts
 apps/ui/src/lib/user-display.ts
 apps/ui/src/lib/user-events.ts
 apps/ui/src/lib/visualization-dimension-contract.test.ts
