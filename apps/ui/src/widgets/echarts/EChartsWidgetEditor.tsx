@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { PanelEditorShell } from "../../components/panel-editor/PanelEditorShell";
+import { readingCanHaveLight } from "../../lib/status-light-show";
 import { readPanelStatusLight, type PanelStatusLight } from "@nexternel/domain";
 import { StatusLightEditorSection, statusLightConfig } from "../../components/status-light/StatusLightFields";
 import {
   Box,
   Button,
   Divider,
-  Drawer,
   FormControl,
   InputLabel,
   ListSubheader,
@@ -25,9 +26,6 @@ import { readTitleIcon, writeTitleIcon } from "../../lib/panel-title-icon";
 import {
   persistBoundWidgetTitle,
 } from "../../lib/widget-title";
-import { VisualizationSlot } from "../../components/VisualizationSlot";
-import { EChartsHost } from "./EChartsHost";
-import { EChartsWidgetBody } from "./EChartsWidgetBody";
 import { isPluginPanelType } from "@nexternel/domain";
 import { GAUGE_WIDGET_TYPE } from "../gauge/manifest";
 import { parseEchartsConfig } from "./config";
@@ -46,6 +44,8 @@ type Props = {
   capabilities: Capability[];
   onClose: () => void;
   onSave: (patch: Partial<WidgetInstance>) => void;
+  /** Draws the panel as it would look with these unsaved changes (the Edit menu's preview). */
+  renderPreview?: (patch: Partial<WidgetInstance>) => ReactNode;
 };
 
 /** Edit scope — what kind of component is being edited (not a free mix of all presets). */
@@ -67,11 +67,10 @@ function familyOptionsInScope(scope: EditScope) {
   return listEchartsFamilyMeta().filter((f) => present.has(f.id));
 }
 
-function editorTitle(scope: EditScope): string {
-  if (scope === "gauge") return "Edit gauge";
-  if (scope === "history") return "Edit chart";
-  if (scope === "custom") return "Edit chart";
-  return "Edit sensor diagram";
+function kindName(scope: EditScope): string {
+  if (scope === "gauge") return "Gauge";
+  if (scope === "history" || scope === "custom") return "Chart";
+  return "Sensor diagram";
 }
 
 function scopeAllLabel(scope: EditScope): string {
@@ -92,6 +91,7 @@ export function EChartsWidgetEditor({
   capabilities,
   onClose,
   onSave,
+  renderPreview,
 }: Props) {
   const [presetId, setPresetId] = useState("gauge");
   const [title, setTitle] = useState("");
@@ -146,61 +146,6 @@ export function EChartsWidgetEditor({
   const familyMeta = getEchartsFamilyMeta(preset.family);
   const typeLabel = componentTypeLabel(editScope);
 
-  const previewWidget: WidgetInstance | null = useMemo(() => {
-    if (!widget) return null;
-    let optionOverride: Record<string, unknown> | undefined;
-    if (overrideText.trim()) {
-      try {
-        const parsed = JSON.parse(overrideText) as unknown;
-        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-          return {
-            ...widget,
-            title: title || widget.title,
-            type: "echarts",
-            bindings: capabilityId ? { capabilityId } : {},
-            config: {
-              ...widget.config,
-              presetId,
-              range,
-              accent: accent || undefined,
-              min: minStr === "" ? undefined : Number(minStr),
-              max: maxStr === "" ? undefined : Number(maxStr),
-            },
-          };
-        }
-        optionOverride = parsed as Record<string, unknown>;
-      } catch {
-        /* keep previous preview without override */
-      }
-    }
-    const min = minStr === "" ? undefined : Number(minStr);
-    const max = maxStr === "" ? undefined : Number(maxStr);
-    return {
-      ...widget,
-      title: title || widget.title,
-      type: "echarts",
-      bindings: capabilityId ? { capabilityId } : {},
-      config: {
-        ...widget.config,
-        presetId,
-        range,
-        accent: accent || undefined,
-        min: min !== undefined && !Number.isNaN(min) ? min : undefined,
-        max: max !== undefined && !Number.isNaN(max) ? max : undefined,
-        optionOverride,
-      },
-    };
-  }, [
-    widget,
-    title,
-    capabilityId,
-    presetId,
-    range,
-    accent,
-    minStr,
-    maxStr,
-    overrideText,
-  ]);
 
   const cap = capabilities.find((c) => c.id === capabilityId);
   const sensorCapabilities = useMemo(
@@ -208,119 +153,121 @@ export function EChartsWidgetEditor({
     [capabilities]
   );
 
-  function handleApply() {
-    if (!widget) return;
+  /** The change Apply would save, or what is wrong with the settings. */
+  function patchFrom(): { patch: Partial<WidgetInstance>; error?: undefined } | { error: string } {
+    if (!widget) return { error: "No panel" };
     let optionOverride: Record<string, unknown> | undefined;
     if (overrideText.trim()) {
       try {
         const parsed = JSON.parse(overrideText) as unknown;
         if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-          setJsonError("optionOverride must be a JSON object");
-          return;
+          return { error: "optionOverride must be a JSON object" };
         }
         optionOverride = parsed as Record<string, unknown>;
-        setJsonError(null);
       } catch (err) {
-        setJsonError(err instanceof Error ? err.message : "Invalid JSON");
-        return;
+        return { error: err instanceof Error ? err.message : "Invalid JSON" };
       }
-    } else {
-      setJsonError(null);
     }
     const min = minStr === "" ? undefined : Number(minStr);
     const max = maxStr === "" ? undefined : Number(maxStr);
-    if (minStr !== "" && Number.isNaN(min)) {
-      setJsonError("Min must be a number");
-      return;
-    }
-    if (maxStr !== "" && Number.isNaN(max)) {
-      setJsonError("Max must be a number");
-      return;
-    }
+    if (minStr !== "" && Number.isNaN(min)) return { error: "Min must be a number" };
+    if (maxStr !== "" && Number.isNaN(max)) return { error: "Max must be a number" };
     const saveType =
       widget.type === GAUGE_WIDGET_TYPE || isPluginPanelType(widget.type)
         ? widget.type
         : "echarts";
-    onSave({
-      title:
-        persistBoundWidgetTitle(title, widget.type, cap) ??
-        (title.trim() || undefined),
-      type: saveType,
-      bindings: capabilityId ? { capabilityId } : {},
-      config: writeTitleIcon(
-        {
-          presetId,
-          range: preset.dataMode === "history" ? range : undefined,
-          accent: accent.trim() || undefined,
-          min,
-          max,
-          optionOverride,
-          ...statusLightConfig(statusLight),
-        },
-        titleIcon
-      ),
-    });
+    return {
+      patch: {
+        title:
+          persistBoundWidgetTitle(title, widget.type, cap) ??
+          (title.trim() || undefined),
+        type: saveType,
+        bindings: capabilityId ? { capabilityId } : {},
+        config: writeTitleIcon(
+          {
+            presetId,
+            range: preset.dataMode === "history" ? range : undefined,
+            accent: accent.trim() || undefined,
+            min,
+            max,
+            optionOverride,
+            ...statusLightConfig(statusLight),
+          },
+          titleIcon
+        ),
+      },
+    };
+  }
+
+  function handleApply() {
+    const result = patchFrom();
+    if (result.error !== undefined) {
+      setJsonError(result.error);
+      return;
+    }
+    setJsonError(null);
+    onSave(result.patch);
     onClose();
   }
 
   const accentColour = /^#[0-9a-fA-F]{6}$/.test(accent.trim()) ? accent.trim() : "#1A73E8";
 
-  const preview = (
-    <Stack spacing={1} sx={{ minWidth: 0 }}>
-      <Typography variant="subtitle2">Preview</Typography>
-      <Box
-        sx={{
-          height: 240,
-          minHeight: 240,
-          display: "flex",
-          flexDirection: "column",
-          border: "1px solid",
-          borderColor: "divider",
-          borderRadius: 1,
-          p: 1,
-          flexShrink: 0,
-        }}
-      >
-        {previewWidget ? (
-          <VisualizationSlot sx={{ flex: 1, minHeight: 220, height: "100%" }}>
-            <EChartsHost>
-              <EChartsWidgetBody
-                widget={previewWidget}
-                cap={cap}
-                dataLabel={cap?.name ?? (title || preset.label)}
-                tileTitle={title.trim() || previewWidget.title?.trim() || null}
-              />
-            </EChartsHost>
-          </VisualizationSlot>
-        ) : (
-          <Typography variant="body2" color="text.secondary" sx={{ m: "auto" }}>
-            Choose a capability to preview this panel.
-          </Typography>
-        )}
-      </Box>
-    </Stack>
-  );
+  const previewResult = open && renderPreview ? patchFrom() : null;
+  const kindLabel = kindName(editScope);
+  const shownTitle = title.trim() || (cap ? capabilityWidgetTitle(cap) : null) || kindLabel;
 
+  if (!widget) return null;
   return (
-    <Drawer
-      anchor="right"
+    <PanelEditorShell
       open={open}
-      onClose={onClose}
-      PaperProps={{ sx: { width: { xs: "100%", sm: editScope === "gauge" ? 440 : 420 }, p: 2 } }}
-    >
-      {widget ? (
-      <Stack spacing={2} sx={{ height: "100%" }}>
-        <Typography variant="h6">{editorTitle(editScope)}</Typography>
-        {editScope !== "gauge" && (
-          <Typography variant="caption" color="text.secondary">
-            {editScope === "history"
-              ? "Choose how values are plotted over time."
-              : editScope === "liveDiagram"
-                ? "Choose a live diagram style for the current value."
-                : "Advanced chart configuration."}
-          </Typography>
+      title={`Edit ${shownTitle}`}
+      kindLabel={kindLabel}
+      preview={previewResult && previewResult.error === undefined ? renderPreview?.(previewResult.patch) : null}
+      onCancel={onClose}
+      onApply={handleApply}
+      footerNote={jsonError ? <Alert severity="error">{jsonError}</Alert> : null}
+      tabs={[
+        {
+          id: "content",
+          label: "Content",
+          content: (
+            <>
+        {preset.needsCapability && (
+          <CapabilityPicker
+            capabilities={sensorCapabilities}
+            value={capabilityId}
+            onChange={setCapabilityId}
+            label={preset.dataMode === "history" ? "What to chart" : editScope === "gauge" ? "What to show" : "What to use"}
+            hint={editScope === "gauge" ? "Search, then pick from the list." : undefined}
+            helperText={editScope === "gauge" ? "" : undefined}
+          />
         )}
 
+        {preset.dataMode === "history" && (
+          <FormControl fullWidth size="small">
+            <InputLabel id="echarts-range">History range</InputLabel>
+            <Select
+              labelId="echarts-range"
+              label="History range"
+              value={range}
+              onChange={(e) => setRange(e.target.value as HistoryRange)}
+            >
+              <MenuItem value="1h">Last 1 hour</MenuItem>
+              <MenuItem value="6h">Last 6 hours</MenuItem>
+              <MenuItem value="24h">Last 24 hours</MenuItem>
+              <MenuItem value="7d">Last 7 days</MenuItem>
+            </Select>
+          </FormControl>
+        )}
+
+            </>
+          ),
+        },
+        {
+          id: "look",
+          label: "Look",
+          content: (
+            <>
         <PanelTitleFields
           title={title}
           onTitleChange={setTitle}
@@ -396,45 +343,6 @@ export function EChartsWidgetEditor({
           </Typography>
         )}
 
-        {preset.needsCapability && (
-          <CapabilityPicker
-            capabilities={sensorCapabilities}
-            value={capabilityId}
-            onChange={setCapabilityId}
-            label={preset.dataMode === "history" ? "What to chart" : editScope === "gauge" ? "What to show" : "What to use"}
-            hint={editScope === "gauge" ? "Search, then pick from the list." : undefined}
-            helperText={editScope === "gauge" ? "" : undefined}
-          />
-        )}
-
-        {preset.dataMode === "history" && (
-          <FormControl fullWidth size="small">
-            <InputLabel id="echarts-range">History range</InputLabel>
-            <Select
-              labelId="echarts-range"
-              label="History range"
-              value={range}
-              onChange={(e) => setRange(e.target.value as HistoryRange)}
-            >
-              <MenuItem value="1h">Last 1 hour</MenuItem>
-              <MenuItem value="6h">Last 6 hours</MenuItem>
-              <MenuItem value="24h">Last 24 hours</MenuItem>
-              <MenuItem value="7d">Last 7 days</MenuItem>
-            </Select>
-          </FormControl>
-        )}
-
-        {editScope === "gauge" ? preview : null}
-
-        {cap ? (
-          <StatusLightEditorSection
-            value={statusLight}
-            onChange={setStatusLight}
-            readings={[{ id: cap.id, name: cap.name, unit: cap.unit, kind: cap.kind }]}
-          />
-        ) : null}
-
-        <Stack spacing={2}>
             <Stack direction="row" spacing={1}>
               <TextField
                 label="Min"
@@ -504,21 +412,27 @@ export function EChartsWidgetEditor({
                 <Button size="small" onClick={() => setOverrideText("")}>
                   Reset override
                 </Button>
-                {jsonError && <Alert severity="error">{jsonError}</Alert>}
-                {preview}
               </>
             )}
-        </Stack>
-
-        <Box sx={{ flex: 1 }} />
-        <Stack direction="row" spacing={1} justifyContent="flex-end">
-          <Button onClick={onClose}>Cancel</Button>
-          <Button variant="contained" onClick={handleApply}>
-            Apply
-          </Button>
-        </Stack>
-      </Stack>
-      ) : null}
-    </Drawer>
+            </>
+          ),
+        },
+        {
+          id: "light",
+          label: "Status light",
+          content:
+            cap && readingCanHaveLight(cap.kind) ? (
+              <>
+          <StatusLightEditorSection
+              showHeading={false}
+            value={statusLight}
+            onChange={setStatusLight}
+            readings={[{ id: cap.id, name: cap.name, unit: cap.unit, kind: cap.kind }]}
+          />
+                      </>
+            ) : null,
+        },
+      ]}
+    />
   );
 }

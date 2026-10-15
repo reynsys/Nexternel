@@ -2,6 +2,12 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.97
+
+- **Tidier Edit menus with a live preview.** Every panel's Edit menu now shows a preview of the panel at the top, which changes as you edit, with three tabs underneath: **Content** (what it shows), **Look** (title, icon, layout and style) and **Status light**. A tab only appears when the panel needs it.
+- Choosing an icon and changing a reading's limits now happen inside the menu instead of in separate windows.
+- Panels from plugins can now be given their own title and icon too.
+
 ## V5.2.96
 
 - The notification bell's second position is now **next to the dashboard options** (the cog above your dashboards) instead of taking a column of its own at the right of the page. On other pages it stays at the top of the side menu.

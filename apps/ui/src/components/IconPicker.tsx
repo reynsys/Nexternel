@@ -31,6 +31,8 @@ type Props = {
   allowNone?: boolean;
   onChange: (value: string) => void;
   onClose: () => void;
+  /** Show inside the page (e.g. an Edit menu) instead of in a separate window. */
+  inline?: boolean;
 };
 
 function Choice({
@@ -79,7 +81,7 @@ function Choice({
 const GRID_SX = { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(84px, 1fr))", gap: 0.5 } as const;
 
 /** Choose an icon for a reading or a panel item. The icon catalogue downloads when this opens. */
-export function IconPicker({ open, value, kind, autoIconId, autoLabel, allowNone = false, onChange, onClose }: Props) {
+export function IconPicker({ open, value, kind, autoIconId, autoLabel, allowNone = false, onChange, onClose, inline = false }: Props) {
   const catalog = useIconCatalog(open);
   const [query, setQuery] = useState("");
   const q = query.trim().toLowerCase();
@@ -99,15 +101,7 @@ export function IconPicker({ open, value, kind, autoIconId, autoLabel, allowNone
     onClose();
   }
 
-  return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" scroll="paper">
-      <DialogTitle sx={{ pr: 6 }}>
-        Choose an icon
-        <IconButton aria-label="Close" onClick={onClose} sx={{ position: "absolute", right: 8, top: 8 }}>
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
-      <DialogContent dividers>
+  const content = (
         <Stack spacing={2}>
           <Box sx={GRID_SX}>
             <Choice selected={value === "auto"} label={autoLabel} onClick={() => pick("auto")}>
@@ -124,7 +118,7 @@ export function IconPicker({ open, value, kind, autoIconId, autoLabel, allowNone
             placeholder="Search icons, e.g. door, heat, plug"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            autoFocus
+            autoFocus={!inline}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -154,7 +148,34 @@ export function IconPicker({ open, value, kind, autoIconId, autoLabel, allowNone
             </Box>
           ))}
         </Stack>
-      </DialogContent>
+  );
+
+  if (inline) {
+    if (!open) return null;
+    return (
+      <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, p: 1.5 }}>
+        <Stack direction="row" alignItems="center" sx={{ mb: 1 }}>
+          <Typography variant="subtitle2" sx={{ flex: 1 }}>
+            Choose an icon
+          </Typography>
+          <IconButton size="small" aria-label="Close the icon list" onClick={onClose}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Stack>
+        <Box sx={{ maxHeight: 320, overflowY: "auto", pr: 0.5 }}>{content}</Box>
+      </Box>
+    );
+  }
+
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" scroll="paper">
+      <DialogTitle sx={{ pr: 6 }}>
+        Choose an icon
+        <IconButton aria-label="Close" onClick={onClose} sx={{ position: "absolute", right: 8, top: 8 }}>
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+      <DialogContent dividers>{content}</DialogContent>
     </Dialog>
   );
 }

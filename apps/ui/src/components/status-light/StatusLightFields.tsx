@@ -80,10 +80,13 @@ export function StatusLightEditorSection({
   value,
   onChange,
   readings,
+  showHeading = true,
 }: {
   value: PanelStatusLight;
   onChange: (next: PanelStatusLight) => void;
   readings: StatusReading[];
+  /** false inside the Edit menu's Status light tab, which already says it. */
+  showHeading?: boolean;
 }) {
   const prefs = useStatusLightPrefs();
   const [editing, setEditing] = useState<StatusReading | null>(null);
@@ -93,7 +96,7 @@ export function StatusLightEditorSection({
 
   return (
     <Stack spacing={1.5}>
-      <Typography variant="subtitle2">Status light</Typography>
+      {showHeading ? <Typography variant="subtitle2">Status light</Typography> : null}
       <FormControl fullWidth size="small">
         <InputLabel id="status-light-style">Style</InputLabel>
         <Select
@@ -144,14 +147,21 @@ export function StatusLightEditorSection({
       ) : null}
       <Stack spacing={1}>
         {numeric.map((r) => (
-          <ReadingLimitsRow key={r.id} reading={r} colours={look} onChange={() => setEditing(r)} />
+          <Stack key={r.id} spacing={1}>
+            <ReadingLimitsRow
+              reading={r}
+              colours={look}
+              open={editing?.id === r.id}
+              onChange={() => setEditing(editing?.id === r.id ? null : r)}
+            />
+            {editing?.id === r.id ? <StatusLimitsEditor inline reading={r} onClose={() => setEditing(null)} /> : null}
+          </Stack>
         ))}
       </Stack>
       <Typography variant="caption" color="text.secondary">
         Limits belong to the reading, so they apply wherever it is shown and to bell alerts. Colours and
         the default style are in Settings → Appearance.
       </Typography>
-      {editing ? <StatusLimitsDialog reading={editing} onClose={() => setEditing(null)} /> : null}
     </Stack>
   );
 }
@@ -159,10 +169,12 @@ export function StatusLightEditorSection({
 function ReadingLimitsRow({
   reading,
   colours,
+  open,
   onChange,
 }: {
   reading: StatusReading;
   colours: Parameters<typeof statusColour>[1];
+  open: boolean;
   onChange: () => void;
 }) {
   const status = useCapabilityStatus(reading.id);
@@ -194,8 +206,8 @@ function ReadingLimitsRow({
           {text}
         </Typography>
       </Box>
-      <Button size="small" onClick={onChange} sx={{ flex: "none" }}>
-        {settings?.enabled ? "Change limits" : "Set limits"}
+      <Button size="small" onClick={onChange} aria-expanded={open} sx={{ flex: "none" }}>
+        {open ? "Close" : settings?.enabled ? "Change limits" : "Set limits"}
       </Button>
     </Box>
   );
@@ -213,6 +225,22 @@ const toText = (v: number | null | undefined) => (typeof v === "number" ? String
 
 /** One reading's limits: where its light turns amber or red, and when the bell rings. */
 export function StatusLimitsDialog({ reading, onClose }: { reading: StatusReading; onClose: () => void }) {
+  return <StatusLimitsEditor reading={reading} onClose={onClose} />;
+}
+
+/**
+ * One reading's limits. `inline` shows them inside the page (a panel's Edit menu) under the reading;
+ * otherwise in a window of their own (Devices page).
+ */
+export function StatusLimitsEditor({
+  reading,
+  onClose,
+  inline = false,
+}: {
+  reading: StatusReading;
+  onClose: () => void;
+  inline?: boolean;
+}) {
   const runtime = useOptionalDashboardDataRuntime();
   const live = useCapabilityStatus(reading.id);
   const [status, setStatus] = useState<CapabilityStatus | null>(live);
@@ -296,69 +324,87 @@ export function StatusLimitsDialog({ reading, onClose }: { reading: StatusReadin
     void done(api.setStatusLimits(reading.id, { enabled, limits, notifyAfterMin: notifyOn ? mins : null }));
   }
 
+  const fields = (
+    <Stack spacing={2} sx={{ pt: inline ? 0 : 1 }}>
+      <FormControlLabel
+        control={<Switch checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />}
+        label="Show a status light for this reading"
+      />
+      {enabled ? (
+        <>
+          <Typography variant="body2" color="text.secondary">
+            Leave a box empty when that side does not matter (for example CO₂ is never too low). The light
+            changes after the reading has stayed past a limit for 1 minute.
+          </Typography>
+          <Box sx={{ display: "grid", gridTemplateColumns: "1fr", gap: 2 }}>
+            {FIELDS.map(({ key, label }) => (
+              <TextField
+                key={key}
+                size="small"
+                label={label}
+                value={text[key]}
+                inputMode="decimal"
+                onChange={(e) => setText({ ...text, [key]: e.target.value })}
+                InputProps={{ endAdornment: unit }}
+              />
+            ))}
+          </Box>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <FormControlLabel
+              sx={{ mr: 0 }}
+              control={<Switch checked={notifyOn} onChange={(e) => setNotifyOn(e.target.checked)} />}
+              label="Bell alert after"
+            />
+            <TextField
+              size="small"
+              value={minutes}
+              disabled={!notifyOn}
+              inputMode="numeric"
+              onChange={(e) => setMinutes(e.target.value)}
+              sx={{ width: 120 }}
+              InputProps={{ endAdornment: <InputAdornment position="end">min</InputAdornment> }}
+            />
+          </Stack>
+          <Typography variant="caption" color="text.secondary">
+            The bell rings when the reading has been at act now this long, and again when it is back to normal.
+          </Typography>
+        </>
+      ) : null}
+      {error ? <Alert severity="error">{error}</Alert> : null}
+    </Stack>
+  );
+  const actions = (
+    <>
+      {status?.custom ? (
+        <Button disabled={saving} onClick={() => void done(api.resetStatusLimits(reading.id))} sx={{ mr: "auto" }}>
+          Back to starting limits
+        </Button>
+      ) : null}
+      <Button onClick={onClose} disabled={saving}>
+        Cancel
+      </Button>
+      <Button variant="contained" onClick={save} disabled={saving}>
+        {inline ? "Save limits" : "Save"}
+      </Button>
+    </>
+  );
+
+  if (inline) {
+    return (
+      <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, p: 1.5, ml: 2.25 }}>
+        {fields}
+        <Stack direction="row" spacing={1} justifyContent="flex-end" flexWrap="wrap" useFlexGap sx={{ mt: 1.5 }}>
+          {actions}
+        </Stack>
+      </Box>
+    );
+  }
+
   return (
     <Dialog open onClose={onClose} fullWidth maxWidth="xs">
       <DialogTitle>Limits for {reading.name}</DialogTitle>
-      <DialogContent>
-        <Stack spacing={2} sx={{ pt: 1 }}>
-          <FormControlLabel
-            control={<Switch checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />}
-            label="Show a status light for this reading"
-          />
-          {enabled ? (
-            <>
-              <Typography variant="body2" color="text.secondary">
-                Leave a box empty when that side does not matter (for example CO₂ is never too low). The
-                light changes after the reading has stayed past a limit for 1 minute.
-              </Typography>
-              {FIELDS.map(({ key, label }) => (
-                <TextField
-                  key={key}
-                  size="small"
-                  label={label}
-                  value={text[key]}
-                  inputMode="decimal"
-                  onChange={(e) => setText({ ...text, [key]: e.target.value })}
-                  InputProps={{ endAdornment: unit }}
-                />
-              ))}
-              <Stack direction="row" spacing={1} alignItems="center">
-                <FormControlLabel
-                  sx={{ mr: 0 }}
-                  control={<Switch checked={notifyOn} onChange={(e) => setNotifyOn(e.target.checked)} />}
-                  label="Bell alert after"
-                />
-                <TextField
-                  size="small"
-                  value={minutes}
-                  disabled={!notifyOn}
-                  inputMode="numeric"
-                  onChange={(e) => setMinutes(e.target.value)}
-                  sx={{ width: 120 }}
-                  InputProps={{ endAdornment: <InputAdornment position="end">min</InputAdornment> }}
-                />
-              </Stack>
-              <Typography variant="caption" color="text.secondary">
-                The bell rings when the reading has been at act now this long, and again when it is back to normal.
-              </Typography>
-            </>
-          ) : null}
-          {error ? <Alert severity="error">{error}</Alert> : null}
-        </Stack>
-      </DialogContent>
-      <DialogActions sx={{ flexWrap: "wrap", gap: 1 }}>
-        {status?.custom ? (
-          <Button disabled={saving} onClick={() => void done(api.resetStatusLimits(reading.id))} sx={{ mr: "auto" }}>
-            Back to starting limits
-          </Button>
-        ) : null}
-        <Button onClick={onClose} disabled={saving}>
-          Cancel
-        </Button>
-        <Button variant="contained" onClick={save} disabled={saving}>
-          Save
-        </Button>
-      </DialogActions>
+      <DialogContent>{fields}</DialogContent>
+      <DialogActions sx={{ flexWrap: "wrap", gap: 1 }}>{actions}</DialogActions>
     </Dialog>
   );
 }

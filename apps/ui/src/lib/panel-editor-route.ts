@@ -3,6 +3,7 @@ import { normalizePanelKind } from "./panel-kind";
 import { isPanelWidgetType } from "../widgets/panel";
 import {
   getPanelScopeMode,
+  isPluginPanelType,
   migrateContributionPanelType,
   panelIsIntegrationKind,
   type PanelScopeMode,
@@ -11,7 +12,7 @@ import type { GeneralWidgetType } from "../widgets/general/config";
 import { GAUGE_WIDGET_TYPE } from "../widgets/gauge";
 import { isEchartsWidgetType } from "../widgets/echarts/config";
 
-export type DashboardEditorKind = "scoped-panel" | "integration-panel" | "gauge" | null;
+export type DashboardEditorKind = "scoped-panel" | "integration-panel" | "gauge" | "plugin-panel" | null;
 
 const INTEGRATION_GENERAL_TYPE: Partial<Record<string, GeneralWidgetType>> = {
   "panel.weather": "weather",
@@ -34,6 +35,8 @@ export function panelAsGeneralWidget(panel: PanelInstance): PanelInstance | null
 export function resolveDashboardEditorKind(panel: PanelInstance): DashboardEditorKind {
   const type = migrateContributionPanelType(panel.type);
   if (type === GAUGE_WIDGET_TYPE || isEchartsWidgetType(type)) return "gauge";
+  // Panels from plugins: title and icon (the plugin draws the rest).
+  if (isPluginPanelType(type)) return "plugin-panel";
   if (!isPanelWidgetType(type)) return null;
   const mode = getPanelScopeMode(type);
   if (mode === "integration") return "integration-panel";

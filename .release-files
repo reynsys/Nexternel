@@ -234,8 +234,11 @@ apps/ui/src/components/NotificationBell.tsx
 apps/ui/src/components/PanelCameraContentFields.tsx
 apps/ui/src/components/PanelCameraOrderList.tsx
 apps/ui/src/components/PanelCapabilityOrderList.tsx
+apps/ui/src/components/PanelCard.tsx
 apps/ui/src/components/PanelChartPresetFields.tsx
 apps/ui/src/components/PanelContentFields.tsx
+apps/ui/src/components/panel-editor/PanelEditorShell.tsx
+apps/ui/src/components/panel-editor/PluginPanelEditor.tsx
 apps/ui/src/components/PanelItemGrid.tsx
 apps/ui/src/components/PanelNotice.tsx
 apps/ui/src/components/PanelTile.tsx

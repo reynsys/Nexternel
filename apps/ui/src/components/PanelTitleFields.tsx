@@ -65,6 +65,7 @@ export function PanelTitleFields({ title, onTitleChange, icon, onIconChange, aut
       </Stack>
       <Box>
         <IconPicker
+          inline
           open={pickerOpen}
           value={icon}
           kind={automatic.icon.kind}

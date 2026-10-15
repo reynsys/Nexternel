@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import GridLayout, { type Layout } from "react-grid-layout";
 import {
   Box,
   IconButton,
-  Paper,
   Stack,
   Tooltip,
   Typography,
@@ -18,42 +17,25 @@ import type { CameraRecord, Capability, PanelInstance } from "../api";
 import type { RuntimePanelInstance } from "../lib/panel-compatibility/types";
 import { runtimeConfigToPanelRecord } from "../lib/panel-compatibility/panel-config";
 import { toRenderPanel } from "../lib/panel-compatibility/render-adapter";
-import { PanelHost } from "../panels/PanelHost";
+import { PanelCard } from "./PanelCard";
+import { PanelPreview } from "./panel-editor/PanelEditorShell";
+import { PluginPanelEditor } from "./panel-editor/PluginPanelEditor";
+import { mergeRuntimePanelPatch } from "../lib/panel-compatibility/normalize-panel";
 import { flowCommit, flowGridForWidth, flowLayout } from "../panels/flow-layout";
-import { WidgetErrorBoundary } from "./WidgetErrorBoundary";
 import { PanelWidgetEditor, isPanelWidgetType, panelLabel } from "../widgets/panel";
 import { GAUGE_WIDGET_TYPE } from "../widgets/gauge";
 import { EChartsWidgetEditor } from "../widgets/echarts/EChartsWidgetEditor";
 import { isEchartsWidgetType } from "../widgets/echarts/config";
 import { getPanelContribution } from "../plugins/registry";
-import { DashboardTileContext } from "../lib/dashboard-tile-context";
-import { readPanelItemDisplay } from "../lib/panel-item-display";
 import { panelTitleIcon } from "../lib/panel-title-icon";
 import type { AutomaticTitle } from "./PanelTitleFields";
-import { ItemIcon } from "../lib/icons/ItemIcon";
-import { chartRangeLabel, readPanelChartRange } from "../lib/panel-chart-config";
-import { normalizePanelKind } from "../lib/panel-kind";
-import {
-  PANEL_TITLE_AREA_LINE_PX,
-  PANEL_TITLE_NAME_LINE_PX,
-  PANEL_TITLE_TILE_HEIGHT,
-  panelHeading,
-  panelTitleAreaSx,
-  panelTitleNameSx,
-  panelTitleRangeSx,
-} from "../lib/panel-heading";
+import { panelHeading } from "../lib/panel-heading";
 import {
   panelAsGeneralWidget,
   resolveDashboardEditorKind,
 } from "../lib/panel-editor-route";
 import { GeneralWidgetEditor } from "../widgets/GeneralWidgetEditor";
-import { migrateContributionPanelType, isPluginPanelType, readPanelStatusLight } from "@nexternel/domain";
-import {
-  StatusLight,
-  lightPlacement,
-  resolveStatusLook,
-  useStatusLightPrefs,
-} from "./status-light/StatusLight";
+import { migrateContributionPanelType, isPluginPanelType } from "@nexternel/domain";
 import {
   DASHBOARD_GRID_MARGIN_X,
   DASHBOARD_GRID_MARGIN_Y,
@@ -64,123 +46,12 @@ import {
   gridLayoutsEqual,
   panelSectionLayoutMatches,
 } from "../panels/placement";
-import { contentSurfaceSx } from "../skins/surfaceStyles";
-import { useGradientActive, useSolidContentPanels } from "../skins/useSurfaceStyles";
 import { useConfirm } from "./confirm";
 import type { PanelActivity } from "../lib/dashboard-data-runtime";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 
 const PANEL_DRAG_MIME = "application/x-nexternel-panel";
-
-/** One title tile for every panel — same row heights and typography everywhere. */
-function PanelTitleTile({
-  tileTitle,
-  areaLabel,
-  rangeNote,
-  isChartsPanel,
-  icon,
-  light,
-}: {
-  /** Status light for the panel's only reading (inline at the right, or a bar along the bottom). */
-  light?: ReactNode;
-  tileTitle: string | null;
-  areaLabel: string | null;
-  rangeNote: string | null;
-  isChartsPanel: boolean;
-  /** Title bar icon (panel-title-icon.ts); iconId null = none. */
-  icon: { iconId: string | null; kind: string | null };
-}) {
-  const titleLine = tileTitle?.trim() || null;
-  const areaLine = areaLabel?.trim() || null;
-  const showAreaRow = Boolean(areaLine || (isChartsPanel && rangeNote));
-
-  return (
-    <Box
-      data-nx-title-tile
-      sx={{
-        flexShrink: 0,
-        height: PANEL_TITLE_TILE_HEIGHT,
-        minHeight: PANEL_TITLE_TILE_HEIGHT,
-        maxHeight: PANEL_TITLE_TILE_HEIGHT,
-        boxSizing: "border-box",
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        gap: "6px",
-        minWidth: 0,
-        px: "8px",
-        overflow: "hidden",
-        position: "relative",
-      }}
-    >
-      {icon.iconId !== null ? (
-        <ItemIcon iconId={icon.iconId} kind={icon.kind} sx={{ fontSize: 18, flexShrink: 0, color: "primary.main" }} />
-      ) : null}
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          rowGap: 0,
-          gap: 0,
-          flex: 1,
-          width: "100%",
-          minWidth: 0,
-          "& > *": { margin: 0, padding: 0 },
-        }}
-      >
-      {titleLine ? (
-        <Box
-          component="div"
-          title={titleLine}
-          sx={{ ...panelTitleNameSx, height: `${PANEL_TITLE_NAME_LINE_PX}px` }}
-        >
-          {titleLine}
-        </Box>
-      ) : null}
-      {showAreaRow ? (
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            height: `${PANEL_TITLE_AREA_LINE_PX}px`,
-            width: "100%",
-            gap: "8px",
-          }}
-        >
-          {areaLine ? (
-            <Box
-              component="div"
-              title={areaLine}
-              sx={{
-                ...panelTitleAreaSx,
-                flex: 1,
-                minWidth: 0,
-                width: "auto",
-              }}
-            >
-              {areaLine}
-            </Box>
-          ) : (
-            <Box sx={{ flex: 1, minWidth: 0 }} />
-          )}
-          {isChartsPanel && rangeNote ? (
-            <Box
-              component="div"
-              title={rangeNote}
-              sx={{ ...panelTitleRangeSx, color: "text.secondary", m: 0 }}
-            >
-              {rangeNote}
-            </Box>
-          ) : null}
-        </Box>
-      ) : null}
-      </Box>
-      {light}
-    </Box>
-  );
-}
 
 type Props = {
   sectionId: string;
@@ -254,9 +125,6 @@ export function SectionGrid({
   const [width, setWidth] = useState(0);
   const [editPanelId, setEditPanelId] = useState<string | null>(null);
   const [dropHighlight, setDropHighlight] = useState(false);
-  const gradientActive = useGradientActive();
-  const statusPrefs = useStatusLightPrefs();
-  const solidContentPanels = useSolidContentPanels();
   const { confirm } = useConfirm();
 
   const mutedLabel = alpha(theme.palette.text.primary, theme.palette.mode === "dark" ? 0.62 : 0.55);
@@ -339,6 +207,27 @@ export function SectionGrid({
       icon: panelTitleIcon(editing.type, runtimeConfigToPanelRecord(editing.config), auto, { ignoreChoice: true }),
     };
   })();
+
+  /** The editing panel's size on this dashboard, so the Edit menu's preview matches it. */
+  const editingSize = (() => {
+    const item = editing ? gridLayout.find((l) => l.i === editing.id) : undefined;
+    if (!item || grid.gridWidth <= 0) return { width: 440, height: 220 };
+    const colW = (grid.gridWidth - DASHBOARD_GRID_MARGIN_X * (cols - 1)) / cols;
+    return {
+      width: item.w * colW + (item.w - 1) * DASHBOARD_GRID_MARGIN_X,
+      height: item.h * rowHeight + (item.h - 1) * DASHBOARD_GRID_MARGIN_Y,
+    };
+  })();
+  const renderPreview = (patch: Partial<PanelInstance>) =>
+    editing ? (
+      <PanelPreview
+        panel={mergeRuntimePanelPatch(editing, patch)}
+        size={editingSize}
+        capabilities={capabilities}
+        cameras={cameras}
+        sectionRoomId={sectionRoomId}
+      />
+    ) : null;
 
   function handleDrop(e: DragEvent) {
     e.preventDefault();
@@ -448,55 +337,23 @@ export function SectionGrid({
           {panels.map((w) => {
             const canEdit = isEditableWidget(w);
             const itemKind = dashboardItemKind(w.type);
-            const heading = panelHeading(w, capabilities, sectionRoomId, cameras);
-            const tileTitle = heading.title;
-            const areaLabel = heading.area;
-            const rangeNote =
-              normalizePanelKind(w.type) === "panel.charts"
-                ? chartRangeLabel(readPanelChartRange(runtimeConfigToPanelRecord(w.config)))
-                : null;
-            const showTitleTile = Boolean(tileTitle || areaLabel || rangeNote);
-            const isChartsPanel = normalizePanelKind(w.type) === "panel.charts";
-            const titleIcon = panelTitleIcon(w.type, runtimeConfigToPanelRecord(w.config), heading);
-            // Lights belong to readings: a panel with one reading shows it here; a panel with
-            // several draws one per reading in its mini panels (PanelItemChrome).
-            const statusLook = resolveStatusLook(
-              readPanelStatusLight(runtimeConfigToPanelRecord(w.config)),
-              statusPrefs
-            );
-            const lightCap = heading.item ?? null;
-            const titlePlacement = lightCap && showTitleTile ? lightPlacement(statusLook, "title") : null;
-            const readingPlacement = lightCap ? lightPlacement(statusLook, "reading") : null;
-            const lightAt = (placement: ReturnType<typeof lightPlacement>) =>
-              placement && lightCap ? (
-                <StatusLight capabilityId={lightCap.id} kind={lightCap.kind} unit={lightCap.unit} look={statusLook} placement={placement} />
-              ) : null;
+            const tileTitle = panelHeading(w, capabilities, sectionRoomId, cameras).title;
             return (
               <div
                 key={w.id}
                 data-nx-grid-widget={w.id}
                 data-nx-widget-title={tileTitle ?? undefined}
               >
-                <Paper
-                  elevation={editMode ? 2 : 0}
-                  variant={editMode ? "elevation" : "outlined"}
-                  sx={{
-                    flex: 1,
-                    minHeight: 0,
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    overflow: "hidden",
-                    boxSizing: "border-box",
-                    borderRadius: 2,
-                    border: "1px solid",
-                    borderColor: "divider",
-                    position: "relative",
-                    ...contentSurfaceSx(gradientActive, solidContentPanels),
-                  }}
-                >
-                  {titlePlacement === "frame" ? lightAt("frame") : null}
-                  {editMode && (
+                <PanelCard
+                  panel={w}
+                  capabilities={capabilities}
+                  cameras={cameras}
+                  sectionRoomId={sectionRoomId}
+                  editMode={editMode}
+                  activity={activity}
+                  onCapabilityState={onCapabilityState}
+                  toolbar={
+                    editMode && (
                     <Stack
                       direction="row"
                       alignItems="center"
@@ -581,69 +438,9 @@ export function SectionGrid({
                         </IconButton>
                       </Tooltip>
                     </Stack>
-                  )}
-                  <Box
-                    sx={{
-                      flex: 1,
-                      minHeight: 0,
-                      minWidth: 0,
-                      display: "flex",
-                      flexDirection: "column",
-                      boxSizing: "border-box",
-                      p: "4px",
-                      gap: showTitleTile ? "6px" : 0,
-                      overflow: "hidden",
-                    }}
-                  >
-                    {showTitleTile ? (
-                      <PanelTitleTile
-                        tileTitle={tileTitle}
-                        areaLabel={areaLabel}
-                        rangeNote={rangeNote}
-                        isChartsPanel={isChartsPanel}
-                        icon={titleIcon}
-                        light={titlePlacement === "inline" ? lightAt("inline") : null}
-                      />
-                    ) : null}
-                    {titlePlacement === "under-title" ? lightAt("gap-bar") : null}
-                    <Box
-                      data-nx-main-tile
-                      sx={{
-                        flex: 1,
-                        minHeight: 0,
-                        minWidth: 0,
-                        display: "flex",
-                        flexDirection: "column",
-                        overflow: "hidden",
-                        position: "relative",
-                        borderRadius: 1.5,
-                      }}
-                    >
-                      {lightAt(readingPlacement)}
-                      <DashboardTileContext.Provider
-                        value={{
-                          showBodyHeading: false,
-                          showItemContext: areaLabel == null,
-                          showItemLabel: !heading.ownsItemName,
-                          titleTile: { ...heading, rangeNote },
-                          itemDisplay: readPanelItemDisplay(runtimeConfigToPanelRecord(w.config)),
-                          statusLook,
-                        }}
-                      >
-                        <WidgetErrorBoundary widgetId={w.id} widgetType={w.type}>
-                          <PanelHost
-                            panel={w}
-                            capabilities={capabilities}
-                            editMode={editMode}
-                            sectionRoomId={sectionRoomId}
-                            activity={activity}
-                            onCapabilityState={onCapabilityState}
-                          />
-                        </WidgetErrorBoundary>
-                      </DashboardTileContext.Provider>
-                    </Box>
-                  </Box>
-                </Paper>
+                  )
+                  }
+                />
               </div>
             );
           })}
@@ -664,6 +461,7 @@ export function SectionGrid({
           sectionRoomId={sectionRoomId}
           sectionTitle={sectionTitle}
           automatic={editingAutomatic}
+          renderPreview={renderPreview}
           onClose={() => setEditPanelId(null)}
           onSave={(patch) => {
             onUpdatePanel(sectionId, editing.id, patch);
@@ -676,6 +474,7 @@ export function SectionGrid({
           open
           widget={integrationEditWidget}
           automatic={editingAutomatic}
+          renderPreview={(patch) => renderPreview({ ...patch, type: editing.type })}
           onClose={() => setEditPanelId(null)}
           onSave={(patch) => {
             onUpdatePanel(sectionId, editing.id, {
@@ -686,11 +485,26 @@ export function SectionGrid({
         />
       )}
 
+      {editorKind === "plugin-panel" && editing && editingSaved && (
+        <PluginPanelEditor
+          open
+          widget={editingSaved}
+          kindLabel={getPanelContribution(editing.type)?.label ?? "Plugin panel"}
+          automatic={editingAutomatic}
+          renderPreview={renderPreview}
+          onClose={() => setEditPanelId(null)}
+          onSave={(patch) => {
+            onUpdatePanel(sectionId, editing.id, patch);
+          }}
+        />
+      )}
+
       {editorKind === "gauge" && editing && editingSaved && (
         <EChartsWidgetEditor
           open
           widget={editingSaved}
           capabilities={capabilities}
+          renderPreview={renderPreview}
           onClose={() => setEditPanelId(null)}
           onSave={(patch) => {
             onUpdatePanel(sectionId, editing.id, patch);

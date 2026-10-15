@@ -65,6 +65,7 @@ export function ItemOverrideFields({ defaultName, defaultIcon, kind, value, onCh
         </Stack>
       </Stack>
       <IconPicker
+        inline
         open={pickerOpen}
         value={icon}
         kind={kind}

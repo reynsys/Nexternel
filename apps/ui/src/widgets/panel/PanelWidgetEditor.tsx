@@ -1,14 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { PanelEditorShell } from "../../components/panel-editor/PanelEditorShell";
+import { readingCanHaveLight } from "../../lib/status-light-show";
 import { readPanelStatusLight, type PanelStatusLight } from "@nexternel/domain";
 import { StatusLightEditorSection, statusLightConfig } from "../../components/status-light/StatusLightFields";
 
 import {
 
-  Button,
 
   Checkbox,
 
-  Drawer,
 
   FormControl,
 
@@ -103,6 +103,8 @@ type Props = {
   onSave: (patch: Partial<WidgetInstance>) => void;
   /** The title and icon the panel shows when none are set. */
   automatic?: AutomaticTitle;
+  /** Draws the panel as it would look with these unsaved changes (the Edit menu's preview). */
+  renderPreview?: (patch: Partial<WidgetInstance>) => ReactNode;
 };
 
 
@@ -138,6 +140,8 @@ export function PanelWidgetEditor({
   onSave,
 
   automatic = { title: null, icon: { iconId: "auto", kind: null } },
+
+  renderPreview,
 
 }: Props) {
 
@@ -445,7 +449,7 @@ export function PanelWidgetEditor({
 
 
 
-  function handleSave() {
+  function buildPatch(): Partial<WidgetInstance> {
 
     const areaIds =
 
@@ -515,51 +519,155 @@ export function PanelWidgetEditor({
       titleIcon
     );
 
-    onSave({
+    return {
       title: title.trim() || undefined,
       config: savedConfig,
-    });
+    };
+  }
 
+  function handleSave() {
+    onSave(buildPatch());
     onClose();
-
   }
 
 
 
-  const heading =
+
+  const lightReadings = (capabilityIds.length
+    ? scopeCapabilities.filter((c) => capabilityIds.includes(c.id))
+    : scopeCapabilities
+  ).map((c) => ({ id: c.id, name: c.name, unit: c.unit, kind: c.kind }));
+  const hasLightTab = showSystemFilter && !isCamera && lightReadings.some((r) => readingCanHaveLight(r.kind));
+  const kindLabel =
     panelKind === "panel.status"
-      ? "Edit status"
+      ? "Status panel"
       : panelKind === "panel.controls"
-        ? "Edit controls"
+        ? "Controls panel"
         : panelKind === "panel.charts"
-          ? "Edit charts"
+          ? "Charts panel"
           : panelKind === "panel.camera"
-            ? "Edit cameras"
-            : "Edit panel";
+            ? "Cameras panel"
+            : "Panel";
+  const shownTitle = title.trim() || automatic.title || kindLabel;
 
   return (
-
-    <Drawer
-      anchor="right"
+    <PanelEditorShell
       open={open}
-      onClose={onClose}
-      PaperProps={{ sx: { width: { xs: "100%", sm: 400 }, p: 2 } }}
-    >
+      title={`Edit ${shownTitle}`}
+      kindLabel={kindLabel}
+      preview={open && renderPreview ? renderPreview(buildPatch()) : null}
+      onCancel={onClose}
+      onApply={handleSave}
+      tabs={[
+        {
+          id: "content",
+          label: "Content",
+          content: (
+            <>
+          {showAreaScope && sectionRoomId && (
 
-      <Stack spacing={2} sx={{ height: "100%" }}>
+            <FormControlLabel
 
-        <Typography variant="h6">{heading}</Typography>
+              control={
 
-        <Typography variant="caption" color="text.secondary">
-          {panelKind === "panel.status"
-            ? "Choose the readings. Arrange puts them in a row or stacks them."
-            : panelKind === "panel.controls"
-              ? "Choose the switches. Arrange puts them in a row or stacks them."
-              : "Optional title. Shown above the panel when set."}
-        </Typography>
+                <Checkbox
 
-        <Stack spacing={2} sx={{ mt: 1 }}>
+                  checked={inheritSection}
 
+                  onChange={(e) => setInheritSection(e.target.checked)}
+
+                />
+
+              }
+
+              label={`Use this section${sectionTitle ? ` (${sectionTitle})` : ""}`}
+
+            />
+
+          )}
+
+          {showAreaScope && !inheritSection && (
+
+            <FormControl fullWidth>
+
+              <InputLabel id="panel-edit-area">{AREA.singular}</InputLabel>
+
+              <Select
+
+                labelId="panel-edit-area"
+
+                label={AREA.singular}
+
+                value={areaId}
+
+                onChange={(e) => setAreaId(e.target.value)}
+
+              >
+
+                <MenuItem value="">All {AREA.plural.toLowerCase()}</MenuItem>
+
+                {areas.map((a) => (
+
+                  <MenuItem key={a.id} value={a.id}>
+
+                    {a.name}
+
+                  </MenuItem>
+
+                ))}
+
+              </Select>
+
+            </FormControl>
+
+          )}
+
+          {showSystemFilter && (
+
+            <PanelContentFields
+
+              panelKind={widget.type}
+
+              capabilityIds={capabilityIds}
+
+              onCapabilityIdsChange={setCapabilityIds}
+
+              options={scopeCapabilities}
+
+              overrides={itemDisplay.overrides}
+
+              onOverridesChange={itemCount > 1 ? (overrides) => setItemDisplay({ ...itemDisplay, overrides }) : undefined}
+
+            />
+
+          )}
+
+          {showCameraContent && (
+
+            <PanelCameraContentFields
+
+              cameraIds={cameraIds}
+
+              onCameraIdsChange={setCameraIds}
+
+              options={scopeCameras}
+
+              overrides={itemDisplay.overrides}
+
+              onOverridesChange={itemCount > 1 ? (overrides) => setItemDisplay({ ...itemDisplay, overrides }) : undefined}
+
+            />
+
+          )}
+
+            </>
+          ),
+        },
+        {
+          id: "look",
+          label: "Look",
+          content: (
+            <>
           <PanelTitleFields
             title={title}
             onTitleChange={setTitle}
@@ -619,64 +727,6 @@ export function PanelWidgetEditor({
               onMaxStrChange={setChartMaxStr}
 
             />
-
-          )}
-
-          {showAreaScope && sectionRoomId && (
-
-            <FormControlLabel
-
-              control={
-
-                <Checkbox
-
-                  checked={inheritSection}
-
-                  onChange={(e) => setInheritSection(e.target.checked)}
-
-                />
-
-              }
-
-              label={`Use this section${sectionTitle ? ` (${sectionTitle})` : ""}`}
-
-            />
-
-          )}
-
-          {showAreaScope && !inheritSection && (
-
-            <FormControl fullWidth>
-
-              <InputLabel id="panel-edit-area">{AREA.singular}</InputLabel>
-
-              <Select
-
-                labelId="panel-edit-area"
-
-                label={AREA.singular}
-
-                value={areaId}
-
-                onChange={(e) => setAreaId(e.target.value)}
-
-              >
-
-                <MenuItem value="">All {AREA.plural.toLowerCase()}</MenuItem>
-
-                {areas.map((a) => (
-
-                  <MenuItem key={a.id} value={a.id}>
-
-                    {a.name}
-
-                  </MenuItem>
-
-                ))}
-
-              </Select>
-
-            </FormControl>
 
           )}
 
@@ -747,85 +797,33 @@ export function PanelWidgetEditor({
                 </FormControl>
               </Stack>
               <Typography variant="caption" color="text.secondary">
-                Each item shows its name and icon in its own tile. Short leaves out the part every
-                item shares, which the panel title already shows. The pencil beside an item below
-                gives it its own name or icon on this panel.
+                Short leaves out the part every item shares, which the panel title already shows. To give
+                one item its own name or icon here, use the pencil beside it in Content.
               </Typography>
             </Stack>
           )}
 
+            </>
+          ),
+        },
+        {
+          id: "light",
+          label: "Status light",
+          content: hasLightTab ? (
+            <>
           {showSystemFilter && !isCamera && (
             <StatusLightEditorSection
+              showHeading={false}
               value={statusLight}
               onChange={setStatusLight}
-              readings={(capabilityIds.length
-                ? scopeCapabilities.filter((c) => capabilityIds.includes(c.id))
-                : scopeCapabilities
-              ).map((c) => ({ id: c.id, name: c.name, unit: c.unit, kind: c.kind }))}
+              readings={lightReadings}
             />
           )}
 
-          {showSystemFilter && (
-
-            <PanelContentFields
-
-              panelKind={widget.type}
-
-              capabilityIds={capabilityIds}
-
-              onCapabilityIdsChange={setCapabilityIds}
-
-              options={scopeCapabilities}
-
-              overrides={itemDisplay.overrides}
-
-              onOverridesChange={itemCount > 1 ? (overrides) => setItemDisplay({ ...itemDisplay, overrides }) : undefined}
-
-            />
-
-          )}
-
-          {showCameraContent && (
-
-            <PanelCameraContentFields
-
-              cameraIds={cameraIds}
-
-              onCameraIdsChange={setCameraIds}
-
-              options={scopeCameras}
-
-              overrides={itemDisplay.overrides}
-
-              onOverridesChange={itemCount > 1 ? (overrides) => setItemDisplay({ ...itemDisplay, overrides }) : undefined}
-
-            />
-
-          )}
-
-        </Stack>
-
-        <Stack direction="row" spacing={1} sx={{ mt: "auto", pt: 2 }}>
-
-          <Button variant="outlined" onClick={onClose} fullWidth>
-
-            Cancel
-
-          </Button>
-
-          <Button variant="contained" onClick={handleSave} fullWidth>
-
-            Apply
-
-          </Button>
-
-        </Stack>
-
-      </Stack>
-
-    </Drawer>
-
+            </>
+          ) : null,
+        },
+      ]}
+    />
   );
-
 }
-

@@ -1,14 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { PanelEditorShell } from "../components/panel-editor/PanelEditorShell";
 import {
   Alert,
   Button,
-  Drawer,
   FormControl,
   FormControlLabel,
   InputLabel,
   MenuItem,
   Select,
-  Stack,
   Switch,
   TextField,
   Typography,
@@ -39,6 +38,8 @@ type Props = {
   onSave: (patch: Partial<WidgetInstance>) => void;
   /** The title and icon the panel shows when none are set. */
   automatic?: AutomaticTitle;
+  /** Draws the panel as it would look with these unsaved changes (the Edit menu's preview). */
+  renderPreview?: (patch: Partial<WidgetInstance>) => ReactNode;
 };
 
 const TYPE_LABELS: Record<GeneralWidgetType, string> = {
@@ -50,7 +51,7 @@ const TYPE_LABELS: Record<GeneralWidgetType, string> = {
   camera: "Camera",
 };
 
-export function GeneralWidgetEditor({ open, widget, onClose, onSave, automatic }: Props) {
+export function GeneralWidgetEditor({ open, widget, onClose, onSave, automatic, renderPreview }: Props) {
   const [title, setTitle] = useState("");
   const [titleIcon, setTitleIcon] = useState("auto");
   const [weatherLocation, setWeatherLocation] = useState("London");
@@ -142,8 +143,8 @@ export function GeneralWidgetEditor({ open, widget, onClose, onSave, automatic }
     }
   }
 
-  function handleApply() {
-    if (!widget) return;
+  function buildPatch(): Partial<WidgetInstance> {
+    if (!widget) return {};
     const config: Record<string, unknown> = writeTitleIcon({ ...(widget.config ?? {}) }, titleIcon);
     if (type === "weather") {
       const lat = Number(weatherLat);
@@ -167,47 +168,34 @@ export function GeneralWidgetEditor({ open, widget, onClose, onSave, automatic }
       config.clockItalic = clockItalic;
     }
     const trimmed = title.trim();
-    onSave({
+    return {
       title: trimmed || undefined,
       config,
-    });
+    };
+  }
+
+  function handleApply() {
+    if (!widget) return;
+    onSave(buildPatch());
     onClose();
   }
 
+  if (!widget) return null;
   return (
-    <Drawer
-      anchor="right"
+    <PanelEditorShell
       open={open}
-      onClose={onClose}
-      PaperProps={{ sx: { width: { xs: "100%", sm: 400 }, p: 2 } }}
-    >
-      <Stack spacing={2} sx={{ height: "100%" }}>
-        <Typography variant="h6">Edit {label.toLowerCase()}</Typography>
-        <Typography variant="caption" color="text.secondary">
-          {type === "weather"
-            ? "Forecast uses Latitude / Longitude (Open-Meteo). The location label is only the heading — use Look up to fill coordinates from a place name."
-            : type === "device_status"
-              ? "Optional title (default: Devices) and offline-only list."
-              : type === "camera"
-                ? "Choose a camera registered under Cameras. Stream plays via go2rtc."
-                : type === "clock"
-                  ? "The time grows and shrinks with the panel. Colour and the Theme font follow the dashboard."
-                  : `Optional title (default: ${label}). Data refreshes automatically.`}
-        </Typography>
-
-        <PanelTitleFields
-          title={title}
-          onTitleChange={setTitle}
-          icon={titleIcon}
-          onIconChange={setTitleIcon}
-          automatic={
-            automatic ?? {
-              title: type === "weather" ? weatherLocation || "Weather" : generalWidgetHeading(widget, label),
-              icon: { iconId: "auto", kind: null },
-            }
-          }
-        />
-
+      title={`Edit ${title.trim() || label}`}
+      kindLabel={label}
+      preview={open && renderPreview ? renderPreview(buildPatch()) : null}
+      onCancel={onClose}
+      onApply={handleApply}
+      tabs={[
+        {
+          id: "content",
+          label: "Content",
+          content:
+            type === "weather" || type === "device_status" || type === "camera" ? (
+              <>
         {type === "weather" && (
           <>
             <TextField
@@ -219,14 +207,14 @@ export function GeneralWidgetEditor({ open, widget, onClose, onSave, automatic }
                 setWeatherLocation(e.target.value);
                 setGeocodeHint(null);
               }}
-              helperText="Heading text — does not change weather until you Look up or set lat/lon"
+              helperText="The name shown on the panel. Look up fills in the position below."
             />
             <Button
               variant="outlined"
               disabled={geocodeBusy}
               onClick={() => void lookupPlace()}
             >
-              {geocodeBusy ? "Looking up…" : "Look up place → fill lat/lon"}
+              {geocodeBusy ? "Looking up…" : "Look up this place"}
             </Button>
             {geocodeError && <Alert severity="error">{geocodeError}</Alert>}
             {geocodeHint && <Alert severity="success">{geocodeHint}</Alert>}
@@ -237,7 +225,6 @@ export function GeneralWidgetEditor({ open, widget, onClose, onSave, automatic }
               value={weatherLat}
               onChange={(e) => setWeatherLat(e.target.value)}
               inputProps={{ inputMode: "decimal" }}
-              helperText="North/south (−90 to 90). Your exact coords are sent; the forecast model picks the nearest grid cell."
             />
             <TextField
               label="Longitude"
@@ -246,11 +233,9 @@ export function GeneralWidgetEditor({ open, widget, onClose, onSave, automatic }
               value={weatherLon}
               onChange={(e) => setWeatherLon(e.target.value)}
               inputProps={{ inputMode: "decimal" }}
-              helperText="East/west (−180 to 180). UK values are typically negative (e.g. −0.85)."
             />
             <Typography variant="caption" color="text.secondary">
-              After Apply, save the dashboard. Data is Open-Meteo using UK Met Office model
-              fields — not a live copy of the Met Office website (their icons/wording differ).
+              Forecasts come from Open-Meteo (UK Met Office model).
             </Typography>
           </>
         )}
@@ -266,6 +251,49 @@ export function GeneralWidgetEditor({ open, widget, onClose, onSave, automatic }
             label="Show offline devices only"
           />
         )}
+
+        {type === "camera" && (
+          <FormControl fullWidth size="small">
+            <InputLabel id="camera-pick">Camera</InputLabel>
+            <Select
+              labelId="camera-pick"
+              label="Camera"
+              value={cameraId}
+              onChange={(e) => setCameraId(e.target.value)}
+            >
+              <MenuItem value="">
+                <em>Select…</em>
+              </MenuItem>
+              {cameras.map((c) => (
+                <MenuItem key={c.id} value={c.id}>
+                  {c.name}
+                  {c.areaName ? ` · ${c.areaName}` : ""}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
+
+              </>
+            ) : null,
+        },
+        {
+          id: "look",
+          label: "Look",
+          content: (
+            <>
+        <PanelTitleFields
+          title={title}
+          onTitleChange={setTitle}
+          icon={titleIcon}
+          onIconChange={setTitleIcon}
+          automatic={
+            automatic ?? {
+              title: type === "weather" ? weatherLocation || "Weather" : generalWidgetHeading(widget, label),
+              icon: { iconId: "auto", kind: null },
+            }
+          }
+        />
 
         {type === "clock" && (
           <>
@@ -333,37 +361,10 @@ export function GeneralWidgetEditor({ open, widget, onClose, onSave, automatic }
           </>
         )}
 
-        {type === "camera" && (
-          <FormControl fullWidth size="small">
-            <InputLabel id="camera-pick">Camera</InputLabel>
-            <Select
-              labelId="camera-pick"
-              label="Camera"
-              value={cameraId}
-              onChange={(e) => setCameraId(e.target.value)}
-            >
-              <MenuItem value="">
-                <em>Select…</em>
-              </MenuItem>
-              {cameras.map((c) => (
-                <MenuItem key={c.id} value={c.id}>
-                  {c.name}
-                  {c.areaName ? ` · ${c.areaName}` : ""}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        )}
-
-        <Stack direction="row" spacing={1} sx={{ mt: "auto", pt: 2 }}>
-          <Button variant="outlined" onClick={onClose} fullWidth>
-            Cancel
-          </Button>
-          <Button variant="contained" onClick={handleApply} fullWidth>
-            Apply
-          </Button>
-        </Stack>
-      </Stack>
-    </Drawer>
+            </>
+          ),
+        },
+      ]}
+    />
   );
 }
