@@ -5,6 +5,8 @@ import { Box, Button, IconButton, Stack, Tooltip, Typography } from "@mui/materi
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import { api, type DashboardSummary } from "../api";
 import { getDashboardIcon } from "../lib/dashboard-icons";
+import { NotificationBell } from "./NotificationBell";
+import { useSkin } from "../skins/SkinProvider";
 
 type Props = {
   activeId?: string;
@@ -14,6 +16,8 @@ type Props = {
   canEdit?: boolean;
   /** Enter Dashboard options (layout edit + manage). */
   onDashboardOptions?: () => void;
+  /** May clear all notifications (bell beside the cog). */
+  canClearNotifications?: boolean;
 };
 
 /**
@@ -26,7 +30,9 @@ export function DashboardTabBar({
   editMode = false,
   canEdit = true,
   onDashboardOptions,
+  canClearNotifications = false,
 }: Props) {
+  const { skin } = useSkin();
   const navigate = useNavigate();
   const [dashboards, setDashboards] = useState<DashboardSummary[]>([]);
   const tabsRef = useRef<HTMLDivElement>(null);
@@ -154,6 +160,11 @@ export function DashboardTabBar({
             );
           })}
       </Box>
+      {skin.id === "mui-dashboard" ? (
+        <Box sx={{ display: { xs: "none", md: "flex" }, alignItems: "center" }}>
+          <NotificationBell place="dashboard" canClear={canClearNotifications} />
+        </Box>
+      ) : null}
       {canEdit && (
         <Tooltip title="Dashboard Options">
           <IconButton

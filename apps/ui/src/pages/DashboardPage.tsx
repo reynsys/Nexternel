@@ -869,6 +869,7 @@ function DashboardPageContent() {
         refreshKey={tabRefreshKey}
         editMode={editMode}
         canEdit={canEditDashboards}
+        canClearNotifications={hasPermission(permissions, "manageUsers", isAdmin)}
         onDashboardOptions={() => {
           if (!canEditDashboards) return;
           if (!editMode) enterEditMode();

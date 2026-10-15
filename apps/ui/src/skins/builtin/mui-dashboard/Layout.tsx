@@ -8,9 +8,6 @@ import { isGradientActive } from "../../surfaceStyles";
 import { SideMenu, useSideMenuCollapsed } from "./SideMenu";
 import { AppNavbar } from "./AppNavbar";
 import { BottomNav, BOTTOM_NAV_HEIGHT_PX } from "./BottomNav";
-import { NotificationBell } from "../../../components/NotificationBell";
-import { normalizeBellPrefs } from "../../themePrefs";
-import { hasPermission } from "../../../lib/permissions";
 
 /** Free MUI dashboard-style shell: permanent side menu + mobile app bar. */
 export function MuiDashboardLayout() {
@@ -18,8 +15,6 @@ export function MuiDashboardLayout() {
   const [collapsed, setCollapsed] = useSideMenuCollapsed();
   const { themePrefs } = useSkin();
   const hasGradient = isGradientActive(themePrefs);
-  // Bell at the top right of the page (Settings → Appearance); phones keep it in the top bar.
-  const bellTop = signedIn && normalizeBellPrefs(themePrefs.bell).position === "top";
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh" }}>
@@ -57,19 +52,12 @@ export function MuiDashboardLayout() {
             // Phones: room for the bottom bar.
             pb: { xs: `${BOTTOM_NAV_HEIGHT_PX + 24}px`, md: 5 },
             pt: { xs: 10, md: 3 },
-            // Room for the bell at the top right.
-            pr: bellTop ? { md: "48px" } : undefined,
           }}
         >
           {signedIn ? <MaintenanceBanner /> : null}
           <Outlet />
         </Stack>
       </Box>
-      {bellTop ? (
-        <Box sx={{ display: { xs: "none", md: "block" }, position: "fixed", top: 26, right: 16, zIndex: (t) => t.zIndex.appBar }}>
-          <NotificationBell place="top" canClear={hasPermission(permissions ?? null, "manageUsers", isAdmin)} />
-        </Box>
-      ) : null}
       <BottomNav
         signedIn={signedIn}
         isAdmin={isAdmin}

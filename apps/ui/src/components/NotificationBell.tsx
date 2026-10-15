@@ -11,6 +11,7 @@ import {
   Typography,
 } from "@mui/material";
 import NotificationsNoneRoundedIcon from "@mui/icons-material/NotificationsNoneRounded";
+import { useLocation } from "react-router-dom";
 import { api, type NotificationItem } from "../api";
 import { useOptionalSkin } from "../skins/SkinProvider";
 import { normalizeBellPrefs } from "../skins/themePrefs";
@@ -27,6 +28,11 @@ function ago(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short" });
 }
 
+/** Pages that show the dashboard tabs (and the Dashboard Options cog). */
+export function isDashboardRoute(pathname: string): boolean {
+  return pathname === "/" || pathname.startsWith("/d/") || pathname.startsWith("/dashboards/");
+}
+
 const LEVEL_COLOR: Record<NotificationItem["level"], string> = {
   info: "primary.main",
   warning: "warning.main",
@@ -37,14 +43,21 @@ const LEVEL_COLOR: Record<NotificationItem["level"], string> = {
  * Bell with the latest messages from Nexternel and plugins. Its counter takes the status-light
  * colour of the most important unread message: accent for information, amber, red only for
  * "act now". Each person chooses in Settings → Appearance whether it shows (always, only with new
- * messages, never) and where: `place` says where this copy sits; "bar" (phone top bar, top-menu
- * layout) shows whenever the bell is on.
+ * messages, never) and where: `place` says where this copy sits. "dashboard" = beside the
+ * Dashboard Options cog; pages without that row keep the bell in the side menu ("menu"). "bar"
+ * (phone top bar, top-menu layout) shows whenever the bell is on.
  */
-export function NotificationBell({ canClear, place = "bar" }: { canClear?: boolean; place?: "menu" | "top" | "bar" }) {
+export function NotificationBell({ canClear, place = "bar" }: { canClear?: boolean; place?: "menu" | "dashboard" | "bar" }) {
   const skin = useOptionalSkin();
   const prefs = normalizeBellPrefs(skin?.themePrefs.bell);
   const lights = useStatusLightPrefs();
-  const here = prefs.show !== "never" && (place === "bar" || place === prefs.position);
+  const { pathname } = useLocation();
+  const onDashboard = isDashboardRoute(pathname);
+  const here =
+    prefs.show !== "never" &&
+    (place === "bar" ||
+      (place === "dashboard" && prefs.position === "top") ||
+      (place === "menu" && (prefs.position === "menu" || !onDashboard)));
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [unread, setUnread] = useState(0);
@@ -116,8 +129,8 @@ export function NotificationBell({ canClear, place = "bar" }: { canClear?: boole
         open={Boolean(anchor)}
         anchorEl={anchor}
         onClose={close}
-        anchorOrigin={{ vertical: "bottom", horizontal: place === "top" ? "right" : "left" }}
-        transformOrigin={{ vertical: "top", horizontal: place === "top" ? "right" : "left" }}
+        anchorOrigin={{ vertical: "bottom", horizontal: place === "dashboard" ? "right" : "left" }}
+        transformOrigin={{ vertical: "top", horizontal: place === "dashboard" ? "right" : "left" }}
         slotProps={{ paper: { sx: { width: "min(380px, calc(100vw - 32px))", maxHeight: "70vh" } } }}
       >
         <Stack direction="row" alignItems="center" sx={{ px: 2, py: 1.5 }}>

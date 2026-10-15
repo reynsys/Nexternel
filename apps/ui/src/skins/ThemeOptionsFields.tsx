@@ -504,14 +504,15 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
               disabled={bell.show === "never"}
               options={[
                 { value: "menu", label: "Top of the side menu" },
-                { value: "top", label: "Top right of the page" },
+                { value: "top", label: "Next to the dashboard options" },
               ]}
               onChange={(v) => set({ bell: { ...bell, position: v } })}
             />
           </Stack>
           <Typography variant="caption" color="text.secondary">
-            On phones and with the top menu layout the bell sits in the top bar. Which plugin messages reach
-            the bell is set for each plugin in Settings → Plugins.
+            "Next to the dashboard options" puts it beside the cog above your dashboards; on other pages it stays
+            at the top of the side menu. On phones and with the top menu layout it sits in the top bar. Which
+            plugin messages reach the bell is set for each plugin in Settings → Plugins.
           </Typography>
         </Stack>
       </Section>

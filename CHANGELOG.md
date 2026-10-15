@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.96
+
+- The notification bell's second position is now **next to the dashboard options** (the cog above your dashboards) instead of taking a column of its own at the right of the page. On other pages it stays at the top of the side menu.
+
 ## V5.2.95
 
 - **Calmer notification bell:** its number is coloured by the most important new message: your accent colour for information (such as a summary or an available update), amber for "keep an eye on it", and red only when something needs doing now.
