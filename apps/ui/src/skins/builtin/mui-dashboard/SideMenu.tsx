@@ -152,12 +152,12 @@ export function SideMenu({
           </Typography>
         )}
         {signedIn && !collapsed ? (
-          <NotificationBell canClear={hasPermission(permissions ?? null, "manageUsers", isAdmin)} />
+          <NotificationBell place="menu" canClear={hasPermission(permissions ?? null, "manageUsers", isAdmin)} />
         ) : null}
       </Box>
       {signedIn && collapsed ? (
         <Box sx={{ display: "flex", justifyContent: "center", pb: 1 }}>
-          <NotificationBell canClear={hasPermission(permissions ?? null, "manageUsers", isAdmin)} />
+          <NotificationBell place="menu" canClear={hasPermission(permissions ?? null, "manageUsers", isAdmin)} />
         </Box>
       ) : null}
       <Divider />

@@ -11,7 +11,19 @@ export type ThemePrefsDto = {
   effectSpeed?: number;
   effectColour?: "white" | "accent" | "scene";
   statusLight?: StatusLightPrefs;
+  bell?: BellPrefs;
 };
+
+/** The notification bell for this person: when it shows and where (Settings → Appearance). */
+export type BellPrefs = { show: "always" | "new" | "never"; position: "menu" | "top" };
+
+function bellField(raw: unknown): BellPrefs {
+  const o = (raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {}) as Record<string, unknown>;
+  return {
+    show: o.show === "new" || o.show === "never" ? o.show : "always",
+    position: o.position === "top" ? "top" : "menu",
+  };
+}
 
 /** How status lights look for this person (each panel can still choose its own style). */
 export type StatusLightPrefs = {
@@ -52,6 +64,7 @@ const DEFAULT: ThemePrefsDto = {
   effectSpeed: 1,
   effectColour: "white",
   statusLight: STATUS_LIGHT_DEFAULT,
+  bell: { show: "always", position: "menu" },
 };
 
 const HEX = /^#[0-9A-Fa-f]{6}$/;
@@ -138,7 +151,7 @@ function effectFields(o: Record<string, unknown>) {
 }
 
 export function defaultThemePrefs(): ThemePrefsDto {
-  return { ...DEFAULT, statusLight: statusLightField(null) };
+  return { ...DEFAULT, statusLight: statusLightField(null), bell: bellField(null) };
 }
 
 function normalizeGradientId(raw: unknown): string {
@@ -171,6 +184,7 @@ export function parseThemePrefsInput(
     solidContentPanels: Boolean(o.solidContentPanels),
     ...effectFields(o),
     statusLight: statusLightField(o.statusLight),
+    bell: bellField(o.bell),
   };
 }
 
@@ -193,5 +207,6 @@ export function themePrefsFromDb(raw: unknown): ThemePrefsDto {
     solidContentPanels: Boolean(o.solidContentPanels),
     ...effectFields(o),
     statusLight: statusLightField(o.statusLight),
+    bell: bellField(o.bell),
   };
 }

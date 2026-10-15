@@ -124,6 +124,7 @@ export function UsersPage() {
       effectSpeed: theme.effectSpeed,
       effectColour: theme.effectColour,
       statusLight: theme.statusLight,
+      bell: theme.bell,
     };
   }
 

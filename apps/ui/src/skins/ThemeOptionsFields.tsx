@@ -28,7 +28,9 @@ import {
   DEFAULT_STATUS_LIGHT_PREFS,
   PRIMARY_SWATCHES,
   normalizeAccentHex,
+  normalizeBellPrefs,
   normalizeStatusLightPrefs,
+  type BellPrefs,
   type StatusLightPrefs,
   type ThemePrefs,
 } from "./themePrefs";
@@ -128,6 +130,7 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
   const set = (patch: Partial<ThemePrefs>) => onThemeChange({ ...themePrefs, ...patch });
   const statusLight = normalizeStatusLightPrefs(themePrefs.statusLight);
   const setLight = (patch: Partial<StatusLightPrefs>) => set({ statusLight: { ...statusLight, ...patch } });
+  const bell = normalizeBellPrefs(themePrefs.bell);
 
   useEffect(() => setCustomHex(themePrefs.primary), [themePrefs.primary]);
   useEffect(() => setKind(kindOf(themePrefs.gradientId)), [themePrefs.gradientId]);
@@ -466,6 +469,50 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
               Original colours
             </Button>
           </Stack>
+        </Stack>
+      </Section>
+
+      <Divider />
+
+      <Section
+        title="Notification bell"
+        hint="Messages from Nexternel and plugins. Its number has the colour of the most important new message: your accent colour for information, amber for keep an eye on it, red for act now."
+      >
+        <Stack spacing={1.25}>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Typography variant="body2" color="text.secondary" sx={{ width: 64, flexShrink: 0 }}>
+              Show
+            </Typography>
+            <Segmented<BellPrefs["show"]>
+              label="When the bell shows"
+              value={bell.show}
+              options={[
+                { value: "always", label: "Always" },
+                { value: "new", label: "Only with new messages" },
+                { value: "never", label: "Never" },
+              ]}
+              onChange={(v) => set({ bell: { ...bell, show: v } })}
+            />
+          </Stack>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Typography variant="body2" color="text.secondary" sx={{ width: 64, flexShrink: 0 }}>
+              Where
+            </Typography>
+            <Segmented<BellPrefs["position"]>
+              label="Where the bell sits"
+              value={bell.position}
+              disabled={bell.show === "never"}
+              options={[
+                { value: "menu", label: "Top of the side menu" },
+                { value: "top", label: "Top right of the page" },
+              ]}
+              onChange={(v) => set({ bell: { ...bell, position: v } })}
+            />
+          </Stack>
+          <Typography variant="caption" color="text.secondary">
+            On phones and with the top menu layout the bell sits in the top bar. Which plugin messages reach
+            the bell is set for each plugin in Settings → Plugins.
+          </Typography>
         </Stack>
       </Section>
 

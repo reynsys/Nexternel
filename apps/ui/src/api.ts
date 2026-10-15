@@ -280,6 +280,7 @@ export type UserThemePrefs = {
   effectSpeed?: number;
   effectColour?: "white" | "accent" | "scene";
   statusLight?: import("./skins/themePrefs").StatusLightPrefs;
+  bell?: import("./skins/themePrefs").BellPrefs;
 };
 
 export type User = {
@@ -1357,6 +1358,12 @@ export const api = {
       body: JSON.stringify({ grants }),
     }),
 
+  setPluginBell: (id: string, bell: "all" | "important" | "none") =>
+    apiFetch<{ plugin: PluginInfo }>(`/api/v1/plugins/${encodeURIComponent(id)}/bell`, {
+      method: "PUT",
+      body: JSON.stringify({ bell }),
+    }),
+
   savePluginSettings: (id: string, settings: Record<string, unknown>) =>
     apiFetch<{ plugin: PluginInfo }>(`/api/v1/plugins/${encodeURIComponent(id)}/settings`, {
       method: "PUT",
@@ -1892,6 +1899,8 @@ export type PluginInfo = {
   missingSettings: string[];
   /** Dashboard panels the plugin offers; type is plugin.<id>.<panel id>. */
   panels: PluginPanelInfo[];
+  /** Which of its messages reach the bell: all, important (keep an eye on it) or none. */
+  bell?: "all" | "important" | "none";
   installedAt: string;
 };
 
@@ -1988,6 +1997,8 @@ export type NotificationItem = {
 export type NotificationsResponse = {
   items: NotificationItem[];
   unreadCount: number;
+  /** The most important unread message's level (the bell's colour). */
+  unreadLevel?: "info" | "warning" | "alert" | null;
   lastReadAt: string | null;
 };
 

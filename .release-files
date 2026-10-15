@@ -123,6 +123,7 @@ apps/api/src/migrate/topic-remap.ts
 apps/api/src/migrate/types.ts
 apps/api/src/mqtt-login.ts
 apps/api/src/notifications/routes.ts
+apps/api/src/notifications/service.test.ts
 apps/api/src/notifications/service.ts
 apps/api/src/octopus/client.ts
 apps/api/src/octopus/ensure-schema.ts

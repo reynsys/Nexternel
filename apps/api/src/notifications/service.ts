@@ -18,6 +18,26 @@ export function normalizeLevel(raw: unknown): NotificationLevel {
   return raw === "warning" || raw === "alert" ? raw : "info";
 }
 
+/** Which of a plugin's messages reach the bell (Settings → Plugins). */
+export type PluginBell = "all" | "important" | "none";
+
+export function normalizePluginBell(raw: unknown): PluginBell {
+  return raw === "all" || raw === "none" ? raw : "important";
+}
+
+/**
+ * The level a plugin's message gets in the bell, or null when it is not shown. Red ("act now") is
+ * kept for Nexternel itself (status lights, problems with the system), so plugins reach amber at most.
+ */
+export function pluginMessageLevel(requested: unknown, bell: PluginBell): NotificationLevel | null {
+  const level = normalizeLevel(requested) === "info" ? "info" : "warning";
+  if (bell === "none") return null;
+  if (bell === "important" && level === "info") return null;
+  return level;
+}
+
+const LEVEL_RANK: Record<NotificationLevel, number> = { info: 1, warning: 2, alert: 3 };
+
 /** Add a message to the bell. `source` is e.g. "plugin:ai" or "system". */
 export async function addNotification(input: {
   source: string;
@@ -54,7 +74,7 @@ export async function addNotification(input: {
 export async function listNotifications(
   userId: string,
   limit: number
-): Promise<{ items: NotificationRecord[]; unreadCount: number; lastReadAt: string | null }> {
+): Promise<{ items: NotificationRecord[]; unreadCount: number; unreadLevel: NotificationLevel | null; lastReadAt: string | null }> {
   const pool = getPool();
   const read = await pool.query<{ last_read_at: Date }>(
     `SELECT last_read_at FROM notification_reads WHERE user_id = $1`,
@@ -68,10 +88,18 @@ export async function listNotifications(
      FROM notifications ORDER BY created_at DESC LIMIT $1`,
     [Math.min(Math.max(limit, 1), 100)]
   );
-  const unread = await pool.query<{ n: string }>(
-    `SELECT COUNT(*)::text AS n FROM notifications WHERE created_at > COALESCE($1::timestamptz, '-infinity')`,
+  const unread = await pool.query<{ n: string; level: string }>(
+    `SELECT COUNT(*)::text AS n, level FROM notifications
+     WHERE created_at > COALESCE($1::timestamptz, '-infinity') GROUP BY level`,
     [lastReadAt]
   );
+  let unreadCount = 0;
+  let unreadLevel: NotificationLevel | null = null;
+  for (const r of unread.rows) {
+    unreadCount += Number(r.n);
+    const level = normalizeLevel(r.level);
+    if (!unreadLevel || LEVEL_RANK[level] > LEVEL_RANK[unreadLevel]) unreadLevel = level;
+  }
   return {
     items: rows.rows.map((r) => ({
       id: r.id,
@@ -82,7 +110,9 @@ export async function listNotifications(
       body: r.body,
       createdAt: r.created_at.toISOString(),
     })),
-    unreadCount: Number(unread.rows[0]?.n ?? 0),
+    unreadCount,
+    /** The most important unread message's level: the bell's colour. */
+    unreadLevel,
     lastReadAt: lastReadAt ? lastReadAt.toISOString() : null,
   };
 }

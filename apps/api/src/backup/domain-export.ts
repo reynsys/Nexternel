@@ -103,18 +103,20 @@ export type ExportedPlugin = {
   manifest: PluginManifest;
   grants: Record<string, unknown>;
   settings: Record<string, unknown>;
+  /** Which messages reach the bell (V5.2.95+). */
+  bell?: string;
 };
 
 async function loadPlugins(): Promise<ExportedPlugin[]> {
   const r = await getPool().query<{
-    id: string; source: string; enabled: boolean; manifest: PluginManifest; grants: Record<string, unknown>; settings: Record<string, unknown>;
-  }>(`SELECT id, source, enabled, manifest, grants, settings FROM installed_plugins ORDER BY id`);
+    id: string; source: string; enabled: boolean; manifest: PluginManifest; grants: Record<string, unknown>; settings: Record<string, unknown>; bell: string;
+  }>(`SELECT id, source, enabled, manifest, grants, settings, bell FROM installed_plugins ORDER BY id`);
   return r.rows.map((row) => {
     const settings: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(row.settings)) {
       settings[key] = isEncryptedSecret(value) ? { secret: decryptSecret(value) } : value;
     }
-    return { id: row.id, source: row.source, enabled: row.enabled, manifest: row.manifest, grants: row.grants, settings };
+    return { id: row.id, source: row.source, enabled: row.enabled, manifest: row.manifest, grants: row.grants, settings, bell: row.bell };
   });
 }
 

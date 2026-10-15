@@ -12,6 +12,9 @@ import {
 } from "@mui/material";
 import NotificationsNoneRoundedIcon from "@mui/icons-material/NotificationsNoneRounded";
 import { api, type NotificationItem } from "../api";
+import { useOptionalSkin } from "../skins/SkinProvider";
+import { normalizeBellPrefs } from "../skins/themePrefs";
+import { useStatusLightPrefs } from "./status-light/StatusLight";
 
 const POLL_MS = 60_000;
 
@@ -30,34 +33,56 @@ const LEVEL_COLOR: Record<NotificationItem["level"], string> = {
   alert: "error.main",
 };
 
-/** Bell with the latest messages from plugins (and later from Nexternel itself). */
-export function NotificationBell({ canClear }: { canClear?: boolean }) {
+/**
+ * Bell with the latest messages from Nexternel and plugins. Its counter takes the status-light
+ * colour of the most important unread message: accent for information, amber, red only for
+ * "act now". Each person chooses in Settings → Appearance whether it shows (always, only with new
+ * messages, never) and where: `place` says where this copy sits; "bar" (phone top bar, top-menu
+ * layout) shows whenever the bell is on.
+ */
+export function NotificationBell({ canClear, place = "bar" }: { canClear?: boolean; place?: "menu" | "top" | "bar" }) {
+  const skin = useOptionalSkin();
+  const prefs = normalizeBellPrefs(skin?.themePrefs.bell);
+  const lights = useStatusLightPrefs();
+  const here = prefs.show !== "never" && (place === "bar" || place === prefs.position);
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [unread, setUnread] = useState(0);
+  const [unreadLevel, setUnreadLevel] = useState<NotificationItem["level"] | null>(null);
   const [lastReadAt, setLastReadAt] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const res = await api.notifications(30);
     setItems(res.items);
     setUnread(res.unreadCount);
+    setUnreadLevel(res.unreadLevel ?? (res.unreadCount ? "info" : null));
     setLastReadAt(res.lastReadAt);
   }, []);
 
   useEffect(() => {
+    if (!here) return;
     void load().catch(() => {});
     const timer = setInterval(() => {
       if (document.visibilityState === "visible") void load().catch(() => {});
     }, POLL_MS);
     return () => clearInterval(timer);
-  }, [load]);
+  }, [load, here]);
+
+  const badgeColour =
+    unreadLevel === "alert" ? lights.colours.alert : unreadLevel === "warning" ? lights.colours.watch : "primary.main";
 
   async function open(el: HTMLElement) {
     setAnchor(el);
     await load().catch(() => {});
     if (unread > 0) {
       // Opening the list counts as reading it; the highlight stays until it closes.
-      void api.markNotificationsRead().then(() => setUnread(0)).catch(() => {});
+      void api
+        .markNotificationsRead()
+        .then(() => {
+          setUnread(0);
+          setUnreadLevel(null);
+        })
+        .catch(() => {});
     }
   }
 
@@ -67,12 +92,22 @@ export function NotificationBell({ canClear }: { canClear?: boolean }) {
   }
 
   const isNew = (n: NotificationItem) => !lastReadAt || Date.parse(n.createdAt) > Date.parse(lastReadAt);
+  const lineColour = (n: NotificationItem) =>
+    n.level === "alert" ? lights.colours.alert : n.level === "warning" ? lights.colours.watch : LEVEL_COLOR.info;
+
+  if (!here) return null;
+  // "Only when there are new messages": hidden while there is nothing new, unless the list is open.
+  if (prefs.show === "new" && unread === 0 && !anchor) return null;
 
   return (
     <>
       <Tooltip title={unread ? `${unread} new notification${unread === 1 ? "" : "s"}` : "Notifications"}>
         <IconButton size="small" aria-label="Notifications" onClick={(e) => void open(e.currentTarget)} color="inherit">
-          <Badge badgeContent={unread} color="error" max={99}>
+          <Badge
+            badgeContent={unread}
+            max={99}
+            sx={{ "& .MuiBadge-badge": { bgcolor: badgeColour, color: "#fff", fontWeight: 700 } }}
+          >
             <NotificationsNoneRoundedIcon fontSize="small" />
           </Badge>
         </IconButton>
@@ -81,7 +116,8 @@ export function NotificationBell({ canClear }: { canClear?: boolean }) {
         open={Boolean(anchor)}
         anchorEl={anchor}
         onClose={close}
-        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        anchorOrigin={{ vertical: "bottom", horizontal: place === "top" ? "right" : "left" }}
+        transformOrigin={{ vertical: "top", horizontal: place === "top" ? "right" : "left" }}
         slotProps={{ paper: { sx: { width: "min(380px, calc(100vw - 32px))", maxHeight: "70vh" } } }}
       >
         <Stack direction="row" alignItems="center" sx={{ px: 2, py: 1.5 }}>
@@ -114,7 +150,7 @@ export function NotificationBell({ canClear }: { canClear?: boolean }) {
                   px: 2,
                   py: 1.25,
                   borderLeft: 3,
-                  borderColor: isNew(n) ? LEVEL_COLOR[n.level] : "transparent",
+                  borderColor: isNew(n) ? lineColour(n) : "transparent",
                 }}
               >
                 <Typography variant="body2" sx={{ fontWeight: 600 }}>

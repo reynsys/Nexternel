@@ -41,7 +41,21 @@ export type ThemePrefs = {
   effectColour?: EffectColour;
   /** How status lights look by default (each panel can choose its own). */
   statusLight?: StatusLightPrefs;
+  /** The notification bell: when it shows and where. */
+  bell?: BellPrefs;
 };
+
+export type BellPrefs = { show: "always" | "new" | "never"; position: "menu" | "top" };
+
+export const DEFAULT_BELL_PREFS: BellPrefs = { show: "always", position: "menu" };
+
+export function normalizeBellPrefs(raw: unknown): BellPrefs {
+  const o = (raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {}) as Record<string, unknown>;
+  return {
+    show: o.show === "new" || o.show === "never" ? o.show : "always",
+    position: o.position === "top" ? "top" : "menu",
+  };
+}
 
 export type StatusLightPrefs = {
   style: "pill" | "bar" | "dots" | "glow" | "off";
@@ -116,6 +130,7 @@ export const DEFAULT_THEME_PREFS: ThemePrefs = {
   effectSpeed: 1,
   effectColour: "white",
   statusLight: DEFAULT_STATUS_LIGHT_PREFS,
+  bell: DEFAULT_BELL_PREFS,
 };
 
 const HEX6 = /^#[0-9A-Fa-f]{6}$/;
@@ -179,6 +194,7 @@ export function normalizeThemePrefs(raw: unknown): ThemePrefs {
     effectSpeed: normalizeEffectSpeed(parsed.effectSpeed),
     effectColour: normalizeEffectColour(parsed.effectColour),
     statusLight: normalizeStatusLightPrefs(parsed.statusLight),
+    bell: normalizeBellPrefs(parsed.bell),
   };
 }
 
@@ -209,5 +225,6 @@ export function toAccountThemePrefs(prefs: ThemePrefs, skinId: string) {
     effectSpeed: normalizeEffectSpeed(prefs.effectSpeed),
     effectColour: normalizeEffectColour(prefs.effectColour),
     statusLight: normalizeStatusLightPrefs(prefs.statusLight),
+    bell: normalizeBellPrefs(prefs.bell),
   };
 }

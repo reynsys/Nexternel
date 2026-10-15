@@ -22,6 +22,8 @@ ALTER TABLE installed_plugins ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NU
 ALTER TABLE installed_plugins ADD COLUMN IF NOT EXISTS status_message TEXT;
 ALTER TABLE installed_plugins ADD COLUMN IF NOT EXISTS status_at TIMESTAMPTZ;
 ALTER TABLE installed_plugins ADD COLUMN IF NOT EXISTS package_sha256 VARCHAR(64);
+-- Which of the plugin's messages reach the bell: all, important (keep an eye on it) or none.
+ALTER TABLE installed_plugins ADD COLUMN IF NOT EXISTS bell VARCHAR(20) NOT NULL DEFAULT 'important';
 
 -- Example manifests from before V5.2.86 could never run; drop them.
 DELETE FROM installed_plugins WHERE builtin = TRUE OR source NOT IN ('catalog', 'file');

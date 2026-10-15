@@ -4,7 +4,7 @@ import { getPool } from "../db.js";
 import { listCapabilities } from "../capabilities/store.js";
 import { isHistoryRange, type HistoryRange } from "../history/influx.js";
 import { queryCapabilityHistory } from "../history/query.js";
-import { addNotification, normalizeLevel } from "../notifications/service.js";
+import { addNotification, normalizePluginBell, pluginMessageLevel, type PluginBell } from "../notifications/service.js";
 import { getLiveState } from "../telemetry/state-cache.js";
 import { APP_VERSION } from "../version.js";
 import { definePluginDevices, parseDeviceDefs, recordPluginReadings } from "./devices.js";
@@ -18,7 +18,7 @@ import { logPluginAction, normalizeGrants, pluginSettingsForRuntime } from "./se
  * Every request carries the plugin's own token; every action is checked against what the
  * person approved for that plugin.
  */
-type Caller = { id: string; name: string; manifest: PluginManifest; grants: PluginGrants; settings: Record<string, unknown> };
+type Caller = { id: string; name: string; manifest: PluginManifest; grants: PluginGrants; settings: Record<string, unknown>; bell: PluginBell };
 
 declare module "fastify" {
   interface FastifyRequest {
@@ -38,8 +38,8 @@ async function identify(request: FastifyRequest): Promise<Caller | null> {
   const id = pluginIdFromToken(token);
   if (!id) return null;
   const res = await getPool().query<{
-    id: string; enabled: boolean; manifest: PluginManifest; grants: Partial<PluginGrants>; settings: Record<string, unknown>; token_hash: string | null;
-  }>(`SELECT id, enabled, manifest, grants, settings, token_hash FROM installed_plugins WHERE id = $1`, [id]);
+    id: string; enabled: boolean; manifest: PluginManifest; grants: Partial<PluginGrants>; settings: Record<string, unknown>; token_hash: string | null; bell: string;
+  }>(`SELECT id, enabled, manifest, grants, settings, token_hash, bell FROM installed_plugins WHERE id = $1`, [id]);
   const row = res.rows[0];
   if (!row || !row.enabled || !tokenMatches(token, row.token_hash)) return null;
   return {
@@ -48,6 +48,7 @@ async function identify(request: FastifyRequest): Promise<Caller | null> {
     manifest: row.manifest,
     grants: normalizeGrants(row.grants, row.manifest.permissions ?? {}),
     settings: row.settings,
+    bell: normalizePluginBell(row.bell),
   };
 }
 
@@ -184,10 +185,13 @@ export const pluginDoorwayRoutes: FastifyPluginAsync = async (app) => {
     }
     recent.push(now);
     notifyTimes.set(p.id, recent);
+    // The person chooses which of this plugin's messages reach the bell; the plugin is not told.
+    const level = pluginMessageLevel(request.body?.level, p.bell);
+    if (!level) return { ok: true, id: null };
     const n = await addNotification({
       source: `plugin:${p.id}`,
       sourceName: p.name,
-      level: normalizeLevel(request.body?.level),
+      level,
       title,
       body: typeof request.body?.body === "string" ? request.body.body : "",
     });

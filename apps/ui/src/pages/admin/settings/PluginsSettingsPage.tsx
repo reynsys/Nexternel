@@ -14,7 +14,12 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
+  FormControl,
   FormControlLabel,
+  FormHelperText,
+  InputLabel,
+  MenuItem,
+  Select,
   Stack,
   Switch,
   Tab,
@@ -153,6 +158,7 @@ export function PluginsSettingsPage() {
                   })
                 }
                 onGrants={(g) => run(`grants-${p.id}`, async () => void (await api.setPluginGrants(p.id, g)))}
+                onBell={(b) => run(`bell-${p.id}`, async () => void (await api.setPluginBell(p.id, b)))}
                 onSettings={async (values) => {
                   await api.savePluginSettings(p.id, values);
                   await load();
@@ -261,6 +267,7 @@ function InstalledPlugin({
   onToggle,
   onUpdate,
   onGrants,
+  onBell,
   onSettings,
   onRemove,
 }: {
@@ -271,6 +278,7 @@ function InstalledPlugin({
   onToggle: (on: boolean) => void;
   onUpdate: () => void;
   onGrants: (g: PluginGrants) => void;
+  onBell: (bell: "all" | "important" | "none") => void;
   onSettings: (values: Record<string, unknown>) => Promise<void>;
   onRemove: () => void;
 }) {
@@ -340,6 +348,26 @@ function InstalledPlugin({
                   Undo
                 </Button>
               </Stack>
+              {p.permissions.notify ? (
+                <FormControl size="small" fullWidth>
+                  <InputLabel id={`bell-${p.id}`}>Messages in the bell</InputLabel>
+                  <Select
+                    labelId={`bell-${p.id}`}
+                    label="Messages in the bell"
+                    value={p.bell ?? "important"}
+                    disabled={busy !== null}
+                    onChange={(e) => onBell(e.target.value as "all" | "important" | "none")}
+                  >
+                    <MenuItem value="important">Only important ones (keep an eye on it)</MenuItem>
+                    <MenuItem value="all">All, including information such as summaries</MenuItem>
+                    <MenuItem value="none">None</MenuItem>
+                  </Select>
+                  <FormHelperText>
+                    Saved straight away. A plugin's messages are never red: red is kept for Nexternel itself, such as a
+                    reading at act now. A plugin's own panels show its information either way.
+                  </FormHelperText>
+                </FormControl>
+              ) : null}
             </Stack>
           ) : null}
           {tab === "activity" ? <PluginActivityView pluginId={p.id} /> : null}

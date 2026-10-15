@@ -14,6 +14,7 @@ import {
   previewPackage,
   removePlugin,
   savePluginSettings,
+  setPluginBell,
   setPluginEnabled,
   setPluginGrants,
 } from "../plugins/service.js";
@@ -119,6 +120,13 @@ export const pluginsRoutes: FastifyPluginAsync = async (app) => {
       return { plugin };
     }
   );
+
+  app.put<{ Params: { id: string }; Body: { bell?: unknown } }>("/api/v1/plugins/:id/bell", async (request, reply) => {
+    if (!requirePermission(request, reply, "manageUsers")) return;
+    const plugin = await setPluginBell(request.params.id, request.body?.bell);
+    if (!plugin) return reply.code(404).send({ error: { code: "not_found", message: "Plugin not found" } });
+    return { plugin };
+  });
 
   app.put<{ Params: { id: string }; Body: { settings?: Record<string, unknown> } }>(
     "/api/v1/plugins/:id/settings",

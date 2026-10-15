@@ -1,3 +1,4 @@
+import { normalizePluginBell, type PluginBell } from "../notifications/service.js";
 import type {
   PluginGrants,
   PluginManifest,
@@ -52,6 +53,8 @@ export type PluginRecord = {
   missingSettings: string[];
   /** Dashboard panels the plugin offers; type = plugin.<id>.<panel id>. */
   panels: (PluginPanelDef & { type: string })[];
+  /** Which of its messages reach the bell: all, important (keep an eye on it) or none. */
+  bell: PluginBell;
   installedAt: string;
 };
 
@@ -69,10 +72,11 @@ type DbRow = {
   status_at: Date | null;
   installed_at: Date;
   package_sha256: string | null;
+  bell: string;
 };
 
 const COLUMNS = `id, enabled, source, manifest, grants, settings, token_hash, config_rev, status, status_message,
-  status_at, installed_at, package_sha256`;
+  status_at, installed_at, package_sha256, bell`;
 
 export function normalizeGrants(raw: Partial<PluginGrants> | undefined, requested: PluginPermissionRequests): PluginGrants {
   const read = raw?.read;
@@ -134,6 +138,7 @@ function rowToRecord(row: DbRow): PluginRecord {
     settings,
     missingSettings: missingRequiredSettings(fields, row.settings),
     panels: (m.panels ?? []).map((p) => ({ ...p, type: pluginPanelType(m.id, p.id) })),
+    bell: normalizePluginBell(row.bell),
     installedAt: row.installed_at.toISOString(),
   };
 }
@@ -275,6 +280,15 @@ export async function setPluginGrants(id: string, raw: Partial<PluginGrants>): P
   if (!grants.devices && row.grants.devices) await removePluginDevices(id);
   await logPluginAction(id, "permissions-changed", { grants });
   return rowToRecord(res.rows[0]!);
+}
+
+/** Which of the plugin's messages reach the bell. */
+export async function setPluginBell(id: string, raw: unknown): Promise<PluginRecord | null> {
+  const bell = normalizePluginBell(raw);
+  const res = await getPool().query(`UPDATE installed_plugins SET bell = $2, updated_at = NOW() WHERE id = $1`, [id, bell]);
+  if ((res.rowCount ?? 0) === 0) return null;
+  await logPluginAction(id, "bell-changed", { bell });
+  return getPluginRecord(id);
 }
 
 /** Check and store settings from the plugin's settings page. Secrets left empty keep their value. */

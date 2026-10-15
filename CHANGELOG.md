@@ -2,6 +2,12 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.95
+
+- **Calmer notification bell:** its number is coloured by the most important new message: your accent colour for information (such as a summary or an available update), amber for "keep an eye on it", and red only when something needs doing now.
+- **Your bell, your way:** in **Settings → Appearance → Notification bell**, choose whether it shows always, only when there are new messages, or never, and whether it sits at the top of the side menu or the top right of the page.
+- **Plugins:** for each plugin, choose which of its messages reach the bell (**Settings → Plugins → Permissions**): only important ones (the starting choice), all, or none. The AI assistant's morning summary now stays on its own panel unless you choose "all". Plugin messages are never red.
+
 ## V5.2.94
 
 - **Every panel that shows a number now has a status light.** Readings without limits yet, such as power or gas, show an empty outline; hover over it and it tells you to open **Edit → Status light** to set limits. Readings that haven't reported since Nexternel started show grey. (Before, these panels showed nothing although the Edit menu said the light was on.)
