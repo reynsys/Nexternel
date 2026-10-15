@@ -78,7 +78,7 @@ function ReadingRow({ item }: { item: SemanticCapabilityView }) {
         ) : null}
       </Typography>
       {look && look.style !== "off" ? (
-        <StatusLight capabilityId={item.source.id} unit={item.source.unit} look={look} placement="inline" />
+        <StatusLight capabilityId={item.source.id} kind={item.source.kind} unit={item.source.unit} look={look} placement="inline" />
       ) : null}
     </RowShell>
   );

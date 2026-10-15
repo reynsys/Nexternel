@@ -111,7 +111,7 @@ export function PanelItemChrome({
   const lightCap = cap && statusLook ? cap : null;
   const lightAt = (placement: ReturnType<typeof lightPlacement>) =>
     placement && lightCap && statusLook ? (
-      <StatusLight capabilityId={lightCap.id} unit={lightCap.unit} look={statusLook} placement={placement} />
+      <StatusLight capabilityId={lightCap.id} kind={lightCap.kind} unit={lightCap.unit} look={statusLook} placement={placement} />
     ) : null;
   const titlePlacement = statusLook ? lightPlacement(statusLook, "title") : null;
   const readingPlacement = statusLook ? lightPlacement(statusLook, "reading") : null;

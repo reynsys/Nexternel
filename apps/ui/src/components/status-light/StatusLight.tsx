@@ -15,6 +15,7 @@ import {
   type CapabilityStatus,
 } from "../../lib/dashboard-data-runtime";
 import { useOptionalSkin } from "../../skins/SkinProvider";
+import { lightToShow } from "../../lib/status-light-show";
 import {
   DEFAULT_STATUS_LIGHT_PREFS,
   normalizeStatusLightPrefs,
@@ -77,6 +78,8 @@ export function statusTooltip(status: CapabilityStatus, value: unknown, unit: st
 
 type Props = {
   capabilityId: string | null | undefined;
+  /** The kind of reading (temperature, power, switch…): decides whether it can have a light. */
+  kind: string | null | undefined;
   unit?: string | null;
   look: StatusLook;
   /**
@@ -92,17 +95,19 @@ type Props = {
  * One reading's status light. Draws nothing for readings without a light (no limits set,
  * switched off) and outside a dashboard.
  */
-export function StatusLight({ capabilityId, unit, look, placement }: Props) {
+export function StatusLight({ capabilityId, kind, unit, look, placement }: Props) {
   const status = useCapabilityStatus(capabilityId);
   const value = useLiveValue(capabilityId ?? "");
-  if (!capabilityId || !status?.state || look.style === "off") return null;
-  const state = status.state;
+  const shown = capabilityId ? lightToShow(status, kind, value) : null;
+  if (!shown || look.style === "off") return null;
+  if (shown === "unset") return <UnsetLight look={look} placement={placement} />;
+  const state = shown;
   const colour = statusColour(state, look);
   const blinkSx =
     look.blink && state === "alert"
       ? { animation: `${pulse} 1.4s ease-in-out infinite`, "@media (prefers-reduced-motion: reduce)": { animation: "none" } }
       : {};
-  const label = statusTooltip(status, value, unit);
+  const label = state === "stale" || !status ? "No recent reading" : statusTooltip(status, value, unit);
   const centred = placement === "in-tile" ? ({ position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)", zIndex: 2 } as const) : {};
 
   const common = { role: "img", "aria-label": label, "data-nx-status-light": state };
@@ -174,6 +179,68 @@ export function StatusLight({ capabilityId, unit, look, placement }: Props) {
 
   return (
     <Tooltip title={label} placement="top" arrow>
+      {node}
+    </Tooltip>
+  );
+}
+
+const UNSET_LABEL = "No limits set yet. Open Edit → Status light to set them.";
+const UNSET_LINE = "rgba(141, 151, 168, 0.75)";
+
+/**
+ * The empty "not set up" light: same shape and place as a real one, outline only, for a reading
+ * that could have a light but has no limits yet. It never blinks.
+ */
+function UnsetLight({ look, placement }: { look: StatusLook; placement: Props["placement"] }) {
+  const common = { role: "img", "aria-label": UNSET_LABEL, "data-nx-status-light": "unset" };
+  const centred = placement === "in-tile" ? ({ position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)", zIndex: 2 } as const) : {};
+  const outline = `1.5px solid ${UNSET_LINE}`;
+  let node;
+  if (look.style === "glow") {
+    return (
+      <Box
+        {...common}
+        sx={{ position: "absolute", inset: 0, borderRadius: "inherit", pointerEvents: "none", zIndex: 1, border: `1px dashed ${UNSET_LINE}` }}
+      />
+    );
+  } else if (look.style === "dots") {
+    node = (
+      <Box {...common} sx={{ display: "flex", gap: "6px", alignItems: "center", flex: "none", ...centred }}>
+        {[0, 1, 2].map((i) => (
+          <Box key={i} sx={{ width: 15, height: 15, borderRadius: "50%", boxSizing: "border-box", border: outline }} />
+        ))}
+      </Box>
+    );
+  } else if (look.style === "bar") {
+    const edge =
+      placement === "under-title"
+        ? ({ position: "absolute", left: 10, right: 10, bottom: 3 } as const)
+        : placement === "in-tile"
+          ? ({ position: "absolute", left: 12, right: 12, bottom: 9, zIndex: 2 } as const)
+          : placement === "gap-bar"
+            ? { mx: "10px", my: "-5px", flexShrink: 0 }
+            : { width: 46, flex: "none" };
+    node = (
+      <Box {...common} sx={{ height: placement === "gap-bar" ? 4 : 5, boxSizing: "border-box", borderRadius: "5px", border: `1px solid ${UNSET_LINE}`, ...edge }} />
+    );
+  } else {
+    node = (
+      <Box
+        {...common}
+        sx={{
+          width: placement === "inline" ? { xs: 32, sm: 46 } : 46,
+          height: 16,
+          boxSizing: "border-box",
+          borderRadius: "8px",
+          flex: "none",
+          border: outline,
+          ...centred,
+        }}
+      />
+    );
+  }
+  return (
+    <Tooltip title={UNSET_LABEL} placement="top" arrow>
       {node}
     </Tooltip>
   );

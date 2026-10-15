@@ -5,9 +5,9 @@ import { normalizeGrants, missingRequiredSettings } from "./service.js";
 import { parseDeviceDefs } from "./devices.js";
 import { clearPluginEvents, pushPluginEvent, waitForPluginEvents } from "./events.js";
 
-const practice = {
-  id: "practice",
-  name: "Practice plugin",
+const example = {
+  id: "example",
+  name: "Example plugin",
   version: "1.0.0",
   pluginApi: 1,
   permissions: { devices: "Adds a pretend sensor", notify: "Says hello" },
@@ -19,7 +19,7 @@ const practice = {
 };
 
 test("a complete manifest is accepted and main defaults to main.mjs", () => {
-  const result = validatePluginManifest(practice);
+  const result = validatePluginManifest(example);
   assert.equal(result.ok, true);
   if (result.ok) {
     assert.equal(result.manifest.main, "main.mjs");
@@ -29,26 +29,26 @@ test("a complete manifest is accepted and main defaults to main.mjs", () => {
 
 test("ids must be plain lowercase (they become folder and device names)", () => {
   for (const id of ["Practice", "a", "with_underscore", "../x", "nexternel.test"]) {
-    assert.equal(validatePluginManifest({ ...practice, id }).ok, false, id);
+    assert.equal(validatePluginManifest({ ...example, id }).ok, false, id);
   }
 });
 
 test("unknown permissions and permissions without a reason are refused", () => {
-  assert.equal(validatePluginManifest({ ...practice, permissions: { everything: "please" } }).ok, false);
-  assert.equal(validatePluginManifest({ ...practice, permissions: { read: "" } }).ok, false);
+  assert.equal(validatePluginManifest({ ...example, permissions: { everything: "please" } }).ok, false);
+  assert.equal(validatePluginManifest({ ...example, permissions: { read: "" } }).ok, false);
 });
 
 test("a main file outside the package is refused", () => {
-  assert.equal(validatePluginManifest({ ...practice, main: "../evil.mjs" }).ok, false);
-  assert.equal(validatePluginManifest({ ...practice, main: "/etc/passwd" }).ok, false);
+  assert.equal(validatePluginManifest({ ...example, main: "../evil.mjs" }).ok, false);
+  assert.equal(validatePluginManifest({ ...example, main: "/etc/passwd" }).ok, false);
 });
 
 test("secret settings cannot carry a default and selects need options", () => {
   assert.equal(
-    validatePluginManifest({ ...practice, settings: [{ key: "k", label: "K", type: "secret", default: "x" }] }).ok,
+    validatePluginManifest({ ...example, settings: [{ key: "k", label: "K", type: "secret", default: "x" }] }).ok,
     false
   );
-  assert.equal(validatePluginManifest({ ...practice, settings: [{ key: "s", label: "S", type: "select" }] }).ok, false);
+  assert.equal(validatePluginManifest({ ...example, settings: [{ key: "s", label: "S", type: "select" }] }).ok, false);
 });
 
 test("version comparison", () => {

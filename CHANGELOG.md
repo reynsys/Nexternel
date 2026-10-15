@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.94
+
+- **Every panel that shows a number now has a status light.** Readings without limits yet, such as power or gas, show an empty outline; hover over it and it tells you to open **Edit → Status light** to set limits. Readings that haven't reported since Nexternel started show grey. (Before, these panels showed nothing although the Edit menu said the light was on.)
+
 ## V5.2.93
 
 - **Status lights when adding a panel:** the **Add Panel** window now has a **Status light** section, so you choose how the light looks while creating the panel. Readings without limits yet (such as power or gas) show a **Set limits** button right there, so any reading can get a light.

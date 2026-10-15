@@ -32,27 +32,9 @@ import {
   type CapabilityStatus,
 } from "../../lib/dashboard-data-runtime";
 import { resolveStatusLook, statusColour, useStatusLightPrefs } from "./StatusLight";
+import { readingCanHaveLight } from "../../lib/status-light-show";
 
-/** Kinds of reading that are plain numbers, so limits make sense. */
-const NON_NUMERIC_KINDS = new Set([
-  "switch",
-  "binary_sensor",
-  "motion",
-  "door",
-  "lock",
-  "camera",
-  "alarm",
-  "weather",
-  "gps",
-  "enum",
-  "text",
-  "json",
-  "colour",
-]);
-
-export function readingCanHaveLight(kind: string): boolean {
-  return !NON_NUMERIC_KINDS.has(kind);
-}
+export { readingCanHaveLight };
 
 export type StatusReading = { id: string; name: string; unit: string | null; kind: string };
 
@@ -187,7 +169,9 @@ function ReadingLimitsRow({
   const settings = status?.settings ?? null;
   const text =
     !settings || !settings.enabled
-      ? "No limits yet: set them to show a light"
+      ? settings
+        ? "Light switched off for this reading"
+        : "No limits yet: its light is an empty outline until you set them"
       : limitsSummary(settings.limits, reading.unit) + (status?.custom ? "" : " (starting limits)");
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0 }}>
@@ -197,7 +181,9 @@ function ReadingLimitsRow({
           height: 10,
           borderRadius: "50%",
           flex: "none",
-          bgcolor: status?.state ? statusColour(status.state, colours) : "action.disabled",
+          boxSizing: "border-box",
+          bgcolor: status?.state ? statusColour(status.state, colours) : "transparent",
+          border: status?.state ? "none" : "1.5px solid rgba(141, 151, 168, 0.75)",
         }}
       />
       <Box sx={{ minWidth: 0, flex: 1 }}>

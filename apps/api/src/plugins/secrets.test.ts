@@ -28,7 +28,7 @@ async function zip(files: Record<string, string>): Promise<Buffer> {
   return z.generateAsync({ type: "nodebuffer" });
 }
 
-const manifest = JSON.stringify({ id: "practice", name: "Practice", version: "1.0.0", pluginApi: 1 });
+const manifest = JSON.stringify({ id: "example", name: "Example", version: "1.0.0", pluginApi: 1 });
 
 test("a package needs a manifest and its main file", async () => {
   assert.equal((await inspectPackage(await zip({ "manifest.json": manifest, "main.mjs": "export default () => {}" }))).ok, true);

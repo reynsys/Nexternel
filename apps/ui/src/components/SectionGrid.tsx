@@ -469,7 +469,7 @@ export function SectionGrid({
             const readingPlacement = lightCap ? lightPlacement(statusLook, "reading") : null;
             const lightAt = (placement: ReturnType<typeof lightPlacement>) =>
               placement && lightCap ? (
-                <StatusLight capabilityId={lightCap.id} unit={lightCap.unit} look={statusLook} placement={placement} />
+                <StatusLight capabilityId={lightCap.id} kind={lightCap.kind} unit={lightCap.unit} look={statusLook} placement={placement} />
               ) : null;
             return (
               <div
