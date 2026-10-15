@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { readPanelStatusLight, type PanelStatusLight } from "@nexternel/domain";
-import { StatusLightEditorSection } from "../../components/status-light/StatusLightFields";
+import { StatusLightEditorSection, statusLightConfig } from "../../components/status-light/StatusLightFields";
 
 import {
 
@@ -490,11 +490,8 @@ export function PanelWidgetEditor({
       },
     };
 
-    if (statusLight.style === "default" && statusLight.position === "default" && statusLight.blink === "default") {
-      delete nextConfig.statusLight;
-    } else {
-      nextConfig.statusLight = statusLight;
-    }
+    delete nextConfig.statusLight;
+    Object.assign(nextConfig, statusLightConfig(statusLight));
 
     if (isCharts) {
       nextConfig.chartRange = chartRange;

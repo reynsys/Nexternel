@@ -56,6 +56,13 @@ export function readingCanHaveLight(kind: string): boolean {
 
 export type StatusReading = { id: string; name: string; unit: string | null; kind: string };
 
+/** The panel's own light settings for its saved config; nothing when it follows the defaults. */
+export function statusLightConfig(value: PanelStatusLight): { statusLight?: PanelStatusLight } {
+  return value.style === "default" && value.position === "default" && value.blink === "default"
+    ? {}
+    : { statusLight: value };
+}
+
 const STYLE_LABELS = {
   pill: "Rounded rectangle",
   bar: "Bar",
@@ -180,7 +187,7 @@ function ReadingLimitsRow({
   const settings = status?.settings ?? null;
   const text =
     !settings || !settings.enabled
-      ? "No light"
+      ? "No limits yet: set them to show a light"
       : limitsSummary(settings.limits, reading.unit) + (status?.custom ? "" : " (starting limits)");
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0 }}>

@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.93
+
+- **Status lights when adding a panel:** the **Add Panel** window now has a **Status light** section, so you choose how the light looks while creating the panel. Readings without limits yet (such as power or gas) show a **Set limits** button right there, so any reading can get a light.
+
 ## V5.2.92
 
 - Panels such as **Weather**, **System information** and **Devices** now recover by themselves within seconds if the connection to the server drops for a moment (for example while Nexternel updates), instead of showing an error until their next refresh. The message they show meanwhile is in plain words and no longer cut off.

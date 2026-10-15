@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { readPanelStatusLight, type PanelStatusLight } from "@nexternel/domain";
-import { StatusLightEditorSection } from "../../components/status-light/StatusLightFields";
+import { StatusLightEditorSection, statusLightConfig } from "../../components/status-light/StatusLightFields";
 import {
   Box,
   Button,
@@ -255,9 +255,7 @@ export function EChartsWidgetEditor({
           min,
           max,
           optionOverride,
-          ...(statusLight.style === "default" && statusLight.position === "default" && statusLight.blink === "default"
-            ? {}
-            : { statusLight }),
+          ...statusLightConfig(statusLight),
         },
         titleIcon
       ),

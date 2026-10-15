@@ -53,7 +53,9 @@ import {
   isCorePanelCatalogType,
   panelUsesAreaScope,
   panelUsesCapabilityScope,
+  readPanelStatusLight,
   type PanelContentMode,
+  type PanelStatusLight,
 } from "@nexternel/domain";
 import {
   DEFAULT_SECTION_ICON,
@@ -68,6 +70,7 @@ import {
 import { SlotBindingFields } from "../components/SlotBindingFields";
 import { PanelCameraContentFields } from "../components/PanelCameraContentFields";
 import { PanelContentFields } from "../components/PanelContentFields";
+import { StatusLightEditorSection, statusLightConfig } from "../components/status-light/StatusLightFields";
 import { validateAddPanelReady } from "../lib/add-panel-validation";
 import { bindingsFromSlots } from "../lib/widget-bindings";
 import { suggestSlotBindings } from "../lib/slot-bindings";
@@ -168,6 +171,7 @@ function DashboardPageContent() {
   const [addPanelCatalog, setAddPanelCatalog] = useState<AddPanelDiscoveryItem[]>([]);
   const [addPanelSlotValues, setAddPanelSlotValues] = useState<Record<string, string>>({});
   const [addPanelTitle, setAddPanelTitle] = useState("");
+  const [addPanelStatusLight, setAddPanelStatusLight] = useState<PanelStatusLight>(() => readPanelStatusLight(null));
   const [addSectionId, setAddSectionId] = useState<string>("");
   const [iconPickerSectionId, setIconPickerSectionId] = useState<string | null>(null);
   const [iconPickerAnchor, setIconPickerAnchor] = useState<HTMLElement | null>(null);
@@ -187,6 +191,19 @@ function DashboardPageContent() {
   } | null>(null);
 
   const addPanelIsCore = isCorePanelCatalogType(addPanelType);
+  // The readings the new panel will show: picked ones (or all in scope when automatic), or a plugin/gauge's chosen readings.
+  const addPanelReadings = useMemo(() => {
+    const picked = addPanelIsCore
+      ? addPanelType === "panel.camera"
+        ? []
+        : addPanelContentMode === "manual"
+          ? addPanelScopeCapabilities.filter((c) => addPanelCapabilityIds.includes(c.id))
+          : addPanelScopeCapabilities
+      : Object.values(addPanelSlotValues)
+          .map((id) => capabilities.find((c) => c.id === id))
+          .filter((c): c is Capability => Boolean(c));
+    return picked.map((c) => ({ id: c.id, name: c.name, unit: c.unit, kind: c.kind }));
+  }, [addPanelIsCore, addPanelType, addPanelContentMode, addPanelScopeCapabilities, addPanelCapabilityIds, addPanelSlotValues, capabilities]);
   const addPanelShowsAreaScope = addPanelIsCore && panelUsesAreaScope(addPanelType);
   const addPanelShowsSystemFilter = addPanelIsCore && panelUsesCapabilityScope(addPanelType);
   const addPanelShowsCameraContent = addPanelIsCore && addPanelType === "panel.camera";
@@ -464,6 +481,7 @@ function DashboardPageContent() {
     setAddPanelScopeCapabilities([]);
     setAddPanelSlotValues({});
     setAddPanelTitle("");
+    setAddPanelStatusLight(readPanelStatusLight(null));
     setAddPanelOpen(true);
     void api.rooms().then((r) => {
       setAddPanelAreas(r.rooms.map((room) => ({ id: room.id, name: room.name })));
@@ -529,6 +547,7 @@ function DashboardPageContent() {
       if (addPanelType === GAUGE_WIDGET_TYPE) {
         config.presetId = defaultPresetForKind(boundCap?.kind);
       }
+      Object.assign(config, statusLightConfig(addPanelStatusLight));
 
       setSections((prev) =>
         prev.map((s) => {
@@ -599,6 +618,7 @@ function DashboardPageContent() {
                 ? { chartRange: "24h", chartPresetId: "line-basic" }
                 : {}),
               appearance: { layout: "card" },
+              ...statusLightConfig(addPanelStatusLight),
             },
           })
         );
@@ -1361,6 +1381,13 @@ function DashboardPageContent() {
                 />
               </Stack>
             )}
+
+            {/* Every panel that shows readings gets a status light; readings without limits can be given them here. */}
+            <StatusLightEditorSection
+              value={addPanelStatusLight}
+              onChange={setAddPanelStatusLight}
+              readings={addPanelReadings}
+            />
           </Stack>
         </DialogContent>
         <DialogActions>
