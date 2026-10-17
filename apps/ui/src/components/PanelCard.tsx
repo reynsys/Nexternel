@@ -23,6 +23,9 @@ import {
 } from "../lib/panel-heading";
 import { contentSurfaceSx } from "../skins/surfaceStyles";
 import { useGradientActive, useSolidContentPanels } from "../skins/useSurfaceStyles";
+import { useLook } from "../skins/looks/useLook";
+import { useOptionalSkin } from "../skins/SkinProvider";
+import { readPanelSwitchStyle, resolveSwitchStyle } from "../lib/switch-styles";
 import type { PanelActivity } from "../lib/dashboard-data-runtime";
 import { StatusLight, lightPlacement, resolveStatusLook, useStatusLightPrefs } from "./status-light/StatusLight";
 
@@ -163,6 +166,11 @@ export function PanelCard({
 }: PanelCardProps) {
   const gradientActive = useGradientActive();
   const solidContentPanels = useSolidContentPanels();
+  const { PanelFrame } = useLook();
+  const switchStyle = resolveSwitchStyle(
+    readPanelSwitchStyle(runtimeConfigToPanelRecord(w.config)),
+    useOptionalSkin()?.themePrefs.switchStyle
+  );
   const statusPrefs = useStatusLightPrefs();
   const heading = panelHeading(w, capabilities, sectionRoomId, cameras);
   const tileTitle = heading.title;
@@ -199,13 +207,15 @@ export function PanelCard({
         flexDirection: "column",
         overflow: "hidden",
         boxSizing: "border-box",
-        borderRadius: 2,
-        border: "1px solid",
-        borderColor: "divider",
+        // The Look's panel shape (skins/looks): corners, border and shadow.
+        borderRadius: "var(--nx-panel-radius, 20px)",
+        border: "var(--nx-panel-border, 1px solid rgba(255,255,255,0.12))",
+        ...(editMode ? {} : { boxShadow: "var(--nx-panel-shadow, none)" }),
         position: "relative",
         ...contentSurfaceSx(gradientActive, solidContentPanels),
       }}
     >
+      {PanelFrame ? <PanelFrame /> : null}
       {titlePlacement === "frame" ? lightAt("frame") : null}
       {toolbar}
       <Box
@@ -242,7 +252,7 @@ export function PanelCard({
             flexDirection: "column",
             overflow: "hidden",
             position: "relative",
-            borderRadius: 1.5,
+            borderRadius: "var(--nx-main-tile-radius, 15px)",
           }}
         >
           {lightAt(readingPlacement)}
@@ -254,6 +264,7 @@ export function PanelCard({
               titleTile: { ...heading, rangeNote },
               itemDisplay: readPanelItemDisplay(runtimeConfigToPanelRecord(w.config)),
               statusLook,
+              switchStyle,
             }}
           >
             <WidgetErrorBoundary widgetId={w.id} widgetType={w.type}>

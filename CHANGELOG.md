@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.99
+
+- **Switch styles.** Switches on your dashboards can now look 12 different ways: the classic toggle, a power button, a wall rocker, an ON / OFF pair, a tile that lights up, a lever, day & night, a cyber 0 / 1 block, a neon ring, turning gears, a 3D switch with a light, and a 3D big knob. Choose your starting style in **Settings → Appearance → Switch style**, and give any panel its own in its **Edit menu → Look**. The classic toggle stays the default.
+- **Looks.** **Settings → Appearance** now starts with a **Look** choice for the whole dashboard: **Standard** (clean, solid panels, as before) or **Glass** (frosted see-through panels over a colourful background). This replaces the old "Panels: frosted glass or solid" setting, and your dashboard keeps the look it had. Switches follow the Look you choose. More Looks will follow.
+
 ## V5.2.97
 
 - **Tidier Edit menus with a live preview.** Every panel's Edit menu now shows a preview of the panel at the top, which changes as you edit, with three tabs underneath: **Content** (what it shows), **Look** (title, icon, layout and style) and **Status light**. A tab only appears when the panel needs it.

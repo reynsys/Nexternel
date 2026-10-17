@@ -161,7 +161,7 @@ export function PanelItemChrome({
         p: "3px",
         border: "1px solid",
         borderColor: "divider",
-        borderRadius: "12px",
+        borderRadius: "var(--nx-mini-panel-radius, 12px)",
       }}
     >
       {titlePlacement === "frame" ? lightAt("frame") : null}

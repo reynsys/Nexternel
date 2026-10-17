@@ -13,6 +13,9 @@ import {
   type BackgroundEffectId,
   type EffectColour,
 } from "./effects/catalog";
+import { lookIdFromPrefs } from "../lib/look-choice";
+import { resolveLook } from "./looks/registry";
+import { DEFAULT_SWITCH_STYLE, normalizeSwitchStyle, type SwitchStyleId } from "../lib/switch-styles";
 
 export const THEME_PREFS_KEY = "nexternel.themePrefs";
 
@@ -24,14 +27,18 @@ export type ThemePrefs = {
   primary: string;
   /** Layout skin id (also kept in localStorage for offline boot) */
   skinId?: string;
+  /** The dashboard's Look (Standard, Glass, or an installed Look pack). See skins/looks. */
+  lookId?: string;
+  /** Starting switch style for panels that have not chosen their own. */
+  switchStyle?: SwitchStyleId;
   /**
    * Page gradient background id (`none` = solid theme background).
    * See gradientPalettes.ts
    */
   gradientId?: string;
   /**
-   * When a gradient is on: keep Cards / widgets / tables as solid light/dark
-   * paper (true), or frosted glass over the gradient (false).
+   * Solid light/dark panels (true) or frosted glass over the background (false).
+   * Follows the Look (withLook / normalizeThemePrefs); kept for older servers and backups.
    */
   solidContentPanels?: boolean;
   /** Animated background effect (`off` = none). See effects/catalog.ts */
@@ -123,8 +130,10 @@ export const DEFAULT_THEME_PREFS: ThemePrefs = {
   mode: "dark",
   primary: PRIMARY_SWATCHES[0]!.color,
   skinId: "mui-dashboard",
+  lookId: "standard",
+  switchStyle: DEFAULT_SWITCH_STYLE,
   gradientId: GRADIENT_NONE_ID,
-  solidContentPanels: false,
+  solidContentPanels: true,
   effectId: "off",
   effectAmount: 1,
   effectSpeed: 1,
@@ -180,6 +189,13 @@ export function normalizeThemePrefs(raw: unknown): ThemePrefs {
   const primaryRaw =
     typeof parsed.primary === "string" ? normalizeAccentHex(parsed.primary) : null;
 
+  const effectId = normalizeEffectId(parsed.effectId);
+  const lookId = lookIdFromPrefs({
+    lookId: parsed.lookId,
+    solidContentPanels: parsed.solidContentPanels,
+    backdrop: gradientId !== GRADIENT_NONE_ID || effectId !== "off",
+  });
+
   return {
     mode: parsed.mode === "light" ? "light" : "dark",
     primary: primaryRaw ?? DEFAULT_THEME_PREFS.primary,
@@ -187,14 +203,32 @@ export function normalizeThemePrefs(raw: unknown): ThemePrefs {
       typeof parsed.skinId === "string" && parsed.skinId.trim()
         ? parsed.skinId.trim()
         : DEFAULT_THEME_PREFS.skinId,
+    lookId,
+    switchStyle: normalizeSwitchStyle(parsed.switchStyle),
     gradientId,
-    solidContentPanels: Boolean(parsed.solidContentPanels),
-    effectId: normalizeEffectId(parsed.effectId),
+    solidContentPanels: !resolveLook(lookId).frosted,
+    effectId,
     effectAmount: normalizeEffectAmount(parsed.effectAmount),
     effectSpeed: normalizeEffectSpeed(parsed.effectSpeed),
     effectColour: normalizeEffectColour(parsed.effectColour),
     statusLight: normalizeStatusLightPrefs(parsed.statusLight),
     bell: normalizeBellPrefs(parsed.bell),
+  };
+}
+
+/**
+ * Choose a Look. A Look with a background of its own brings it along when the page has none,
+ * and panels turn frosted or solid with it.
+ */
+export function withLook(prefs: ThemePrefs, lookId: string): ThemePrefs {
+  const look = resolveLook(lookId);
+  const plain =
+    (!prefs.gradientId || prefs.gradientId === GRADIENT_NONE_ID) && (!prefs.effectId || prefs.effectId === "off");
+  return {
+    ...prefs,
+    lookId,
+    solidContentPanels: !look.frosted,
+    ...(plain && look.defaultBackground ? { gradientId: look.defaultBackground } : {}),
   };
 }
 
@@ -218,6 +252,8 @@ export function toAccountThemePrefs(prefs: ThemePrefs, skinId: string) {
     mode: prefs.mode,
     primary: prefs.primary,
     skinId: prefs.skinId ?? skinId,
+    lookId: prefs.lookId ?? "standard",
+    switchStyle: normalizeSwitchStyle(prefs.switchStyle),
     gradientId: prefs.gradientId ?? GRADIENT_NONE_ID,
     solidContentPanels: Boolean(prefs.solidContentPanels),
     effectId: normalizeEffectId(prefs.effectId),

@@ -12,6 +12,7 @@ apps/api/src/auth/permissions.ts
 apps/api/src/auth/plugin.ts
 apps/api/src/auth/rbac.ts
 apps/api/src/auth/roles.ts
+apps/api/src/auth/theme-prefs.test.ts
 apps/api/src/auth/theme-prefs.ts
 apps/api/src/auth/tokens.ts
 apps/api/src/backup/collect.ts
@@ -248,6 +249,9 @@ apps/ui/src/components/SegmentButtonNav.tsx
 apps/ui/src/components/SlotBindingFields.tsx
 apps/ui/src/components/status-light/StatusLightFields.tsx
 apps/ui/src/components/status-light/StatusLight.tsx
+apps/ui/src/components/switch-styles/SwitchStylePicker.tsx
+apps/ui/src/components/switch-styles/switch-styles.css
+apps/ui/src/components/switch-styles/SwitchStyleVisual.tsx
 apps/ui/src/components/UserAvatarField.tsx
 apps/ui/src/components/VisualizationSlot.tsx
 apps/ui/src/components/WidgetErrorBoundary.tsx
@@ -292,6 +296,8 @@ apps/ui/src/lib/group-by-area.ts
 apps/ui/src/lib/home-dashboard.ts
 apps/ui/src/lib/icons/catalog.ts
 apps/ui/src/lib/icons/ItemIcon.tsx
+apps/ui/src/lib/look-choice.test.ts
+apps/ui/src/lib/look-choice.ts
 apps/ui/src/lib/panel-appearance.ts
 apps/ui/src/lib/panel-cameras.test.ts
 apps/ui/src/lib/panel-cameras.ts
@@ -338,6 +344,8 @@ apps/ui/src/lib/permissions.ts
 apps/ui/src/lib/slot-bindings.ts
 apps/ui/src/lib/status-light-show.test.ts
 apps/ui/src/lib/status-light-show.ts
+apps/ui/src/lib/switch-styles.test.ts
+apps/ui/src/lib/switch-styles.ts
 apps/ui/src/lib/usePanelPoll.ts
 apps/ui/src/lib/user-display.ts
 apps/ui/src/lib/user-events.ts
@@ -475,6 +483,10 @@ apps/ui/src/skins/gradientPalettes.ts
 apps/ui/src/skins/local/.gitignore
 apps/ui/src/skins/local/.gitkeep
 apps/ui/src/skins/local/README.md
+apps/ui/src/skins/looks/builtin.ts
+apps/ui/src/skins/looks/registry.ts
+apps/ui/src/skins/looks/types.ts
+apps/ui/src/skins/looks/useLook.ts
 apps/ui/src/skins/metricColors.ts
 apps/ui/src/skins/nav.ts
 apps/ui/src/skins/registry.ts

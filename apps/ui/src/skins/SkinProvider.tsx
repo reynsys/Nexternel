@@ -143,7 +143,7 @@ export function SkinProvider({ children }: { children: ReactNode }) {
     <SkinContext.Provider value={value}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <AppearanceCssVars />
+        <AppearanceCssVars lookId={themePrefs.lookId} />
         <GlobalStyles
           styles={{
             html: {

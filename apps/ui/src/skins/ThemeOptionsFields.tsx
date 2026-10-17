@@ -33,7 +33,11 @@ import {
   type BellPrefs,
   type StatusLightPrefs,
   type ThemePrefs,
+  withLook,
 } from "./themePrefs";
+import { listLooks, resolveLook } from "./looks/registry";
+import { SwitchStylePicker } from "../components/switch-styles/SwitchStylePicker";
+import { normalizeSwitchStyle } from "../lib/switch-styles";
 import { isGradientActive } from "./surfaceStyles";
 import {
   BACKGROUND_EFFECTS,
@@ -153,6 +157,63 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
 
   return (
     <Stack spacing={3}>
+      <Section
+        title="Look"
+        hint={
+          resolveLook(themePrefs.lookId).frosted && !backdrop
+            ? "Glass panels show the background through them. Choose a background below."
+            : "How panels, tiles and switches are drawn."
+        }
+      >
+        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 1 }}>
+          {listLooks().map((look) => {
+            const selected = resolveLook(themePrefs.lookId).id === look.id;
+            return (
+              <ButtonBase
+                key={look.id}
+                onClick={() => onThemeChange(withLook(themePrefs, look.id))}
+                aria-pressed={selected}
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  display: "grid",
+                  gridTemplateColumns: "minmax(0, 1fr)",
+                  justifyItems: "start",
+                  alignContent: "start",
+                  textAlign: "left",
+                  gap: 0.25,
+                  px: 1.25,
+                  py: 1,
+                  borderRadius: 1.5,
+                  border: "1px solid",
+                  borderColor: selected ? "primary.main" : "divider",
+                  bgcolor: selected ? "action.selected" : "transparent",
+                }}
+              >
+                <Typography variant="body2" fontWeight={600}>
+                  {look.label}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {look.description}
+                </Typography>
+              </ButtonBase>
+            );
+          })}
+        </Box>
+      </Section>
+
+      <Section
+        title="Switch style"
+        hint="How switches look on your dashboards. A panel can choose its own in its Edit menu (Look tab)."
+      >
+        <SwitchStylePicker
+          value={normalizeSwitchStyle(themePrefs.switchStyle)}
+          onChange={(id) => set({ switchStyle: id })}
+        />
+      </Section>
+
+      <Divider />
+
       <Section title="Colour mode">
         <Stack direction="row" spacing={1}>
           {(["light", "dark"] as const).map((mode) => (
@@ -358,26 +419,6 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
             />
           </Stack>
         </Stack>
-      </Section>
-
-      <Section
-        title="Panels"
-        hint={
-          backdrop
-            ? "Frosted glass lets the background show through; solid panels are easiest to read."
-            : "Panels are solid on a plain background without an effect."
-        }
-      >
-        <Segmented
-          label="Panel style"
-          value={themePrefs.solidContentPanels ? "solid" : "glass"}
-          disabled={!backdrop}
-          options={[
-            { value: "glass", label: "Frosted glass" },
-            { value: "solid", label: "Solid" },
-          ]}
-          onChange={(v) => set({ solidContentPanels: v === "solid" })}
-        />
       </Section>
 
       <Divider />

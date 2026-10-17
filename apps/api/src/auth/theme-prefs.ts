@@ -4,6 +4,10 @@ export type ThemePrefsDto = {
   mode: "light" | "dark";
   primary: string;
   skinId: string;
+  /** The dashboard's Look (Standard, Glass or an installed Look pack). */
+  lookId?: string;
+  /** Starting switch style for panels (keep in sync with the UI's lib/switch-styles.ts). */
+  switchStyle?: string;
   gradientId?: string;
   solidContentPanels?: boolean;
   effectId?: string;
@@ -57,6 +61,8 @@ const DEFAULT: ThemePrefsDto = {
   mode: "dark",
   primary: "#1A73E8",
   skinId: "mui-dashboard",
+  lookId: "standard",
+  switchStyle: "toggle",
   gradientId: "none",
   solidContentPanels: false,
   effectId: "off",
@@ -154,6 +160,26 @@ export function defaultThemePrefs(): ThemePrefsDto {
   return { ...DEFAULT, statusLight: statusLightField(null), bell: bellField(null) };
 }
 
+/**
+ * Look ids are short lowercase names. A Look not installed on this server is still kept (the UI
+ * shows Standard instead). Prefs saved before Looks get one from the old panels setting:
+ * frosted panels over a background were the Glass Look (same rule as the UI's look-choice.ts).
+ */
+function lookField(o: Record<string, unknown>): string {
+  if (typeof o.lookId === "string" && /^[a-z0-9][a-z0-9-]{0,39}$/.test(o.lookId)) return o.lookId;
+  const backdrop =
+    normalizeGradientId(o.gradientId) !== "none" || (typeof o.effectId === "string" && EFFECT_IDS.has(o.effectId) && o.effectId !== "off");
+  return backdrop && !o.solidContentPanels ? "glass" : "standard";
+}
+
+const SWITCH_STYLES = new Set([
+  "toggle", "power", "rocker", "pair", "tile", "lever", "daynight", "cyber", "neon", "gears", "led", "bigknob",
+]);
+
+function switchStyleField(raw: unknown): string {
+  return typeof raw === "string" && SWITCH_STYLES.has(raw) ? raw : "toggle";
+}
+
 function normalizeGradientId(raw: unknown): string {
   if (typeof raw !== "string" || !raw.trim()) return "none";
   const id = raw.trim();
@@ -180,6 +206,8 @@ export function parseThemePrefsInput(
     mode,
     primary,
     skinId,
+    lookId: lookField(o),
+    switchStyle: switchStyleField(o.switchStyle),
     gradientId: normalizeGradientId(o.gradientId),
     solidContentPanels: Boolean(o.solidContentPanels),
     ...effectFields(o),
@@ -203,6 +231,8 @@ export function themePrefsFromDb(raw: unknown): ThemePrefsDto {
       typeof o.skinId === "string" && o.skinId.trim()
         ? o.skinId.trim()
         : DEFAULT.skinId,
+    lookId: lookField(o),
+    switchStyle: switchStyleField(o.switchStyle),
     gradientId: normalizeGradientId(o.gradientId),
     solidContentPanels: Boolean(o.solidContentPanels),
     ...effectFields(o),

@@ -2,6 +2,7 @@ import { createContext, useContext } from "react";
 import type { PanelHeading } from "./panel-heading";
 import { DEFAULT_ITEM_DISPLAY, type PanelItemDisplay } from "./panel-item-display";
 import type { StatusLook } from "../components/status-light/StatusLight";
+import type { SwitchStyleId } from "./switch-styles";
 
 export type PanelTitleTileSnapshot = PanelHeading & {
   rangeNote: string | null;
@@ -26,6 +27,8 @@ export type DashboardTileChrome = {
   itemDisplay: PanelItemDisplay;
   /** How this panel shows status lights (absent outside dashboards = no lights). */
   statusLook?: StatusLook | null;
+  /** How this panel draws its switches (absent = the classic toggle). */
+  switchStyle?: SwitchStyleId;
 };
 
 const defaultChrome: DashboardTileChrome = {

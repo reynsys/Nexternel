@@ -111,14 +111,14 @@ export function nestedContentPanelSx(
     return {
       border: "1px solid",
       borderColor: "divider",
-      borderRadius: 2,
+      borderRadius: "var(--nx-tile-radius, 20px)",
       ...contentPanelStyles(theme, { gradientActive, solidContentPanels }),
     };
   }
   return {
     border: "1px solid",
     borderColor: "divider",
-    borderRadius: 2,
+    borderRadius: "var(--nx-tile-radius, 20px)",
     bgcolor: alpha(
       theme.palette.text.primary,
       theme.palette.mode === "dark" ? 0.06 : 0.04

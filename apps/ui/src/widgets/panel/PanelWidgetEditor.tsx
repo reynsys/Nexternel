@@ -85,6 +85,9 @@ import {
 import { panelItemLabel } from "../../lib/panel-heading";
 import { readTitleIcon, writeTitleIcon } from "../../lib/panel-title-icon";
 import { PanelTitleFields, type AutomaticTitle } from "../../components/PanelTitleFields";
+import { SWITCH_STYLES, readPanelSwitchStyle, normalizeSwitchStyle, type SwitchStyleId } from "../../lib/switch-styles";
+import { isControllableResolvedCapability } from "../../panels/panel-capabilities";
+import { useOptionalSkin } from "../../skins/SkinProvider";
 
 
 
@@ -207,6 +210,8 @@ export function PanelWidgetEditor({
   );
 
   const [itemStyle, setItemStyle] = useState<PanelItemStyle>(readPanelItemStyle(widget.config));
+  const [switchStyle, setSwitchStyle] = useState<SwitchStyleId | "default">(readPanelSwitchStyle(widget.config));
+  const personSwitchStyle = normalizeSwitchStyle(useOptionalSkin()?.themePrefs.switchStyle);
   const [itemDisplay, setItemDisplay] = useState<PanelItemDisplay>(readPanelItemDisplay(widget.config));
   const [titleIcon, setTitleIcon] = useState(readTitleIcon(widget.config));
   const [statusLight, setStatusLight] = useState<PanelStatusLight>(readPanelStatusLight(widget.config));
@@ -491,6 +496,7 @@ export function PanelWidgetEditor({
         layout: appearanceLayout,
         direction: itemDirection,
         itemStyle,
+        switchStyle: switchStyle === "default" ? undefined : switchStyle,
       },
     };
 
@@ -537,6 +543,11 @@ export function PanelWidgetEditor({
     ? scopeCapabilities.filter((c) => capabilityIds.includes(c.id))
     : scopeCapabilities
   ).map((c) => ({ id: c.id, name: c.name, unit: c.unit, kind: c.kind }));
+  const hasSwitches =
+    showArrange &&
+    (capabilityIds.length ? scopeCapabilities.filter((c) => capabilityIds.includes(c.id)) : scopeCapabilities).some(
+      isControllableResolvedCapability
+    );
   const hasLightTab = showSystemFilter && !isCamera && lightReadings.some((r) => readingCanHaveLight(r.kind));
   const kindLabel =
     panelKind === "panel.status"
@@ -730,6 +741,29 @@ export function PanelWidgetEditor({
 
           )}
 
+          {hasSwitches && (
+            <FormControl fullWidth size="small">
+              <InputLabel id="panel-switch-style">Switch style</InputLabel>
+              <Select
+                labelId="panel-switch-style"
+                label="Switch style"
+                value={switchStyle}
+                onChange={(e) => setSwitchStyle(e.target.value as SwitchStyleId | "default")}
+              >
+                <MenuItem value="default">
+                  My starting style ({SWITCH_STYLES.find((s) => s.id === personSwitchStyle)?.label})
+                </MenuItem>
+                {SWITCH_STYLES.map((s) => (
+                  <MenuItem key={s.id} value={s.id}>
+                    {s.label}
+                  </MenuItem>
+                ))}
+              </Select>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                How this panel's switches look. The starting style is set in Settings → Appearance.
+              </Typography>
+            </FormControl>
+          )}
           {showArrange && (
             <FormControl fullWidth size="small">
               <InputLabel id="panel-arrange">Arrange</InputLabel>

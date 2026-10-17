@@ -270,9 +270,13 @@ export type UserThemePrefs = {
   mode: "light" | "dark";
   primary: string;
   skinId: string;
+  /** The dashboard's Look (Standard, Glass or an installed Look pack) */
+  lookId?: string;
+  /** Starting switch style (lib/switch-styles.ts) */
+  switchStyle?: string;
   /** Page gradient id, or `"none"` for solid background */
   gradientId?: string;
-  /** Keep cards/panels as solid light/dark when a gradient is on */
+  /** Solid panels (true) or frosted over the background; follows the Look */
   solidContentPanels?: boolean;
   /** Animated background effect (Settings → Appearance) */
   effectId?: string;
