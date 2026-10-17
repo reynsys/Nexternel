@@ -2,6 +2,9 @@ apps/api/Dockerfile
 apps/api/.dockerignore
 apps/api/openapi/openapi.yaml
 apps/api/package.json
+apps/api/src/addons/licence.test.ts
+apps/api/src/addons/licence.ts
+apps/api/src/addons/service.ts
 apps/api/src/auth/avatar.ts
 apps/api/src/auth/ensure-admin.ts
 apps/api/src/auth/ensure-roles-schema.ts
@@ -144,6 +147,7 @@ apps/api/src/plugins/secrets.test.ts
 apps/api/src/plugins/secrets.ts
 apps/api/src/plugins/service.ts
 apps/api/src/plugins/validate.ts
+apps/api/src/routes/addons.ts
 apps/api/src/routes/auth.ts
 apps/api/src/routes/cameras.ts
 apps/api/src/routes/capabilities.ts
@@ -376,6 +380,7 @@ apps/ui/src/pages/admin/sections/BackupRestoreSection.tsx
 apps/ui/src/pages/admin/sections/BrandLogoSection.tsx
 apps/ui/src/pages/admin/sections/DeviceFilesPackCard.tsx
 apps/ui/src/pages/admin/sections/ProfileSection.tsx
+apps/ui/src/pages/admin/settings/AddonsSettingsPage.tsx
 apps/ui/src/pages/admin/settings/AppearanceSettingsPage.tsx
 apps/ui/src/pages/admin/settings/BackupSettingsPage.tsx
 apps/ui/src/pages/admin/settings/DiagnosticReportCard.tsx
@@ -483,6 +488,7 @@ apps/ui/src/skins/gradientPalettes.ts
 apps/ui/src/skins/local/.gitignore
 apps/ui/src/skins/local/.gitkeep
 apps/ui/src/skins/local/README.md
+apps/ui/src/skins/looks/addon-loader.ts
 apps/ui/src/skins/looks/builtin.ts
 apps/ui/src/skins/looks/registry.ts
 apps/ui/src/skins/looks/types.ts

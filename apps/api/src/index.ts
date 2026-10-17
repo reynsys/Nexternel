@@ -42,6 +42,8 @@ import { weatherRoutes } from "./routes/weather.js";
 import { shellyRoutes } from "./routes/shelly.js";
 import { octopusRoutes } from "./routes/octopus.js";
 import { pluginsRoutes } from "./routes/plugins.js";
+import { addonsRoutes } from "./routes/addons.js";
+import { ensureAddonSchema, startAddonChecks } from "./addons/service.js";
 import { ensurePluginSchema } from "./plugins/ensure-schema.js";
 import { pluginDoorwayRoutes } from "./plugins/doorway.js";
 import { pluginHostRoutes } from "./plugins/host-routes.js";
@@ -103,6 +105,7 @@ await app.register(async (api) => {
   await api.register(rolesRoutes);
   await api.register(systemRoutes);
   await api.register(pluginsRoutes);
+  await api.register(addonsRoutes);
   await api.register(pluginDoorwayRoutes);
   await api.register(pluginHostRoutes);
   await api.register(pluginPanelRoutes);
@@ -137,6 +140,7 @@ try {
   app.log.info(v4Domain, "V4 domain schema ensured");
   await ensureDashboardSchema();
   await ensurePluginSchema();
+  await ensureAddonSchema();
   try {
     await ensureHostKey();
   } catch (err) {
@@ -292,6 +296,7 @@ try {
   const { startOctopusPoller } = await import("./octopus/poll.js");
   startOctopusPoller();
   startUpdateChecks();
+  startAddonChecks();
   startBackupScheduler(app.log);
   app.log.info("octopus poller started");
 

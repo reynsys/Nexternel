@@ -6,6 +6,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 import { ThemeProvider, CssBaseline, GlobalStyles } from "@mui/material";
@@ -24,6 +25,8 @@ import {
 } from "./themePrefs";
 import { AppearanceCssVars } from "./AppearanceCssVars";
 import { BackgroundEffects } from "./effects/BackgroundEffects";
+import { looksVersion, resolveLook, subscribeLooks } from "./looks/registry";
+import { loadAddons } from "./looks/addon-loader";
 
 type SkinContextValue = {
   skin: UiSkin;
@@ -33,6 +36,8 @@ type SkinContextValue = {
   setThemePrefs: (prefs: ThemePrefs | ((prev: ThemePrefs) => ThemePrefs)) => void;
   /** Apply prefs from the signed-in user account (login / me). */
   applyAccountPrefs: (prefs: UserThemePrefs | null | undefined) => void;
+  /** Changes when an add-on adds a Look, so pickers and panels re-draw. */
+  looksVersion: number;
 };
 
 const SkinContext = createContext<SkinContextValue | null>(null);
@@ -42,9 +47,17 @@ export function SkinProvider({ children }: { children: ReactNode }) {
   const [themePrefs, setThemePrefsState] = useState<ThemePrefs>(() => getThemePrefs());
   const skins = useMemo(() => listSkins(), []);
   const skin = useMemo(() => getSkin(skinId), [skinId]);
+  const lookVer = useSyncExternalStore(subscribeLooks, looksVersion, looksVersion);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- lookVer: a Look from an add-on may arrive later
+  const look = useMemo(() => resolveLook(themePrefs.lookId), [themePrefs.lookId, lookVer]);
+  // A Look that only works in one colour mode (HUD) shows in that mode; the saved choice is kept.
+  const shownPrefs = useMemo(
+    () => (look.forceMode && look.forceMode !== themePrefs.mode ? { ...themePrefs, mode: look.forceMode } : themePrefs),
+    [look, themePrefs]
+  );
   const theme = useMemo(
-    () => skin.createTheme(themePrefs),
-    [skin, themePrefs]
+    () => skin.createTheme(shownPrefs),
+    [skin, shownPrefs]
   );
   const persistServerRef = useRef(true);
   const hydratedRef = useRef(false);
@@ -74,6 +87,7 @@ export function SkinProvider({ children }: { children: ReactNode }) {
     queueMicrotask(() => {
       persistServerRef.current = true;
     });
+    void loadAddons();
   }, []);
 
   useEffect(() => {
@@ -118,13 +132,18 @@ export function SkinProvider({ children }: { children: ReactNode }) {
     [pushAccountPrefs, skinId]
   );
 
+  // With a plain background, a Look may bring its own (e.g. the HUD's grid).
+  const lookBackground = useMemo(
+    () => (!gradientCss(shownPrefs.gradientId) && look.background ? look.background(shownPrefs.mode) : null),
+    [look, shownPrefs.gradientId, shownPrefs.mode]
+  );
   const pageGradient = useMemo(
-    () => gradientCss(themePrefs.gradientId, themePrefs.mode),
-    [themePrefs.gradientId, themePrefs.mode]
+    () => gradientCss(shownPrefs.gradientId, shownPrefs.mode) ?? lookBackground?.image ?? null,
+    [shownPrefs.gradientId, shownPrefs.mode, lookBackground]
   );
   const pageBaseColour = useMemo(
-    () => gradientBaseColour(themePrefs.gradientId, themePrefs.mode),
-    [themePrefs.gradientId, themePrefs.mode]
+    () => gradientBaseColour(shownPrefs.gradientId, shownPrefs.mode) ?? lookBackground?.colour ?? null,
+    [shownPrefs.gradientId, shownPrefs.mode, lookBackground]
   );
 
   const value = useMemo(
@@ -135,15 +154,16 @@ export function SkinProvider({ children }: { children: ReactNode }) {
       themePrefs,
       setThemePrefs,
       applyAccountPrefs,
+      looksVersion: lookVer,
     }),
-    [skin, skins, setSkinId, themePrefs, setThemePrefs, applyAccountPrefs]
+    [skin, skins, setSkinId, themePrefs, setThemePrefs, applyAccountPrefs, lookVer]
   );
 
   return (
     <SkinContext.Provider value={value}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <AppearanceCssVars lookId={themePrefs.lookId} />
+        <AppearanceCssVars lookId={themePrefs.lookId} looksVersion={lookVer} />
         <GlobalStyles
           styles={{
             html: {
@@ -180,7 +200,11 @@ export function SkinProvider({ children }: { children: ReactNode }) {
           <div
             aria-hidden="true"
             className="nx-page-layer"
-            style={{ zIndex: -2, backgroundImage: pageGradient, backgroundSize: "100% 100%" }}
+            style={{
+              zIndex: -2,
+              backgroundImage: pageGradient,
+              backgroundSize: gradientCss(shownPrefs.gradientId) ? "100% 100%" : (lookBackground?.size ?? "100% 100%"),
+            }}
           />
         ) : null}
         <BackgroundEffects prefs={themePrefs} />

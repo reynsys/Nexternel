@@ -5,8 +5,8 @@ import type { UiLook } from "./types";
 type LookModule = { default?: UiLook; look?: UiLook };
 
 /**
- * Look packs that are not part of the public release live in skins/local/looks/<id>/look.ts
- * (skins/local is never exported to GitHub, see skins/local/README.md).
+ * Looks: the built-in ones, private packs built into this copy (skins/local/looks/<id>/look.ts,
+ * never exported to GitHub) and paid add-ons loaded while Nexternel runs (addon-loader.ts).
  */
 function loadLocalLooks(): UiLook[] {
   const mods = import.meta.glob<LookModule>("../local/looks/*/look.ts", { eager: true });
@@ -23,7 +23,30 @@ for (const look of [...BUILTIN_LOOKS, ...loadLocalLooks()]) {
   if (!byId.has(look.id)) byId.set(look.id, look);
 }
 
-/** Every Look installed on this server, Standard first. */
+let version = 0;
+const listeners = new Set<() => void>();
+
+/** Add a Look (from an add-on). A built-in Look's id cannot be taken. */
+export function registerLook(look: UiLook): boolean {
+  if (!look || !isLookId(look.id) || typeof look.tokens !== "function") return false;
+  if (BUILTIN_LOOKS.some((b) => b.id === look.id)) return false;
+  byId.set(look.id, look);
+  version += 1;
+  listeners.forEach((l) => l());
+  return true;
+}
+
+/** For useSyncExternalStore: re-draw when an add-on adds a Look. */
+export function subscribeLooks(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+export function looksVersion(): number {
+  return version;
+}
+
+/** Every Look available here, Standard first. */
 export function listLooks(): UiLook[] {
   return Array.from(byId.values());
 }

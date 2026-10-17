@@ -2,6 +2,14 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.102
+
+- Groundwork for add-on Looks: a Look can now bring its own background, fonts and panel frames. Nothing changes on your dashboards.
+
+## V5.2.101
+
+- **Add-ons (coming soon):** a new **Settings → Add-ons** page where you will enter a licence key from the Nexternel shop to install extra Looks and features. The shop is not open yet.
+
 ## V5.2.100
 
 - **Switch styles per panel, like gauges:** open a panel's **Edit menu → Look → Switch style** and tap the picture you want. In a panel with several switches, each switch can have its own style: open its options in the **Content** tab. The style choice in Settings → Appearance is gone.

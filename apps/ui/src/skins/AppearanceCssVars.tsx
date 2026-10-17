@@ -9,9 +9,10 @@ import { resolveLook } from "./looks/registry";
  * importing MUI (clock, future plugins, SVG, canvas). The Look's shape tokens are here too
  * (--nx-panel-radius and friends), and its id is on <html data-nx-look>.
  */
-export function AppearanceCssVars({ lookId }: { lookId?: string }) {
+export function AppearanceCssVars({ lookId, looksVersion = 0 }: { lookId?: string; looksVersion?: number }) {
   const theme = useTheme();
-  const look = resolveLook(lookId);
+  // looksVersion: a Look from an add-on may arrive after the first draw.
+  const look = useMemo(() => resolveLook(lookId), [lookId, looksVersion]);
   const vars = useMemo(() => {
     const accent = theme.palette.primary.main;
     const metricValue = metricValueColorFromTheme(theme);
@@ -43,12 +44,32 @@ export function AppearanceCssVars({ lookId }: { lookId?: string }) {
       "--nx-chip": t.chip,
       "--nx-glow": t.glow,
       "--nx-text-glow": t.textGlow,
+      ...(t.panelFill ? { "--nx-panel-fill": t.panelFill } : {}),
+      ...(t.tileFill ? { "--nx-tile-fill": t.tileFill } : {}),
+      ...(t.tileBorder ? { "--nx-tile-border": t.tileBorder } : {}),
+      ...(t.tileShadow ? { "--nx-tile-shadow": t.tileShadow } : {}),
     } as Record<string, string>;
   }, [theme, look]);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-nx-look", look.id);
   }, [look.id]);
+
+  // The Look's own CSS (fonts, frames, per-Look switch details) in one <style>, replaced on change.
+  useEffect(() => {
+    const id = "nx-look-css";
+    let el = document.getElementById(id) as HTMLStyleElement | null;
+    if (!look.css) {
+      el?.remove();
+      return;
+    }
+    if (!el) {
+      el = document.createElement("style");
+      el.id = id;
+      document.head.appendChild(el);
+    }
+    el.textContent = look.css;
+  }, [look.css]);
 
   return <GlobalStyles styles={{ ":root": vars }} />;
 }

@@ -1323,6 +1323,15 @@ export const api = {
     }),
 
   plugins: () => apiFetch<PluginsResponse>("/api/v1/plugins"),
+  addons: () => apiFetch<AddonsResponse>("/api/v1/addons"),
+  installAddon: (key: string) =>
+    apiFetch<{ addons: AddonInfo[] }>("/api/v1/addons/install", { method: "POST", body: JSON.stringify({ key }) }),
+  checkAddons: () => apiFetch<{ addons: AddonInfo[] }>("/api/v1/addons/check", { method: "POST", body: "{}" }),
+  removeAddon: (id: string) =>
+    apiFetch<{ addons: AddonInfo[] }>(`/api/v1/addons/${encodeURIComponent(id)}`, { method: "DELETE" }),
+  activeAddons: () => apiFetch<{ addons: { id: string; kind: string; version: string; sha: string }[] }>("/api/v1/addons/active"),
+  /** A pack's code (only while its licence is valid here). */
+  addonCode: async (id: string) => (await apiDownload(`/api/v1/addons/${encodeURIComponent(id)}/code`, "addon.js")).blob,
 
   pluginCatalog: (refresh = false) =>
     apiFetch<{ plugins: PluginCatalogEntry[] }>(`/api/v1/plugins/catalog${refresh ? "?refresh=1" : ""}`),
@@ -2521,3 +2530,21 @@ export type DashboardDetail = DashboardSummary & {
   ownerUserId: string | null;
   createdAt: string;
 };
+
+/** A paid add-on installed on this server (Settings → Add-ons). */
+export type AddonInfo = {
+  id: string;
+  name: string;
+  kind: string;
+  version: string;
+  description: string | null;
+  licenceId: string;
+  holder: string | null;
+  status: "active" | "expired" | "revoked" | "broken";
+  message: string | null;
+  validUntil: string | null;
+  installedAt: string;
+  checkedAt: string | null;
+};
+
+export type AddonsResponse = { available: boolean; serverId: string; addons: AddonInfo[] };

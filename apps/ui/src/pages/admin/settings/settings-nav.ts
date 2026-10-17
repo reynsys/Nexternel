@@ -8,6 +8,7 @@ export const SETTINGS_TABS: {
   { label: "Appearance", segment: "appearance", permission: "viewSystem" },
   { label: "System", segment: "system", permission: "viewSystem" },
   { label: "Plugins", segment: "plugins", permission: "viewSystem" },
+  { label: "Add-ons", segment: "addons", permission: "manageUsers" },
   { label: "Backup & Restore", segment: "backup", permission: "manageUsers" },
 ];
 

@@ -1,6 +1,7 @@
 import { alpha, type Theme } from "@mui/material/styles";
 import { gradientCss } from "./gradientPalettes";
 import type { ThemePrefs } from "./themePrefs";
+import { resolveLook } from "./looks/registry";
 
 /*
  * Frosted glass blurs whatever is behind it. Over a moving background effect that blur must be
@@ -14,8 +15,13 @@ const GLASS_TINT = "linear-gradient(var(--nx-glass-tint, transparent), var(--nx-
  * True when the page has a backdrop to show through — a gradient or soft-glow background, or a
  * background effect. Chrome then turns transparent and panels frosted (unless solid is chosen).
  */
-export function isGradientActive(prefs: Pick<ThemePrefs, "gradientId" | "effectId">): boolean {
-  return Boolean(gradientCss(prefs.gradientId)) || (Boolean(prefs.effectId) && prefs.effectId !== "off");
+export function isGradientActive(prefs: Pick<ThemePrefs, "gradientId" | "effectId" | "lookId">): boolean {
+  return (
+    Boolean(gradientCss(prefs.gradientId)) ||
+    (Boolean(prefs.effectId) && prefs.effectId !== "off") ||
+    // A Look with its own background (3D, HUD) counts as one: menus turn clear over it.
+    Boolean(resolveLook(prefs.lookId).background)
+  );
 }
 
 /**
@@ -116,13 +122,13 @@ export function nestedContentPanelSx(
     };
   }
   return {
-    border: "1px solid",
-    borderColor: "divider",
+    border: `var(--nx-tile-border, 1px solid ${theme.palette.divider})`,
     borderRadius: "var(--nx-tile-radius, 20px)",
-    bgcolor: alpha(
+    boxShadow: "var(--nx-tile-shadow, none)",
+    bgcolor: `var(--nx-tile-fill, ${alpha(
       theme.palette.text.primary,
       theme.palette.mode === "dark" ? 0.06 : 0.04
-    ),
+    )})`,
   };
 }
 

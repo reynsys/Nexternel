@@ -43,6 +43,12 @@ export type LookTokens = {
   glow: string;
   /** Glow on text that is on (a text-shadow; "none" for none). */
   textGlow: string;
+  /** Optional: a panel's own fill (else the theme's paper, or frosted glass). */
+  panelFill?: string;
+  /** Optional: the inside of tiles (fill, border, shadow). */
+  tileFill?: string;
+  tileBorder?: string;
+  tileShadow?: string;
 };
 
 export type UiLook = {
@@ -57,4 +63,16 @@ export type UiLook = {
   tokens: (theme: Theme) => LookTokens;
   /** Decoration drawn behind each panel's content, sized to the panel (e.g. HUD frames). */
   PanelFrame?: ComponentType;
+  /** The page background this Look brings, used while Appearance → Background is Plain. */
+  background?: (mode: "light" | "dark") => {
+    colour: string;
+    /** CSS background-image layers. */
+    image?: string;
+    /** background-size for each layer (e.g. "100% 100%, 28px 28px"). */
+    size?: string;
+  };
+  /** Extra CSS while this Look is chosen (may start with @import for fonts). */
+  css?: string;
+  /** A Look that only works in one colour mode (e.g. HUD is always dark). */
+  forceMode?: "light" | "dark";
 };

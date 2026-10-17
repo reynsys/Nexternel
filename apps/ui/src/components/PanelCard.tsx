@@ -209,12 +209,15 @@ export function PanelCard({
         ...(editMode ? {} : { boxShadow: "var(--nx-panel-shadow, none)" }),
         position: "relative",
         ...contentSurfaceSx(gradientActive, solidContentPanels),
+        // A Look may give panels their own fill (not over frosted glass).
+        ...(gradientActive && !solidContentPanels ? {} : { backgroundColor: "var(--nx-panel-fill, var(--nx-surface-paper))" }),
       }}
     >
       {PanelFrame ? <PanelFrame /> : null}
       {titlePlacement === "frame" ? lightAt("frame") : null}
       {toolbar}
       <Box
+        data-nx-panel-body
         sx={{
           flex: 1,
           minHeight: 0,
@@ -225,6 +228,9 @@ export function PanelCard({
           p: "4px",
           gap: showTitleTile ? "6px" : 0,
           overflow: "hidden",
+          // Above the Look's panel frame.
+          position: "relative",
+          zIndex: 1,
         }}
       >
         {showTitleTile ? (

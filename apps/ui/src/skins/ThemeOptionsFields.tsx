@@ -199,7 +199,14 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
 
       <Divider />
 
-      <Section title="Colour mode">
+      <Section
+        title="Colour mode"
+        hint={
+          resolveLook(themePrefs.lookId).forceMode
+            ? `${resolveLook(themePrefs.lookId).label} is always ${resolveLook(themePrefs.lookId).forceMode}. Your choice comes back with other Looks.`
+            : undefined
+        }
+      >
         <Stack direction="row" spacing={1}>
           {(["light", "dark"] as const).map((mode) => (
             <Button

@@ -105,6 +105,9 @@ services:
       BACKUP_JOBS_DIR: /backup-jobs
       PLUGINS_DIR: /plugins
       PLUGIN_CATALOG_URL: ${PLUGIN_CATALOG_URL:-}
+      # Paid add-ons: only for testing with a practice licence server (empty = the Nexternel shop)
+      ADDON_LICENCE_URL: ${ADDON_LICENCE_URL:-}
+      ADDON_PUBLIC_KEY: ${ADDON_PUBLIC_KEY:-}
       UPDATE_FEED_URL: ${UPDATE_FEED_URL:-}
       HTTPS_PORT: ${HTTPS_PORT:-443}
       LOCAL_NAME: ${LOCAL_NAME:-nexternel}

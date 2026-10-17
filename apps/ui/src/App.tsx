@@ -11,6 +11,7 @@ import { SettingsIndexRedirect } from "./pages/admin/settings/SettingsIndexRedir
 import { AppearanceSettingsPage } from "./pages/admin/settings/AppearanceSettingsPage";
 import { SystemStatusPage } from "./pages/admin/settings/SystemStatusPage";
 import { PluginsSettingsPage } from "./pages/admin/settings/PluginsSettingsPage";
+import { AddonsSettingsPage } from "./pages/admin/settings/AddonsSettingsPage";
 import { BackupSettingsPage } from "./pages/admin/settings/BackupSettingsPage";
 import { UsersPage } from "./pages/admin/UsersPage";
 import { RolesPage } from "./pages/admin/RolesPage";
@@ -229,6 +230,14 @@ export function App() {
             element={
               <RequirePermission permission="viewSystem">
                 <PluginsSettingsPage />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="addons"
+            element={
+              <RequirePermission permission="manageUsers">
+                <AddonsSettingsPage />
               </RequirePermission>
             }
           />
