@@ -33,6 +33,9 @@ export const panelTitleNameSx = {
   lineHeight: "17px",
   color: "text.primary",
   margin: 0,
+  // Panel titles are headings: capitals and spacing as the Look's headings.
+  textTransform: "var(--nx-heading-case, none)",
+  letterSpacing: "var(--nx-heading-spacing, normal)",
 } as const;
 
 /** Area line in the panel title tile only. */
@@ -44,6 +47,8 @@ export const panelTitleAreaSx = {
   fontWeight: 400,
   color: "text.secondary",
   margin: 0,
+  textTransform: "var(--nx-heading-case, none)",
+  letterSpacing: "var(--nx-heading-spacing, normal)",
 } as const;
 
 /** Chart history range on the right of the area line — not full width (avoids left-aligned range). */

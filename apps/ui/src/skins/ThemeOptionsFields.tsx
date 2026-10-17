@@ -45,7 +45,7 @@ import {
 } from "./effects/catalog";
 import { useReducedMotion } from "./effects/BackgroundEffects";
 import type { UiSkin } from "./types";
-import { choiceSx } from "./surfaceStyles";
+import { choiceSx, insetSx } from "./surfaceStyles";
 
 type Props = {
   themePrefs: ThemePrefs;
@@ -264,14 +264,14 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
                   }}
                 >
                   <Box
-                    sx={{
-                      width: "100%",
-                      height: 40,
-                      borderRadius: 1,
-                      backgroundImage: gradientCss(g.id, g.glow?.light ? "light" : themePrefs.mode) ?? undefined,
-                      border: "1px solid",
-                      borderColor: "divider",
-                    }}
+                    sx={[
+                      insetSx(),
+                      {
+                        width: "100%",
+                        height: 40,
+                        backgroundImage: gradientCss(g.id, g.glow?.light ? "light" : themePrefs.mode) ?? undefined,
+                      },
+                    ]}
                   />
                   <Typography
                     variant="caption"

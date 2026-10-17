@@ -52,6 +52,7 @@ import {
   devicesPanelChromeSx,
   devicesPanelHeaderSx,
 } from "./devices-panel-styles";
+import { insetSx } from "../../../skins/surfaceStyles";
 
 type TabKey = "overview" | "capabilities" | "configuration" | "advanced";
 
@@ -364,14 +365,7 @@ function CapabilitiesTab({
   actions: DeviceDetailActions;
 }) {
   return (
-    <TableContainer
-      sx={{
-        border: "1px solid",
-        borderColor: "divider",
-        borderRadius: 1.5,
-        overflow: "hidden",
-      }}
-    >
+    <TableContainer sx={[{ overflow: "hidden" }, insetSx()]}>
       <Table size="small">
         <TableHead>
           <TableRow>

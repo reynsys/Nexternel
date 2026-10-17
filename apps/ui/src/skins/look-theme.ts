@@ -1,6 +1,13 @@
 import type { Theme, ThemeOptions } from "@mui/material/styles";
 import type { LookTokens } from "./looks/types";
-import { contentPanelStyles } from "./surfaceStyles";
+import { contentPanelStyles, insetStyle } from "./surfaceStyles";
+
+declare module "@mui/material/Paper" {
+  interface PaperPropsVariantOverrides {
+    /** A box inside a card, drawn from the Look's inset role. */
+    inset: true;
+  }
+}
 
 declare module "@mui/material/styles" {
   interface Theme {
@@ -58,7 +65,10 @@ export function lookThemeOptions(
       overline: { letterSpacing: t.headingSpacing === "normal" ? undefined : t.headingSpacing },
     },
     components: {
-      MuiPaper: { styleOverrides: { root: { backgroundImage: "none" } } },
+      MuiPaper: {
+        styleOverrides: { root: { backgroundImage: "none" } },
+        variants: [{ props: { variant: "inset" }, style: insetStyle(t) }],
+      },
       MuiCard: {
         defaultProps: role("card"),
         styleOverrides: {

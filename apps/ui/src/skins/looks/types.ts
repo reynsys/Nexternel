@@ -94,6 +94,27 @@ export type LookTokens = {
   choiceSelectedFill: string;
   choiceSelectedBorder: string;
   choiceSelectedShadow: string;
+  /** A box inside a card (a list, a row, an expanded item, a group of settings): <Paper variant="inset">. */
+  insetFill: string;
+  insetBorder: string;
+  insetShadow: string;
+  /** The bar of room buttons above a dashboard: its bottom line, the space between buttons, its inner margin. */
+  barEdge: string;
+  barGap: string;
+  barInset: string;
+  /**
+   * The Gears switch: fill, outline, outline width and shadow ("" = the accent-coloured gears).
+   * "url(#nx-gear-metal)" gives polished metal.
+   */
+  gearFill: string;
+  gearStroke: string;
+  gearStrokeWidth: string;
+  gearShadow: string;
+  /** Space inside a panel around its title and tiles, and at the sides of its title. */
+  panelInset: string;
+  titleInset: string;
+  /** Each reading's small panel inside a several-reading panel: its border. */
+  miniPanelBorder: string;
   /** Dashboard sections (the box around a group of panels). */
   sectionFill: string;
   sectionBorder: string;

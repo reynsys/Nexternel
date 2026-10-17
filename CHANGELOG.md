@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.104
+
+- Groundwork for add-on Looks: the last hand-made boxes in Settings, Devices and the Edit menus now follow the chosen Look too. Nothing changes in Standard.
+
 ## V5.2.103
 
 - **Tidier menu footer:** your name, role and version each on their own line, with a proper **Sign out** button and the menu-collapse button beside it. The letter in your picture circle is easier to read.

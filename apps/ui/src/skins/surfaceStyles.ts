@@ -2,6 +2,7 @@ import { alpha, type Theme } from "@mui/material/styles";
 import { gradientCss } from "./gradientPalettes";
 import type { ThemePrefs } from "./themePrefs";
 import { resolveLook } from "./looks/registry";
+import type { LookTokens } from "./looks/types";
 
 /*
  * Frosted glass blurs whatever is behind it. Over a moving background effect that blur must be
@@ -77,36 +78,6 @@ export function contentPanelStyles(
   };
 }
 
-/** Metric tiles inside dashboard widgets — nested on a content panel. */
-export function metricTileSurfaceSx(
-  theme: Theme,
-  gradientActive: boolean,
-  solidContentPanels = false
-) {
-  const accent = theme.palette.primary.main;
-  const base = {
-    border: "1px solid",
-    borderColor: alpha(accent, theme.palette.mode === "dark" ? 0.32 : 0.24),
-    borderRadius: 8,
-  };
-  if (gradientActive && !solidContentPanels) {
-    return {
-      ...base,
-      backgroundColor: alpha(
-        theme.palette.background.paper,
-        theme.palette.mode === "dark" ? 0.58 : 0.68
-      ),
-      backgroundImage: GLASS_TINT,
-      backdropFilter: GLASS_BLUR(8),
-      WebkitBackdropFilter: GLASS_BLUR(8),
-    };
-  }
-  return {
-    ...base,
-    bgcolor: alpha(accent, theme.palette.mode === "dark" ? 0.1 : 0.07),
-  };
-}
-
 /** The one main-tile surface. Every panel uses this border and fill. */
 export function nestedContentPanelSx(
   theme: Theme,
@@ -115,8 +86,7 @@ export function nestedContentPanelSx(
 ) {
   if (gradientActive && !solidContentPanels) {
     return {
-      border: "1px solid",
-      borderColor: "divider",
+      border: `var(--nx-tile-border, 1px solid ${theme.palette.divider})`,
       borderRadius: "var(--nx-tile-radius, 20px)",
       ...contentPanelStyles(theme, { gradientActive, solidContentPanels }),
     };
@@ -169,6 +139,21 @@ export function choiceSx(selected: boolean, opts: { hover?: boolean; quiet?: boo
       ...(opts.hover ? { "&:hover": { backgroundColor: selected ? n.choiceSelectedFill : t.palette.action.hover } } : {}),
     };
   };
+}
+
+/** A box inside a card: <Paper variant="inset"> and insetSx share this. */
+export function insetStyle(t: LookTokens) {
+  return {
+    border: t.insetBorder,
+    borderRadius: `${t.radiusUnit * 1.5}px`,
+    backgroundColor: t.insetFill,
+    boxShadow: t.insetShadow,
+  };
+}
+
+/** A box inside a card, for parts that cannot be a <Paper variant="inset"> (list rows, tables). */
+export function insetSx() {
+  return (t: Theme) => insetStyle(t.nx);
 }
 
 /** A dashboard section (the box around a group of panels). Clear over a page background. */

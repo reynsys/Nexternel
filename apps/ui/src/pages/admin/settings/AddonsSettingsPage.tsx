@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Stack, TextField, Typography } from "@mui/material";
+import { Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Paper, Stack, TextField, Typography } from "@mui/material";
 import { api, type AddonInfo, type AddonsResponse } from "../../../api";
 import { useConfirm } from "../../../components/confirm";
 import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
@@ -133,7 +133,7 @@ export function AddonsSettingsPage() {
             </Stack>
             <Stack spacing={1.5}>
               {data.addons.map((a) => (
-                <Box key={a.id} sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, p: 1.5 }}>
+                <Paper key={a.id} variant="inset" sx={{ p: 1.5 }}>
                   <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
                     <Typography fontWeight={600}>{a.name}</Typography>
                     <Chip size="small" variant="outlined" label={KIND[a.kind] ?? a.kind} />
@@ -171,7 +171,7 @@ export function AddonsSettingsPage() {
                       {a.message}
                     </Alert>
                   ) : null}
-                </Box>
+                </Paper>
               ))}
             </Stack>
             <Typography variant="caption" color="text.secondary" component="div" sx={{ mt: 1.5 }}>

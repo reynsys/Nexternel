@@ -3,7 +3,6 @@ import { useSkin } from "./SkinProvider";
 import {
   contentSurfaceSx,
   isGradientActive,
-  metricTileSurfaceSx,
   nestedContentPanelSx,
 } from "./surfaceStyles";
 
@@ -14,7 +13,6 @@ export {
   contentSurfaceSx,
   isGradientActive,
   contentPanelStyles,
-  metricTileSurfaceSx,
   nestedContentPanelSx,
 } from "./surfaceStyles";
 
@@ -42,12 +40,4 @@ export function useNestedContentPanelSx() {
   const gradientActive = useGradientActive();
   const solidContentPanels = useSolidContentPanels();
   return nestedContentPanelSx(theme, gradientActive, solidContentPanels);
-}
-
-/** Air quality / nested metric tiles inside widget cards. */
-export function useMetricTileSurfaceSx() {
-  const theme = useTheme();
-  const gradientActive = useGradientActive();
-  const solidContentPanels = useSolidContentPanels();
-  return metricTileSurfaceSx(theme, gradientActive, solidContentPanels);
 }

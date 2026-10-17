@@ -287,8 +287,10 @@ export function SectionGrid({
         outlineColor: dropHighlight ? "primary.main" : "divider",
         transition: "outline-color 0.15s ease, background-color 0.15s ease",
         /* RGL sets pixel height on .react-grid-item; children must fill it. */
+        // Each panel keeps its own content inside (PanelCard clips); the grid cell does not, so a
+        // Look's panel shadows and frames are never cut off.
         "& .react-grid-item": {
-          overflow: "hidden",
+          overflow: "visible",
           boxSizing: "border-box",
         },
         "& .react-grid-item > div": {

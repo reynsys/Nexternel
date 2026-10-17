@@ -1,31 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Checkbox,
-  Chip,
-  CircularProgress,
-  Collapse,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  FormControl,
-  FormControlLabel,
-  FormHelperText,
-  InputLabel,
-  MenuItem,
-  Select,
-  Stack,
-  Switch,
-  Tab,
-  Tabs,
-  Typography,
-} from "@mui/material";
+import { Alert, Box, Button, Card, CardContent, Checkbox, Chip, CircularProgress, Collapse, Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControl, FormControlLabel, FormHelperText, InputLabel, MenuItem, Paper, Select, Stack, Switch, Tab, Tabs, Typography } from "@mui/material";
 import {
   api,
   type PluginCatalogEntry,
@@ -290,7 +264,7 @@ function InstalledPlugin({
   const grantsChanged = JSON.stringify(grants) !== JSON.stringify(p.grants);
 
   return (
-    <Box sx={{ border: 1, borderColor: "divider", borderRadius: 2, p: 2 }}>
+    <Paper variant="inset" sx={{ p: 2 }}>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} alignItems={{ sm: "center" }}>
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
@@ -380,7 +354,7 @@ function InstalledPlugin({
           ) : null}
         </Box>
       </Collapse>
-    </Box>
+    </Paper>
   );
 }
 

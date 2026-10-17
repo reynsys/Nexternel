@@ -1,4 +1,4 @@
-import { useId, type CSSProperties } from "react";
+import type { CSSProperties } from "react";
 import type { SwitchStyleId } from "../../lib/switch-styles";
 import "./switch-styles.css";
 
@@ -50,13 +50,12 @@ const GEAR_MIDDLE = gearPath(70, 28, 8, MODULE, 0.5, 0);
 const GEAR_RIGHT = gearPath(112, 28, 14, MODULE, 0, 5);
 
 function Gears() {
-  // A Look pack can make the gears metal with: --gear-fill: var(--nxs-metal).
-  const metal = `nxs-metal-${useId().replace(/:/g, "")}`;
+  // The metal gradient a Look can choose with gearFill "url(#nx-gear-metal)" (same in every copy).
   return (
-    <span className="nxs-gr" style={{ "--nxs-metal": `url(#${metal})` } as CSSProperties}>
+    <span className="nxs-gr">
       <svg viewBox="0 0 140 56">
         <defs>
-          <radialGradient id={metal} cx=".5" cy=".5" r=".5">
+          <radialGradient id="nx-gear-metal" cx=".5" cy=".5" r=".5">
             <stop offset="0" stopColor="#5b6372" />
             <stop offset=".35" stopColor="#cfd5df" />
             <stop offset=".55" stopColor="#9aa3b2" />

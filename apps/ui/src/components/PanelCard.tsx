@@ -64,7 +64,7 @@ function PanelTitleTile({
         alignItems: "center",
         gap: "6px",
         minWidth: 0,
-        px: "8px",
+        px: "var(--nx-title-inset, 8px)",
         overflow: "hidden",
         position: "relative",
       }}
@@ -225,7 +225,7 @@ export function PanelCard({
           display: "flex",
           flexDirection: "column",
           boxSizing: "border-box",
-          p: "4px",
+          p: "var(--nx-panel-inset, 4px)",
           gap: showTitleTile ? "6px" : 0,
           overflow: "hidden",
           // Above the Look's panel frame.

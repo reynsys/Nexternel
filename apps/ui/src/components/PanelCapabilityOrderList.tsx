@@ -30,6 +30,7 @@ import { useConfirm } from "./confirm";
 import { ItemOverrideFields } from "./ItemOverrideFields";
 import { isControllableResolvedCapability } from "../panels/panel-capabilities";
 import type { ItemOverride } from "../lib/panel-item-display";
+import { insetSx } from "../skins/surfaceStyles";
 
 type Props = {
   options: ResolvedPanelCapability[];
@@ -164,14 +165,11 @@ export function PanelCapabilityOrderList({
                   </IconButton>
                 </Stack>
               }
-              sx={{
-                border: 1,
-                borderColor: "divider",
-                borderRadius: 1,
-                mb: 0.75,
-                pr: onOverridesChange ? 18 : 14,
-                bgcolor: dragIndex === index ? "action.hover" : undefined,
-              }}
+              sx={[
+                insetSx(),
+                { mb: 0.75, pr: onOverridesChange ? 18 : 14 },
+                dragIndex === index ? { bgcolor: "action.hover" } : {},
+              ]}
             >
               <DragIndicatorIcon
                 fontSize="small"

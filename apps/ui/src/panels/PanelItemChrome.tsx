@@ -159,8 +159,7 @@ export function PanelItemChrome({
         flexDirection: "column",
         gap: "3px",
         p: "3px",
-        border: "1px solid",
-        borderColor: "divider",
+        border: "var(--nx-mini-panel-border, 1px solid rgba(255,255,255,0.12))",
         borderRadius: "var(--nx-mini-panel-radius, 12px)",
       }}
     >

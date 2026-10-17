@@ -1,23 +1,5 @@
 import { useEffect, useState, type ChangeEvent } from "react";
-import {
-  Alert,
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControl,
-  FormControlLabel,
-  InputAdornment,
-  InputLabel,
-  MenuItem,
-  Select,
-  Stack,
-  Switch,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, FormControlLabel, InputAdornment, InputLabel, MenuItem, Paper, Select, Stack, Switch, TextField, Typography } from "@mui/material";
 import {
   DEFAULT_NOTIFY_AFTER_MIN,
   DEFAULT_STATUS_LIMITS,
@@ -413,12 +395,12 @@ export function StatusLimitsEditor({
 
   if (inline) {
     return (
-      <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, p: 1.5, ml: 2.25 }}>
+      <Paper variant="inset" sx={{ p: 1.5, ml: 2.25 }}>
         {fields}
         <Stack direction="row" spacing={1} justifyContent="flex-end" flexWrap="wrap" useFlexGap sx={{ mt: 1.5 }}>
           {actions}
         </Stack>
-      </Box>
+      </Paper>
     );
   }
 

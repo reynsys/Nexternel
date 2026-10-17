@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, Button, FormControl, InputLabel, MenuItem, Select, Stack, TextField, Typography } from "@mui/material";
+import { Button, FormControl, InputLabel, MenuItem, Paper, Select, Stack, TextField, Typography } from "@mui/material";
 import BlockIcon from "@mui/icons-material/Block";
 import { ItemIcon } from "../lib/icons/ItemIcon";
 import { overrideHasValue, type ItemOverride } from "../lib/panel-item-display";
@@ -32,7 +32,11 @@ export function ItemOverrideFields({ defaultName, defaultIcon, kind, value, onCh
   }
 
   return (
-    <Box sx={{ border: 1, borderColor: "divider", borderTop: 0, borderRadius: "0 0 8px 8px", p: 1.5, mt: -0.75, mb: 0.75 }}>
+    // Hangs under its row in the list: the same inside-a-card box, joined to the row above.
+    <Paper
+      variant="inset"
+      sx={{ borderTop: 0, borderTopLeftRadius: 0, borderTopRightRadius: 0, p: 1.5, mt: -0.75, mb: 0.75 }}
+    >
       <Stack spacing={1.25}>
         <TextField
           size="small"
@@ -99,6 +103,6 @@ export function ItemOverrideFields({ defaultName, defaultIcon, kind, value, onCh
         onChange={(next) => update({ icon: next })}
         onClose={() => setPickerOpen(false)}
       />
-    </Box>
+    </Paper>
   );
 }

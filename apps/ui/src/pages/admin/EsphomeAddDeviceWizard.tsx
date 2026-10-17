@@ -1,24 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
-import {
-  Alert,
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControl,
-  IconButton,
-  InputLabel,
-  MenuItem,
-  Select,
-  Stack,
-  Step,
-  StepLabel,
-  Stepper,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, IconButton, InputLabel, MenuItem, Paper, Select, Stack, Step, StepLabel, Stepper, TextField, Typography } from "@mui/material";
 import BuildRoundedIcon from "@mui/icons-material/BuildRounded";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import {
@@ -579,15 +560,7 @@ export function EsphomeAddDeviceWizard({
                     const catalogEntry = componentCatalogEntry(comp.kind);
                     if (!catalogEntry) return null;
                     return (
-                      <Box
-                        key={comp.id}
-                        sx={{
-                          border: "1px solid",
-                          borderColor: "divider",
-                          borderRadius: 1,
-                          p: 1.5,
-                        }}
-                      >
+                      <Paper key={comp.id} variant="inset" sx={{ p: 1.5 }}>
                         <Stack
                           direction="row"
                           justifyContent="space-between"
@@ -628,7 +601,7 @@ export function EsphomeAddDeviceWizard({
                             )
                           }
                         />
-                      </Box>
+                      </Paper>
                     );
                   })}
                   <BuilderComponentPicker

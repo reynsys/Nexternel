@@ -66,6 +66,19 @@ function standardRoles(theme: Theme) {
     choiceSelectedFill: p.action.selected,
     choiceSelectedBorder: `1px solid ${p.primary.main}`,
     choiceSelectedShadow: "none",
+    insetFill: "transparent",
+    insetBorder: `1px solid ${p.divider}`,
+    insetShadow: "none",
+    barEdge: `1px solid ${p.divider}`,
+    barGap: "4px",
+    barInset: "0px",
+    miniPanelBorder: `1px solid ${p.divider}`,
+    gearFill: "",
+    gearStroke: "",
+    gearStrokeWidth: "",
+    gearShadow: "",
+    panelInset: "4px",
+    titleInset: "8px",
     sectionFill: p.background.paper,
     sectionBorder: `1px solid ${p.divider}`,
     sectionShadow: dark ? "none" : "0 1px 3px rgba(0,0,0,0.06)",
@@ -109,6 +122,7 @@ function glassTokens(theme: Theme): Partial<LookTokens> {
     chip: "rgba(255,255,255,0.24)",
     glow: `0 0 18px ${alpha(accent, 0.5)}`,
     textGlow: `0 0 14px ${alpha(accent, 0.45)}`,
+    gearFill: "rgba(255,255,255,0.5)",
   };
 }
 

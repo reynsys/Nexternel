@@ -74,29 +74,31 @@ export function DashboardTabBar({
       direction="row"
       alignItems="center"
       spacing={1}
-      sx={{
+      sx={(t) => ({
         minWidth: 0,
         pb: 0.5,
-        borderBottom: "1px solid",
-        borderColor: "divider",
-      }}
+        // The Look's room bar: its bottom line.
+        borderBottom: t.nx.barEdge,
+      })}
     >
       <Box
         ref={tabsRef}
-        sx={{
+        sx={(t) => ({
           display: "flex",
           alignItems: "center",
-          gap: 0.5,
+          // The Look's spacing between room buttons, and room for their shadows inside the scroll area.
+          gap: t.nx.barGap,
           minWidth: 0,
           flex: 1,
           overflowX: "auto",
-          py: 0.5,
+          py: `calc(4px + ${t.nx.barInset})`,
+          px: t.nx.barInset,
           // Swipeable on touch screens; no scrollbar strip under the tabs.
           scrollSnapType: "x proximity",
           scrollbarWidth: "none",
           "&::-webkit-scrollbar": { display: "none" },
           "& > *": { scrollSnapAlign: "start" },
-        }}
+        })}
       >
         {loading && (
           <Typography variant="caption" color="text.secondary">

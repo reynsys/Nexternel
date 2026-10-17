@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, IconButton, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import { Box, Button, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import BlockIcon from "@mui/icons-material/Block";
 import { ItemIcon } from "../lib/icons/ItemIcon";
 import { IconPicker } from "./IconPicker";
@@ -32,17 +32,18 @@ export function PanelTitleFields({ title, onTitleChange, icon, onIconChange, aut
       <Typography variant="subtitle2">Title &amp; icon</Typography>
       <Stack direction="row" spacing={1} alignItems="flex-start">
         <Tooltip title="Choose the icon">
-          <IconButton
+          <Button
+            variant="outlined"
             aria-label="Choose the title icon"
             onClick={() => setPickerOpen(true)}
-            sx={{ border: 1, borderColor: "divider", borderRadius: 1, width: 40, height: 40, mt: "0px" }}
+            sx={{ minWidth: 40, width: 40, height: 40, p: 0 }}
           >
             {shownIcon !== null ? (
               <ItemIcon iconId={shownIcon} kind={automatic.icon.kind} sx={{ color: "primary.main" }} />
             ) : (
               <BlockIcon sx={{ color: "text.secondary" }} />
             )}
-          </IconButton>
+          </Button>
         </Tooltip>
         <TextField
           label="Title"

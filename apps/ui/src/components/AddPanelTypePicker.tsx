@@ -5,6 +5,7 @@ import {
   groupAddPanelDiscovery,
   type AddPanelDiscoveryItem,
 } from "../lib/add-panel-discovery";
+import { insetSx } from "../skins/surfaceStyles";
 
 type Props = {
   catalog: AddPanelDiscoveryItem[];
@@ -39,13 +40,7 @@ export function AddPanelTypePicker({ catalog, value, onChange }: Props) {
       <List
         dense
         aria-label="Panel type"
-        sx={{
-          maxHeight: 320,
-          overflow: "auto",
-          border: "1px solid",
-          borderColor: "divider",
-          borderRadius: 1,
-        }}
+        sx={[{ maxHeight: 320, overflow: "auto" }, insetSx()]}
       >
         {groups.length === 0 && (
           <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>

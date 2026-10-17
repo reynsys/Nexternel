@@ -1,17 +1,5 @@
 import { useMemo, useState } from "react";
-import {
-  Box,
-  ButtonBase,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  InputAdornment,
-  LinearProgress,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Box, ButtonBase, Dialog, DialogContent, DialogTitle, IconButton, InputAdornment, LinearProgress, Paper, Stack, TextField, Typography } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import SearchIcon from "@mui/icons-material/Search";
 import BlockIcon from "@mui/icons-material/Block";
@@ -152,7 +140,7 @@ export function IconPicker({ open, value, kind, autoIconId, autoLabel, allowNone
   if (inline) {
     if (!open) return null;
     return (
-      <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, p: 1.5 }}>
+      <Paper variant="inset" sx={{ p: 1.5 }}>
         <Stack direction="row" alignItems="center" sx={{ mb: 1 }}>
           <Typography variant="subtitle2" sx={{ flex: 1 }}>
             Choose an icon
@@ -162,7 +150,7 @@ export function IconPicker({ open, value, kind, autoIconId, autoLabel, allowNone
           </IconButton>
         </Stack>
         <Box sx={{ maxHeight: 320, overflowY: "auto", pr: 0.5 }}>{content}</Box>
-      </Box>
+      </Paper>
     );
   }
 

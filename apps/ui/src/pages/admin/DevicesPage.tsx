@@ -1,32 +1,7 @@
 import { DevicesTabs } from "../../components/DevicesTabs";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
-import {
-  Alert,
-  Box,
-  Button,
-  Checkbox,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControl,
-  FormControlLabel,
-  InputLabel,
-  Link,
-  MenuItem,
-  Select,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TextField,
-  Typography,
-  useMediaQuery,
-  useTheme,
-} from "@mui/material";
+import { Alert, Box, Button, Card, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, FormControlLabel, InputLabel, Link, MenuItem, Paper, Select, Stack, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
 import SyncRoundedIcon from "@mui/icons-material/SyncRounded";
 import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
 import {
@@ -36,7 +11,6 @@ import {
 } from "../../api";
 import { AREA } from "../../lib/area-labels";
 import { esphomeDashboardUrl } from "../../lib/device-utils";
-import { useContentSurfaceSx } from "../../skins/useSurfaceStyles";
 import { useConfirm } from "../../components/confirm";
 import { EsphomeAddDeviceWizard } from "./EsphomeAddDeviceWizard";
 import { EsphomeDevicePanelDialog } from "./EsphomeDevicePanelDialog";
@@ -51,6 +25,7 @@ import {
   type StatusFilter,
   type TypeFilter,
 } from "./devices/device-nav-utils";
+import { insetSx } from "../../skins/surfaceStyles";
 
 type AreaOption = { id: string; name: string };
 
@@ -107,7 +82,6 @@ export function DevicesPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [busy, setBusy] = useState(false);
   const [hostname, setHostname] = useState("localhost");
-  const contentSurface = useContentSurfaceSx();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
@@ -633,15 +607,7 @@ export function DevicesPage() {
       {catalogHint && <Alert severity="warning">{catalogHint}</Alert>}
 
       {isAdmin && unregistered.length > 0 && (
-        <Box
-          sx={{
-            border: "1px solid",
-            borderColor: "divider",
-            borderRadius: 1,
-            p: 2,
-            ...contentSurface,
-          }}
-        >
+        <Card sx={{ p: 2 }}>
           <Typography variant="subtitle1" fontWeight={600}>
             Server YAML not registered
           </Typography>
@@ -658,14 +624,7 @@ export function DevicesPage() {
                 justifyContent="space-between"
                 alignItems={{ xs: "stretch", sm: "center" }}
                 gap={1}
-                sx={{
-                  border: "1px solid",
-                  borderColor: "divider",
-                  borderRadius: 1,
-                  px: 1.5,
-                  py: 1,
-                  ...contentSurface,
-                }}
+                sx={[{ px: 1.5, py: 1 }, insetSx()]}
               >
                 <Box>
                   <Typography fontWeight={500}>
@@ -701,7 +660,7 @@ export function DevicesPage() {
               </Stack>
             ))}
           </Stack>
-        </Box>
+        </Card>
       )}
 
       {physicalDeviceCount === 0 && !isAdmin ? (
@@ -912,15 +871,7 @@ export function DevicesPage() {
               </Stack>
 
               {discoveredShellies.length > 0 && (
-                <Box
-                  sx={{
-                    border: "1px solid",
-                    borderColor: "divider",
-                    borderRadius: 1,
-                    maxHeight: 200,
-                    overflow: "auto",
-                  }}
-                >
+                <Paper variant="inset" sx={{ maxHeight: 200, overflow: "auto" }}>
                   <Table size="small">
                     <TableHead>
                       <TableRow>
@@ -962,7 +913,7 @@ export function DevicesPage() {
                       ))}
                     </TableBody>
                   </Table>
-                </Box>
+                </Paper>
               )}
 
               <TextField
