@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.105
+
+- **Add-ons are ready:** with a licence key from Nexternel you can now install extra Looks in **Settings → Add-ons**.
+
 ## V5.2.104
 
 - Groundwork for add-on Looks: the last hand-made boxes in Settings, Devices and the Edit menus now follow the chosen Look too. Nothing changes in Standard.

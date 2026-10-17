@@ -1,5 +1,4 @@
 import { createCipheriv, createDecipheriv, createHash, hkdfSync, randomBytes, randomUUID, type KeyObject } from "crypto";
-import { hostname } from "os";
 import { config } from "../config.js";
 import { getPool } from "../db.js";
 import { encryptSecret, decryptSecret } from "../plugins/secrets.js";
@@ -23,8 +22,11 @@ import {
  * a licence keeps working offline until it ends (the licence server sets ~30 days).
  */
 
-/** The licence server's public signing keys. Production keys are added when the shop opens. */
-const PRODUCTION_KEYS: string[] = [];
+/**
+ * The licence server's public signing keys (licence.nexternel.com). Public on purpose: they can
+ * only check licences and packs, never make them.
+ */
+const PRODUCTION_KEYS: string[] = ["MCowBQYDK2VwAyEAwJ8w47xKOH4nZogiLr+mk2Aa8EAl4PVXKTQ+y3IeW2c="];
 const DEFAULT_LICENCE_URL = "https://licence.nexternel.com";
 
 function keys(): KeyObject[] {
@@ -239,7 +241,8 @@ export async function installWithKey(rawKey: string): Promise<AddonInfo[]> {
   const activated = await callLicenceServer("/v1/activate", {
     key,
     serverId: sid,
-    serverName: hostname(),
+    // The name people know this server by (as on the local network), not the container's id.
+    serverName: `${(process.env.LOCAL_NAME || "nexternel").toLowerCase()}.local`,
     nexternel: APP_VERSION,
   });
   const token = typeof activated.licence === "string" ? activated.licence : "";
