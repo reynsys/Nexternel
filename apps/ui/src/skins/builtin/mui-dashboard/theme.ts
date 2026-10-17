@@ -1,6 +1,5 @@
 import { createTheme, alpha, type Theme } from "@mui/material/styles";
 import type { ThemePrefs } from "../../themePrefs";
-import { contentPanelStyles, isGradientActive } from "../../surfaceStyles";
 
 function lightSurfaces() {
   return {
@@ -21,8 +20,6 @@ export function createMuiDashboardTheme(prefs: ThemePrefs): Theme {
   const mode = prefs.mode;
   const primary = prefs.primary;
   const surfaces = mode === "dark" ? darkSurfaces() : lightSurfaces();
-  const gradientActive = isGradientActive(prefs);
-  const solidContentPanels = Boolean(prefs.solidContentPanels);
 
   return createTheme({
     palette: {
@@ -52,99 +49,9 @@ export function createMuiDashboardTheme(prefs: ThemePrefs): Theme {
       h6: { fontWeight: 600 },
     },
     shape: { borderRadius: 10 },
+    // Building blocks are styled from the chosen Look (skins/look-theme.ts); only the menu's
+    // own link colour stays here.
     components: {
-      MuiButton: {
-        styleOverrides: {
-          root: { textTransform: "none", borderRadius: 8 },
-        },
-      },
-      MuiCard: {
-        styleOverrides: {
-          root: ({ theme }) => ({
-            borderRadius: 12,
-            border: `1px solid ${alpha(theme.palette.mode === "dark" ? "#fff" : "#000", 0.08)}`,
-            ...contentPanelStyles(theme, { gradientActive, solidContentPanels }),
-          }),
-        },
-      },
-      MuiAccordion: {
-        styleOverrides: {
-          root: ({ theme }) => ({
-            ...contentPanelStyles(theme, { gradientActive, solidContentPanels }),
-            backgroundImage: "none",
-            "&:before": { display: "none" },
-          }),
-        },
-      },
-      MuiDrawer: {
-        styleOverrides: {
-          paper: {
-            backgroundImage: "none",
-            borderRight: `1px solid ${alpha(mode === "dark" ? "#fff" : "#000", 0.08)}`,
-          },
-        },
-      },
-      MuiListItemButton: {
-        styleOverrides: {
-          root: ({ theme }) => ({
-            borderRadius: 8,
-            // Match DashboardTabBar active tab: solid accent + contrast ink
-            "&.Mui-selected": {
-              backgroundColor: theme.palette.primary.main,
-              color: theme.palette.primary.contrastText,
-              "& .MuiListItemIcon-root": {
-                color: theme.palette.primary.contrastText,
-              },
-              "& .MuiListItemText-primary": {
-                color: theme.palette.primary.contrastText,
-                fontWeight: 600,
-              },
-              "&:hover": {
-                backgroundColor: theme.palette.primary.dark,
-              },
-            },
-            "&.Mui-selected.Mui-focusVisible": {
-              backgroundColor: theme.palette.primary.dark,
-            },
-          }),
-        },
-      },
-      MuiTab: {
-        styleOverrides: {
-          root: {
-            "&.Mui-selected": {
-              color: primary,
-              fontWeight: 600,
-            },
-          },
-        },
-      },
-      MuiSwitch: {
-        styleOverrides: {
-          switchBase: {
-            "&.Mui-checked": {
-              color: primary,
-            },
-            "&.Mui-checked + .MuiSwitch-track": {
-              backgroundColor: primary,
-            },
-          },
-        },
-      },
-      MuiCheckbox: {
-        styleOverrides: {
-          root: {
-            "&.Mui-checked": { color: primary },
-          },
-        },
-      },
-      MuiRadio: {
-        styleOverrides: {
-          root: {
-            "&.Mui-checked": { color: primary },
-          },
-        },
-      },
       MuiLink: {
         styleOverrides: {
           root: {
@@ -152,11 +59,6 @@ export function createMuiDashboardTheme(prefs: ThemePrefs): Theme {
               color: primary,
             },
           },
-        },
-      },
-      MuiPaper: {
-        styleOverrides: {
-          root: { backgroundImage: "none" },
         },
       },
     },

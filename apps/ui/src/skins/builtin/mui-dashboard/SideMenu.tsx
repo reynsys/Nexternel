@@ -6,10 +6,10 @@ import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
-import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import LogoutIcon from "@mui/icons-material/Logout";
 import { Link as RouterLink } from "react-router-dom";
 import { APP_VERSION } from "../../../version";
 import { MenuContent } from "./MenuContent";
@@ -18,6 +18,7 @@ import { hasPermission } from "../../../lib/permissions";
 import type { User } from "../../../api";
 import type { RolePermissions } from "../../../lib/permissions";
 import { getBrandLogo } from "../../brandLogo";
+import { BrandMark } from "../../../components/BrandMark";
 import {
   getSideMenuCollapsed,
   setSideMenuCollapsed,
@@ -37,42 +38,6 @@ type Props = {
   collapsed: boolean;
   onCollapsedChange: (collapsed: boolean) => void;
 };
-
-function BrandMark({ logo, size = 28 }: { logo: string | null; size?: number }) {
-  if (logo) {
-    return (
-      <Box
-        component="img"
-        src={logo}
-        alt="Brand"
-        sx={{
-          width: size,
-          height: size,
-          borderRadius: "999px",
-          objectFit: "cover",
-          border: "1px solid",
-          borderColor: "divider",
-          display: "block",
-          flexShrink: 0,
-        }}
-      />
-    );
-  }
-  return (
-    <Box
-      sx={{
-        width: size,
-        height: size,
-        borderRadius: "999px",
-        backgroundImage:
-          "linear-gradient(135deg, hsl(210, 98%, 60%) 0%, hsl(210, 100%, 35%) 100%)",
-        border: "1px solid",
-        borderColor: "primary.main",
-        flexShrink: 0,
-      }}
-    />
-  );
-}
 
 export function SideMenu({
   signedIn,
@@ -96,28 +61,34 @@ export function SideMenu({
     return () => window.removeEventListener("nexternel:brand-logo-updated", refresh);
   }, []);
 
+  // Both footer buttons are ordinary buttons, so they take the chosen Look's button style.
   const collapseToggle = (
     <Tooltip
       title={collapsed ? "Expand menu" : "Collapse menu (icons only)"}
       placement={collapsed ? "right" : "top"}
     >
-      <IconButton
+      <Button
+        variant="outlined"
         size="small"
         onClick={() => onCollapsedChange(!collapsed)}
         aria-label={collapsed ? "Expand menu" : "Collapse menu"}
+        sx={{ minWidth: 40, px: 1, flexShrink: 0 }}
       >
-        {collapsed ? (
-          <ChevronRightIcon fontSize="small" />
-        ) : (
-          <ChevronLeftIcon fontSize="small" />
-        )}
-      </IconButton>
+        {collapsed ? <ChevronRightIcon fontSize="small" /> : <ChevronLeftIcon fontSize="small" />}
+      </Button>
     </Tooltip>
   );
+
+  const userName = user?.displayName?.trim() || user?.username || "User";
+  const initial = (user?.displayName || user?.username || "?").trim().slice(0, 1).toUpperCase();
+  const roleName =
+    user?.roleName ||
+    (user?.role === "admin" ? "Administrator" : user?.role === "viewer" ? "Viewer" : (user?.role ?? ""));
 
   return (
     <MuiDrawer
       variant="permanent"
+      data-nx-sidemenu
       sx={{
         display: { xs: "none", md: "block" },
         width,
@@ -147,7 +118,10 @@ export function SideMenu({
       >
         <BrandMark logo={logo} size={collapsed ? 32 : 28} />
         {!collapsed && (
-          <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2, flex: 1 }}>
+          <Typography
+            variant="subtitle1"
+            sx={(t) => ({ fontWeight: 700, lineHeight: 1.2, flex: 1, textTransform: t.nx.headingCase, letterSpacing: t.nx.headingSpacing })}
+          >
             Nexternel
           </Typography>
         )}
@@ -179,7 +153,7 @@ export function SideMenu({
       </Box>
 
       <Stack
-        spacing={collapsed ? 1 : 0}
+        spacing={1.25}
         sx={{
           p: collapsed ? 1 : 1.5,
           borderTop: "1px solid",
@@ -190,20 +164,14 @@ export function SideMenu({
         {signedIn ? (
           collapsed ? (
             <>
-              <Tooltip
-                title={user?.displayName?.trim() || user?.username || "User"}
-                placement="right"
-              >
-              <Avatar
-                src={user?.avatarData ?? undefined}
-                sx={{ width: 36, height: 36, bgcolor: "primary.dark", cursor: "pointer" }}
-                component={RouterLink}
-                to="/admin/users"
-              >
-                  {(user?.displayName || user?.username || "?")
-                    .trim()
-                    .slice(0, 1)
-                    .toUpperCase()}
+              <Tooltip title={`${userName} · ${roleName}`} placement="right">
+                <Avatar
+                  src={user?.avatarData ?? undefined}
+                  sx={{ width: 36, height: 36, cursor: "pointer" }}
+                  component={RouterLink}
+                  to="/admin/users"
+                >
+                  {initial}
                 </Avatar>
               </Tooltip>
               <Tooltip title={APP_VERSION} placement="right">
@@ -212,57 +180,43 @@ export function SideMenu({
                 </Typography>
               </Tooltip>
               <Tooltip title="Sign out" placement="right">
-                <Button size="small" onClick={onLogout} sx={{ minWidth: 0, px: 1 }}>
-                  Out
+                <Button variant="outlined" size="small" onClick={onLogout} aria-label="Sign out" sx={{ minWidth: 40, px: 1 }}>
+                  <LogoutIcon fontSize="small" />
                 </Button>
               </Tooltip>
               {collapseToggle}
             </>
           ) : (
-            <Stack direction="row" spacing={0.5} alignItems="center">
-              <Avatar
-                src={user?.avatarData ?? undefined}
-                sx={{ width: 36, height: 36, bgcolor: "primary.dark", flexShrink: 0 }}
-              >
-                {(user?.displayName || user?.username || "?")
-                  .trim()
-                  .slice(0, 1)
-                  .toUpperCase()}
-              </Avatar>
-              <Box sx={{ minWidth: 0, flex: 1 }}>
-                <Typography
-                  variant="body2"
-                  sx={{ fontWeight: 500, lineHeight: 1.25 }}
-                  noWrap
-                >
-                  {user?.displayName?.trim() || user?.username || "User"}
-                </Typography>
-                <Typography variant="caption" color="text.secondary" noWrap display="block">
-                  {user?.roleName ||
-                    (user?.role === "admin"
-                      ? "Administrator"
-                      : user?.role === "viewer"
-                        ? "Viewer"
-                        : (user?.role ?? ""))}
-                </Typography>
-                <Typography variant="caption" color="text.secondary" noWrap display="block">
-                  {APP_VERSION}
-                </Typography>
-              </Box>
-              <Button size="small" onClick={onLogout} sx={{ flexShrink: 0 }}>
-                Out
-              </Button>
-              {collapseToggle}
-            </Stack>
+            <>
+              {/* Who is signed in: picture, name, role and version, each on its own line. */}
+              <Stack direction="row" spacing={1.25} alignItems="center" sx={{ minWidth: 0 }}>
+                <Avatar src={user?.avatarData ?? undefined} sx={{ width: 40, height: 40, flexShrink: 0 }}>
+                  {initial}
+                </Avatar>
+                <Box sx={{ minWidth: 0, flex: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.3 }} noWrap title={userName}>
+                    {userName}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" noWrap display="block" title={roleName}>
+                    {roleName}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" noWrap display="block">
+                    {APP_VERSION}
+                  </Typography>
+                </Box>
+              </Stack>
+              <Stack direction="row" spacing={1}>
+                <Button variant="outlined" size="small" startIcon={<LogoutIcon fontSize="small" />} onClick={onLogout} sx={{ flex: 1 }}>
+                  Sign out
+                </Button>
+                {collapseToggle}
+              </Stack>
+            </>
           )
         ) : (
-          <Stack
-            direction={collapsed ? "column" : "row"}
-            spacing={1}
-            alignItems="center"
-          >
-            <Button component={RouterLink} to="/login" size="small" fullWidth={!collapsed}>
-              {collapsed ? "In" : "Login"}
+          <Stack direction={collapsed ? "column" : "row"} spacing={1} alignItems="center">
+            <Button component={RouterLink} to="/login" variant="outlined" size="small" fullWidth={!collapsed}>
+              {collapsed ? "In" : "Sign in"}
             </Button>
             {collapseToggle}
           </Stack>

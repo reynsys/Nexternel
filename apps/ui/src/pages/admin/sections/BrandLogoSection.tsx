@@ -1,11 +1,12 @@
 import { useRef, useState } from "react";
-import { Alert, Box, Button, Card, CardContent, Stack, Typography } from "@mui/material";
+import { Alert, Button, Card, CardContent, Stack, Typography } from "@mui/material";
 import {
   fileToBrandLogoDataUrl,
   getBrandLogo,
   setBrandLogo,
 } from "../../../skins/brandLogo";
 import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
+import { BrandMark } from "../../../components/BrandMark";
 
 export function BrandLogoSection() {
   const surfaceSx = useContentSurfaceSx();
@@ -44,33 +45,7 @@ export function BrandLogoSection() {
           Logo shown next to Nexternel in the side menu.
         </Typography>
         <Stack direction="row" spacing={2} alignItems="center">
-          {brandLogo ? (
-            <Box
-              component="img"
-              src={brandLogo}
-              alt="Brand"
-              sx={{
-                width: 48,
-                height: 48,
-                borderRadius: "999px",
-                objectFit: "cover",
-                border: "1px solid",
-                borderColor: "divider",
-              }}
-            />
-          ) : (
-            <Box
-              sx={{
-                width: 48,
-                height: 48,
-                borderRadius: "999px",
-                backgroundImage:
-                  "linear-gradient(135deg, hsl(210, 98%, 60%) 0%, hsl(210, 100%, 35%) 100%)",
-                border: "1px solid",
-                borderColor: "primary.main",
-              }}
-            />
-          )}
+          <BrandMark logo={brandLogo} size={48} />
           <input
             ref={brandInputRef}
             type="file"

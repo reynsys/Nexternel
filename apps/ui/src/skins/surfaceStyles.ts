@@ -151,3 +151,32 @@ export function contentSurfaceSx(
     WebkitBackdropFilter: GLASS_BLUR(10),
   };
 }
+
+/*
+ * Shared pieces for hand-built parts: they take their look from the chosen Look's roles
+ * (theme.nx, see skins/look-theme.ts), so a Look restyles them like every building block.
+ */
+
+/** An option tile in a picker (Looks, backgrounds, effects, icons, switch styles). */
+export function choiceSx(selected: boolean, opts: { hover?: boolean; quiet?: boolean; radius?: "inset" | "field" } = {}) {
+  return (t: Theme) => {
+    const n = t.nx;
+    return {
+      borderRadius: opts.radius === "field" ? 1 : 1.5,
+      border: selected ? n.choiceSelectedBorder : opts.quiet ? "1px solid transparent" : n.choiceBorder,
+      backgroundColor: selected ? n.choiceSelectedFill : n.choiceFill,
+      boxShadow: selected ? n.choiceSelectedShadow : opts.quiet ? "none" : n.choiceShadow,
+      ...(opts.hover ? { "&:hover": { backgroundColor: selected ? n.choiceSelectedFill : t.palette.action.hover } } : {}),
+    };
+  };
+}
+
+/** A dashboard section (the box around a group of panels). Clear over a page background. */
+export function sectionSx(gradientActive: boolean) {
+  return (t: Theme) => ({
+    border: t.nx.sectionBorder,
+    borderRadius: t.nx.sectionRadius,
+    boxShadow: gradientActive ? "none" : t.nx.sectionShadow,
+    ...(gradientActive ? { backgroundColor: "transparent", backgroundImage: "none" } : { backgroundColor: t.nx.sectionFill }),
+  });
+}

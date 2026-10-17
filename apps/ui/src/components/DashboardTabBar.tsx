@@ -70,6 +70,7 @@ export function DashboardTabBar({
 
   return (
     <Stack
+      data-nx-tabbar
       direction="row"
       alignItems="center"
       spacing={1}

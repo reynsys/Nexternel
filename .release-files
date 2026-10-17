@@ -223,6 +223,7 @@ apps/ui/src/App.tsx
 apps/ui/src/components/AdaptiveReading.tsx
 apps/ui/src/components/AddPanelTypePicker.tsx
 apps/ui/src/components/AppErrorBoundary.tsx
+apps/ui/src/components/BrandMark.tsx
 apps/ui/src/components/CapabilityPicker.tsx
 apps/ui/src/components/confirm/ConfirmProvider.tsx
 apps/ui/src/components/confirm/index.ts
@@ -302,6 +303,7 @@ apps/ui/src/lib/icons/catalog.ts
 apps/ui/src/lib/icons/ItemIcon.tsx
 apps/ui/src/lib/look-choice.test.ts
 apps/ui/src/lib/look-choice.ts
+apps/ui/src/lib/look-roles-guard.test.ts
 apps/ui/src/lib/panel-appearance.ts
 apps/ui/src/lib/panel-cameras.test.ts
 apps/ui/src/lib/panel-cameras.ts
@@ -491,8 +493,10 @@ apps/ui/src/skins/local/README.md
 apps/ui/src/skins/looks/addon-loader.ts
 apps/ui/src/skins/looks/builtin.ts
 apps/ui/src/skins/looks/registry.ts
+apps/ui/src/skins/looks/resolve.ts
 apps/ui/src/skins/looks/types.ts
 apps/ui/src/skins/looks/useLook.ts
+apps/ui/src/skins/look-theme.ts
 apps/ui/src/skins/metricColors.ts
 apps/ui/src/skins/nav.ts
 apps/ui/src/skins/registry.ts

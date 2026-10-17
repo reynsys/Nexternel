@@ -101,7 +101,7 @@ import { DashboardIconPicker } from "../components/DashboardIconPicker";
 import { getDashboardIcon } from "../lib/dashboard-icons";
 import { useShellAuth } from "../skins/useShellAuth";
 import { hasPermission } from "../lib/permissions";
-import { chromeSurfaceSx } from "../skins/surfaceStyles";
+import { sectionSx } from "../skins/surfaceStyles";
 import { useGradientActive } from "../skins/useSurfaceStyles";
 import { resolveHomeDashboardId } from "../lib/home-dashboard";
 import { dashboardIdForSlug, dashboardPaths } from "../lib/dashboard-path";
@@ -1048,23 +1048,18 @@ function DashboardPageContent() {
               }}
               onDrop={(e) => handleSectionPanelDrop(e, section.id)}
               disableGutters
-              sx={{
-                gridColumn: `span ${span}`,
-                border: "1px solid",
-                borderColor: "divider",
-                borderRadius: 2,
-                scrollMarginTop: 16,
-                overflow: "hidden",
-                ...chromeSurfaceSx(gradientActive),
-                "&:before": { display: "none" },
-                boxShadow: (t) =>
-                  gradientActive
-                    ? "none"
-                    : t.palette.mode === "dark"
-                      ? "none"
-                      : "0 1px 3px rgba(0,0,0,0.06)",
-                minWidth: 0,
-              }}
+              data-nx-role="section"
+              sx={[
+                {
+                  gridColumn: `span ${span}`,
+                  scrollMarginTop: 16,
+                  overflow: "hidden",
+                  "&:before": { display: "none" },
+                  minWidth: 0,
+                },
+                // The Look's dashboard section (border, corners, fill, shadow).
+                sectionSx(gradientActive),
+              ]}
             >
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Stack

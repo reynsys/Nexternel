@@ -16,6 +16,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import SearchIcon from "@mui/icons-material/Search";
 import BlockIcon from "@mui/icons-material/Block";
 import { ItemIcon, useIconCatalog } from "../lib/icons/ItemIcon";
+import { choiceSx } from "../skins/surfaceStyles";
 
 type Props = {
   open: boolean;
@@ -52,7 +53,8 @@ function Choice({
       aria-pressed={selected}
       aria-label={label}
       title={label}
-      sx={{
+      sx={[
+        {
         width: "100%",
         display: "grid",
         gridTemplateColumns: "minmax(0, 1fr)",
@@ -60,12 +62,9 @@ function Choice({
         gap: 0.5,
         py: 1,
         px: 0.5,
-        borderRadius: 1.5,
-        border: "1px solid",
-        borderColor: selected ? "primary.main" : "transparent",
-        bgcolor: selected ? "action.selected" : "transparent",
-        "&:hover": { bgcolor: "action.hover" },
-      }}
+      },
+      choiceSx(selected, { hover: true, quiet: true }),
+    ]}
     >
       {children}
       <Typography

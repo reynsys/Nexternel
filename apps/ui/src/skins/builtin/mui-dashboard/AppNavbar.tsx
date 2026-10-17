@@ -19,6 +19,8 @@ import Divider from "@mui/material/Divider";
 import { Link as RouterLink } from "react-router-dom";
 import { barSurfaceSx } from "../../surfaceStyles";
 import { useGradientActive } from "../../useSurfaceStyles";
+import { BrandMark } from "../../../components/BrandMark";
+import { getBrandLogo } from "../../brandLogo";
 
 const Toolbar = styled(MuiToolbar)({
   width: "100%",
@@ -73,15 +75,7 @@ export function AppNavbar({
           }}
         >
           <Stack direction="row" spacing={1} sx={{ mr: "auto", alignItems: "center" }}>
-            <Box
-              sx={{
-                width: 24,
-                height: 24,
-                borderRadius: "999px",
-                backgroundImage:
-                  "linear-gradient(135deg, hsl(210, 98%, 60%) 0%, hsl(210, 100%, 35%) 100%)",
-              }}
-            />
+            <BrandMark logo={getBrandLogo()} size={24} />
             <Typography variant="h6" component="h1" sx={{ color: "text.primary" }}>
               Nexternel
             </Typography>

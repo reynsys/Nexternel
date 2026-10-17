@@ -49,6 +49,81 @@ export type LookTokens = {
   tileFill?: string;
   tileBorder?: string;
   tileShadow?: string;
+
+  // ---- The rest of Nexternel: every screen is built from these roles (skins/look-theme.ts). ----
+  // An empty string "" means "leave the building block's own default".
+
+  /** Page ground and the plain fill most things sit on. */
+  ground: string;
+  paper: string;
+  /** Lines: borders and dividers everywhere. */
+  line: string;
+  /** Text. */
+  font: string;
+  headingCase: "none" | "uppercase";
+  headingSpacing: string;
+  /**
+   * Corners. radiusUnit is the base size every "1×, 1.5×, 2×" corner in Nexternel is measured in
+   * (fields, pop-ups, option tiles, boxes inside cards); the others are buttons and menu items,
+   * chips and cards.
+   */
+  radiusUnit: number;
+  radiusControl: string;
+  radiusChip: string;
+  radiusCard: string;
+  /** The side menu and the top bar. */
+  chromeFill: string;
+  chromeEdge: string;
+  chromeShadow: string;
+  /** Cards (Settings and other pages). */
+  cardFill: string;
+  cardBorder: string;
+  cardShadow: string;
+  /** Pop-ups: menus, dialogs, drop-down lists. */
+  popupFill: string;
+  popupBorder: string;
+  popupShadow: string;
+  /** Text and number fields. */
+  fieldFill: string;
+  fieldBorderColour: string;
+  fieldShadow: string;
+  /** Option tiles (pickers: Looks, backgrounds, icons, switch styles). */
+  choiceFill: string;
+  choiceBorder: string;
+  choiceShadow: string;
+  choiceSelectedFill: string;
+  choiceSelectedBorder: string;
+  choiceSelectedShadow: string;
+  /** Dashboard sections (the box around a group of panels). */
+  sectionFill: string;
+  sectionBorder: string;
+  sectionShadow: string;
+  sectionRadius: string;
+  /** Buttons: shape (a CSS clip-path or "none") and letters. */
+  buttonShape: string;
+  buttonCase: "none" | "uppercase";
+  primaryFill: string;
+  primaryInk: string;
+  primaryBorder: string;
+  primaryShadow: string;
+  secondaryFill: string;
+  secondaryInk: string;
+  secondaryBorder: string;
+  secondaryShadow: string;
+  quietInk: string;
+  /** The chosen item in a menu or list. */
+  selectedFill: string;
+  selectedInk: string;
+  selectedShadow: string;
+  /** A person's picture circle when there is no photo. */
+  avatarFill: string;
+  avatarInk: string;
+  avatarBorder: string;
+  /** The Nexternel mark at the top of the menu (when there is no own logo). */
+  brandFill: string;
+  brandBorder: string;
+  brandShadow: string;
+  brandRadius: string;
 };
 
 export type UiLook = {
@@ -60,7 +135,8 @@ export type UiLook = {
   frosted: boolean;
   /** Background chosen with this Look when the page has none yet (a gradient id). */
   defaultBackground?: string;
-  tokens: (theme: Theme) => LookTokens;
+  /** The Look's values; anything left out is Standard's. */
+  tokens: (theme: Theme) => Partial<LookTokens>;
   /** Decoration drawn behind each panel's content, sized to the panel (e.g. HUD frames). */
   PanelFrame?: ComponentType;
   /** The page background this Look brings, used while Appearance → Background is Plain. */
@@ -71,7 +147,10 @@ export type UiLook = {
     /** background-size for each layer (e.g. "100% 100%, 28px 28px"). */
     size?: string;
   };
-  /** Extra CSS while this Look is chosen (may start with @import for fonts). */
+  /**
+   * Extra CSS while this Look is chosen (may start with @import for fonts). Decorations attach to
+   * roles: [data-nx-role="card" | "section" | "chrome" | "popup"], [data-nx-tabbar], [data-nx-panel-body].
+   */
   css?: string;
   /** A Look that only works in one colour mode (e.g. HUD is always dark). */
   forceMode?: "light" | "dark";

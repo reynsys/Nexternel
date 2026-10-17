@@ -1,12 +1,9 @@
-import { createTheme, alpha, type Theme } from "@mui/material/styles";
+import { createTheme, type Theme } from "@mui/material/styles";
 import type { ThemePrefs } from "../../themePrefs";
-import { contentPanelStyles, isGradientActive } from "../../surfaceStyles";
 
 /** Classic flat theme — respects configurator mode + primary. */
 export function createClassicTheme(prefs: ThemePrefs): Theme {
   const mode = prefs.mode;
-  const gradientActive = isGradientActive(prefs);
-  const solidContentPanels = Boolean(prefs.solidContentPanels);
 
   return createTheme({
     palette: {
@@ -21,56 +18,15 @@ export function createClassicTheme(prefs: ThemePrefs): Theme {
     typography: {
       fontFamily: '"IBM Plex Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
     },
+    // Building blocks are styled from the chosen Look (skins/look-theme.ts); the top menu's
+    // active link stays here.
     components: {
-      MuiCard: {
-        styleOverrides: {
-          root: ({ theme }) => ({
-            border: `1px solid ${alpha(theme.palette.mode === "dark" ? "#fff" : "#000", 0.08)}`,
-            ...contentPanelStyles(theme, { gradientActive, solidContentPanels }),
-          }),
-        },
-      },
-      MuiAccordion: {
-        styleOverrides: {
-          root: ({ theme }) => ({
-            ...contentPanelStyles(theme, { gradientActive, solidContentPanels }),
-            "&:before": { display: "none" },
-          }),
-        },
-      },
-      MuiButton: {
-        styleOverrides: {
-          root: { textTransform: "none" },
-        },
-      },
       MuiLink: {
         styleOverrides: {
           root: ({ theme }) => ({
             "&.nexternel-nav-active": {
               color: theme.palette.primary.main,
               fontWeight: 700,
-            },
-          }),
-        },
-      },
-      MuiTab: {
-        styleOverrides: {
-          root: ({ theme }) => ({
-            "&.Mui-selected": {
-              color: theme.palette.primary.main,
-              fontWeight: 600,
-            },
-          }),
-        },
-      },
-      MuiSwitch: {
-        styleOverrides: {
-          switchBase: ({ theme }) => ({
-            "&.Mui-checked": {
-              color: theme.palette.primary.main,
-            },
-            "&.Mui-checked + .MuiSwitch-track": {
-              backgroundColor: theme.palette.primary.main,
             },
           }),
         },

@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { ThemeProvider, CssBaseline, GlobalStyles } from "@mui/material";
+import { createTheme } from "@mui/material/styles";
 import { api, getStoredAccessToken, type UserThemePrefs } from "../api";
 import type { UiSkin } from "./types";
 import { getActiveSkinId, setActiveSkinId } from "./activeSkin";
@@ -26,6 +27,9 @@ import {
 import { AppearanceCssVars } from "./AppearanceCssVars";
 import { BackgroundEffects } from "./effects/BackgroundEffects";
 import { looksVersion, resolveLook, subscribeLooks } from "./looks/registry";
+import { resolveTokens } from "./looks/resolve";
+import { lookThemeOptions } from "./look-theme";
+import { isGradientActive } from "./surfaceStyles";
 import { loadAddons } from "./looks/addon-loader";
 
 type SkinContextValue = {
@@ -55,10 +59,18 @@ export function SkinProvider({ children }: { children: ReactNode }) {
     () => (look.forceMode && look.forceMode !== themePrefs.mode ? { ...themePrefs, mode: look.forceMode } : themePrefs),
     [look, themePrefs]
   );
-  const theme = useMemo(
-    () => skin.createTheme(shownPrefs),
-    [skin, shownPrefs]
-  );
+  const theme = useMemo(() => {
+    // The skin gives the layout's colours; the Look styles every building block from its roles.
+    const base = skin.createTheme(shownPrefs);
+    const tokens = resolveTokens(look, base);
+    return createTheme(
+      base,
+      lookThemeOptions(base, tokens, {
+        gradientActive: isGradientActive(shownPrefs),
+        solidContentPanels: Boolean(shownPrefs.solidContentPanels),
+      })
+    );
+  }, [skin, shownPrefs, look]);
   const persistServerRef = useRef(true);
   const hydratedRef = useRef(false);
 

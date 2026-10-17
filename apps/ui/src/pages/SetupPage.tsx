@@ -16,6 +16,7 @@ import AddHomeRoundedIcon from "@mui/icons-material/AddHomeRounded";
 import SettingsBackupRestoreRoundedIcon from "@mui/icons-material/SettingsBackupRestoreRounded";
 import { api, rememberAuth, type BackupInspectResult, type BackupJob } from "../api";
 import { useSkin } from "../skins/SkinProvider";
+import { choiceSx } from "../skins/surfaceStyles";
 
 /**
  * Welcome screen on a new installation: start a new home, or take over one from its backup.
@@ -31,16 +32,16 @@ function Choice({ icon, title, text, onClick }: { icon: ReactNode; title: string
   return (
     <ButtonBase
       onClick={onClick}
-      sx={{
+      sx={[
+        {
         flex: 1,
         display: "block",
         textAlign: "left",
         p: 2.5,
-        borderRadius: 2,
-        border: 1,
-        borderColor: "divider",
         "&:hover": { borderColor: "primary.main", bgcolor: "action.hover" },
-      }}
+      },
+      choiceSx(false),
+    ]}
     >
       <Box sx={{ color: "primary.main", mb: 1, "& svg": { fontSize: 36 } }}>{icon}</Box>
       <Typography variant="subtitle1" fontWeight={600}>

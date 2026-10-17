@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.103
+
+- **Tidier menu footer:** your name, role and version each on their own line, with a proper **Sign out** button and the menu-collapse button beside it. The letter in your picture circle is easier to read.
+- Groundwork for add-on Looks: a Look now restyles every part of Nexternel (menu, top bar, buttons, cards, pop-ups, fields), not only the panels. Standard looks the same as before.
+
 ## V5.2.102
 
 - Groundwork for add-on Looks: a Look can now bring its own background, fonts and panel frames. Nothing changes on your dashboards.

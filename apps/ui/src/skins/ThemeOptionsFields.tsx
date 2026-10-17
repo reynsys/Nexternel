@@ -45,6 +45,7 @@ import {
 } from "./effects/catalog";
 import { useReducedMotion } from "./effects/BackgroundEffects";
 import type { UiSkin } from "./types";
+import { choiceSx } from "./surfaceStyles";
 
 type Props = {
   themePrefs: ThemePrefs;
@@ -168,7 +169,8 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
                 key={look.id}
                 onClick={() => onThemeChange(withLook(themePrefs, look.id))}
                 aria-pressed={selected}
-                sx={{
+                sx={[
+                  {
                   width: "100%",
                   height: "100%",
                   display: "grid",
@@ -179,11 +181,9 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
                   gap: 0.25,
                   px: 1.25,
                   py: 1,
-                  borderRadius: 1.5,
-                  border: "1px solid",
-                  borderColor: selected ? "primary.main" : "divider",
-                  bgcolor: selected ? "action.selected" : "transparent",
-                }}
+                },
+                choiceSx(selected),
+              ]}
               >
                 <Typography variant="body2" fontWeight={600}>
                   {look.label}
@@ -356,7 +356,8 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
                 key={e.id}
                 onClick={() => set({ effectId: e.id })}
                 aria-pressed={selected}
-                sx={{
+                sx={[
+                  {
                   width: "100%",
                   height: "100%",
                   display: "grid",
@@ -367,11 +368,9 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
                   gap: 0.25,
                   px: 1.25,
                   py: 1,
-                  borderRadius: 1.5,
-                  border: "1px solid",
-                  borderColor: selected ? "primary.main" : "divider",
-                  bgcolor: selected ? "action.selected" : "transparent",
-                }}
+                },
+                choiceSx(selected),
+              ]}
               >
                 <Typography variant="body2" fontWeight={600}>
                   {e.label}

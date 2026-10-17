@@ -1,6 +1,7 @@
 import { Box, ButtonBase, Switch, Typography } from "@mui/material";
 import { SWITCH_STYLES, type SwitchStyleId } from "../../lib/switch-styles";
 import { SwitchStyleVisual, SwitchTileFill } from "./SwitchStyleVisual";
+import { choiceSx } from "../../skins/surfaceStyles";
 
 /** A small picture of each switch style, switched on, to choose from. */
 export function SwitchStylePicker({ value, onChange }: { value: SwitchStyleId; onChange: (id: SwitchStyleId) => void }) {
@@ -14,18 +15,17 @@ export function SwitchStylePicker({ value, onChange }: { value: SwitchStyleId; o
             onClick={() => onChange(s.id)}
             aria-pressed={selected}
             title={s.hint}
-            sx={{
+            sx={[
+              {
               display: "grid",
               gridTemplateRows: "64px auto",
               justifyItems: "center",
               gap: 0.75,
               px: 1,
               py: 1,
-              borderRadius: 1.5,
-              border: "1px solid",
-              borderColor: selected ? "primary.main" : "divider",
-              bgcolor: selected ? "action.selected" : "transparent",
-            }}
+            },
+            choiceSx(selected),
+          ]}
           >
             <Box sx={{ position: "relative", width: "100%", display: "grid", placeItems: "center", pointerEvents: "none" }}>
               {s.id === "toggle" ? (

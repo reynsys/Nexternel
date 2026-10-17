@@ -16,7 +16,7 @@ export function AppearanceCssVars({ lookId, looksVersion = 0 }: { lookId?: strin
   const vars = useMemo(() => {
     const accent = theme.palette.primary.main;
     const metricValue = metricValueColorFromTheme(theme);
-    const t = look.tokens(theme);
+    const t = theme.nx;
     return {
       "--nx-accent": accent,
       "--nx-accent-soft": alpha(accent, theme.palette.mode === "dark" ? 0.72 : 0.55),

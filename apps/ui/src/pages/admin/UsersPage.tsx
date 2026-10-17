@@ -244,7 +244,7 @@ export function UsersPage() {
                     <Stack direction="row" spacing={1.5} alignItems="center">
                       <Avatar
                         src={u.avatarData ?? undefined}
-                        sx={{ width: 32, height: 32, bgcolor: "primary.dark" }}
+                        sx={{ width: 32, height: 32 }}
                       >
                         {userInitial(u)}
                       </Avatar>

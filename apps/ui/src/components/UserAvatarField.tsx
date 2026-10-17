@@ -38,7 +38,7 @@ export function UserAvatarField({
       <Stack direction="row" spacing={2} alignItems="center">
         <Avatar
           src={avatarData ?? undefined}
-          sx={{ width: 64, height: 64, bgcolor: "primary.dark" }}
+          sx={{ width: 64, height: 64 }}
         >
           {userInitial({ displayName, username })}
         </Avatar>

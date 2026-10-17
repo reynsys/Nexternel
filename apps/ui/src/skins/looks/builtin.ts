@@ -27,11 +27,75 @@ function standardTokens(theme: Theme): LookTokens {
     chip: alpha(theme.palette.text.primary, 0.12),
     glow: "0 0 0 transparent",
     textGlow: "none",
+    ...standardRoles(theme),
+  };
+}
+
+/** Today's look for every other part of Nexternel (menus, cards, buttons, fields…). */
+function standardRoles(theme: Theme) {
+  const r = Number(theme.shape.borderRadius) || 0;
+  const dark = theme.palette.mode === "dark";
+  const fg = dark ? "#fff" : "#000";
+  const p = theme.palette;
+  return {
+    ground: p.background.default,
+    paper: p.background.paper,
+    line: p.divider,
+    font: String(theme.typography.fontFamily),
+    headingCase: "none" as const,
+    headingSpacing: "normal",
+    radiusUnit: r,
+    radiusControl: "8px",
+    radiusChip: "16px",
+    radiusCard: "12px",
+    chromeFill: p.background.paper,
+    chromeEdge: `1px solid ${alpha(fg, 0.08)}`,
+    chromeShadow: "",
+    cardFill: p.background.paper,
+    cardBorder: `1px solid ${alpha(fg, 0.08)}`,
+    cardShadow: "",
+    popupFill: "",
+    popupBorder: "",
+    popupShadow: "",
+    fieldFill: "",
+    fieldBorderColour: "",
+    fieldShadow: "",
+    choiceFill: "transparent",
+    choiceBorder: `1px solid ${p.divider}`,
+    choiceShadow: "none",
+    choiceSelectedFill: p.action.selected,
+    choiceSelectedBorder: `1px solid ${p.primary.main}`,
+    choiceSelectedShadow: "none",
+    sectionFill: p.background.paper,
+    sectionBorder: `1px solid ${p.divider}`,
+    sectionShadow: dark ? "none" : "0 1px 3px rgba(0,0,0,0.06)",
+    sectionRadius: `${r * 2}px`,
+    buttonShape: "none",
+    buttonCase: "none" as const,
+    primaryFill: "",
+    primaryInk: "",
+    primaryBorder: "",
+    primaryShadow: "",
+    secondaryFill: "",
+    secondaryInk: "",
+    secondaryBorder: "",
+    secondaryShadow: "",
+    quietInk: "",
+    selectedFill: p.primary.main,
+    selectedInk: p.primary.contrastText,
+    selectedShadow: "",
+    avatarFill: p.primary.dark,
+    avatarInk: p.primary.contrastText,
+    avatarBorder: "",
+    brandFill: "linear-gradient(135deg, hsl(210, 98%, 60%) 0%, hsl(210, 100%, 35%) 100%)",
+    brandBorder: `1px solid ${p.primary.main}`,
+    brandShadow: "",
+    brandRadius: "999px",
   };
 }
 
 /** Standard's shape with softer, see-through controls that glow a little when on. */
-function glassTokens(theme: Theme): LookTokens {
+function glassTokens(theme: Theme): Partial<LookTokens> {
   const accent = theme.palette.primary.main;
   return {
     ...standardTokens(theme),

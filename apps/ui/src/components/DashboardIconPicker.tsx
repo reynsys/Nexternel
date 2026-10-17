@@ -1,5 +1,6 @@
 import { Box, ButtonBase, Tooltip, Typography } from "@mui/material";
 import { DASHBOARD_ICONS } from "../lib/dashboard-icons";
+import { choiceSx } from "../skins/surfaceStyles";
 
 type Props = {
   value?: string;
@@ -31,15 +32,13 @@ export function DashboardIconPicker({ value, onChange, dense }: Props) {
                 onClick={() => onChange(id)}
                 aria-label={label}
                 aria-pressed={selected}
-                sx={{
+                sx={[
+                  {
                   p: dense ? 0.75 : 1,
-                  borderRadius: 1,
-                  border: "1px solid",
-                  borderColor: selected ? "primary.main" : "divider",
-                  bgcolor: selected ? "action.selected" : "transparent",
                   color: selected ? "primary.main" : "text.secondary",
-                  "&:hover": { bgcolor: "action.hover" },
-                }}
+                },
+                choiceSx(selected, { hover: true, radius: "field" }),
+              ]}
               >
                 <Icon fontSize={dense ? "small" : "medium"} />
               </ButtonBase>
