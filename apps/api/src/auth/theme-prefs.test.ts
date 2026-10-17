@@ -21,8 +21,3 @@ test("a Look id that is not a short lowercase name is not stored", () => {
   assert.equal(parseThemePrefsInput({ ...base, lookId: "../../etc" })?.lookId, "standard");
 });
 
-test("the starting switch style is kept when known, else the classic toggle", () => {
-  assert.equal(parseThemePrefsInput({ ...base, switchStyle: "gears" })?.switchStyle, "gears");
-  assert.equal(parseThemePrefsInput({ ...base, switchStyle: "bear" })?.switchStyle, "toggle");
-  assert.equal(themePrefsFromDb({ ...base }).switchStyle, "toggle");
-});

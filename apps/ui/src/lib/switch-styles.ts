@@ -1,7 +1,7 @@
 /**
- * Switch styles: how an on/off switch is drawn in a panel tile. Each person picks a starting
- * style (Settings → Appearance); a panel can choose its own in its Edit menu (Look tab).
- * Every style draws itself from the Look's tokens, so it follows Standard, Glass or a Look pack.
+ * Switch styles: how an on/off switch is drawn in a panel tile. Chosen like a gauge's style: per
+ * panel in its Edit menu (Look tab), and per switch in a panel with several (the switch's own
+ * options in the Content tab). Every style draws itself from the Look's tokens.
  */
 
 export const SWITCH_STYLES = [
@@ -33,17 +33,11 @@ export function normalizeSwitchStyle(raw: unknown): SwitchStyleId {
   return isSwitchStyleId(raw) ? raw : DEFAULT_SWITCH_STYLE;
 }
 
-/** A panel's own switch style, or "default" to use the person's starting style. */
-export function readPanelSwitchStyle(config: Record<string, unknown> | undefined): SwitchStyleId | "default" {
+/** A panel's switch style (the classic toggle when it has not chosen one). */
+export function readPanelSwitchStyle(config: Record<string, unknown> | undefined): SwitchStyleId {
   const appearance = config?.appearance;
   if (appearance && typeof appearance === "object" && !Array.isArray(appearance)) {
-    const style = (appearance as Record<string, unknown>).switchStyle;
-    if (isSwitchStyleId(style)) return style;
+    return normalizeSwitchStyle((appearance as Record<string, unknown>).switchStyle);
   }
-  return "default";
-}
-
-/** The style a panel shows: its own choice, else the person's starting style. */
-export function resolveSwitchStyle(panelChoice: SwitchStyleId | "default", personDefault: unknown): SwitchStyleId {
-  return panelChoice === "default" ? normalizeSwitchStyle(personDefault) : panelChoice;
+  return DEFAULT_SWITCH_STYLE;
 }

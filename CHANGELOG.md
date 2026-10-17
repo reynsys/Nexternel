@@ -2,6 +2,12 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.100
+
+- **Switch styles per panel, like gauges:** open a panel's **Edit menu → Look → Switch style** and tap the picture you want. In a panel with several switches, each switch can have its own style: open its options in the **Content** tab. The style choice in Settings → Appearance is gone.
+- **Status lights per panel:** style, place, blink and now the **colours** are all in each panel's **Edit menu → Status light**. They are no longer in Settings → Appearance; panels keep the look they had.
+- **Appearance:** smaller Light / Dark buttons with sun and moon icons, brighter soft-glow backgrounds, and six new light ones: Pearl, Sky, Mint, Peach, Lilac and Lemon. Picking a light one switches to Light mode so text stays easy to read.
+
 ## V5.2.99
 
 - **Switch styles.** Switches on your dashboards can now look 12 different ways: the classic toggle, a power button, a wall rocker, an ON / OFF pair, a tile that lights up, a lever, day & night, a cyber 0 / 1 block, a neon ring, turning gears, a 3D switch with a light, and a 3D big knob. Choose your starting style in **Settings → Appearance → Switch style**, and give any panel its own in its **Edit menu → Look**. The classic toggle stays the default.

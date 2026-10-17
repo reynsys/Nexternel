@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import {
   Alert,
   Box,
@@ -40,7 +40,7 @@ export type StatusReading = { id: string; name: string; unit: string | null; kin
 
 /** The panel's own light settings for its saved config; nothing when it follows the defaults. */
 export function statusLightConfig(value: PanelStatusLight): { statusLight?: PanelStatusLight } {
-  return value.style === "default" && value.position === "default" && value.blink === "default"
+  return value.style === "default" && value.position === "default" && value.blink === "default" && !value.colours
     ? {}
     : { statusLight: value };
 }
@@ -54,6 +54,8 @@ const STYLE_LABELS = {
 } as const;
 
 const POSITION_LABELS = { title: "In the title", reading: "Under the reading" } as const;
+
+const COLOUR_LABELS = { ok: "Normal", watch: "Keep an eye", alert: "Act now" } as const;
 
 /** "Act now below 16 · keep an eye on it 18 to 24 · act now above 27 °C" */
 export function limitsSummary(limits: StatusLimits, unit: string | null): string {
@@ -102,10 +104,9 @@ export function StatusLightEditorSection({
         <Select
           labelId="status-light-style"
           label="Style"
-          value={value.style}
+          value={look.style}
           onChange={(e) => onChange({ ...value, style: e.target.value as PanelStatusLight["style"] })}
         >
-          <MenuItem value="default">Default ({STYLE_LABELS[prefs.style]})</MenuItem>
           {(Object.keys(STYLE_LABELS) as (keyof typeof STYLE_LABELS)[]).map((k) => (
             <MenuItem key={k} value={k}>
               {STYLE_LABELS[k]}
@@ -120,10 +121,9 @@ export function StatusLightEditorSection({
             <Select
               labelId="status-light-position"
               label="Where"
-              value={value.position}
+              value={look.position}
               onChange={(e) => onChange({ ...value, position: e.target.value as PanelStatusLight["position"] })}
             >
-              <MenuItem value="default">Default ({POSITION_LABELS[prefs.position]})</MenuItem>
               <MenuItem value="title">{POSITION_LABELS.title}</MenuItem>
               <MenuItem value="reading">{POSITION_LABELS.reading}</MenuItem>
             </Select>
@@ -133,16 +133,38 @@ export function StatusLightEditorSection({
             <Select
               labelId="status-light-blink"
               label="Blink on act now"
-              value={value.blink === "default" ? "default" : value.blink ? "on" : "off"}
-              onChange={(e) =>
-                onChange({ ...value, blink: e.target.value === "default" ? "default" : e.target.value === "on" })
-              }
+              value={look.blink ? "on" : "off"}
+              onChange={(e) => onChange({ ...value, blink: e.target.value === "on" })}
             >
-              <MenuItem value="default">Default ({prefs.blink ? "On" : "Off"})</MenuItem>
               <MenuItem value="on">On</MenuItem>
               <MenuItem value="off">Off</MenuItem>
             </Select>
           </FormControl>
+          <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap>
+            <Typography variant="body2" color="text.secondary">
+              Colours
+            </Typography>
+            {(["ok", "watch", "alert"] as const).map((k) => (
+              <Stack key={k} direction="row" spacing={0.75} alignItems="center">
+                <Box
+                  component="input"
+                  type="color"
+                  aria-label={`${COLOUR_LABELS[k]} colour`}
+                  value={look.colours[k]}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                    onChange({ ...value, colours: { ...look.colours, [k]: e.target.value.toUpperCase() } })
+                  }
+                  sx={{ width: 32, height: 26, p: 0, border: 0, bgcolor: "transparent", cursor: "pointer" }}
+                />
+                <Typography variant="caption">{COLOUR_LABELS[k]}</Typography>
+              </Stack>
+            ))}
+            {value.colours ? (
+              <Button size="small" onClick={() => onChange({ ...value, colours: undefined })}>
+                Reset colours
+              </Button>
+            ) : null}
+          </Stack>
         </>
       ) : null}
       <Stack spacing={1}>
@@ -159,8 +181,8 @@ export function StatusLightEditorSection({
         ))}
       </Stack>
       <Typography variant="caption" color="text.secondary">
-        Limits belong to the reading, so they apply wherever it is shown and to bell alerts. Colours and
-        the default style are in Settings → Appearance.
+        Style, place, blink and colours are for this panel. Limits belong to the reading, so they apply
+        wherever it is shown and to bell alerts.
       </Typography>
     </Stack>
   );

@@ -6,12 +6,21 @@
  * Icon:  this panel's own icon  →  the reading's icon  →  automatic by kind of reading
  */
 import { panelItemLabel } from "./panel-heading";
+import { isSwitchStyleId, type SwitchStyleId } from "./switch-styles";
 
 export type ItemIconsMode = "show" | "hide";
 /** short = without the device/room name already in the panel title; full = the whole name. */
 export type ItemNamesMode = "short" | "full" | "hide";
-/** icon: a catalogue id, "auto" (the reading's own) or "none" (no icon on this panel). */
-export type ItemOverride = { name?: string; icon?: string };
+/**
+ * icon: a catalogue id, "auto" (the reading's own) or "none" (no icon on this panel).
+ * switchStyle: this switch's own style (else the panel's).
+ */
+export type ItemOverride = { name?: string; icon?: string; switchStyle?: SwitchStyleId };
+
+/** An override that changes something (empty ones are not saved). */
+export function overrideHasValue(o: ItemOverride | undefined): boolean {
+  return Boolean(o && (o.name || o.icon || o.switchStyle));
+}
 
 export type PanelItemDisplay = {
   icons: ItemIconsMode;
@@ -35,7 +44,8 @@ export function readPanelItemDisplay(config: Record<string, unknown> | undefined
       const o: ItemOverride = {};
       if (typeof raw.name === "string" && raw.name.trim()) o.name = raw.name.trim();
       if (typeof raw.icon === "string" && raw.icon && raw.icon !== "auto") o.icon = raw.icon;
-      if (o.name || o.icon) overrides[id] = o;
+      if (isSwitchStyleId(raw.switchStyle)) o.switchStyle = raw.switchStyle;
+      if (overrideHasValue(o)) overrides[id] = o;
     }
   }
   return { icons, names, overrides };
@@ -54,7 +64,7 @@ export function writePanelItemDisplay(
   else delete next.itemNames;
   const keep = keepIds ? new Set(keepIds) : null;
   const overrides = Object.fromEntries(
-    Object.entries(display.overrides).filter(([id, o]) => (!keep || keep.has(id)) && (o.name || o.icon))
+    Object.entries(display.overrides).filter(([id, o]) => (!keep || keep.has(id)) && overrideHasValue(o))
   );
   if (Object.keys(overrides).length) next.itemOverrides = overrides;
   else delete next.itemOverrides;

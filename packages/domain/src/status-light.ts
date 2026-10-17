@@ -99,10 +99,17 @@ export const STATUS_WORDS: Record<StatusState, string> = {
 export type StatusLightStyle = "pill" | "bar" | "dots" | "glow" | "off";
 export type StatusLightPosition = "title" | "reading";
 
+export type StatusLightColours = { ok: string; watch: string; alert: string };
+
+/**
+ * A panel's status light, chosen in its Edit menu. "default" (and no colours) = the panel has not
+ * chosen yet and shows the starting look.
+ */
 export type PanelStatusLight = {
   style: StatusLightStyle | "default";
   position: StatusLightPosition | "default";
   blink: boolean | "default";
+  colours?: StatusLightColours;
 };
 
 export const STATUS_LIGHT_DEFAULTS = { style: "pill" as StatusLightStyle, position: "title" as StatusLightPosition, blink: true };
@@ -111,9 +118,14 @@ export function readPanelStatusLight(config: Record<string, unknown> | null | un
   const raw = (config?.statusLight ?? {}) as Partial<PanelStatusLight>;
   const styles = ["pill", "bar", "dots", "glow", "off", "default"];
   const positions = ["title", "reading", "default"];
+  const c = (raw.colours && typeof raw.colours === "object" ? raw.colours : {}) as Record<string, unknown>;
+  const hex = (v: unknown) => typeof v === "string" && /^#[0-9A-Fa-f]{6}$/.test(v);
   return {
     style: styles.includes(raw.style as string) ? (raw.style as PanelStatusLight["style"]) : "default",
     position: positions.includes(raw.position as string) ? (raw.position as PanelStatusLight["position"]) : "default",
     blink: typeof raw.blink === "boolean" ? raw.blink : "default",
+    ...(hex(c.ok) && hex(c.watch) && hex(c.alert)
+      ? { colours: { ok: c.ok as string, watch: c.watch as string, alert: c.alert as string } }
+      : {}),
   };
 }

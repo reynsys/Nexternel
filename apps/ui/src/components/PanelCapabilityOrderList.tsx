@@ -28,6 +28,7 @@ import {
 import { asSwitchCapability } from "../panels/panel-capabilities";
 import { useConfirm } from "./confirm";
 import { ItemOverrideFields } from "./ItemOverrideFields";
+import { isControllableResolvedCapability } from "../panels/panel-capabilities";
 import type { ItemOverride } from "../lib/panel-item-display";
 
 type Props = {
@@ -194,6 +195,7 @@ export function PanelCapabilityOrderList({
                 defaultName={capabilityOptionPrimary(asSwitchCapability(cap))}
                 defaultIcon={cap.icon ?? "auto"}
                 kind={cap.kind}
+                isSwitch={isControllableResolvedCapability(cap)}
                 value={overrides[cap.id]}
                 onChange={(next) => {
                   const all = { ...overrides };

@@ -6,8 +6,6 @@ export type ThemePrefsDto = {
   skinId: string;
   /** The dashboard's Look (Standard, Glass or an installed Look pack). */
   lookId?: string;
-  /** Starting switch style for panels (keep in sync with the UI's lib/switch-styles.ts). */
-  switchStyle?: string;
   gradientId?: string;
   solidContentPanels?: boolean;
   effectId?: string;
@@ -62,7 +60,6 @@ const DEFAULT: ThemePrefsDto = {
   primary: "#1A73E8",
   skinId: "mui-dashboard",
   lookId: "standard",
-  switchStyle: "toggle",
   gradientId: "none",
   solidContentPanels: false,
   effectId: "off",
@@ -122,6 +119,12 @@ const GRADIENT_IDS = new Set([
   "glow-sunset",
   "glow-ocean",
   "glow-rose",
+  "glow-pearl",
+  "glow-sky",
+  "glow-mint",
+  "glow-peach",
+  "glow-lilac",
+  "glow-lemon",
 ]);
 
 /** Known background effects (keep in sync with UI skins/effects/catalog.ts). */
@@ -172,14 +175,6 @@ function lookField(o: Record<string, unknown>): string {
   return backdrop && !o.solidContentPanels ? "glass" : "standard";
 }
 
-const SWITCH_STYLES = new Set([
-  "toggle", "power", "rocker", "pair", "tile", "lever", "daynight", "cyber", "neon", "gears", "led", "bigknob",
-]);
-
-function switchStyleField(raw: unknown): string {
-  return typeof raw === "string" && SWITCH_STYLES.has(raw) ? raw : "toggle";
-}
-
 function normalizeGradientId(raw: unknown): string {
   if (typeof raw !== "string" || !raw.trim()) return "none";
   const id = raw.trim();
@@ -207,7 +202,6 @@ export function parseThemePrefsInput(
     primary,
     skinId,
     lookId: lookField(o),
-    switchStyle: switchStyleField(o.switchStyle),
     gradientId: normalizeGradientId(o.gradientId),
     solidContentPanels: Boolean(o.solidContentPanels),
     ...effectFields(o),
@@ -232,7 +226,6 @@ export function themePrefsFromDb(raw: unknown): ThemePrefsDto {
         ? o.skinId.trim()
         : DEFAULT.skinId,
     lookId: lookField(o),
-    switchStyle: switchStyleField(o.switchStyle),
     gradientId: normalizeGradientId(o.gradientId),
     solidContentPanels: Boolean(o.solidContentPanels),
     ...effectFields(o),

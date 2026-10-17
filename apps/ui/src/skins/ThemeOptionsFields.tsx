@@ -16,6 +16,8 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
+import LightModeIcon from "@mui/icons-material/LightMode";
+import DarkModeIcon from "@mui/icons-material/DarkMode";
 import {
   GLOW_PALETTES,
   GRADIENT_NONE_ID,
@@ -25,19 +27,14 @@ import {
   isGlowId,
 } from "./gradientPalettes";
 import {
-  DEFAULT_STATUS_LIGHT_PREFS,
   PRIMARY_SWATCHES,
   normalizeAccentHex,
   normalizeBellPrefs,
-  normalizeStatusLightPrefs,
   type BellPrefs,
-  type StatusLightPrefs,
   type ThemePrefs,
   withLook,
 } from "./themePrefs";
 import { listLooks, resolveLook } from "./looks/registry";
-import { SwitchStylePicker } from "../components/switch-styles/SwitchStylePicker";
-import { normalizeSwitchStyle } from "../lib/switch-styles";
 import { isGradientActive } from "./surfaceStyles";
 import {
   BACKGROUND_EFFECTS,
@@ -63,7 +60,7 @@ type BackgroundKind = "plain" | "glow" | "gradient";
 
 const BACKGROUND_HINT: Record<BackgroundKind, string> = {
   plain: "The standard light or dark background.",
-  glow: "Pools of soft light on a deep background.",
+  glow: "Pools of soft light. The pale ones in the second row switch to Light mode.",
   gradient: "Two colours blending across the page.",
 };
 
@@ -132,8 +129,6 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
   const background = getGradientPalette(themePrefs.gradientId);
   const effectId = themePrefs.effectId ?? "off";
   const set = (patch: Partial<ThemePrefs>) => onThemeChange({ ...themePrefs, ...patch });
-  const statusLight = normalizeStatusLightPrefs(themePrefs.statusLight);
-  const setLight = (patch: Partial<StatusLightPrefs>) => set({ statusLight: { ...statusLight, ...patch } });
   const bell = normalizeBellPrefs(themePrefs.bell);
 
   useEffect(() => setCustomHex(themePrefs.primary), [themePrefs.primary]);
@@ -202,16 +197,6 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
         </Box>
       </Section>
 
-      <Section
-        title="Switch style"
-        hint="How switches look on your dashboards. A panel can choose its own in its Edit menu (Look tab)."
-      >
-        <SwitchStylePicker
-          value={normalizeSwitchStyle(themePrefs.switchStyle)}
-          onChange={(id) => set({ switchStyle: id })}
-        />
-      </Section>
-
       <Divider />
 
       <Section title="Colour mode">
@@ -219,9 +204,11 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
           {(["light", "dark"] as const).map((mode) => (
             <Button
               key={mode}
-              fullWidth
+              size="small"
               variant={themePrefs.mode === mode ? "contained" : "outlined"}
+              startIcon={mode === "light" ? <LightModeIcon /> : <DarkModeIcon />}
               onClick={() => set({ mode })}
+              sx={{ minWidth: 96 }}
             >
               {mode === "light" ? "Light" : "Dark"}
             </Button>
@@ -249,7 +236,10 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
               return (
                 <ButtonBase
                   key={g.id}
-                  onClick={() => set({ gradientId: g.id })}
+                  onClick={() =>
+                    // A light glow needs dark text: it brings Light mode along.
+                    set(g.glow?.light ? { gradientId: g.id, mode: "light" } : { gradientId: g.id })
+                  }
                   aria-pressed={selected}
                   aria-label={g.label}
                   sx={{
@@ -271,7 +261,7 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
                       width: "100%",
                       height: 40,
                       borderRadius: 1,
-                      backgroundImage: gradientCss(g.id, themePrefs.mode) ?? undefined,
+                      backgroundImage: gradientCss(g.id, g.glow?.light ? "light" : themePrefs.mode) ?? undefined,
                       border: "1px solid",
                       borderColor: "divider",
                     }}
@@ -417,98 +407,6 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
               disabled={effectId === "off"}
               onChange={(v) => set({ effectColour: v })}
             />
-          </Stack>
-        </Stack>
-      </Section>
-
-      <Divider />
-
-      <Section
-        title="Status lights"
-        hint="The light on a reading: green is normal, amber means keep an eye on it, red means act now, grey means no recent reading. Each panel can choose its own style in its Edit menu."
-      >
-        <Stack spacing={1.25}>
-          <Stack direction="row" spacing={1.5} alignItems="center">
-            <Typography variant="body2" color="text.secondary" sx={{ width: 64, flexShrink: 0 }}>
-              Style
-            </Typography>
-            <Segmented<StatusLightPrefs["style"]>
-              label="Status light style"
-              value={statusLight.style}
-              options={[
-                { value: "pill", label: "Rounded rectangle" },
-                { value: "bar", label: "Bar" },
-                { value: "dots", label: "Dots" },
-                { value: "glow", label: "Glowing border" },
-                { value: "off", label: "Off" },
-              ]}
-              onChange={(v) => setLight({ style: v })}
-            />
-          </Stack>
-          <Stack direction="row" spacing={1.5} alignItems="center">
-            <Typography variant="body2" color="text.secondary" sx={{ width: 64, flexShrink: 0 }}>
-              Where
-            </Typography>
-            <Segmented<StatusLightPrefs["position"]>
-              label="Status light position"
-              value={statusLight.position}
-              disabled={statusLight.style === "off"}
-              options={[
-                { value: "title", label: "In the title" },
-                { value: "reading", label: "Under the reading" },
-              ]}
-              onChange={(v) => setLight({ position: v })}
-            />
-          </Stack>
-          <Stack direction="row" spacing={1.5} alignItems="center">
-            <Typography variant="body2" color="text.secondary" sx={{ width: 64, flexShrink: 0 }}>
-              Blink
-            </Typography>
-            <Segmented<"on" | "off">
-              label="Blink on act now"
-              value={statusLight.blink ? "on" : "off"}
-              disabled={statusLight.style === "off"}
-              options={[
-                { value: "on", label: "Blink on act now" },
-                { value: "off", label: "Steady" },
-              ]}
-              onChange={(v) => setLight({ blink: v === "on" })}
-            />
-          </Stack>
-          <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap>
-            <Typography variant="body2" color="text.secondary" sx={{ width: 64, flexShrink: 0 }}>
-              Colours
-            </Typography>
-            {(
-              [
-                ["ok", "Normal"],
-                ["watch", "Keep an eye on it"],
-                ["alert", "Act now"],
-              ] as const
-            ).map(([key, label]) => (
-              <Box
-                key={key}
-                component="label"
-                sx={{ display: "inline-flex", alignItems: "center", gap: 0.75, cursor: "pointer" }}
-              >
-                <Box
-                  component="input"
-                  type="color"
-                  aria-label={`${label} colour`}
-                  value={statusLight.colours[key]}
-                  onChange={(e) =>
-                    setLight({
-                      colours: { ...statusLight.colours, [key]: (e.target as HTMLInputElement).value.toUpperCase() },
-                    })
-                  }
-                  sx={{ width: 28, height: 28, p: 0, border: 0, bgcolor: "transparent", cursor: "pointer" }}
-                />
-                <Typography variant="body2">{label}</Typography>
-              </Box>
-            ))}
-            <Button size="small" onClick={() => set({ statusLight: { ...statusLight, colours: DEFAULT_STATUS_LIGHT_PREFS.colours } })}>
-              Original colours
-            </Button>
           </Stack>
         </Stack>
       </Section>

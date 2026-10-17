@@ -42,3 +42,10 @@ test("saved panels without these settings are unchanged, and leftovers for remov
   assert.deepEqual(saved, { itemNames: "full", itemOverrides: { a: { name: "A" } } });
   assert.deepEqual(readPanelItemDisplay(saved), { icons: "show", names: "full", overrides: { a: { name: "A" } } });
 });
+
+test("a switch's own style in the panel is read and saved; an unknown one is dropped", () => {
+  const read = readPanelItemDisplay({ itemOverrides: { a: { switchStyle: "gears" }, b: { switchStyle: "bear" } } });
+  assert.deepEqual(read.overrides, { a: { switchStyle: "gears" } });
+  const saved = writePanelItemDisplay({}, read);
+  assert.deepEqual(saved.itemOverrides, { a: { switchStyle: "gears" } });
+});

@@ -13,7 +13,7 @@ export type GradientPalette = {
   /** CSS angle, e.g. 135deg */
   angle?: string;
   /** Soft glow: three pools of light over a deep base (the former Gaussian themes). */
-  glow?: { pools: [Rgb, Rgb, Rgb]; base: [string, string, string] };
+  glow?: { pools: [Rgb, Rgb, Rgb]; base: [string, string, string]; light?: boolean };
 };
 
 export const GRADIENT_NONE_ID = "none";
@@ -56,8 +56,14 @@ export const GRADIENT_PALETTES: GradientPalette[] = [
 
 const hexOf = (c: Rgb) => `#${c.map((v) => v.toString(16).padStart(2, "0")).join("")}`.toUpperCase();
 
-function glow(id: string, label: string, pools: [Rgb, Rgb, Rgb], base: [string, string, string]): GradientPalette {
-  return { id: `glow-${id}`, label, from: hexOf(pools[0]), to: hexOf(pools[1]), glow: { pools, base } };
+function glow(
+  id: string,
+  label: string,
+  pools: [Rgb, Rgb, Rgb],
+  base: [string, string, string],
+  light = false
+): GradientPalette {
+  return { id: `glow-${id}`, label, from: hexOf(pools[0]), to: hexOf(pools[1]), glow: { pools, base, light } };
 }
 
 /** Soft glow backgrounds: pools of light on a deep background. Static — nothing is animated or blurred. */
@@ -72,6 +78,13 @@ export const GLOW_PALETTES: GradientPalette[] = [
   glow("sunset", "Sunset", [[255, 110, 80], [200, 60, 140], [255, 190, 90]], ["#12060e", "#2b0f1f", "#170812"]),
   glow("ocean", "Ocean", [[0, 140, 255], [40, 60, 200], [0, 230, 220]], ["#010a14", "#04213a", "#020f1f"]),
   glow("rose", "Rose", [[255, 90, 150], [170, 60, 200], [255, 200, 220]], ["#14050c", "#2e0d1d", "#18060f"]),
+  // Light glows: pale pools on a light ground, in light and dark mode alike.
+  glow("pearl", "Pearl", [[170, 190, 230], [215, 190, 235], [255, 255, 255]], ["#f7f8fc", "#eef1f8", "#f3f1f8"], true),
+  glow("sky", "Sky", [[110, 190, 255], [150, 220, 255], [255, 255, 255]], ["#f2f8ff", "#e4f1ff", "#eef6ff"], true),
+  glow("mint", "Mint", [[100, 220, 170], [150, 230, 220], [240, 255, 230]], ["#f1fbf6", "#e2f6ec", "#edf9f3"], true),
+  glow("peach", "Peach", [[255, 170, 130], [255, 140, 170], [255, 225, 170]], ["#fff6f1", "#ffeae2", "#fff2ec"], true),
+  glow("lilac", "Lilac", [[190, 150, 255], [255, 160, 220], [210, 200, 255]], ["#f8f4ff", "#efe7ff", "#f6f0ff"], true),
+  glow("lemon", "Lemon", [[255, 220, 90], [180, 230, 120], [255, 245, 190]], ["#fffbea", "#fdf5d6", "#fffae6"], true),
 ];
 
 const BY_ID = new Map([...GRADIENT_PALETTES, ...GLOW_PALETTES].map((p) => [p.id, p]));
@@ -125,7 +138,10 @@ export function mixHexColors(a: string, b: string): string {
 export function gradientBaseColour(id: string | null | undefined, mode: "light" | "dark" = "dark"): string | null {
   const p = getGradientPalette(id);
   if (!p) return null;
-  if (p.glow) return mode === "light" ? "#eef1f7" : p.glow.base[2];
+  if (p.glow) {
+    if (p.glow.light) return mode === "light" ? p.glow.base[2] : "#0f121b";
+    return mode === "light" ? "#eef1f7" : p.glow.base[2];
+  }
   return p.to;
 }
 
@@ -135,16 +151,23 @@ export function gradientCss(id: string | null | undefined, mode: "light" | "dark
   if (!p) return null;
   if (p.glow) {
     const [a, b, c] = p.glow.pools;
-    const k = mode === "light" ? 1.25 : 1;
-    const rgba = (rgb: Rgb, alpha: number) => `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${alpha.toFixed(3)})`;
-    const ground =
-      mode === "light"
+    // A light glow shows on its pale ground in Light mode; in Dark mode its pools sit on a deep
+    // ground, so light text stays readable.
+    const paleGround = p.glow.light && mode === "light";
+    // Pools are stronger on a light ground, where pale light shows less.
+    const k = mode === "light" ? 1.15 : 1;
+    const rgba = (rgb: Rgb, alpha: number) => `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${Math.min(1, alpha).toFixed(3)})`;
+    const ground = paleGround
+      ? `linear-gradient(135deg, ${p.glow.base[0]} 0%, ${p.glow.base[1]} 45%, ${p.glow.base[2]} 100%)`
+      : mode === "light"
         ? "linear-gradient(135deg, #f7f8fc, #eef1f7 45%, #f4f2f8)"
-        : `linear-gradient(135deg, ${p.glow.base[0]} 0%, ${p.glow.base[1]} 45%, ${p.glow.base[2]} 100%)`;
+        : p.glow.light
+          ? "linear-gradient(135deg, #0b0e16 0%, #161a26 45%, #0f121b 100%)"
+          : `linear-gradient(135deg, ${p.glow.base[0]} 0%, ${p.glow.base[1]} 45%, ${p.glow.base[2]} 100%)`;
     return [
-      `radial-gradient(circle at 18% 82%, ${rgba(a, 0.3 * k)}, transparent 46%)`,
-      `radial-gradient(circle at 88% 12%, ${rgba(b, 0.26 * k)}, transparent 42%)`,
-      `radial-gradient(circle at 55% 38%, ${rgba(c, 0.1 * k)}, transparent 40%)`,
+      `radial-gradient(circle at 18% 82%, ${rgba(a, 0.55 * k)}, transparent 60%)`,
+      `radial-gradient(circle at 88% 12%, ${rgba(b, 0.5 * k)}, transparent 56%)`,
+      `radial-gradient(circle at 55% 40%, ${rgba(c, 0.22 * k)}, transparent 50%)`,
       ground,
     ].join(", ");
   }

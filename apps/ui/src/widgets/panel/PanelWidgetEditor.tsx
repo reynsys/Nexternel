@@ -85,9 +85,9 @@ import {
 import { panelItemLabel } from "../../lib/panel-heading";
 import { readTitleIcon, writeTitleIcon } from "../../lib/panel-title-icon";
 import { PanelTitleFields, type AutomaticTitle } from "../../components/PanelTitleFields";
-import { SWITCH_STYLES, readPanelSwitchStyle, normalizeSwitchStyle, type SwitchStyleId } from "../../lib/switch-styles";
+import { DEFAULT_SWITCH_STYLE, readPanelSwitchStyle, type SwitchStyleId } from "../../lib/switch-styles";
 import { isControllableResolvedCapability } from "../../panels/panel-capabilities";
-import { useOptionalSkin } from "../../skins/SkinProvider";
+import { SwitchStylePicker } from "../../components/switch-styles/SwitchStylePicker";
 
 
 
@@ -210,8 +210,7 @@ export function PanelWidgetEditor({
   );
 
   const [itemStyle, setItemStyle] = useState<PanelItemStyle>(readPanelItemStyle(widget.config));
-  const [switchStyle, setSwitchStyle] = useState<SwitchStyleId | "default">(readPanelSwitchStyle(widget.config));
-  const personSwitchStyle = normalizeSwitchStyle(useOptionalSkin()?.themePrefs.switchStyle);
+  const [switchStyle, setSwitchStyle] = useState<SwitchStyleId>(readPanelSwitchStyle(widget.config));
   const [itemDisplay, setItemDisplay] = useState<PanelItemDisplay>(readPanelItemDisplay(widget.config));
   const [titleIcon, setTitleIcon] = useState(readTitleIcon(widget.config));
   const [statusLight, setStatusLight] = useState<PanelStatusLight>(readPanelStatusLight(widget.config));
@@ -496,7 +495,7 @@ export function PanelWidgetEditor({
         layout: appearanceLayout,
         direction: itemDirection,
         itemStyle,
-        switchStyle: switchStyle === "default" ? undefined : switchStyle,
+        switchStyle: switchStyle === DEFAULT_SWITCH_STYLE ? undefined : switchStyle,
       },
     };
 
@@ -742,27 +741,15 @@ export function PanelWidgetEditor({
           )}
 
           {hasSwitches && (
-            <FormControl fullWidth size="small">
-              <InputLabel id="panel-switch-style">Switch style</InputLabel>
-              <Select
-                labelId="panel-switch-style"
-                label="Switch style"
-                value={switchStyle}
-                onChange={(e) => setSwitchStyle(e.target.value as SwitchStyleId | "default")}
-              >
-                <MenuItem value="default">
-                  My starting style ({SWITCH_STYLES.find((s) => s.id === personSwitchStyle)?.label})
-                </MenuItem>
-                {SWITCH_STYLES.map((s) => (
-                  <MenuItem key={s.id} value={s.id}>
-                    {s.label}
-                  </MenuItem>
-                ))}
-              </Select>
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
-                How this panel's switches look. The starting style is set in Settings → Appearance.
+            <Stack spacing={1}>
+              <Typography variant="subtitle2">Switch style</Typography>
+              <SwitchStylePicker value={switchStyle} onChange={setSwitchStyle} />
+              <Typography variant="caption" color="text.secondary">
+                {itemCount > 1
+                  ? "For every switch in this panel. A switch can have its own style in its options on the Content tab."
+                  : "How this panel's switch looks."}
               </Typography>
-            </FormControl>
+            </Stack>
           )}
           {showArrange && (
             <FormControl fullWidth size="small">

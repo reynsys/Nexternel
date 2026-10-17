@@ -15,7 +15,6 @@ import {
 } from "./effects/catalog";
 import { lookIdFromPrefs } from "../lib/look-choice";
 import { resolveLook } from "./looks/registry";
-import { DEFAULT_SWITCH_STYLE, normalizeSwitchStyle, type SwitchStyleId } from "../lib/switch-styles";
 
 export const THEME_PREFS_KEY = "nexternel.themePrefs";
 
@@ -29,8 +28,6 @@ export type ThemePrefs = {
   skinId?: string;
   /** The dashboard's Look (Standard, Glass, or an installed Look pack). See skins/looks. */
   lookId?: string;
-  /** Starting switch style for panels that have not chosen their own. */
-  switchStyle?: SwitchStyleId;
   /**
    * Page gradient background id (`none` = solid theme background).
    * See gradientPalettes.ts
@@ -131,7 +128,6 @@ export const DEFAULT_THEME_PREFS: ThemePrefs = {
   primary: PRIMARY_SWATCHES[0]!.color,
   skinId: "mui-dashboard",
   lookId: "standard",
-  switchStyle: DEFAULT_SWITCH_STYLE,
   gradientId: GRADIENT_NONE_ID,
   solidContentPanels: true,
   effectId: "off",
@@ -204,7 +200,6 @@ export function normalizeThemePrefs(raw: unknown): ThemePrefs {
         ? parsed.skinId.trim()
         : DEFAULT_THEME_PREFS.skinId,
     lookId,
-    switchStyle: normalizeSwitchStyle(parsed.switchStyle),
     gradientId,
     solidContentPanels: !resolveLook(lookId).frosted,
     effectId,
@@ -253,7 +248,6 @@ export function toAccountThemePrefs(prefs: ThemePrefs, skinId: string) {
     primary: prefs.primary,
     skinId: prefs.skinId ?? skinId,
     lookId: prefs.lookId ?? "standard",
-    switchStyle: normalizeSwitchStyle(prefs.switchStyle),
     gradientId: prefs.gradientId ?? GRADIENT_NONE_ID,
     solidContentPanels: Boolean(prefs.solidContentPanels),
     effectId: normalizeEffectId(prefs.effectId),

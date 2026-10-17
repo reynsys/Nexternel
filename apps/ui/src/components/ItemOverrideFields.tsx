@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Box, Button, Stack, TextField, Typography } from "@mui/material";
+import { Box, Button, FormControl, InputLabel, MenuItem, Select, Stack, TextField, Typography } from "@mui/material";
 import BlockIcon from "@mui/icons-material/Block";
 import { ItemIcon } from "../lib/icons/ItemIcon";
-import type { ItemOverride } from "../lib/panel-item-display";
+import { overrideHasValue, type ItemOverride } from "../lib/panel-item-display";
+import { SWITCH_STYLES, type SwitchStyleId } from "../lib/switch-styles";
 import { IconPicker } from "./IconPicker";
 
 type Props = {
@@ -13,10 +14,12 @@ type Props = {
   kind?: string | null;
   value: ItemOverride | undefined;
   onChange: (next: ItemOverride | undefined) => void;
+  /** This item is a switch: offer its own switch style. */
+  isSwitch?: boolean;
 };
 
 /** This panel's own name and icon for one item — shared by every panel item list. */
-export function ItemOverrideFields({ defaultName, defaultIcon, kind, value, onChange }: Props) {
+export function ItemOverrideFields({ defaultName, defaultIcon, kind, value, onChange, isSwitch = false }: Props) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const icon = value?.icon ?? "auto";
 
@@ -24,7 +27,8 @@ export function ItemOverrideFields({ defaultName, defaultIcon, kind, value, onCh
     const next: ItemOverride = { ...value, ...patch };
     if (!next.name?.trim()) delete next.name;
     if (!next.icon || next.icon === "auto") delete next.icon;
-    onChange(next.name || next.icon ? next : undefined);
+    if (!next.switchStyle) delete next.switchStyle;
+    onChange(overrideHasValue(next) ? next : undefined);
   }
 
   return (
@@ -57,12 +61,32 @@ export function ItemOverrideFields({ defaultName, defaultIcon, kind, value, onCh
           >
             {icon === "auto" ? "Reading's icon" : icon === "none" ? "No icon" : "Chosen icon"}
           </Button>
-          {(value?.name || value?.icon) && (
+          {overrideHasValue(value) && (
             <Button size="small" onClick={() => onChange(undefined)}>
               Reset
             </Button>
           )}
         </Stack>
+        {isSwitch && (
+          <FormControl fullWidth size="small">
+            <InputLabel id="item-switch-style">Switch style</InputLabel>
+            <Select
+              labelId="item-switch-style"
+              label="Switch style"
+              value={value?.switchStyle ?? "panel"}
+              onChange={(e) =>
+                update({ switchStyle: e.target.value === "panel" ? undefined : (e.target.value as SwitchStyleId) })
+              }
+            >
+              <MenuItem value="panel">Same as the panel (Look tab)</MenuItem>
+              {SWITCH_STYLES.map((s) => (
+                <MenuItem key={s.id} value={s.id}>
+                  {s.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
       </Stack>
       <IconPicker
         inline

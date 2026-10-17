@@ -272,8 +272,6 @@ export type UserThemePrefs = {
   skinId: string;
   /** The dashboard's Look (Standard, Glass or an installed Look pack) */
   lookId?: string;
-  /** Starting switch style (lib/switch-styles.ts) */
-  switchStyle?: string;
   /** Page gradient id, or `"none"` for solid background */
   gradientId?: string;
   /** Solid panels (true) or frosted over the background; follows the Look */

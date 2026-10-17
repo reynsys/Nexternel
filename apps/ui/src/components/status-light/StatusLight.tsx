@@ -27,7 +27,7 @@ const DOT_OFF = "rgba(128, 138, 156, 0.28)";
 
 const pulse = keyframes`50% { opacity: .3; }`;
 
-/** The look a panel's lights use: the panel's own choice, else the person's Appearance settings. */
+/** The look a panel's lights use: the panel's own choice (Edit menu → Status light), else the starting look. */
 export type StatusLook = {
   style: StatusLightStyle;
   position: StatusLightPosition;
@@ -35,7 +35,7 @@ export type StatusLook = {
   colours: { ok: string; watch: string; alert: string };
 };
 
-/** The person's status light settings (Settings → Appearance). */
+/** The starting look for panels that have not chosen (saved person settings from before V5.2.100, else the defaults). */
 export function useStatusLightPrefs(): StatusLightPrefs {
   const skin = useOptionalSkin();
   return normalizeStatusLightPrefs(skin?.themePrefs.statusLight ?? DEFAULT_STATUS_LIGHT_PREFS);
@@ -46,7 +46,7 @@ export function resolveStatusLook(panel: PanelStatusLight | null | undefined, pr
     style: !panel || panel.style === "default" ? prefs.style : panel.style,
     position: !panel || panel.position === "default" ? prefs.position : panel.position,
     blink: !panel || panel.blink === "default" ? prefs.blink : panel.blink,
-    colours: prefs.colours,
+    colours: panel?.colours ?? prefs.colours,
   };
 }
 

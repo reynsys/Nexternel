@@ -25,7 +25,9 @@ type Props = {
 
 export function SemanticCapabilityTile({ item, showSecondary }: Props) {
   const theme = useTheme();
-  const { showItemContext, showItemLabel, switchStyle = "toggle" } = useDashboardTileChrome();
+  const { showItemContext, showItemLabel, itemDisplay, switchStyle: panelSwitchStyle = "toggle" } = useDashboardTileChrome();
+  // A switch's own style in this panel, else the panel's.
+  const switchStyle = itemDisplay.overrides[item.source.id]?.switchStyle ?? panelSwitchStyle;
   const cap = item.source;
 
   const showName = showItemLabel;

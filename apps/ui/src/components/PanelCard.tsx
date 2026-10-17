@@ -24,8 +24,7 @@ import {
 import { contentSurfaceSx } from "../skins/surfaceStyles";
 import { useGradientActive, useSolidContentPanels } from "../skins/useSurfaceStyles";
 import { useLook } from "../skins/looks/useLook";
-import { useOptionalSkin } from "../skins/SkinProvider";
-import { readPanelSwitchStyle, resolveSwitchStyle } from "../lib/switch-styles";
+import { readPanelSwitchStyle } from "../lib/switch-styles";
 import type { PanelActivity } from "../lib/dashboard-data-runtime";
 import { StatusLight, lightPlacement, resolveStatusLook, useStatusLightPrefs } from "./status-light/StatusLight";
 
@@ -167,10 +166,7 @@ export function PanelCard({
   const gradientActive = useGradientActive();
   const solidContentPanels = useSolidContentPanels();
   const { PanelFrame } = useLook();
-  const switchStyle = resolveSwitchStyle(
-    readPanelSwitchStyle(runtimeConfigToPanelRecord(w.config)),
-    useOptionalSkin()?.themePrefs.switchStyle
-  );
+  const switchStyle = readPanelSwitchStyle(runtimeConfigToPanelRecord(w.config));
   const statusPrefs = useStatusLightPrefs();
   const heading = panelHeading(w, capabilities, sectionRoomId, cameras);
   const tileTitle = heading.title;
