@@ -119,6 +119,8 @@ import {
   useDashboardDataRuntime,
 } from "../lib/dashboard-data-runtime";
 import { ButtonRow } from "../components/ButtonRow";
+import { useLiveChanges } from "../lib/live-changes";
+import { displayPath, useDisplayMode } from "../lib/display-mode";
 
 function sectionContentSummary(panels: RuntimePanelInstance[]): string {
   const count = panels.length;
@@ -134,7 +136,9 @@ function DashboardPageContent() {
   const [pageLoading, setPageLoading] = useState(true);
   const [bootError, setBootError] = useState<string | null>(null);
   const { permissions, isAdmin } = useShellAuth();
-  const canEditDashboards = hasPermission(
+  const display = useDisplayMode();
+  // Display mode only shows: no editing there.
+  const canEditDashboards = !display.active && hasPermission(
     permissions,
     "editDashboards",
     isAdmin
@@ -362,21 +366,45 @@ function DashboardPageContent() {
     };
   }, [routeIdParam, routeSlug]);
 
+  // A dashboard, device, camera or area changed on another screen: show it here (not while editing).
+  useLiveChanges(
+    ["dashboards", "capabilities", "devices", "cameras", "rooms"],
+    (topic) => {
+      if (!dashboardId) return;
+      void Promise.all([
+        api.getDashboard(dashboardId),
+        api.capabilities(),
+        api.cameras().catch(() => ({ cameras: [] as CameraRecord[] })),
+      ])
+        .then(([dash, caps, cams]) => {
+          if (topic !== "dashboards") dataRuntime.resolvers.clear();
+          loadDocument(dash.dashboard.document, dash.dashboard.name);
+          setCapabilities(caps.capabilities);
+          setCameras(cams.cameras);
+        })
+        .catch(() => {
+          /* e.g. this dashboard was deleted: keep what is shown */
+        });
+    },
+    !editMode && !pageLoading && Boolean(dashboardId)
+  );
+
   /** Show the readable address (`/` or `/d/<name>`), also for old `/dashboards/<id>` links. */
   useEffect(() => {
     if (pageLoading || !dashboardId) return;
     let cancelled = false;
     void api.dashboards().then((res) => {
       if (cancelled) return;
-      const path = dashboardPaths(res.dashboards).get(dashboardId);
+      const plain = dashboardPaths(res.dashboards).get(dashboardId);
+      const path = plain && display.active ? displayPath(plain) : plain;
       if (path && path !== window.location.pathname) {
-        window.history.replaceState(null, "", path);
+        window.history.replaceState(null, "", path + (display.active ? window.location.search : ""));
       }
     });
     return () => {
       cancelled = true;
     };
-  }, [pageLoading, dashboardId]);
+  }, [pageLoading, dashboardId, display.active]);
 
 
   useEffect(() => {
@@ -866,6 +894,7 @@ function DashboardPageContent() {
       )}
       {!pageLoading && !bootError && (
       <>
+      {display.active && !display.tabs ? null : (
       <DashboardTabBar
         activeId={dashboardId ?? undefined}
         refreshKey={tabRefreshKey}
@@ -877,6 +906,7 @@ function DashboardPageContent() {
           if (!editMode) enterEditMode();
         }}
       />
+      )}
 
       {editMode && canEditDashboards && (
         <Stack spacing={1.5}>

@@ -110,6 +110,8 @@ apps/api/src/index.ts
 apps/api/src/installation-meta.ts
 apps/api/src/lib/host-metrics.ts
 apps/api/src/lib/server-temperature.ts
+apps/api/src/live/changes.test.ts
+apps/api/src/live/changes.ts
 apps/api/src/migrate/adopt-config.ts
 apps/api/src/migrate/align-mqtt-topics.test.ts
 apps/api/src/migrate/align-mqtt-topics.ts
@@ -301,11 +303,14 @@ apps/ui/src/lib/dashboard-path.ts
 apps/ui/src/lib/dashboard-tile-context.tsx
 apps/ui/src/lib/dashboard-tile.ts
 apps/ui/src/lib/device-utils.ts
+apps/ui/src/lib/display-mode.test.ts
+apps/ui/src/lib/display-mode.ts
 apps/ui/src/lib/esphome-install-guide.ts
 apps/ui/src/lib/group-by-area.ts
 apps/ui/src/lib/home-dashboard.ts
 apps/ui/src/lib/icons/catalog.ts
 apps/ui/src/lib/icons/ItemIcon.tsx
+apps/ui/src/lib/live-changes.ts
 apps/ui/src/lib/look-choice.test.ts
 apps/ui/src/lib/look-choice.ts
 apps/ui/src/lib/look-font.test.ts
@@ -409,6 +414,7 @@ apps/ui/src/pages/admin/settings/UpdatesCard.tsx
 apps/ui/src/pages/admin/UsersPage.tsx
 apps/ui/src/pages/DashboardPage.tsx
 apps/ui/src/pages/DashboardsPage.tsx
+apps/ui/src/pages/DisplayPage.tsx
 apps/ui/src/pages/LoginPage.tsx
 apps/ui/src/pages/SetupPage.tsx
 apps/ui/src/panels/CalendarPanel.tsx

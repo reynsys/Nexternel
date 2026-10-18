@@ -1,4 +1,5 @@
 import { getPool } from "../db.js";
+import { publishChange } from "../live/changes.js";
 
 export type NotificationLevel = "info" | "warning" | "alert";
 
@@ -60,6 +61,7 @@ export async function addNotification(input: {
     [KEEP]
   );
   const row = res.rows[0]!;
+  publishChange("notifications");
   return {
     id: row.id,
     source: input.source,

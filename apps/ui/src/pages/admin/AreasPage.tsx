@@ -23,6 +23,7 @@ import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
 import { api } from "../../api";
 import { AREA } from "../../lib/area-labels";
 import { ButtonRow } from "../../components/ButtonRow";
+import { useLiveChanges } from "../../lib/live-changes";
 
 type AreaRow = {
   id: string;
@@ -48,6 +49,8 @@ export function AreasPage() {
   const [busy, setBusy] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<AreaRow | null>(null);
 
+  // Changes made on another screen show here straight away.
+  useLiveChanges(["rooms", "devices"], () => void load());
   async function load() {
     try {
       const [res, me] = await Promise.all([api.rooms(), api.me()]);

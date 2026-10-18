@@ -180,11 +180,16 @@ async function postWelcomeBackup<T>(path: string, opts: { file: File; password: 
 
 export const SERVER_UNREACHABLE = "Can't reach Nexternel right now. Trying again.";
 
+/** This screen's id, sent with every request so the "something changed" message can skip its own echo. */
+export const CLIENT_ID =
+  typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `c${Date.now()}${Math.random().toString(36).slice(2)}`;
+
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
   if (!headers.has("Content-Type") && init?.body && !(init.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
+  headers.set("X-Nexternel-Client", CLIENT_ID);
   const access = getStoredAccessToken();
   if (access) {
     headers.set("Authorization", `Bearer ${access}`);
@@ -418,7 +423,8 @@ export type LiveEvent = {
   message?: string;
 };
 
-export function connectLiveSocket(onEvent: (ev: LiveEvent) => void): () => void {
+/** channel "changes": only the "something changed" messages (see lib/live-changes.ts). */
+export function connectLiveSocket(onEvent: (ev: LiveEvent) => void, channel?: "changes"): () => void {
   let closedByCaller = false;
   let ws: WebSocket | null = null;
   let pingTimer: number | null = null;
@@ -501,7 +507,7 @@ export function connectLiveSocket(onEvent: (ev: LiveEvent) => void): () => void 
         ws = null;
       }
 
-      const url = `${getWsBase()}/api/v1/ws?access_token=${encodeURIComponent(token)}`;
+      const url = `${getWsBase()}/api/v1/ws?access_token=${encodeURIComponent(token)}${channel ? `&channel=${channel}` : ""}`;
       const socket = new WebSocket(url);
       ws = socket;
 

@@ -46,6 +46,7 @@ import { useShellAuth } from "../../skins/useShellAuth";
 import { useContentSurfaceSx } from "../../skins/useSurfaceStyles";
 import { ProfileSection } from "./sections/ProfileSection";
 import { ButtonRow } from "../../components/ButtonRow";
+import { useLiveChanges } from "../../lib/live-changes";
 
 function prefsFromUser(u: AdminUser | null): { theme: ThemePrefs; skinId: string } {
   const n = normalizeThemePrefs(u?.themePrefs ?? DEFAULT_THEME_PREFS);
@@ -75,6 +76,8 @@ export function UsersPage() {
   const [skinId, setSkinId] = useState("mui-dashboard");
   const [busy, setBusy] = useState(false);
 
+  // Changes made on another screen show here straight away.
+  useLiveChanges(["users", "roles"], () => void load());
   async function load() {
     try {
       const [usersRes, rolesRes] = await Promise.all([api.users(), api.roles()]);

@@ -35,6 +35,7 @@ import {
 } from "../../api";
 import { AREA } from "../../lib/area-labels";
 import { ButtonRow } from "../../components/ButtonRow";
+import { useLiveChanges } from "../../lib/live-changes";
 
 type AreaOption = { id: string; name: string };
 
@@ -74,6 +75,8 @@ export function CamerasPage() {
   const [form, setForm] = useState(emptyForm);
   const [deleteTarget, setDeleteTarget] = useState<CameraRecord | null>(null);
 
+  // Changes made on another screen show here straight away.
+  useLiveChanges(["cameras", "rooms"], () => void load());
   async function load() {
     try {
       const [camRes, roomRes, me, presetRes] = await Promise.all([

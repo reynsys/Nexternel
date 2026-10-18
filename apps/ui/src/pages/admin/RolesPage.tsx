@@ -34,6 +34,7 @@ import {
   type RolePermissions,
 } from "../../lib/permissions";
 import { ButtonRow } from "../../components/ButtonRow";
+import { useLiveChanges } from "../../lib/live-changes";
 
 function PermissionEditor({
   value,
@@ -128,6 +129,8 @@ export function RolesPage() {
   });
   const [busy, setBusy] = useState(false);
 
+  // Changes made on another screen show here straight away.
+  useLiveChanges(["roles"], () => void load());
   async function load() {
     try {
       const res = await api.roles();

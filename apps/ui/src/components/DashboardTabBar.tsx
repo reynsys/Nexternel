@@ -8,6 +8,8 @@ import { api, type DashboardSummary } from "../api";
 import { getDashboardIcon } from "../lib/dashboard-icons";
 import { NotificationBell } from "./NotificationBell";
 import { useSkin } from "../skins/SkinProvider";
+import { useLiveChanges } from "../lib/live-changes";
+import { displayPath, useDisplayMode } from "../lib/display-mode";
 
 type Props = {
   activeId?: string;
@@ -34,6 +36,7 @@ export function DashboardTabBar({
   canClearNotifications = false,
 }: Props) {
   const { skin } = useSkin();
+  const display = useDisplayMode();
   const navigate = useNavigate();
   const [dashboards, setDashboards] = useState<DashboardSummary[]>([]);
   const tabsRef = useRef<HTMLDivElement>(null);
@@ -45,11 +48,14 @@ export function DashboardTabBar({
   }, [activeId, dashboards]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  // Dashboards added, renamed or reordered on another screen.
+  const [liveKey, setLiveKey] = useState(0);
+  useLiveChanges(["dashboards"], () => setLiveKey((k) => k + 1));
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      setLoading(true);
+      if (liveKey === 0) setLoading(true); // a live refresh keeps the tabs on screen
       try {
         const res = await api.dashboards();
         if (!cancelled) {
@@ -67,7 +73,7 @@ export function DashboardTabBar({
     return () => {
       cancelled = true;
     };
-  }, [refreshKey]);
+  }, [refreshKey, liveKey]);
 
   return (
     <Stack
@@ -131,7 +137,10 @@ export function DashboardTabBar({
                 data-nx-active-tab={active ? "" : undefined}
                 variant={active ? "contained" : "outlined"}
                 color={active ? "primary" : "inherit"}
-                onClick={() => navigate(dashboardPath(d, dashboards))}
+                onClick={() => {
+                  const path = dashboardPath(d, dashboards);
+                  navigate(display.active ? displayPath(path) + window.location.search : path);
+                }}
                 startIcon={<Icon fontSize="small" />}
                 sx={{
                   flexShrink: 0,
@@ -167,7 +176,7 @@ export function DashboardTabBar({
             );
           })}
       </Box>
-      {skin.id === "mui-dashboard" ? (
+      {skin.id === "mui-dashboard" && !display.active ? (
         <Box sx={{ display: { xs: "none", md: "flex" }, alignItems: "center" }}>
           <NotificationBell place="dashboard" canClear={canClearNotifications} />
         </Box>

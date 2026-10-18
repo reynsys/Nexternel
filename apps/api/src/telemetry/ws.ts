@@ -4,6 +4,8 @@ import { verifyTokenDetailed } from "../auth/tokens.js";
 import { ACCESS_COOKIE } from "../config.js";
 import { getAllLiveStates, subscribeLive } from "../telemetry/state-cache.js";
 import { statusEngine } from "../capabilities/status-lights.js";
+import { subscribeChanges } from "../live/changes.js";
+import { APP_VERSION } from "../version.js";
 
 function tokenFromRequest(request: {
   headers: { authorization?: string; cookie?: string };
@@ -37,25 +39,31 @@ export const wsRoutes: FastifyPluginAsync = async (app) => {
         return;
       }
 
-      socket.send(
-        JSON.stringify({
-          type: "hello",
-          states: getAllLiveStates(),
-          statuses: statusEngine.all(),
-        })
-      );
-
       const send = (event: unknown) => {
         if (socket.readyState === socket.OPEN) {
           socket.send(JSON.stringify(event));
         }
       };
-      const unsubscribe = subscribeLive(send);
-      const unsubscribeStatus = statusEngine.subscribe(send);
+
+      // ?channel=changes: only the "something changed" messages (every screen keeps one open).
+      const changesOnly = (request.query as { channel?: string }).channel === "changes";
+      const stops: Array<() => void> = [];
+      if (changesOnly) {
+        socket.send(JSON.stringify({ type: "hello", channel: "changes", version: APP_VERSION }));
+        stops.push(subscribeChanges(send));
+      } else {
+        socket.send(
+          JSON.stringify({
+            type: "hello",
+            states: getAllLiveStates(),
+            statuses: statusEngine.all(),
+          })
+        );
+        stops.push(subscribeLive(send), statusEngine.subscribe(send));
+      }
 
       socket.on("close", () => {
-        unsubscribe();
-        unsubscribeStatus();
+        for (const stop of stops) stop();
       });
 
       socket.on("message", (raw) => {

@@ -41,6 +41,18 @@ export function HttpsCard() {
                   number address.
                 </Typography>
               </Box>
+              <Box>
+                <Typography variant="subtitle2">Wall displays and tablets</Typography>
+                <Typography variant="body2">
+                  <Link href={`${status.localAddresses[0] ?? ""}/display`}>{status.localAddresses[0] ?? ""}/display</Link>
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                  Display mode: the dashboard alone, full screen, with larger text and lighter effects for small computers
+                  such as a Raspberry Pi. Changes made anywhere show by themselves. Add <b>?rotate=60</b> to move through
+                  the dashboards every minute, <b>?tabs=0</b> to hide the room buttons, <b>?text=125</b> for even larger
+                  text, <b>?light=0</b> to keep every effect. Press Esc to leave.
+                </Typography>
+              </Box>
               {status.settings.domain && status.domainCertificate ? (
                 <Box>
                   <Typography variant="subtitle2">Secure address</Typography>

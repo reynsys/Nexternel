@@ -17,6 +17,7 @@ import { PluginPermissionsForm, defaultGrants } from "./plugins/PluginPermission
 import { PluginSettingsForm } from "./plugins/PluginSettingsForm";
 import { PluginActivityView } from "./plugins/PluginActivityView";
 import { ButtonRow } from "../../../components/ButtonRow";
+import { useLiveChanges } from "../../../lib/live-changes";
 
 const STATUS: Record<PluginInfo["status"], { label: string; color: "success" | "warning" | "error" | "default" | "info" }> = {
   running: { label: "Running", color: "success" },
@@ -48,6 +49,8 @@ export function PluginsSettingsPage() {
     const res = await api.plugins();
     setState(res);
   }, []);
+  // Changes made on another screen show here straight away.
+  useLiveChanges(["plugins"], () => void load());
 
   const loadCatalog = useCallback(async (refresh = false) => {
     try {

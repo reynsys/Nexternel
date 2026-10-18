@@ -6,6 +6,7 @@ import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
 import { loadAddons } from "../../../skins/looks/addon-loader";
 import { describeAddonCheck } from "../../../lib/addon-check";
 import { ButtonRow } from "../../../components/ButtonRow";
+import { useLiveChanges } from "../../../lib/live-changes";
 
 const STATUS: Record<AddonInfo["status"], { label: string; color: "success" | "warning" | "error" }> = {
   active: { label: "Active", color: "success" },
@@ -37,6 +38,8 @@ export function AddonsSettingsPage() {
       setError(err instanceof Error ? err.message : String(err));
     }
   }, []);
+  // Changes made on another screen show here straight away.
+  useLiveChanges(["addons"], () => void refresh());
 
   useEffect(() => {
     void refresh();

@@ -2,6 +2,14 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.116
+
+- **Display mode for wall screens and tablets:** open **<your Nexternel address>/display** to show the dashboard alone, full screen, with larger text and lighter effects for small computers such as a Raspberry Pi. Optional: `?rotate=60` moves through the dashboards every minute, `?tabs=0` hides the room buttons. Details in **Settings → System → Addresses**.
+
+## V5.2.115
+
+- **Changes show everywhere at once:** when you change a dashboard, your appearance, a device or anything else, every other open screen (another computer, a phone, a wall display) shows it within a second or two — no refreshing. After a Nexternel update, open screens switch to the new version by themselves.
+
 ## V5.2.114
 
 - **Bigger buttons with more space between them:** buttons, tabs and menu entries are a little larger and no longer sit cramped together — easier to use by touch and on wall screens. Looks with decorated buttons automatically get the extra room they need.

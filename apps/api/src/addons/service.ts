@@ -14,6 +14,7 @@ import {
   type AddonManifest,
   type LicencePayload,
 } from "./licence.js";
+import { publishChange } from "../live/changes.js";
 
 /**
  * Paid add-ons: installed with a licence key from the Nexternel shop, downloaded from the
@@ -323,6 +324,7 @@ export async function checkAddons(): Promise<AddonInfo[]> {
             const checked = checkPackage(packFromServer(got), keys(), { packId: p.id, licenceId: licence.lid });
             if (checked.ok) {
               await savePack(checked.pkg.manifest, checked.code, key, token, licence.lid);
+              publishChange("addons");
               continue;
             }
           } catch {

@@ -58,6 +58,7 @@ import { maintenanceGuard } from "./system/maintenance.js";
 import { v4Routes } from "./v4/routes.js";
 import { panelApiRoutes } from "./panels/api-routes.js";
 import { wsRoutes } from "./telemetry/ws.js";
+import { changeTopicFor, publishChange } from "./live/changes.js";
 import { APP_VERSION } from "./version.js";
 
 const app = Fastify({ logger: true });
@@ -69,6 +70,7 @@ await app.register(cors, {
     "Content-Type",
     "Authorization",
     "X-Nexternel-Token",
+    "X-Nexternel-Client",
   ],
 });
 
@@ -89,6 +91,14 @@ await app.register(async (api) => {
   });
   // While Nexternel is updating or restoring, changes are refused (reading and switching still work).
   api.addHook("preHandler", maintenanceGuard);
+  // Every successful change is announced to all open screens, which then show it straight away.
+  api.addHook("onResponse", async (request, reply) => {
+    if (reply.statusCode >= 400) return;
+    const topic = changeTopicFor(request.method, request.url);
+    if (!topic) return;
+    const client = request.headers["x-nexternel-client"];
+    publishChange(topic, { userId: request.user?.id ?? null, client: typeof client === "string" ? client.slice(0, 64) : null });
+  });
   await api.register(multipart, {
     limits: { fileSize: 2 * 1024 * 1024 * 1024, files: 1 },
   });

@@ -27,6 +27,7 @@ import {
 } from "./devices/device-nav-utils";
 import { insetSx } from "../../skins/surfaceStyles";
 import { ButtonRow } from "../../components/ButtonRow";
+import { useLiveChanges } from "../../lib/live-changes";
 
 type AreaOption = { id: string; name: string };
 
@@ -137,6 +138,8 @@ export function DevicesPage() {
     }
   }, [devices, selection, setSelection]);
 
+  // Changes made on another screen show here straight away.
+  useLiveChanges(["devices", "capabilities", "rooms"], () => void load());
   async function load() {
     try {
       const [devRes, roomRes, me, catRes] = await Promise.all([

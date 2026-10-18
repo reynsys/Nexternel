@@ -16,6 +16,7 @@ import { api, type NotificationItem } from "../api";
 import { useOptionalSkin } from "../skins/SkinProvider";
 import { normalizeBellPrefs } from "../skins/themePrefs";
 import { useStatusLightPrefs } from "./status-light/StatusLight";
+import { useLiveChanges } from "../lib/live-changes";
 
 const POLL_MS = 60_000;
 
@@ -71,6 +72,8 @@ export function NotificationBell({ canClear, place = "bar" }: { canClear?: boole
     setUnreadLevel(res.unreadLevel ?? (res.unreadCount ? "info" : null));
     setLastReadAt(res.lastReadAt);
   }, []);
+
+  useLiveChanges(["notifications"], () => void load().catch(() => {}), here);
 
   useEffect(() => {
     if (!here) return;

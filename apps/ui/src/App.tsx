@@ -24,6 +24,7 @@ import {
   type PermissionKey,
 } from "./lib/permissions";
 import { PluginHostProvider } from "./plugins/PluginHostContext";
+import { DisplayPage } from "./pages/DisplayPage";
 
 function RequireAuth({ children }: { children: ReactNode }) {
   if (!getStoredAccessToken()) {
@@ -128,6 +129,20 @@ export function App() {
   return (
     <PluginHostProvider>
     <Routes>
+      {/* Display mode: the dashboard alone, full screen (wall displays, tablets). */}
+      {["display", "display/:slug"].map((path) => (
+        <Route
+          key={path}
+          path={path}
+          element={
+            <RequireAuth>
+              <RequirePermission permission="viewDashboards">
+                <DisplayPage />
+              </RequirePermission>
+            </RequireAuth>
+          }
+        />
+      ))}
       <Route element={<AppLayout />}>
         <Route path="setup" element={<SetupPage />} />
         <Route

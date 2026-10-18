@@ -32,6 +32,8 @@ import { resolveTokens } from "./looks/resolve";
 import { lookThemeOptions } from "./look-theme";
 import { isGradientActive } from "./surfaceStyles";
 import { loadAddons } from "./looks/addon-loader";
+import { useLiveChanges } from "../lib/live-changes";
+import { LIGHT_CSS, useDisplayMode } from "../lib/display-mode";
 
 type SkinContextValue = {
   skin: UiSkin;
@@ -73,9 +75,10 @@ export function SkinProvider({ children }: { children: ReactNode }) {
     );
   }, [skin, shownPrefs, look]);
   // Text size: all text is measured in rem, so the page's base size scales it everywhere.
+  const display = useDisplayMode();
   useEffect(() => {
-    document.documentElement.style.fontSize = `${themePrefs.textSize ?? 100}%`;
-  }, [themePrefs.textSize]);
+    document.documentElement.style.fontSize = `${display.active ? display.textSize : (themePrefs.textSize ?? 100)}%`;
+  }, [themePrefs.textSize, display.active, display.textSize]);
   // Animations: the person's choice, and off when the device asks apps to reduce motion.
   useEffect(() => {
     const reduce = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
@@ -123,6 +126,21 @@ export function SkinProvider({ children }: { children: ReactNode }) {
         /* stay on local prefs */
       });
   }, [applyAccountPrefs]);
+
+  // Appearance changed on another screen (or by an admin), or an add-on was updated: show it here.
+  useLiveChanges(["me", "users", "addons"], (topic) => {
+    if (topic === "addons") {
+      void loadAddons();
+      return;
+    }
+    if (!getStoredAccessToken()) return;
+    void api
+      .me()
+      .then((r) => applyAccountPrefs(r.user.themePrefs))
+      .catch(() => {
+        /* keep what is shown */
+      });
+  });
 
   const setSkinId = useCallback(
     (id: string) => {
@@ -187,7 +205,7 @@ export function SkinProvider({ children }: { children: ReactNode }) {
         <CssBaseline />
         <AppearanceCssVars lookId={themePrefs.lookId} buttonsId={themePrefs.lookButtons} looksVersion={lookVer} />
         {/* Animations on/off for everything a Look moves (and per panel). */}
-        <GlobalStyles styles={MOTION_CSS} />
+        <GlobalStyles styles={MOTION_CSS + LIGHT_CSS} />
         <GlobalStyles
           styles={{
             html: {
@@ -231,7 +249,7 @@ export function SkinProvider({ children }: { children: ReactNode }) {
             }}
           />
         ) : null}
-        <BackgroundEffects prefs={themePrefs} />
+        <BackgroundEffects prefs={display.light ? { ...themePrefs, effectId: "off" } : themePrefs} />
         {children}
       </ThemeProvider>
     </SkinContext.Provider>
