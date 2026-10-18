@@ -168,9 +168,11 @@ export function flowCommit(
 export const FLOW_CELL_MAX_PX = 128;
 /**
  * Smallest square at which the 12-wide arrangement is still shown exactly as made (px).
- * Any section about 1000 px wide or more qualifies; only narrower screens flow.
+ * Any section about 850 px wide or more qualifies (small desk and wall screens such as
+ * 1024 × 768, also with a Look's frame room); only tablets in portrait and phones flow.
+ * Text stays readable at this size: dial and chart text has its own minimum (MIN_CHART_FONT).
  */
-export const DESIGN_MIN_CELL_PX = 72;
+export const DESIGN_MIN_CELL_PX = 60;
 
 /**
  * Grid geometry for a section `widthPx` wide.

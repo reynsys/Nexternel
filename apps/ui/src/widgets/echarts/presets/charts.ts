@@ -1,5 +1,6 @@
 import type { EchartsBuildCtx, EchartsPreset } from "../types";
 import type { HistoryRange } from "../../../api";
+import { chartFont } from "../types";
 
 function timeSeries(ctx: EchartsBuildCtx): [string, number][] {
   return ctx.points.map((p) => [p.t, p.v]);
@@ -30,7 +31,7 @@ function timeXAxisFor(ctx: EchartsBuildCtx): Record<string, unknown> {
       type: "time",
       minInterval: range === "1h" ? 5 * 60 * 1000 : 60 * 60 * 1000,
       axisLabel: {
-        fontSize: 10,
+        fontSize: chartFont(ctx, 10),
         hideOverlap: true,
         color: ctx.palette?.textMuted,
         // Force clock time only — never year / month / day templates
@@ -44,7 +45,7 @@ function timeXAxisFor(ctx: EchartsBuildCtx): Record<string, unknown> {
     type: "time",
     minInterval: 6 * 60 * 60 * 1000,
     axisLabel: {
-      fontSize: 10,
+      fontSize: chartFont(ctx, 10),
       hideOverlap: true,
       color: ctx.palette?.textMuted,
       formatter: {
@@ -72,7 +73,7 @@ function valueYAxis(
     min: ctx.min,
     max: ctx.max,
     scale: false,
-    axisLabel: { fontSize: 10, formatter: yFmt(ctx), color: ctx.palette?.textMuted },
+    axisLabel: { fontSize: chartFont(ctx, 10), formatter: yFmt(ctx), color: ctx.palette?.textMuted },
   };
   if (opts?.flip) {
     /* category charts put value on xAxis — caller handles */
@@ -86,7 +87,7 @@ function valueXAxis(ctx: EchartsBuildCtx): Record<string, unknown> {
     min: ctx.min,
     max: ctx.max,
     scale: false,
-    axisLabel: { fontSize: 10, formatter: yFmt(ctx), color: ctx.palette?.textMuted },
+    axisLabel: { fontSize: chartFont(ctx, 10), formatter: yFmt(ctx), color: ctx.palette?.textMuted },
   };
 }
 
@@ -253,7 +254,7 @@ export const CHART_PRESETS: EchartsPreset[] = [
             symbol: "none",
             lineStyle: { type: "dashed" },
             data: [{ type: "average", name: "Avg" }, { type: "min" }, { type: "max" }],
-            label: { fontSize: 9 },
+            label: { fontSize: chartFont(ctx, 9) },
           },
         },
       ],
@@ -291,7 +292,7 @@ export const CHART_PRESETS: EchartsPreset[] = [
                 if (v == null) return "";
                 return ctx.unit ? `${v}${ctx.unit}` : String(v);
               },
-              fontSize: 11,
+              fontSize: chartFont(ctx, 11),
               color: accent(ctx),
             },
             labelLayout: { moveOverlap: "shiftY" },
@@ -469,7 +470,7 @@ export const CHART_PRESETS: EchartsPreset[] = [
           data: sample.map((p) =>
             new Date(p.t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
           ),
-          axisLabel: { fontSize: 9 },
+          axisLabel: { fontSize: chartFont(ctx, 9) },
         },
         xAxis: valueXAxis(ctx),
         series: [
@@ -509,7 +510,7 @@ export const CHART_PRESETS: EchartsPreset[] = [
                   hour: "2-digit",
                 })
           ),
-          axisLabel: { fontSize: 9, rotate: 30 },
+          axisLabel: { fontSize: chartFont(ctx, 9), rotate: 30 },
         },
         yAxis: valueYAxis(ctx),
         series: [
@@ -547,7 +548,7 @@ export const CHART_PRESETS: EchartsPreset[] = [
               { name: ctx.title || "Value", value: used },
               { name: "Remaining", value: remain },
             ],
-            label: { fontSize: 11 },
+            label: { fontSize: chartFont(ctx, 11) },
             itemStyle: { borderRadius: 4 },
             color: [accent(ctx), "rgba(128,128,128,0.25)"],
           },
@@ -583,7 +584,7 @@ export const CHART_PRESETS: EchartsPreset[] = [
                 ctx.unit
                   ? `${Number.isInteger(ctx.value) ? ctx.value : ctx.value.toFixed(1)}\n${ctx.unit}`
                   : String(Number.isInteger(ctx.value) ? ctx.value : ctx.value.toFixed(1)),
-              fontSize: 14,
+              fontSize: chartFont(ctx, 14),
             },
             data: [
               { name: "Value", value: used },
@@ -706,7 +707,7 @@ export const CHART_PRESETS: EchartsPreset[] = [
             type: "funnel",
             left: "10%",
             width: "80%",
-            label: { fontSize: 11 },
+            label: { fontSize: chartFont(ctx, 11) },
             data: [
               { name: "Max", value: ctx.max },
               { name: "Value", value: v },
@@ -783,14 +784,14 @@ export const CHART_PRESETS: EchartsPreset[] = [
     dataMode: "none",
     needsCapability: false,
     defaultSize: { w: 4, h: 4 },
-    buildOption: () => ({
+    buildOption: (ctx) => ({
       title: {
         text: "Blank ECharts",
         subtext: "Set optionOverride in Edit",
         left: "center",
         top: "middle",
-        textStyle: { fontSize: 14 },
-        subtextStyle: { fontSize: 11 },
+        textStyle: { fontSize: chartFont(ctx, 14) },
+        subtextStyle: { fontSize: chartFont(ctx, 11) },
       },
     }),
   },

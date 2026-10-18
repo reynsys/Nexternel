@@ -1,4 +1,5 @@
 import type { EchartsBuildCtx, EchartsPreset } from "../types";
+import { MIN_CHART_FONT, chartFont } from "../types";
 
 const GAUGE_SIZE = { w: 4, h: 4 } as const;
 
@@ -254,6 +255,8 @@ type Place = {
   arc: number;
   tick: number;
   labelFont: number;
+  /** Show every n-th number on the dial (1 = all): numbers stay readable instead of shrinking. */
+  labelEvery: number;
   readingFont: number;
   splitDistance: number;
   labelDistance: number;
@@ -348,7 +351,8 @@ function place(ctx: EchartsBuildCtx, shape: Shape): Place {
   const h = ctx.tileHeight && ctx.tileHeight > 0 ? ctx.tileHeight : 240;
   const short = Math.min(w, h);
   const edge = Math.max(2, Math.round(short * 0.02));
-  const labelFont = Math.max(7, Math.round(short * 0.048));
+  // Dial numbers: never below readable (and they follow Text size); with no room for all, fewer are shown.
+  const labelFont = Math.max(chartFont(ctx, MIN_CHART_FONT), Math.round(short * 0.05));
   const splits = marksForRange(ctx.min, ctx.max);
   const labelW = shape.labels ? Math.ceil(glyphWidth(widestTick(ctx.min, ctx.max, splits), labelFont)) : 0;
   const tick = shape.ticks ? Math.max(2, Math.round(short * 0.018)) : 0;
@@ -439,6 +443,13 @@ function place(ctx: EchartsBuildCtx, shape: Shape): Place {
     laid = { ...laid, cy: laid.cy + shift, top: laid.top + shift, bottom: laid.bottom + shift };
   }
 
+  // How many numbers fit round the arc at this size: every n-th one is shown.
+  const sweepDeg = Math.abs(signedSweep(shape.start, shape.end, clockwise)) || 360;
+  const labelR = Math.max(8, laid.r - tick - labelW / 2);
+  const spacing = (labelR * ((sweepDeg * Math.PI) / 180)) / Math.max(1, splits);
+  const needed = Math.max(labelW, labelFont) + labelFont * 0.6;
+  const labelEvery = shape.labels ? Math.max(1, Math.ceil(needed / Math.max(1, spacing))) : 1;
+
   const splitDistance = -(tick + 1 + arc);
   const labelDistance = -(tick + outward) - splitDistance;
 
@@ -449,6 +460,7 @@ function place(ctx: EchartsBuildCtx, shape: Shape): Place {
     arc,
     tick,
     labelFont,
+    labelEvery,
     readingFont: laid.readingFont,
     splitDistance,
     labelDistance,
@@ -523,6 +535,11 @@ function seriesFor(
       fontSize: laid.labelFont,
       formatter: (v: number) => {
         if (laid.hideMin && Math.abs(v - ctx.min) <= Math.abs(ctx.max - ctx.min) * 1e-4 + 1e-4) return "";
+        if (laid.labelEvery > 1) {
+          const splits = marksForRange(ctx.min, ctx.max);
+          const i = Math.round(((v - ctx.min) / (ctx.max - ctx.min || 1)) * splits);
+          if (i % laid.labelEvery !== 0 && i !== splits) return "";
+        }
         return tickText(v);
       },
     },

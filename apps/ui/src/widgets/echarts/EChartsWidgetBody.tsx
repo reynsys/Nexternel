@@ -12,6 +12,7 @@ import { getEchartsPreset } from "./registry";
 import type { EchartsBuildCtx, HistoryPoint } from "./types";
 import { useDashboardTileChrome } from "../../lib/dashboard-tile-context";
 import { useEChartsHost } from "./EChartsHost";
+import { useSkin } from "../../skins/SkinProvider";
 
 function capabilityIdOf(widget: WidgetInstance): string | null {
   const id = primaryCapabilityId(widget.bindings);
@@ -90,6 +91,7 @@ export function EChartsWidgetBody({
   const live = liveValue(cap);
   const chartName = dataLabel.trim() || tileTitle || "";
 
+  const { textScale } = useSkin();
   const ctx: EchartsBuildCtx = useMemo(
     () => ({
       value: live ?? 0,
@@ -104,8 +106,9 @@ export function EChartsWidgetBody({
       range,
       tileWidth: hostSize.w,
       tileHeight: hostSize.h,
+      textScale,
     }),
-    [cap, chartName, min, max, config.accent, chartPalette, points, range, live, hostSize.w, hostSize.h]
+    [cap, chartName, min, max, config.accent, chartPalette, points, range, live, hostSize.w, hostSize.h, textScale]
   );
 
   const option = useMemo(() => {

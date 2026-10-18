@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.119
+
+- **Readable gauges and charts on every screen:** the small numbers round a gauge and on charts never get too small to read, and they follow Settings → Appearance → Text size. When there is not room for all of them, a gauge shows every second number instead of shrinking them.
+- **Smaller screens keep your arrangement:** screens down to about 1024 pixels wide now show the dashboard as you arranged it instead of rearranging panels into fewer columns.
+
 ## V5.2.118
 
 - **Wall display settings:** in **Users → Edit → Wall display** choose, for the account a wall screen uses, which dashboard it starts on, whether it moves through the dashboards, the text size, the room buttons and light effects. The wall screen applies changes within seconds — nobody needs to touch it.

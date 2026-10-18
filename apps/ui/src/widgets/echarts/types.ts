@@ -21,7 +21,17 @@ export type EchartsBuildCtx = {
   /** Main tile size in pixels. Dial writing follows the shorter side. */
   tileWidth?: number;
   tileHeight?: number;
+  /** Settings → Appearance → Text size as a factor (1 = Normal); chart text follows it. */
+  textScale?: number;
 };
+
+/** Smallest chart/dial text that stays readable (px at Normal text size). */
+export const MIN_CHART_FONT = 11;
+
+/** A chart text size: never below readable, and following the person's text size. */
+export function chartFont(ctx: Pick<EchartsBuildCtx, "textScale">, px: number): number {
+  return Math.round(Math.max(px, MIN_CHART_FONT) * (ctx.textScale ?? 1));
+}
 
 export type EchartsPreset = {
   id: string;

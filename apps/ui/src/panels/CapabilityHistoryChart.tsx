@@ -16,6 +16,7 @@ import { VisualizationSlot } from "../components/VisualizationSlot";
 import { PanelValueSummary } from "./PanelValueSummary";
 import { usePanelResponsiveSemanticState } from "./responsive";
 import { parseCapabilityReading } from "./parse-capability-reading";
+import { useSkin } from "../skins/SkinProvider";
 
 type PrefetchedHistory = {
   loading: boolean;
@@ -74,6 +75,7 @@ function CapabilityHistoryChartCanvas({
   const initTheme = useMemo(() => echartsInitTheme(theme), [theme]);
   const preset = getEchartsPreset(presetId);
   const { rect, chartRef } = useEChartsHost();
+  const { textScale } = useSkin();
 
   const option = useMemo(() => {
     const { min, max } = resolvePanelChartMinMax(capability, chartMin, chartMax);
@@ -87,10 +89,11 @@ function CapabilityHistoryChartCanvas({
       palette: chartPalette,
       points,
       range,
+      textScale,
     });
     const merged = buildFinalOption(built, undefined);
     return applySafeChartTooltip(merged);
-  }, [preset, capability, chartMin, chartMax, points, range, chartPalette]);
+  }, [preset, capability, chartMin, chartMax, points, range, chartPalette, textScale]);
 
   const ready = rect.width > 0 && rect.height > 0;
 

@@ -45,6 +45,8 @@ type SkinContextValue = {
   applyAccountPrefs: (prefs: UserThemePrefs | null | undefined) => void;
   /** Changes when an add-on adds a Look, so pickers and panels re-draw. */
   looksVersion: number;
+  /** The text size in use as a factor (1 = Normal), for drawings that size text in pixels (charts, gauges). */
+  textScale: number;
 };
 
 const SkinContext = createContext<SkinContextValue | null>(null);
@@ -76,6 +78,7 @@ export function SkinProvider({ children }: { children: ReactNode }) {
   }, [skin, shownPrefs, look]);
   // Text size: all text is measured in rem, so the page's base size scales it everywhere.
   const display = useDisplayMode();
+  const textScale = (display.active ? display.textSize : (themePrefs.textSize ?? 100)) / 100;
   useEffect(() => {
     document.documentElement.style.fontSize = `${display.active ? display.textSize : (themePrefs.textSize ?? 100)}%`;
   }, [themePrefs.textSize, display.active, display.textSize]);
@@ -195,8 +198,9 @@ export function SkinProvider({ children }: { children: ReactNode }) {
       setThemePrefs,
       applyAccountPrefs,
       looksVersion: lookVer,
+      textScale,
     }),
-    [skin, skins, setSkinId, themePrefs, setThemePrefs, applyAccountPrefs, lookVer]
+    [skin, skins, setSkinId, themePrefs, setThemePrefs, applyAccountPrefs, lookVer, textScale]
   );
 
   return (

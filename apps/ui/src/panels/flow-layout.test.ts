@@ -118,14 +118,13 @@ test("grid geometry: laptops keep their layout exactly, wide screens grow square
   // This laptop's real section width (measured on the live dashboard at 1600 px).
   const laptop = flowGridForWidth(1278);
   assert.deepEqual([laptop.cols, laptop.gridWidth, laptop.rowHeight], [12, 1278, 106.5]); // = before (width / 12)
-  for (const w of [996, 1100, 1366 - 300, 1590]) {
+  for (const w of [852, 950, 996, 1100, 1366 - 300, 1590]) {
     const g = flowGridForWidth(w);
     assert.deepEqual([g.cols, g.gridWidth, g.rowHeight], [12, w, w / 12], `width ${w}`);
   }
   const qhd = flowGridForWidth(2230);
   assert.equal(qhd.cols, 12);
   assert.equal(qhd.gridWidth, 12 * (128 + 12) - 12); // capped at 128 px squares
-  assert.equal(flowGridForWidth(995).cols, 8); // just under: flows
-  assert.equal(flowGridForWidth(850).cols, 6); // tablet landscape
+  assert.equal(flowGridForWidth(851).cols, 6); // just under (tablet landscape): flows
   assert.deepEqual([flowGridForWidth(316).cols, flowGridForWidth(316).gridWidth], [4, 316]); // phone
 });
