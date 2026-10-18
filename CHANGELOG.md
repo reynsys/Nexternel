@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.118
+
+- **Wall display settings:** in **Users → Edit → Wall display** choose, for the account a wall screen uses, which dashboard it starts on, whether it moves through the dashboards, the text size, the room buttons and light effects. The wall screen applies changes within seconds — nobody needs to touch it.
+
 ## V5.2.117
 
 - After signing in you return to the page you were opening (for example a wall display's Display mode address) instead of the home dashboard.

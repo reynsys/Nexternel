@@ -47,6 +47,7 @@ import { useContentSurfaceSx } from "../../skins/useSurfaceStyles";
 import { ProfileSection } from "./sections/ProfileSection";
 import { ButtonRow } from "../../components/ButtonRow";
 import { useLiveChanges } from "../../lib/live-changes";
+import { WallDisplayFields } from "../../components/WallDisplayFields";
 
 function prefsFromUser(u: AdminUser | null): { theme: ThemePrefs; skinId: string } {
   const n = normalizeThemePrefs(u?.themePrefs ?? DEFAULT_THEME_PREFS);
@@ -134,6 +135,7 @@ export function UsersPage() {
       effectColour: theme.effectColour,
       statusLight: theme.statusLight,
       bell: theme.bell,
+      wall: theme.wall,
     };
   }
 
@@ -354,6 +356,9 @@ export function UsersPage() {
                 onThemeChange={setTheme}
                 onSkinChange={setSkinId}
               />
+              <Divider />
+              <Typography variant="subtitle1">Wall display</Typography>
+              <WallDisplayFields value={theme.wall} onChange={(wall) => setTheme((t) => ({ ...t, wall }))} />
             </Stack>
           </DialogContent>
           <DialogActions>
@@ -434,6 +439,9 @@ export function UsersPage() {
                 onThemeChange={setTheme}
                 onSkinChange={setSkinId}
               />
+              <Divider />
+              <Typography variant="subtitle1">Wall display</Typography>
+              <WallDisplayFields value={theme.wall} onChange={(wall) => setTheme((t) => ({ ...t, wall }))} />
             </Stack>
           </DialogContent>
           <DialogActions>

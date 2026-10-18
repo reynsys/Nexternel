@@ -22,10 +22,26 @@ export type ThemePrefsDto = {
   effectColour?: "white" | "accent" | "scene";
   statusLight?: StatusLightPrefs;
   bell?: BellPrefs;
+  /** This account on a wall display (Display mode): set by an admin in Users → Edit. */
+  wall?: WallPrefs;
 };
 
 /** The notification bell for this person: when it shows and where (Settings → Appearance). */
 export type BellPrefs = { show: "always" | "new" | "never"; position: "menu" | "top" };
+
+export type WallPrefs = { textSize: number; tabs: boolean; rotate: number; light: boolean; start: string | null };
+const WALL_TEXT = new Set([90, 100, 110, 125]);
+function wallField(raw: unknown): WallPrefs {
+  const o = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
+  const rotate = typeof o.rotate === "number" && Number.isFinite(o.rotate) ? Math.round(o.rotate) : 0;
+  return {
+    textSize: typeof o.textSize === "number" && WALL_TEXT.has(o.textSize) ? o.textSize : 110,
+    tabs: o.tabs !== false,
+    rotate: rotate >= 10 ? Math.min(rotate, 3600) : 0,
+    light: o.light !== false,
+    start: typeof o.start === "string" && /^[A-Za-z0-9-]{1,64}$/.test(o.start) ? o.start : null,
+  };
+}
 
 function bellField(raw: unknown): BellPrefs {
   const o = (raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {}) as Record<string, unknown>;
@@ -233,6 +249,7 @@ export function parseThemePrefsInput(
     ...effectFields(o),
     statusLight: statusLightField(o.statusLight),
     bell: bellField(o.bell),
+    wall: wallField(o.wall),
   };
 }
 
@@ -260,5 +277,6 @@ export function themePrefsFromDb(raw: unknown): ThemePrefsDto {
     ...effectFields(o),
     statusLight: statusLightField(o.statusLight),
     bell: bellField(o.bell),
+    wall: wallField(o.wall),
   };
 }

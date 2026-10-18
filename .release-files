@@ -263,6 +263,7 @@ apps/ui/src/components/switch-styles/switch-styles.css
 apps/ui/src/components/switch-styles/SwitchStyleVisual.tsx
 apps/ui/src/components/UserAvatarField.tsx
 apps/ui/src/components/VisualizationSlot.tsx
+apps/ui/src/components/WallDisplayFields.tsx
 apps/ui/src/components/WidgetErrorBoundary.tsx
 apps/ui/src/diagnostics/buildClientSnapshot.ts
 apps/ui/src/diagnostics/errorRing.ts

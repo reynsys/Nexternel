@@ -4,7 +4,8 @@ import { Box } from "@mui/material";
 import { DashboardPage } from "./DashboardPage";
 import { api } from "../api";
 import { dashboardPaths } from "../lib/dashboard-path";
-import { NOT_DISPLAY, displayPath, parseDisplayOptions, setDisplayMode, useDisplayMode } from "../lib/display-mode";
+import { NOT_DISPLAY, displayPath, normalizeWallPrefs, parseDisplayOptions, setDisplayMode, useDisplayMode } from "../lib/display-mode";
+import { useSkin } from "../skins/SkinProvider";
 
 /**
  * Display mode (/display, /display/<name>): the dashboard alone, full screen, for wall displays and
@@ -16,10 +17,24 @@ export function DisplayPage() {
   const navigate = useNavigate();
   const display = useDisplayMode();
   const [idle, setIdle] = useState(false);
+  // The account's wall settings (Users → Edit → Wall display); changes arrive live.
+  const { themePrefs } = useSkin();
+  const wall = normalizeWallPrefs(themePrefs.wall);
+  const wallKey = JSON.stringify(wall);
 
   useEffect(() => {
-    setDisplayMode(parseDisplayOptions(search));
-  }, [search]);
+    setDisplayMode(parseDisplayOptions(search, JSON.parse(wallKey)));
+  }, [search, wallKey]);
+
+  // Plain /display opens the account's start dashboard, when one is chosen.
+  const start = wall.start;
+  useEffect(() => {
+    if (!start || pathname.replace(/\/$/, "") !== "/display") return;
+    void api.dashboards().then(({ dashboards }) => {
+      const path = dashboardPaths(dashboards).get(start);
+      if (path && displayPath(path) !== "/display") navigate(displayPath(path) + search, { replace: true });
+    });
+  }, [start, pathname, search, navigate]);
   useEffect(() => () => setDisplayMode(NOT_DISPLAY), []);
 
   useEffect(() => {

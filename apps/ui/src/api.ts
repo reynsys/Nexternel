@@ -296,6 +296,7 @@ export type UserThemePrefs = {
   effectColour?: "white" | "accent" | "scene";
   statusLight?: import("./skins/themePrefs").StatusLightPrefs;
   bell?: import("./skins/themePrefs").BellPrefs;
+  wall?: import("./lib/display-mode").WallPrefs;
 };
 
 export type User = {

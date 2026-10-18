@@ -15,6 +15,7 @@ import {
 } from "./effects/catalog";
 import { lookIdFromPrefs } from "../lib/look-choice";
 import { resolveLook } from "./looks/registry";
+import { normalizeWallPrefs, type WallPrefs } from "../lib/display-mode";
 
 export const THEME_PREFS_KEY = "nexternel.themePrefs";
 
@@ -55,6 +56,8 @@ export type ThemePrefs = {
   statusLight?: StatusLightPrefs;
   /** The notification bell: when it shows and where. */
   bell?: BellPrefs;
+  /** This account on a wall display (Display mode), set in Users → Edit → Wall display. */
+  wall?: WallPrefs;
 };
 
 export type BellPrefs = { show: "always" | "new" | "never"; position: "menu" | "top" };
@@ -222,6 +225,7 @@ export function normalizeThemePrefs(raw: unknown): ThemePrefs {
     effectColour: normalizeEffectColour(parsed.effectColour),
     statusLight: normalizeStatusLightPrefs(parsed.statusLight),
     bell: normalizeBellPrefs(parsed.bell),
+    wall: normalizeWallPrefs(parsed.wall),
   };
 }
 
@@ -286,5 +290,6 @@ export function toAccountThemePrefs(prefs: ThemePrefs, skinId: string) {
     effectColour: normalizeEffectColour(prefs.effectColour),
     statusLight: normalizeStatusLightPrefs(prefs.statusLight),
     bell: normalizeBellPrefs(prefs.bell),
+    wall: normalizeWallPrefs(prefs.wall),
   };
 }

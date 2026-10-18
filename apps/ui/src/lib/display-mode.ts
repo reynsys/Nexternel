@@ -14,16 +14,33 @@ export type DisplayOptions = { active: boolean; textSize: number; tabs: boolean;
 export const NOT_DISPLAY: DisplayOptions = { active: false, textSize: 100, tabs: true, rotate: 0, light: false };
 const TEXT_SIZES = [90, 100, 110, 125];
 
-export function parseDisplayOptions(search: string): DisplayOptions {
+/** The account's wall display settings (Users → Edit → Wall display); `start` = dashboard id. */
+export type WallPrefs = { textSize: number; tabs: boolean; rotate: number; light: boolean; start: string | null };
+export const DEFAULT_WALL: WallPrefs = { textSize: 110, tabs: true, rotate: 0, light: true, start: null };
+
+const rotation = (n: number) => (Number.isFinite(n) && Math.round(n) >= 10 ? Math.min(Math.round(n), 3600) : 0);
+
+export function normalizeWallPrefs(raw: unknown): WallPrefs {
+  const o = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
+  return {
+    textSize: TEXT_SIZES.includes(o.textSize as number) ? (o.textSize as number) : 110,
+    tabs: o.tabs !== false,
+    rotate: typeof o.rotate === "number" ? rotation(o.rotate) : 0,
+    light: o.light !== false,
+    start: typeof o.start === "string" && /^[A-Za-z0-9-]{1,64}$/.test(o.start) ? o.start : null,
+  };
+}
+
+/** The account's wall settings, with anything given in the address taking priority. */
+export function parseDisplayOptions(search: string, wall: WallPrefs = DEFAULT_WALL): DisplayOptions {
   const q = new URLSearchParams(search);
   const text = Number(q.get("text"));
-  const rotate = Math.round(Number(q.get("rotate")));
   return {
     active: true,
-    textSize: TEXT_SIZES.includes(text) ? text : 110,
-    tabs: q.get("tabs") !== "0",
-    rotate: Number.isFinite(rotate) && rotate >= 10 ? Math.min(rotate, 3600) : 0,
-    light: q.get("light") !== "0",
+    textSize: TEXT_SIZES.includes(text) ? text : wall.textSize,
+    tabs: q.has("tabs") ? q.get("tabs") !== "0" : wall.tabs,
+    rotate: q.has("rotate") ? rotation(Number(q.get("rotate"))) : wall.rotate,
+    light: q.has("light") ? q.get("light") !== "0" : wall.light,
   };
 }
 
