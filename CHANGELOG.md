@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.113
+
+- **Everything you can click looks like a button:** the side menu entries and all tab bars (for example Devices / Cameras) are now drawn as buttons, the chosen one filled.
+
 ## V5.2.112
 
 - **Button styles:** add-on Looks that come with several button styles let you choose one in **Settings → Appearance → Buttons**.

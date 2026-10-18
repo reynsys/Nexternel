@@ -25,7 +25,6 @@ export function SegmentButtonNav({ items, activeId }: Props) {
             to={item.to}
             size="small"
             variant={active ? "contained" : "outlined"}
-            color={active ? "primary" : "inherit"}
             sx={{ textTransform: "none", fontWeight: active ? 600 : 500 }}
           >
             {item.label}

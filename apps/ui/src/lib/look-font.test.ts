@@ -17,8 +17,8 @@ test("a Look's font is the person's choice when offered, else its first", () => 
 });
 
 test("a Look's button style is chosen the same way", () => {
-  const withStyles = { buttonStyles: [{ id: "corners", label: "Corners" }, { id: "bar", label: "Light bar" }] };
-  assert.equal(chosenLookButtons(withStyles, "bar")?.id, "bar");
-  assert.equal(chosenLookButtons(withStyles, "nope")?.id, "corners");
-  assert.equal(chosenLookButtons({}, "bar"), undefined);
+  const withStyles = { buttonStyles: [{ id: "one", label: "One" }, { id: "two", label: "Two" }] };
+  assert.equal(chosenLookButtons(withStyles, "two")?.id, "two");
+  assert.equal(chosenLookButtons(withStyles, "nope")?.id, "one");
+  assert.equal(chosenLookButtons({}, "two"), undefined);
 });

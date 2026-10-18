@@ -8,7 +8,7 @@ export function DevicesTabs() {
   const { pathname } = useLocation();
   const value = pathname.startsWith("/admin/cameras") ? "/admin/cameras" : "/admin/devices";
   return (
-    <Tabs value={value} sx={{ borderBottom: 1, borderColor: "divider", minHeight: 40 }}>
+    <Tabs value={value} sx={{ mb: 1 }}>
       <Tab
         value="/admin/devices"
         label="Devices"
@@ -16,7 +16,6 @@ export function DevicesTabs() {
         iconPosition="start"
         component={RouterLink}
         to="/admin/devices"
-        sx={{ minHeight: 40 }}
       />
       <Tab
         value="/admin/cameras"
@@ -25,7 +24,6 @@ export function DevicesTabs() {
         iconPosition="start"
         component={RouterLink}
         to="/admin/cameras"
-        sx={{ minHeight: 40 }}
       />
     </Tabs>
   );

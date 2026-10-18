@@ -1,4 +1,4 @@
-import type { Theme, ThemeOptions } from "@mui/material/styles";
+import { alpha, type Theme, type ThemeOptions } from "@mui/material/styles";
 import type { LookTokens } from "./looks/types";
 import { contentPanelStyles, insetStyle } from "./surfaceStyles";
 
@@ -49,6 +49,8 @@ export function lookThemeOptions(
   const brighter = (fill: string) => (fill ? { "&:hover": { backgroundColor: fill, filter: "brightness(1.12)" } } : {});
   // Buttons the Look gives a shadow look pressed in while held.
   const pressable = (shadow: string) => (shadow ? { "&:active": { boxShadow: t.controlPress } } : {});
+  // Menu items and tabs look like buttons too (same edge as an outlined button; chosen = filled).
+  const buttonEdge = t.secondaryBorder || `1px solid ${alpha(primary.main, 0.5)}`;
 
   return {
     nx: t,
@@ -146,6 +148,9 @@ export function lookThemeOptions(
         styleOverrides: {
           root: {
             borderRadius: t.radiusControl,
+            // Side-menu entries are buttons: each has the outlined button's edge.
+            "&[data-nx-nav]": { border: buttonEdge, marginBottom: 6, ...set("backgroundColor", t.secondaryFill) },
+            "&[data-nx-nav].Mui-selected": { borderColor: "transparent" },
             // The chosen menu item, as the Look draws it.
             "&.Mui-selected": {
               backgroundColor: t.selectedFill,
@@ -171,7 +176,33 @@ export function lookThemeOptions(
           colorDefault: { backgroundColor: t.avatarFill, color: t.avatarInk, ...set("border", t.avatarBorder) },
         },
       },
-      MuiTab: { styleOverrides: { root: { "&.Mui-selected": { color: primary.main, fontWeight: 600 } } } },
+      // Tabs are drawn as a row of buttons: outlined, the chosen one filled.
+      MuiTabs: {
+        styleOverrides: {
+          root: { minHeight: 0, padding: "2px 0" },
+          indicator: { display: "none" },
+          flexContainer: { gap: 8 },
+        },
+      },
+      MuiTab: {
+        styleOverrides: {
+          root: {
+            minHeight: 34,
+            padding: "6px 14px",
+            borderRadius: t.radiusControl,
+            border: buttonEdge,
+            color: primary.main,
+            textTransform: t.buttonCase,
+            ...set("backgroundColor", t.secondaryFill),
+            "&.Mui-selected": {
+              color: t.primaryInk || primary.contrastText,
+              backgroundColor: t.primaryFill || primary.main,
+              border: t.primaryBorder || `1px solid ${primary.main}`,
+              fontWeight: 600,
+            },
+          },
+        },
+      },
       MuiSwitch: {
         styleOverrides: {
           switchBase: { "&.Mui-checked": { color: primary.main }, "&.Mui-checked + .MuiSwitch-track": { backgroundColor: primary.main } },

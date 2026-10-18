@@ -46,6 +46,7 @@ function NavList({
             to={item.to}
             selected={selected}
             onClick={onNavigate}
+            data-nx-nav=""
             sx={{
               justifyContent: collapsed ? "center" : "flex-start",
               px: collapsed ? 1 : 2,
