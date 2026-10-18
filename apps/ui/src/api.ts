@@ -2505,6 +2505,8 @@ export type DashboardSection = {
   icon?: string;
   /** 12-col span: 12 full, 6 half, 4 third, 3 quarter */
   colSpan?: number;
+  /** false: no title bar (icon, name, panel count) outside editing — just the frame round the panels. */
+  showTitle?: boolean;
   /** V5 canonical placement records (schema v3+). */
   panels: PanelInstance[];
 };

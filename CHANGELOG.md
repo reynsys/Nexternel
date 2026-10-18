@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.120
+
+- **Sections without a title bar:** in **Dashboard Options**, switch off **Show section title** for a section to show just its frame around the panels — more room for the panels. Width, order and everything else stay as they are.
+
 ## V5.2.119
 
 - **Readable gauges and charts on every screen:** the small numbers round a gauge and on charts never get too small to read, and they follow Settings → Appearance → Text size. When there is not room for all of them, a gauge shows every second number instead of shrinking them.

@@ -1058,6 +1058,8 @@ function DashboardPageContent() {
       >
         {ordered.map((section, index) => {
           const span = isNarrow ? 12 : normalizeSectionColSpan(section.colSpan);
+          // A section without its title bar shows just its frame round the panels (always open).
+          const titleHidden = !editMode && section.showTitle === false;
           const SecIcon = getDashboardIcon(section.icon);
           return (
             // The section's place in the grid; the Look's section frame is drawn over its edges
@@ -1065,7 +1067,7 @@ function DashboardPageContent() {
             <Box key={section.id} sx={{ gridColumn: `span ${span}`, minWidth: 0, position: "relative", scrollMarginTop: 16 }}>
             <Accordion
               id={`dash-section-${section.id}`}
-              expanded={!section.collapsed}
+              expanded={titleHidden || !section.collapsed}
               onChange={(_e, expanded) =>
                 updateSection(section.id, { collapsed: !expanded })
               }
@@ -1093,7 +1095,7 @@ function DashboardPageContent() {
                 sectionSx(gradientActive),
               ]}
             >
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={titleHidden ? { display: "none" } : undefined}>
                 <ButtonRow
                   direction="row"
                   alignItems="center"
@@ -1172,6 +1174,17 @@ function DashboardPageContent() {
                       sx={{ flexShrink: 0 }}
                       onClick={(e) => e.stopPropagation()}
                     >
+                      <FormControlLabel
+                        sx={{ mr: 0.5 }}
+                        control={
+                          <Switch
+                            size="small"
+                            checked={section.showTitle !== false}
+                            onChange={(e) => updateSection(section.id, { showTitle: e.target.checked })}
+                          />
+                        }
+                        label={<Typography variant="body2">Show section title</Typography>}
+                      />
                       <FormControl size="small" sx={{ minWidth: 100 }}>
                         <InputLabel id={`span-${section.id}`}>Width</InputLabel>
                         <Select
@@ -1228,7 +1241,7 @@ function DashboardPageContent() {
                   )}
                 </ButtonRow>
               </AccordionSummary>
-              <AccordionDetails sx={{ pt: 0, px: 2, pb: 2 }}>
+              <AccordionDetails sx={{ pt: titleHidden ? 2 : 0, px: 2, pb: 2 }}>
                 <SectionGrid
                   sectionId={section.id}
                   sectionRoomId={section.roomId ?? null}
