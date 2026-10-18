@@ -25,6 +25,7 @@ import {
   DEFAULT_THEME_PREFS,
 } from "./themePrefs";
 import { AppearanceCssVars } from "./AppearanceCssVars";
+import { MOTION_CSS } from "../lib/motion";
 import { BackgroundEffects } from "./effects/BackgroundEffects";
 import { looksVersion, resolveLook, subscribeLooks } from "./looks/registry";
 import { resolveTokens } from "./looks/resolve";
@@ -71,6 +72,11 @@ export function SkinProvider({ children }: { children: ReactNode }) {
       })
     );
   }, [skin, shownPrefs, look]);
+  // Animations: the person's choice, and off when the device asks apps to reduce motion.
+  useEffect(() => {
+    const reduce = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    document.documentElement.setAttribute("data-nx-motion", themePrefs.motion !== false && !reduce ? "on" : "off");
+  }, [themePrefs.motion]);
   const persistServerRef = useRef(true);
   const hydratedRef = useRef(false);
 
@@ -176,6 +182,8 @@ export function SkinProvider({ children }: { children: ReactNode }) {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <AppearanceCssVars lookId={themePrefs.lookId} looksVersion={lookVer} />
+        {/* Animations on/off for everything a Look moves (and per panel). */}
+        <GlobalStyles styles={MOTION_CSS} />
         <GlobalStyles
           styles={{
             html: {

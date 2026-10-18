@@ -30,6 +30,8 @@ import {
 } from "./general/clock-config";
 import { PanelTitleFields, type AutomaticTitle } from "../components/PanelTitleFields";
 import { readTitleIcon, writeTitleIcon } from "../lib/panel-title-icon";
+import { PanelMotionField } from "../components/PanelMotionField";
+import { readPanelMotion, writePanelMotion, type PanelMotion } from "../lib/motion";
 
 type Props = {
   open: boolean;
@@ -54,6 +56,7 @@ const TYPE_LABELS: Record<GeneralWidgetType, string> = {
 export function GeneralWidgetEditor({ open, widget, onClose, onSave, automatic, renderPreview }: Props) {
   const [title, setTitle] = useState("");
   const [titleIcon, setTitleIcon] = useState("auto");
+  const [motion, setMotion] = useState<PanelMotion>(readPanelMotion(widget?.config));
   const [weatherLocation, setWeatherLocation] = useState("London");
   const [weatherLat, setWeatherLat] = useState("51.5074");
   const [weatherLon, setWeatherLon] = useState("-0.1278");
@@ -87,6 +90,7 @@ export function GeneralWidgetEditor({ open, widget, onClose, onSave, automatic, 
     }
     setOfflineOnly(parseDeviceStatusConfig(widget.config).offlineOnly);
     setTitleIcon(readTitleIcon(widget.config));
+    setMotion(readPanelMotion(widget.config));
     setCameraId(parseCameraConfig(widget.config).cameraId);
     if (type === "clock") {
       const clock = parseClockConfig(widget.config);
@@ -145,7 +149,7 @@ export function GeneralWidgetEditor({ open, widget, onClose, onSave, automatic, 
 
   function buildPatch(): Partial<WidgetInstance> {
     if (!widget) return {};
-    const config: Record<string, unknown> = writeTitleIcon({ ...(widget.config ?? {}) }, titleIcon);
+    const config: Record<string, unknown> = writePanelMotion(writeTitleIcon({ ...(widget.config ?? {}) }, titleIcon), motion);
     if (type === "weather") {
       const lat = Number(weatherLat);
       const lon = Number(weatherLon);
@@ -294,6 +298,7 @@ export function GeneralWidgetEditor({ open, widget, onClose, onSave, automatic, 
             }
           }
         />
+        <PanelMotionField value={motion} onChange={setMotion} />
 
         {type === "clock" && (
           <>

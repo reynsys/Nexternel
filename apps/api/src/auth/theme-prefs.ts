@@ -6,6 +6,8 @@ export type ThemePrefsDto = {
   skinId: string;
   /** The dashboard's Look (Standard, Glass or an installed Look pack). */
   lookId?: string;
+  /** The Look's animations on (default) or off. */
+  motion?: boolean;
   gradientId?: string;
   solidContentPanels?: boolean;
   effectId?: string;
@@ -60,6 +62,7 @@ const DEFAULT: ThemePrefsDto = {
   primary: "#1A73E8",
   skinId: "mui-dashboard",
   lookId: "standard",
+  motion: true,
   gradientId: "none",
   solidContentPanels: false,
   effectId: "off",
@@ -202,6 +205,7 @@ export function parseThemePrefsInput(
     primary,
     skinId,
     lookId: lookField(o),
+    motion: o.motion !== false,
     gradientId: normalizeGradientId(o.gradientId),
     solidContentPanels: Boolean(o.solidContentPanels),
     ...effectFields(o),
@@ -226,6 +230,7 @@ export function themePrefsFromDb(raw: unknown): ThemePrefsDto {
         ? o.skinId.trim()
         : DEFAULT.skinId,
     lookId: lookField(o),
+    motion: o.motion !== false,
     gradientId: normalizeGradientId(o.gradientId),
     solidContentPanels: Boolean(o.solidContentPanels),
     ...effectFields(o),

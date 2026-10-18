@@ -161,6 +161,7 @@ export function sectionSx(gradientActive: boolean) {
   return (t: Theme) => ({
     border: t.nx.sectionBorder,
     borderRadius: t.nx.sectionRadius,
+    padding: t.nx.sectionInset,
     boxShadow: gradientActive ? "none" : t.nx.sectionShadow,
     ...(gradientActive ? { backgroundColor: "transparent", backgroundImage: "none" } : { backgroundColor: t.nx.sectionFill }),
   });

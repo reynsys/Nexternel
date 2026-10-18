@@ -316,11 +316,17 @@ export async function checkAddons(): Promise<AddonInfo[]> {
           continue;
         }
         if (versions[p.id] && versions[p.id] !== p.version) {
-          const got = await callLicenceServer("/v1/download", { licence: token, pack: p.id });
-          const checked = checkPackage(packFromServer(got), keys(), { packId: p.id, licenceId: licence.lid });
-          if (checked.ok) {
-            await savePack(checked.pkg.manifest, checked.code, key, token, licence.lid);
-            continue;
+          // A newer version that cannot be installed now (e.g. it needs a newer Nexternel) leaves the
+          // current one in place; the licence below is still renewed.
+          try {
+            const got = await callLicenceServer("/v1/download", { licence: token, pack: p.id });
+            const checked = checkPackage(packFromServer(got), keys(), { packId: p.id, licenceId: licence.lid });
+            if (checked.ok) {
+              await savePack(checked.pkg.manifest, checked.code, key, token, licence.lid);
+              continue;
+            }
+          } catch {
+            /* keep the installed version */
           }
         }
         await getPool().query(

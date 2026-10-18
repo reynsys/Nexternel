@@ -37,6 +37,8 @@ import {
   listEchartsPresets,
 } from "./registry";
 import { listEchartsFamilyMeta } from "./families";
+import { PanelMotionField } from "../../components/PanelMotionField";
+import { readPanelMotion, writePanelMotion, type PanelMotion } from "../../lib/motion";
 
 type Props = {
   open: boolean;
@@ -106,6 +108,7 @@ export function EChartsWidgetEditor({
   const [editScope, setEditScope] = useState<EditScope>("gauge");
   const [familyFilter, setFamilyFilter] = useState("all");
   const [statusLight, setStatusLight] = useState<PanelStatusLight>(readPanelStatusLight(null));
+  const [motion, setMotion] = useState<PanelMotion>("follow");
 
   useEffect(() => {
     if (!open || !widget) return;
@@ -120,6 +123,7 @@ export function EChartsWidgetEditor({
     setTitle(persistBoundWidgetTitle(widget.title ?? "", widget.type, cap) ?? "");
     setTitleIcon(readTitleIcon(widget.config));
     setStatusLight(readPanelStatusLight(widget.config));
+    setMotion(readPanelMotion(widget.config));
     setCapabilityId(capId);
     setMinStr(cfg.min !== undefined ? String(cfg.min) : "");
     setMaxStr(cfg.max !== undefined ? String(cfg.max) : "");
@@ -183,7 +187,7 @@ export function EChartsWidgetEditor({
           (title.trim() || undefined),
         type: saveType,
         bindings: capabilityId ? { capabilityId } : {},
-        config: writeTitleIcon(
+        config: writePanelMotion(writeTitleIcon(
           {
             presetId,
             range: preset.dataMode === "history" ? range : undefined,
@@ -194,7 +198,7 @@ export function EChartsWidgetEditor({
             ...statusLightConfig(statusLight),
           },
           titleIcon
-        ),
+        ), motion),
       },
     };
   }
@@ -278,6 +282,8 @@ export function EChartsWidgetEditor({
             icon: { iconId: cap?.icon ?? "auto", kind: cap?.kind ?? null },
           }}
         />
+
+        <PanelMotionField value={motion} onChange={setMotion} />
 
         {showFamilySelect && (
           <FormControl fullWidth size="small">

@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import Avatar from "@mui/material/Avatar";
 import MuiDrawer, { drawerClasses } from "@mui/material/Drawer";
 import Box from "@mui/material/Box";
-import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import Tooltip from "@mui/material/Tooltip";
+import type { Theme } from "@mui/material/styles";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import LogoutIcon from "@mui/icons-material/Logout";
@@ -19,6 +19,7 @@ import type { User } from "../../../api";
 import type { RolePermissions } from "../../../lib/permissions";
 import { getBrandLogo } from "../../brandLogo";
 import { BrandMark } from "../../../components/BrandMark";
+import { LookDecor, RoleDivider, useHasDecor } from "../../looks/LookDecor";
 import {
   getSideMenuCollapsed,
   setSideMenuCollapsed,
@@ -52,6 +53,8 @@ export function SideMenu({
   const [logo, setLogo] = useState<string | null>(() => getBrandLogo());
   const width = collapsed ? SIDE_MENU_WIDTH_COLLAPSED : SIDE_MENU_WIDTH_EXPANDED;
   const gradientActive = useGradientActive();
+  const decoratedDividers = useHasDecor("menuDivider");
+  const decoratedEdge = useHasDecor("menuEdge");
 
   useEffect(() => {
     function refresh() {
@@ -98,6 +101,8 @@ export function SideMenu({
           boxSizing: "border-box",
           ...chromeSurfaceSx(gradientActive),
           overflowX: "hidden",
+          // Room for the Look's menu edge drawing (core space rule).
+          ...(decoratedEdge ? { paddingRight: (t: Theme) => t.nx.menuEdgeSpace } : {}),
           transition: (theme) =>
             theme.transitions.create("width", {
               easing: theme.transitions.easing.sharp,
@@ -134,7 +139,7 @@ export function SideMenu({
           <NotificationBell place="menu" canClear={hasPermission(permissions ?? null, "manageUsers", isAdmin)} />
         </Box>
       ) : null}
-      <Divider />
+      <RoleDivider place="top" />
       <Box
         sx={{
           overflow: "auto",
@@ -152,11 +157,13 @@ export function SideMenu({
         />
       </Box>
 
+      {decoratedDividers ? <RoleDivider place="bottom" /> : null}
       <Stack
         spacing={1.25}
         sx={{
           p: collapsed ? 1 : 1.5,
-          borderTop: "1px solid",
+          // Standard's plain line; a Look with its own divider draws it just above instead.
+          borderTop: decoratedDividers ? "none" : "1px solid",
           borderColor: "divider",
           alignItems: collapsed ? "center" : "stretch",
         }}
@@ -222,6 +229,11 @@ export function SideMenu({
           </Stack>
         )}
       </Stack>
+      {decoratedEdge ? (
+        <Box sx={(t) => ({ position: "absolute", top: 0, bottom: 0, right: 0, width: t.nx.menuEdgeSpace })}>
+          <LookDecor slot="menuEdge" />
+        </Box>
+      ) : null}
     </MuiDrawer>
   );
 }

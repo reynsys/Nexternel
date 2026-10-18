@@ -3,6 +3,8 @@ import type { WidgetInstance } from "../../api";
 import { PanelTitleFields, type AutomaticTitle } from "../PanelTitleFields";
 import { readTitleIcon, writeTitleIcon } from "../../lib/panel-title-icon";
 import { PanelEditorShell } from "./PanelEditorShell";
+import { PanelMotionField } from "../PanelMotionField";
+import { readPanelMotion, writePanelMotion, type PanelMotion } from "../../lib/motion";
 
 /** Edit menu of a panel that a plugin provides: its title and icon (the plugin draws the rest). */
 export function PluginPanelEditor({
@@ -25,15 +27,17 @@ export function PluginPanelEditor({
 }) {
   const [title, setTitle] = useState(widget.title ?? "");
   const [titleIcon, setTitleIcon] = useState(readTitleIcon(widget.config));
+  const [motion, setMotion] = useState<PanelMotion>(readPanelMotion(widget.config));
   useEffect(() => {
     if (!open) return;
     setTitle(widget.title ?? "");
     setTitleIcon(readTitleIcon(widget.config));
+    setMotion(readPanelMotion(widget.config));
   }, [open, widget.id]);
 
   const buildPatch = (): Partial<WidgetInstance> => ({
     title: title.trim() || undefined,
-    config: writeTitleIcon({ ...(widget.config ?? {}) }, titleIcon),
+    config: writePanelMotion(writeTitleIcon({ ...(widget.config ?? {}) }, titleIcon), motion),
   });
 
   return (
@@ -52,13 +56,16 @@ export function PluginPanelEditor({
           id: "look",
           label: "Look",
           content: (
-            <PanelTitleFields
-              title={title}
-              onTitleChange={setTitle}
-              icon={titleIcon}
-              onIconChange={setTitleIcon}
-              automatic={automatic}
-            />
+            <>
+              <PanelTitleFields
+                title={title}
+                onTitleChange={setTitle}
+                icon={titleIcon}
+                onIconChange={setTitleIcon}
+                automatic={automatic}
+              />
+              <PanelMotionField value={motion} onChange={setMotion} />
+            </>
           ),
         },
       ]}

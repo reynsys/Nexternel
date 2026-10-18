@@ -2,6 +2,14 @@ import type { Theme } from "@mui/material/styles";
 import type { ComponentType } from "react";
 
 /**
+ * Places where a Look can draw its own decoration (sized to the place, drawn inside it):
+ * panel and section frames, the side menu's edge, the small menu dividers (place "top" under the
+ * logo, "bottom" above the signed-in person) and the line under the room tabs.
+ */
+export type DecorSlot = "panel" | "section" | "menuEdge" | "menuDivider" | "barEdge";
+export type DecorProps = { place?: string };
+
+/**
  * What a Look decides about the dashboard's shape. Panels, tiles and controls read these as
  * CSS variables (AppearanceCssVars), never their own fixed values, so a new Look restyles
  * every part at once and nothing is rebuilt per Look.
@@ -115,6 +123,16 @@ export type LookTokens = {
   titleInset: string;
   /** Each reading's small panel inside a several-reading panel: its border. */
   miniPanelBorder: string;
+  /**
+   * Room reserved for decorations (core space rule: a Look's decoration is drawn inside the box of
+   * the thing it decorates, which keeps this much room for it, so neighbours never overlap):
+   * the side menu's edge strip, the small menu dividers, the line under the room tabs, and the
+   * inner margin of a dashboard section around its frame.
+   */
+  menuEdgeSpace: string;
+  dividerSpace: string;
+  barEdgeSpace: string;
+  sectionInset: string;
   /** Dashboard sections (the box around a group of panels). */
   sectionFill: string;
   sectionBorder: string;
@@ -158,8 +176,10 @@ export type UiLook = {
   defaultBackground?: string;
   /** The Look's values; anything left out is Standard's. */
   tokens: (theme: Theme) => Partial<LookTokens>;
-  /** Decoration drawn behind each panel's content, sized to the panel (e.g. HUD frames). */
+  /** Decoration drawn behind each panel's content, sized to the panel (e.g. HUD frames). Same as decor.panel. */
   PanelFrame?: ComponentType;
+  /** Decorations for the other places (see DecorSlot). Animations inside them follow the Animations setting. */
+  decor?: Partial<Record<DecorSlot, ComponentType<DecorProps>>>;
   /** The page background this Look brings, used while Appearance → Background is Plain. */
   background?: (mode: "light" | "dark") => {
     colour: string;

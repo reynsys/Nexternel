@@ -165,7 +165,7 @@ export function SwitchStyleVisual({
   if (!size) return null;
   return (
     <span
-      className="nxs"
+      className="nxs nx-anim"
       data-on={on ? "true" : "false"}
       data-disabled={disabled ? "true" : "false"}
       aria-hidden="true"

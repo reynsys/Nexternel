@@ -23,8 +23,9 @@ import {
 } from "../lib/panel-heading";
 import { contentSurfaceSx } from "../skins/surfaceStyles";
 import { useGradientActive, useSolidContentPanels } from "../skins/useSurfaceStyles";
-import { useLook } from "../skins/looks/useLook";
+import { LookDecor } from "../skins/looks/LookDecor";
 import { readPanelSwitchStyle } from "../lib/switch-styles";
+import { readPanelMotion } from "../lib/motion";
 import type { PanelActivity } from "../lib/dashboard-data-runtime";
 import { StatusLight, lightPlacement, resolveStatusLook, useStatusLightPrefs } from "./status-light/StatusLight";
 
@@ -165,8 +166,8 @@ export function PanelCard({
 }: PanelCardProps) {
   const gradientActive = useGradientActive();
   const solidContentPanels = useSolidContentPanels();
-  const { PanelFrame } = useLook();
   const switchStyle = readPanelSwitchStyle(runtimeConfigToPanelRecord(w.config));
+  const motion = readPanelMotion(runtimeConfigToPanelRecord(w.config));
   const statusPrefs = useStatusLightPrefs();
   const heading = panelHeading(w, capabilities, sectionRoomId, cameras);
   const tileTitle = heading.title;
@@ -193,6 +194,8 @@ export function PanelCard({
     ) : null;
   return (
     <Paper
+      // This panel's own Animations choice (absent = follows Settings → Appearance).
+      data-nx-panel-motion={motion === "follow" ? undefined : motion}
       elevation={editMode ? 2 : 0}
       variant={editMode ? "elevation" : "outlined"}
       sx={{
@@ -213,7 +216,7 @@ export function PanelCard({
         ...(gradientActive && !solidContentPanels ? {} : { backgroundColor: "var(--nx-panel-fill, var(--nx-surface-paper))" }),
       }}
     >
-      {PanelFrame ? <PanelFrame /> : null}
+      <LookDecor slot="panel" />
       {titlePlacement === "frame" ? lightAt("frame") : null}
       {toolbar}
       <Box

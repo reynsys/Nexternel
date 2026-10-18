@@ -102,6 +102,7 @@ import { getDashboardIcon } from "../lib/dashboard-icons";
 import { useShellAuth } from "../skins/useShellAuth";
 import { hasPermission } from "../lib/permissions";
 import { sectionSx } from "../skins/surfaceStyles";
+import { LookDecor } from "../skins/looks/LookDecor";
 import { useGradientActive } from "../skins/useSurfaceStyles";
 import { resolveHomeDashboardId } from "../lib/home-dashboard";
 import { dashboardIdForSlug, dashboardPaths } from "../lib/dashboard-path";
@@ -1028,8 +1029,10 @@ function DashboardPageContent() {
           const span = isNarrow ? 12 : normalizeSectionColSpan(section.colSpan);
           const SecIcon = getDashboardIcon(section.icon);
           return (
+            // The section's place in the grid; the Look's section frame is drawn over its edges
+            // (inside the room the section keeps for it with sectionInset).
+            <Box key={section.id} sx={{ gridColumn: `span ${span}`, minWidth: 0, position: "relative", scrollMarginTop: 16 }}>
             <Accordion
-              key={section.id}
               id={`dash-section-${section.id}`}
               expanded={!section.collapsed}
               onChange={(_e, expanded) =>
@@ -1051,13 +1054,11 @@ function DashboardPageContent() {
               data-nx-role="section"
               sx={[
                 {
-                  gridColumn: `span ${span}`,
-                  scrollMarginTop: 16,
                   overflow: "hidden",
                   "&:before": { display: "none" },
                   minWidth: 0,
                 },
-                // The Look's dashboard section (border, corners, fill, shadow).
+                // The Look's dashboard section (border, corners, fill, shadow) and the room it keeps for a frame.
                 sectionSx(gradientActive),
               ]}
             >
@@ -1220,6 +1221,8 @@ function DashboardPageContent() {
                 />
               </AccordionDetails>
             </Accordion>
+            <LookDecor slot="section" />
+            </Box>
           );
         })}
       </Box>

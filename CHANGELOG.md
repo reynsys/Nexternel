@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.106
+
+- **Animations on/off:** in **Settings → Appearance** you can switch off the moving decorations of add-on Looks, and each panel can choose its own in **Edit → Look**.
+- Groundwork for add-on Looks: they can now decorate the menu edge, the menu dividers, the line under the room tabs and the dashboard sections, always keeping clear of neighbouring parts. Nothing changes in Standard.
+
 ## V5.2.105
 
 - **Add-ons are ready:** with a licence key from Nexternel you can now install extra Looks in **Settings → Add-ons**.

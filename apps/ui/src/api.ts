@@ -272,6 +272,8 @@ export type UserThemePrefs = {
   skinId: string;
   /** The dashboard's Look (Standard, Glass or an installed Look pack) */
   lookId?: string;
+  /** The Look's animations on or off */
+  motion?: boolean;
   /** Page gradient id, or `"none"` for solid background */
   gradientId?: string;
   /** Solid panels (true) or frosted over the background; follows the Look */

@@ -88,6 +88,8 @@ import { PanelTitleFields, type AutomaticTitle } from "../../components/PanelTit
 import { DEFAULT_SWITCH_STYLE, readPanelSwitchStyle, type SwitchStyleId } from "../../lib/switch-styles";
 import { isControllableResolvedCapability } from "../../panels/panel-capabilities";
 import { SwitchStylePicker } from "../../components/switch-styles/SwitchStylePicker";
+import { PanelMotionField } from "../../components/PanelMotionField";
+import { readPanelMotion, type PanelMotion } from "../../lib/motion";
 
 
 
@@ -211,6 +213,7 @@ export function PanelWidgetEditor({
 
   const [itemStyle, setItemStyle] = useState<PanelItemStyle>(readPanelItemStyle(widget.config));
   const [switchStyle, setSwitchStyle] = useState<SwitchStyleId>(readPanelSwitchStyle(widget.config));
+  const [motion, setMotion] = useState<PanelMotion>(readPanelMotion(widget.config));
   const [itemDisplay, setItemDisplay] = useState<PanelItemDisplay>(readPanelItemDisplay(widget.config));
   const [titleIcon, setTitleIcon] = useState(readTitleIcon(widget.config));
   const [statusLight, setStatusLight] = useState<PanelStatusLight>(readPanelStatusLight(widget.config));
@@ -315,6 +318,8 @@ export function PanelWidgetEditor({
     setItemStyle(readPanelItemStyle(widget.config));
     setItemDisplay(readPanelItemDisplay(widget.config));
     setTitleIcon(readTitleIcon(widget.config));
+    setSwitchStyle(readPanelSwitchStyle(widget.config));
+    setMotion(readPanelMotion(widget.config));
     setStatusLight(readPanelStatusLight(widget.config));
 
     setChartRange(readPanelChartRange(widget.config));
@@ -496,6 +501,7 @@ export function PanelWidgetEditor({
         direction: itemDirection,
         itemStyle,
         switchStyle: switchStyle === DEFAULT_SWITCH_STYLE ? undefined : switchStyle,
+        motion: motion === "follow" ? undefined : motion,
       },
     };
 
@@ -740,6 +746,7 @@ export function PanelWidgetEditor({
 
           )}
 
+          <PanelMotionField value={motion} onChange={setMotion} />
           {hasSwitches && (
             <Stack spacing={1}>
               <Typography variant="subtitle2">Switch style</Typography>

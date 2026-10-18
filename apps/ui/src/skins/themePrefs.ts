@@ -28,6 +28,8 @@ export type ThemePrefs = {
   skinId?: string;
   /** The dashboard's Look (Standard, Glass, or an installed Look pack). See skins/looks. */
   lookId?: string;
+  /** The Look's moving decorations on (default) or off. Each panel can override it. */
+  motion?: boolean;
   /**
    * Page gradient background id (`none` = solid theme background).
    * See gradientPalettes.ts
@@ -128,6 +130,7 @@ export const DEFAULT_THEME_PREFS: ThemePrefs = {
   primary: PRIMARY_SWATCHES[0]!.color,
   skinId: "mui-dashboard",
   lookId: "standard",
+  motion: true,
   gradientId: GRADIENT_NONE_ID,
   solidContentPanels: true,
   effectId: "off",
@@ -200,6 +203,7 @@ export function normalizeThemePrefs(raw: unknown): ThemePrefs {
         ? parsed.skinId.trim()
         : DEFAULT_THEME_PREFS.skinId,
     lookId,
+    motion: parsed.motion !== false,
     gradientId,
     solidContentPanels: !resolveLook(lookId).frosted,
     effectId,
@@ -248,6 +252,7 @@ export function toAccountThemePrefs(prefs: ThemePrefs, skinId: string) {
     primary: prefs.primary,
     skinId: prefs.skinId ?? skinId,
     lookId: prefs.lookId ?? "standard",
+    motion: prefs.motion !== false,
     gradientId: prefs.gradientId ?? GRADIENT_NONE_ID,
     solidContentPanels: Boolean(prefs.solidContentPanels),
     effectId: normalizeEffectId(prefs.effectId),

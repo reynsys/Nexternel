@@ -246,6 +246,7 @@ apps/ui/src/components/PanelContentFields.tsx
 apps/ui/src/components/panel-editor/PanelEditorShell.tsx
 apps/ui/src/components/panel-editor/PluginPanelEditor.tsx
 apps/ui/src/components/PanelItemGrid.tsx
+apps/ui/src/components/PanelMotionField.tsx
 apps/ui/src/components/PanelNotice.tsx
 apps/ui/src/components/PanelTile.tsx
 apps/ui/src/components/PanelTitleFields.tsx
@@ -304,6 +305,8 @@ apps/ui/src/lib/icons/ItemIcon.tsx
 apps/ui/src/lib/look-choice.test.ts
 apps/ui/src/lib/look-choice.ts
 apps/ui/src/lib/look-roles-guard.test.ts
+apps/ui/src/lib/motion.test.ts
+apps/ui/src/lib/motion.ts
 apps/ui/src/lib/panel-appearance.ts
 apps/ui/src/lib/panel-cameras.test.ts
 apps/ui/src/lib/panel-cameras.ts
@@ -492,6 +495,7 @@ apps/ui/src/skins/local/.gitkeep
 apps/ui/src/skins/local/README.md
 apps/ui/src/skins/looks/addon-loader.ts
 apps/ui/src/skins/looks/builtin.ts
+apps/ui/src/skins/looks/LookDecor.tsx
 apps/ui/src/skins/looks/registry.ts
 apps/ui/src/skins/looks/resolve.ts
 apps/ui/src/skins/looks/types.ts

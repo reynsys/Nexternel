@@ -21,3 +21,8 @@ test("a Look id that is not a short lowercase name is not stored", () => {
   assert.equal(parseThemePrefsInput({ ...base, lookId: "../../etc" })?.lookId, "standard");
 });
 
+
+test("animations are on unless turned off", () => {
+  assert.equal(themePrefsFromDb({ ...base }).motion, true);
+  assert.equal(parseThemePrefsInput({ ...base, motion: false })?.motion, false);
+});

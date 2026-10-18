@@ -10,6 +10,7 @@ import {
   Radio,
   RadioGroup,
   Stack,
+  Switch,
   TextField,
   ToggleButton,
   ToggleButtonGroup,
@@ -195,6 +196,18 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
             );
           })}
         </Box>
+        <FormControlLabel
+          sx={{ mt: 1 }}
+          control={<Switch checked={themePrefs.motion !== false} onChange={(e) => set({ motion: e.target.checked })} />}
+          label={
+            <Typography variant="body2">
+              Animations{" "}
+              <Typography component="span" variant="caption" color="text.secondary">
+                — moving frames, rings and lights in Looks that have them. Each panel can choose its own in Edit → Look.
+              </Typography>
+            </Typography>
+          }
+        />
       </Section>
 
       <Divider />

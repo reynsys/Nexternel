@@ -2,6 +2,7 @@ import { dashboardPath } from "../lib/dashboard-path";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Button, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import { LookDecor } from "../skins/looks/LookDecor";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import { api, type DashboardSummary } from "../api";
 import { getDashboardIcon } from "../lib/dashboard-icons";
@@ -76,11 +77,14 @@ export function DashboardTabBar({
       spacing={1}
       sx={(t) => ({
         minWidth: 0,
-        pb: 0.5,
+        position: "relative",
+        // Room for the Look's own line drawing under the tabs (core space rule).
+        pb: `calc(4px + ${t.nx.barEdgeSpace})`,
         // The Look's room bar: its bottom line.
         borderBottom: t.nx.barEdge,
       })}
     >
+
       <Box
         ref={tabsRef}
         sx={(t) => ({
@@ -181,6 +185,10 @@ export function DashboardTabBar({
           </IconButton>
         </Tooltip>
       )}
+      {/* Last, so the row's spacing does not shift the tabs; "!important" beats the row's gap margin. */}
+      <Box sx={(t) => ({ position: "absolute", left: 0, right: 0, bottom: 0, height: t.nx.barEdgeSpace, pointerEvents: "none", ml: "0 !important" })}>
+        <LookDecor slot="barEdge" />
+      </Box>
     </Stack>
   );
 }
