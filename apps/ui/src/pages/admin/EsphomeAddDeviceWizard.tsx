@@ -30,6 +30,7 @@ import { InstallWorkflowStepper } from "./InstallWorkflowStepper";
 import { BuilderComponentFields } from "./esphome/BuilderComponentFields";
 import { BuilderComponentPicker } from "./esphome/BuilderComponentPicker";
 import { useConfirm } from "../../components/confirm";
+import { ButtonRow } from "../../components/ButtonRow";
 
 type AreaOption = { id: string; name: string };
 
@@ -433,7 +434,7 @@ export function EsphomeAddDeviceWizard({
             </Typography>
           )}
           {!editLoading && path === "choose" && (
-            <Stack spacing={2} sx={{ mt: 1 }}>
+            <ButtonRow sx={{ mt: 1 }}>
               <Typography color="text.secondary">
                 Add a new ESP32 or ESP8266 by describing the hardware attached to it.
                 Nexternel generates the configuration and registers capabilities automatically.
@@ -458,11 +459,11 @@ export function EsphomeAddDeviceWizard({
               <Typography variant="caption" color="text.secondary">
                 Import is for YAML already on this server (migration or advanced setups).
               </Typography>
-            </Stack>
+            </ButtonRow>
           )}
 
           {!editLoading && path === "new" && (
-            <Stack spacing={2} sx={{ mt: 1 }}>
+            <ButtonRow sx={{ mt: 1 }}>
               <Stepper activeStep={newStepIndex} alternativeLabel>
                 <Step>
                   <StepLabel>Hardware</StepLabel>
@@ -666,7 +667,7 @@ export function EsphomeAddDeviceWizard({
                   </Alert>
                 </Stack>
               )}
-            </Stack>
+            </ButtonRow>
           )}
 
           {!editLoading && path === "import" && (

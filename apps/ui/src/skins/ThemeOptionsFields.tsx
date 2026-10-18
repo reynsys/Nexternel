@@ -50,6 +50,7 @@ import {
 import { useReducedMotion } from "./effects/BackgroundEffects";
 import type { UiSkin } from "./types";
 import { choiceSx, insetSx } from "./surfaceStyles";
+import { ButtonRow } from "../components/ButtonRow";
 
 type Props = {
   themePrefs: ThemePrefs;
@@ -304,7 +305,7 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
             : undefined
         }
       >
-        <Stack direction="row" spacing={1}>
+        <ButtonRow direction="row">
           {(["light", "dark"] as const).map((mode) => (
             <Button
               key={mode}
@@ -317,7 +318,7 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
               {mode === "light" ? "Light" : "Dark"}
             </Button>
           ))}
-        </Stack>
+        </ButtonRow>
       </Section>
 
       <Section title="Background" hint={BACKGROUND_HINT[kind]}>
@@ -385,7 +386,7 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
       </Section>
 
       <Section title="Accent colour" hint="For menus, tabs and buttons.">
-        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+        <ButtonRow direction="row" flexWrap="wrap" useFlexGap>
           {PRIMARY_SWATCHES.map((s) => {
             const selected = themePrefs.primary.toLowerCase() === s.color.toLowerCase();
             return (
@@ -406,7 +407,7 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
               </Tooltip>
             );
           })}
-        </Stack>
+        </ButtonRow>
         <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap sx={{ mt: 1.5 }}>
           <TextField
             size="small"

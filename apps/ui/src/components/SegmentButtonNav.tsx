@@ -1,5 +1,6 @@
-import { Button, Stack } from "@mui/material";
+import { Button } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
+import { ButtonRow } from "./ButtonRow";
 
 export type SegmentNavItem = {
   id: string;
@@ -15,7 +16,7 @@ type Props = {
 /** Horizontal pill-style nav — active = filled, inactive = outlined button. */
 export function SegmentButtonNav({ items, activeId }: Props) {
   return (
-    <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
+    <ButtonRow direction="row" flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
       {items.map((item) => {
         const active = item.id === activeId;
         return (
@@ -31,6 +32,6 @@ export function SegmentButtonNav({ items, activeId }: Props) {
           </Button>
         );
       })}
-    </Stack>
+    </ButtonRow>
   );
 }

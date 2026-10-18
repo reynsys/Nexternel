@@ -30,6 +30,7 @@ import { SystemDiagnosticsSection } from "./SystemDiagnosticsSection";
 import { DiagnosticReportCard } from "./DiagnosticReportCard";
 import { UpdatesCard } from "./UpdatesCard";
 import { HttpsCard } from "./HttpsCard";
+import { ButtonRow } from "../../../components/ButtonRow";
 
 
 
@@ -192,7 +193,7 @@ export function SystemStatusPage() {
 
           </Stack>
 
-          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 2 }}>
+          <ButtonRow direction="row" flexWrap="wrap" useFlexGap sx={{ mt: 2 }}>
 
             {RESTART_OPTIONS.map((opt) => (
 
@@ -216,7 +217,7 @@ export function SystemStatusPage() {
 
             ))}
 
-          </Stack>
+          </ButtonRow>
 
           {restartMsg && (
 

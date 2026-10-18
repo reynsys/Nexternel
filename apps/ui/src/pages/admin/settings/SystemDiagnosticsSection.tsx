@@ -23,6 +23,7 @@ import {
 } from "../../../api";
 import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
 import { connectivityChipColor, connectivityLabel, deviceConnectivityState } from "../../../lib/device-utils";
+import { ButtonRow } from "../../../components/ButtonRow";
 
 function stageColor(status: PipelineStageStatus): "success" | "error" | "warning" | "default" {
   if (status === "pass") return "success";
@@ -132,14 +133,14 @@ export function SystemDiagnosticsSection() {
           Read-only inspection of MQTT subscriptions, observed broker traffic, and the
           device → capability → telemetry pipeline. Does not modify devices or configuration.
         </Typography>
-        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
+        <ButtonRow direction="row" flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
           <Button variant="contained" disabled={busy} onClick={() => void loadPipeline()}>
             {busy ? "Loading…" : "Run diagnostics"}
           </Button>
           <Button variant="outlined" disabled={busy} onClick={() => void startSniff()}>
             Sniff broker (30s)
           </Button>
-        </Stack>
+        </ButtonRow>
         {sniffMsg && (
           <Alert severity="info" sx={{ mb: 1 }}>
             {sniffMsg} — diagnostics will refresh when the sniff window ends.

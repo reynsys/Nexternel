@@ -17,6 +17,7 @@ import SettingsBackupRestoreRoundedIcon from "@mui/icons-material/SettingsBackup
 import { api, rememberAuth, type BackupInspectResult, type BackupJob } from "../api";
 import { useSkin } from "../skins/SkinProvider";
 import { choiceSx } from "../skins/surfaceStyles";
+import { ButtonRow } from "../components/ButtonRow";
 
 /**
  * Welcome screen on a new installation: start a new home, or take over one from its backup.
@@ -182,7 +183,7 @@ export function SetupPage() {
     <Box sx={{ maxWidth: 640, mx: "auto", py: { xs: 2, sm: 6 }, px: 2 }}>
       <Card>
         <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
-          <Stack spacing={2.5}>
+          <ButtonRow>
             <Typography variant="h5" fontWeight={600}>
               Welcome to Nexternel
             </Typography>
@@ -246,14 +247,14 @@ export function SetupPage() {
                   autoComplete="new-password"
                 />
                 {error && <Alert severity="error">{error}</Alert>}
-                <Stack direction="row" spacing={1} justifyContent="space-between">
+                <ButtonRow direction="row" justifyContent="space-between">
                   <Button onClick={() => go("choose")} disabled={busy}>
                     Back
                   </Button>
                   <Button type="submit" variant="contained" disabled={busy}>
                     {busy ? "Creating…" : "Create account"}
                   </Button>
-                </Stack>
+                </ButtonRow>
               </Stack>
             )}
 
@@ -302,14 +303,14 @@ export function SetupPage() {
                 />
                 {busy && <LinearProgress />}
                 {error && <Alert severity="error">{error}</Alert>}
-                <Stack direction="row" spacing={1} justifyContent="space-between">
+                <ButtonRow direction="row" justifyContent="space-between">
                   <Button onClick={() => go("choose")} disabled={busy}>
                     Back
                   </Button>
                   <Button type="submit" variant="contained" disabled={busy || !backupFile || !backupPassword}>
                     {busy ? "Opening…" : "Open backup"}
                   </Button>
-                </Stack>
+                </ButtonRow>
               </Stack>
             )}
 
@@ -341,14 +342,14 @@ export function SetupPage() {
                   </Alert>
                 ) : null}
                 {error && <Alert severity="error">{error}</Alert>}
-                <Stack direction="row" spacing={1} justifyContent="space-between">
+                <ButtonRow direction="row" justifyContent="space-between">
                   <Button onClick={() => go("pick-backup")} disabled={busy}>
                     Back
                   </Button>
                   <Button variant="contained" onClick={() => void onRestore()} disabled={busy}>
                     Restore this home
                   </Button>
-                </Stack>
+                </ButtonRow>
               </>
             )}
 
@@ -397,7 +398,7 @@ export function SetupPage() {
               Nexternel {version || ""}
               {serverIp ? ` · server ${serverIp}` : ""}
             </Typography>
-          </Stack>
+          </ButtonRow>
         </CardContent>
       </Card>
     </Box>

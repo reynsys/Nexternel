@@ -28,6 +28,7 @@ import {
 } from "../../sideMenuPrefs";
 import { chromeSurfaceSx } from "../../surfaceStyles";
 import { useGradientActive } from "../../useSurfaceStyles";
+import { ButtonRow } from "../../../components/ButtonRow";
 
 type Props = {
   signedIn: boolean;
@@ -212,21 +213,21 @@ export function SideMenu({
                   </Typography>
                 </Box>
               </Stack>
-              <Stack direction="row" spacing={1}>
+              <ButtonRow direction="row">
                 <Button variant="outlined" size="small" startIcon={<LogoutIcon fontSize="small" />} onClick={onLogout} sx={{ flex: 1 }}>
                   Sign out
                 </Button>
                 {collapseToggle}
-              </Stack>
+              </ButtonRow>
             </>
           )
         ) : (
-          <Stack direction={collapsed ? "column" : "row"} spacing={1} alignItems="center">
+          <ButtonRow direction={collapsed ? "column" : "row"} alignItems="center">
             <Button component={RouterLink} to="/login" variant="outlined" size="small" fullWidth={!collapsed}>
               {collapsed ? "In" : "Sign in"}
             </Button>
             {collapseToggle}
-          </Stack>
+          </ButtonRow>
         )}
       </Stack>
       {decoratedEdge ? (

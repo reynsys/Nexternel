@@ -4,7 +4,6 @@ import {
   Box,
   Button,
   Container,
-  Stack,
   Toolbar,
   Typography,
 } from "@mui/material";
@@ -16,6 +15,7 @@ import { useShellAuth } from "../../useShellAuth";
 import { MaintenanceBanner } from "../../../components/MaintenanceBanner";
 import { useSkin } from "../../SkinProvider";
 import { isGradientActive } from "../../surfaceStyles";
+import { ButtonRow } from "../../../components/ButtonRow";
 
 /** Flat top-nav shell (original V3 look). */
 export function ClassicLayout() {
@@ -40,9 +40,8 @@ export function ClassicLayout() {
           <Typography variant="h6" sx={{ fontWeight: 600, mr: 1 }}>
             Nexternel {APP_VERSION}
           </Typography>
-          <Stack
+          <ButtonRow
             direction="row"
-            spacing={2}
             alignItems="center"
             sx={{ flexGrow: 1 }}
             flexWrap="wrap"
@@ -80,7 +79,7 @@ export function ClassicLayout() {
                 </Button>
               );
             })}
-          </Stack>
+          </ButtonRow>
           {signedIn ? <NotificationBell canClear={hasPermission(permissions ?? null, "manageUsers", isAdmin)} /> : null}
           {signedIn ? (
             <Button color="inherit" size="small" onClick={() => void logout()}>

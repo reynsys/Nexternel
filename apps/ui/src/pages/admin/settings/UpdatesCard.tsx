@@ -15,6 +15,7 @@ import { useConfirm } from "../../../components/confirm";
 import { useShellAuth } from "../../../skins/useShellAuth";
 import { hasPermission } from "../../../lib/permissions";
 import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
+import { ButtonRow } from "../../../components/ButtonRow";
 
 const when = (iso: string) =>
   new Date(iso).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
@@ -168,7 +169,7 @@ export function UpdatesCard() {
               {error ? <Alert severity="error">{error}</Alert> : null}
 
               {canManage ? (
-                <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                <ButtonRow direction={{ xs: "column", sm: "row" }}>
                   <Button variant="outlined" disabled={busy !== null || updating} onClick={() => void run("check", api.checkForUpdate)}>
                     {busy === "check" ? "Checking…" : "Check for update"}
                   </Button>
@@ -187,7 +188,7 @@ export function UpdatesCard() {
                       {busy === "start" ? "Starting…" : "Update"}
                     </Button>
                   ) : null}
-                </Stack>
+                </ButtonRow>
               ) : null}
               {status.downloaded && !status.canUpdate ? (
                 <Typography variant="body2" color="text.secondary">

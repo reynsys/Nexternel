@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.114
+
+- **Bigger buttons with more space between them:** buttons, tabs and menu entries are a little larger and no longer sit cramped together — easier to use by touch and on wall screens. Looks with decorated buttons automatically get the extra room they need.
+
 ## V5.2.113
 
 - **Everything you can click looks like a button:** the side menu entries and all tab bars (for example Devices / Cameras) are now drawn as buttons, the chosen one filled.

@@ -28,6 +28,7 @@ import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import { api, type BackupSchedule, type StoredBackup } from "../../../api";
 import { useConfirm } from "../../../components/confirm";
 import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
+import { ButtonRow } from "../../../components/ButtonRow";
 
 function saveBlob({ blob, filename }: { blob: Blob; filename: string }) {
   const url = URL.createObjectURL(blob);
@@ -212,7 +213,7 @@ export function AutomaticBackupsSection() {
             : "No backup yet — the first runs at the chosen time, or press Back up now."}
         </Typography>
 
-        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
+        <ButtonRow direction="row" flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
           <Button
             variant="contained"
             disabled={busy !== null}
@@ -234,7 +235,7 @@ export function AutomaticBackupsSection() {
           >
             Download emergency kit
           </Button>
-        </Stack>
+        </ButtonRow>
 
         {busy === "now" && <LinearProgress sx={{ mb: 2 }} />}
 

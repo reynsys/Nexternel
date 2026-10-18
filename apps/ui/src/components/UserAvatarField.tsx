@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Avatar, Button, Stack, Typography } from "@mui/material";
 import { fileToAvatarDataUrl, userInitial } from "../lib/user-display";
 import { useConfirm } from "./confirm";
+import { ButtonRow } from "./ButtonRow";
 
 type Props = {
   avatarData: string | null;
@@ -42,7 +43,7 @@ export function UserAvatarField({
         >
           {userInitial({ displayName, username })}
         </Avatar>
-        <Stack spacing={1}>
+        <ButtonRow>
           <input
             ref={inputRef}
             type="file"
@@ -78,7 +79,7 @@ export function UserAvatarField({
               Remove picture
             </Button>
           )}
-        </Stack>
+        </ButtonRow>
       </Stack>
       {error && (
         <Typography variant="caption" color="error">

@@ -5,6 +5,7 @@ import { useConfirm } from "../../../components/confirm";
 import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
 import { loadAddons } from "../../../skins/looks/addon-loader";
 import { describeAddonCheck } from "../../../lib/addon-check";
+import { ButtonRow } from "../../../components/ButtonRow";
 
 const STATUS: Record<AddonInfo["status"], { label: string; color: "success" | "warning" | "error" }> = {
   active: { label: "Active", color: "success" },
@@ -95,7 +96,7 @@ export function AddonsSettingsPage() {
                 });
               }}
             >
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ sm: "flex-start" }}>
+              <ButtonRow direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "stretch", sm: "flex-start" }} flexWrap="nowrap">
                 <TextField
                   id="addon-licence-key"
                   size="small"
@@ -110,7 +111,7 @@ export function AddonsSettingsPage() {
                 <Button type="submit" variant="contained" disabled={!key.trim() || busy !== null}>
                   {busy === "install" ? <CircularProgress size={20} color="inherit" /> : "Install"}
                 </Button>
-              </Stack>
+              </ButtonRow>
             </Box>
           )}
           {error ? (

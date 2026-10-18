@@ -34,6 +34,7 @@ import { useConfirm } from "./confirm";
 import { DashboardIconPicker } from "./DashboardIconPicker";
 import { getDashboardIcon } from "../lib/dashboard-icons";
 import { migratePersistedDashboardDocument } from "../lib/panel-compatibility";
+import { ButtonRow } from "./ButtonRow";
 
 type Props = {
   /** Shorter chrome when embedded under Dashboard options */
@@ -244,7 +245,7 @@ export function ManageDashboardsPanel({
             <ListItem
               key={d.id}
               secondaryAction={
-                <Stack direction="row" spacing={0.5}>
+                <ButtonRow direction="row">
                   <IconButton
                     edge="end"
                     size="small"
@@ -297,7 +298,7 @@ export function ManageDashboardsPanel({
                   >
                     <DeleteIcon fontSize="small" />
                   </IconButton>
-                </Stack>
+                </ButtonRow>
               }
               disablePadding
             >

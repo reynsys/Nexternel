@@ -31,6 +31,7 @@ import { ItemOverrideFields } from "./ItemOverrideFields";
 import { isControllableResolvedCapability } from "../panels/panel-capabilities";
 import type { ItemOverride } from "../lib/panel-item-display";
 import { insetSx } from "../skins/surfaceStyles";
+import { ButtonRow } from "./ButtonRow";
 
 type Props = {
   options: ResolvedPanelCapability[];
@@ -126,7 +127,7 @@ export function PanelCapabilityOrderList({
               }}
               onDragEnd={() => setDragIndex(null)}
               secondaryAction={
-                <Stack direction="row" spacing={0.25}>
+                <ButtonRow direction="row">
                   {onOverridesChange && (
                     <IconButton
                       size="small"
@@ -163,7 +164,7 @@ export function PanelCapabilityOrderList({
                   >
                     <CloseIcon fontSize="small" />
                   </IconButton>
-                </Stack>
+                </ButtonRow>
               }
               sx={[
                 insetSx(),

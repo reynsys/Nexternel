@@ -43,6 +43,10 @@ export function AppearanceCssVars({
       "--nx-mini-panel-radius": t.miniPanelRadius,
       "--nx-mini-panel-border": t.miniPanelBorder,
       "--nx-panel-inset": t.panelInset,
+      // Space between neighbouring buttons / menu entries, with room for the Look's button decoration.
+      "--nx-decor-reach": t.decorReach,
+      "--nx-control-gap": `calc(${t.controlGap} + 2 * ${t.decorReach})`,
+      "--nx-list-gap": `calc(8px + 2 * ${t.decorReach})`,
       "--nx-title-inset": t.titleInset,
       "--nx-heading-case": t.headingCase,
       "--nx-heading-spacing": t.headingSpacing,

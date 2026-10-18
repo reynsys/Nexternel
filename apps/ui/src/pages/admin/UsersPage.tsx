@@ -45,6 +45,7 @@ import {
 import { useShellAuth } from "../../skins/useShellAuth";
 import { useContentSurfaceSx } from "../../skins/useSurfaceStyles";
 import { ProfileSection } from "./sections/ProfileSection";
+import { ButtonRow } from "../../components/ButtonRow";
 
 function prefsFromUser(u: AdminUser | null): { theme: ThemePrefs; skinId: string } {
   const n = normalizeThemePrefs(u?.themePrefs ?? DEFAULT_THEME_PREFS);
@@ -210,14 +211,14 @@ export function UsersPage() {
     <Stack spacing={2}>
       <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" useFlexGap spacing={1}>
         <Typography variant="h4">Users</Typography>
-        <Stack direction="row" spacing={1}>
+        <ButtonRow direction="row">
           <Button component={RouterLink} to="/admin/roles" variant="outlined">
             Edit roles
           </Button>
           <Button variant="contained" onClick={openAdd}>
             Add user
           </Button>
-        </Stack>
+        </ButtonRow>
       </Stack>
       <Typography variant="body2" color="text.secondary">
         Manage accounts and assign roles. Manage what each role can do under{" "}

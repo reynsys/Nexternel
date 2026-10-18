@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import { api, type BackupInspectResult, type BackupJob } from "../../../api";
 import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
+import { ButtonRow } from "../../../components/ButtonRow";
 
 const PHASE_LABELS: Record<string, string> = {
   queued: "Checking backup",
@@ -255,7 +256,7 @@ export function BackupRestoreSection() {
           <Typography variant="subtitle2" gutterBottom>
             Create Backup
           </Typography>
-          <Stack spacing={2} sx={{ maxWidth: 480 }}>
+          <ButtonRow sx={{ maxWidth: 480 }}>
             <TextField
               label="Backup password"
               type="password"
@@ -318,7 +319,7 @@ export function BackupRestoreSection() {
             {createJob?.status === "failed" && (
               <Alert severity="error">{createJob.error?.message || createJob.message}</Alert>
             )}
-          </Stack>
+          </ButtonRow>
         </CardContent>
       </Card>
 
@@ -339,7 +340,7 @@ export function BackupRestoreSection() {
               e.target.value = "";
             }}
           />
-          <Stack spacing={2} sx={{ maxWidth: 520 }}>
+          <ButtonRow sx={{ maxWidth: 520 }}>
             <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems="flex-start">
               <Button variant="outlined" onClick={() => restoreFileRef.current?.click()}>
                 Select Backup File
@@ -505,7 +506,7 @@ export function BackupRestoreSection() {
                 {restoreJob.restoreResult.errors.join("; ")}
               </Alert>
             )}
-          </Stack>
+          </ButtonRow>
         </CardContent>
       </Card>
     </Stack>

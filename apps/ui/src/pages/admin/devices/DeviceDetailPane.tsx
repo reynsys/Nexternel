@@ -53,6 +53,7 @@ import {
   devicesPanelHeaderSx,
 } from "./devices-panel-styles";
 import { insetSx } from "../../../skins/surfaceStyles";
+import { ButtonRow } from "../../../components/ButtonRow";
 
 type TabKey = "overview" | "capabilities" | "configuration" | "advanced";
 
@@ -217,7 +218,7 @@ function OverviewTab({
   const isEsphome = (device.firmwareType || "esphome") === "esphome";
 
   return (
-    <Stack spacing={2}>
+    <ButtonRow>
       {device.esphomeLifecycleState === "configuration_missing" && (
         <Alert severity="warning">
           ESPHome YAML file is missing on the server. The device row is kept in Nexternel.
@@ -249,7 +250,7 @@ function OverviewTab({
           <Typography variant="subtitle2" fontWeight={700} gutterBottom>
             Device
           </Typography>
-          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap alignItems="center">
+          <ButtonRow direction="row" flexWrap="wrap" useFlexGap alignItems="center">
             <FormControlLabel
               control={
                 <Switch
@@ -275,7 +276,7 @@ function OverviewTab({
             >
               Delete
             </Button>
-          </Stack>
+          </ButtonRow>
         </Box>
       )}
 
@@ -284,7 +285,7 @@ function OverviewTab({
           <Typography variant="subtitle2" fontWeight={700} gutterBottom>
             ESPHome
           </Typography>
-          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+          <ButtonRow direction="row" flexWrap="wrap" useFlexGap>
             {device.esphomeLifecycleState === "configuration_missing" &&
               device.esphomeManagementMode === "managed" && (
                 <Button
@@ -346,10 +347,10 @@ function OverviewTab({
             >
               ESPHome dashboard
             </Button>
-          </Stack>
+          </ButtonRow>
         </Box>
       )}
-    </Stack>
+    </ButtonRow>
   );
 }
 
@@ -419,7 +420,7 @@ function CapabilitiesTab({
             </TableCell>
             {isAdmin && (
               <TableCell align="right">
-                <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                <ButtonRow direction="row" justifyContent="flex-end">
                   <Button
                     {...devicesOutlinedButton}
                     disabled={!s.capabilityId}
@@ -444,7 +445,7 @@ function CapabilitiesTab({
                   >
                     Remove
                   </Button>
-                </Stack>
+                </ButtonRow>
               </TableCell>
             )}
           </TableRow>
@@ -496,7 +497,7 @@ function CapabilitiesTab({
             </TableCell>
             {isAdmin && (
               <TableCell align="right">
-                <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                <ButtonRow direction="row" justifyContent="flex-end">
                   <Button
                     {...devicesOutlinedButton}
                     disabled={!r.capabilityId}
@@ -520,7 +521,7 @@ function CapabilitiesTab({
                   >
                     Remove
                   </Button>
-                </Stack>
+                </ButtonRow>
               </TableCell>
             )}
           </TableRow>
@@ -567,7 +568,7 @@ function ConfigurationTab({
         Management mode: <strong>{device.esphomeManagementMode ?? "imported"}</strong>
       </Typography>
       {isAdmin && (
-        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+        <ButtonRow direction="row" flexWrap="wrap" useFlexGap>
           {device.esphomeManagementMode === "managed" ? (
             <Button
               {...devicesContainedButton}
@@ -602,7 +603,7 @@ function ConfigurationTab({
           >
             Sync from YAML
           </Button>
-        </Stack>
+        </ButtonRow>
       )}
     </Box>
   );
@@ -623,13 +624,13 @@ function AdvancedTab({
   const isEsphome = (device.firmwareType || "esphome") === "esphome";
 
   return (
-    <Stack spacing={2}>
+    <ButtonRow>
       {isEsphome && isAdmin && (
         <Box sx={devicesActionGroupSx(theme)}>
           <Typography variant="subtitle2" fontWeight={700} gutterBottom>
             Maintenance
           </Typography>
-          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+          <ButtonRow direction="row" flexWrap="wrap" useFlexGap>
             {device.esphomeLifecycleState === "configuration_missing" &&
               device.esphomeManagementMode === "managed" && (
                 <Button
@@ -648,7 +649,7 @@ function AdvancedTab({
             >
               Download firmware (.bin)
             </Button>
-          </Stack>
+          </ButtonRow>
         </Box>
       )}
       {isAdmin && (
@@ -666,7 +667,7 @@ function AdvancedTab({
           </Button>
         </Box>
       )}
-    </Stack>
+    </ButtonRow>
   );
 }
 

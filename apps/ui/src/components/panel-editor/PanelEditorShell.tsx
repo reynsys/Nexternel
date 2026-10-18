@@ -3,6 +3,7 @@ import { Box, Button, Drawer, Stack, Tab, Tabs, Typography } from "@mui/material
 import type { CameraRecord, Capability } from "../../api";
 import type { RuntimePanelInstance } from "../../lib/panel-compatibility/types";
 import { PanelCard } from "../PanelCard";
+import { ButtonRow } from "../ButtonRow";
 
 export type PanelEditorTabId = "content" | "look" | "light";
 
@@ -94,14 +95,14 @@ export function PanelEditorShell({
       </Box>
       <Box sx={{ flexShrink: 0, px: 2, py: 1.5, borderTop: 1, borderColor: "divider" }}>
         {footerNote}
-        <Stack direction="row" spacing={1} sx={{ mt: footerNote ? 1 : 0 }}>
+        <ButtonRow direction="row" sx={{ mt: footerNote ? 1 : 0 }}>
           <Button variant="outlined" onClick={onCancel} fullWidth>
             Cancel
           </Button>
           <Button variant="contained" onClick={onApply} fullWidth disabled={applyDisabled}>
             Apply
           </Button>
-        </Stack>
+        </ButtonRow>
       </Box>
     </Drawer>
   );

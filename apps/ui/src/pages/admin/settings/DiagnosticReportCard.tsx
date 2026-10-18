@@ -1,11 +1,12 @@
 import { useCallback, useState } from "react";
-import { Alert, Button, Card, CardContent, Stack, Typography } from "@mui/material";
+import { Alert, Button, Card, CardContent, Typography } from "@mui/material";
 import { api, getStoredAccessToken, type ServerDiagnostics } from "../../../api";
 import { buildClientSnapshot } from "../../../diagnostics/buildClientSnapshot";
 import { clearDiagnosticErrors } from "../../../diagnostics/errorRing";
 import { formatDiagnosticsReport, type AuthExtras } from "../../../diagnostics/formatReport";
 import { copyTextToClipboard, downloadTextFile } from "../../../lib/copyText";
 import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
+import { ButtonRow } from "../../../components/ButtonRow";
 
 /** One text report of this browser and the server — to copy into a support message. */
 export function DiagnosticReportCard() {
@@ -70,7 +71,7 @@ export function DiagnosticReportCard() {
             {status.text}
           </Alert>
         )}
-        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+        <ButtonRow direction="row" flexWrap="wrap" useFlexGap>
           <Button variant="contained" disabled={busy} onClick={() => void run("copy")}>
             Copy report
           </Button>
@@ -87,7 +88,7 @@ export function DiagnosticReportCard() {
           >
             Clear error log
           </Button>
-        </Stack>
+        </ButtonRow>
       </CardContent>
     </Card>
   );

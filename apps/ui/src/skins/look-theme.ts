@@ -113,6 +113,10 @@ export function lookThemeOptions(
         // Every button looks like a button: no bare text that might or might not be clickable.
         defaultProps: { variant: "outlined" },
         styleOverrides: {
+          // Comfortable sizes for touch and wall screens (40 / 36 / 48 px).
+          sizeMedium: { minHeight: 40 },
+          sizeSmall: { minHeight: 36 },
+          sizeLarge: { minHeight: 48 },
           root: ({ ownerState }) => {
             const tinted = !ownerState.color || ownerState.color === "primary" || ownerState.color === "inherit";
             return {
@@ -144,12 +148,31 @@ export function lookThemeOptions(
           },
         },
       },
+      MuiIconButton: {
+        styleOverrides: {
+          sizeMedium: { minWidth: 40, minHeight: 40 },
+          sizeSmall: { minWidth: 36, minHeight: 36 },
+        },
+      },
+      // Buttons at the foot of a dialog or card: Nexternel's space between buttons.
+      MuiDialogActions: {
+        styleOverrides: { root: { gap: "var(--nx-control-gap)", padding: "12px 24px 20px", "& > :not(style) ~ :not(style)": { marginLeft: 0 } } },
+      },
+      MuiCardActions: {
+        styleOverrides: { root: { gap: "var(--nx-control-gap)", "& > :not(style) ~ :not(style)": { marginLeft: 0 } } },
+      },
       MuiListItemButton: {
         styleOverrides: {
           root: {
             borderRadius: t.radiusControl,
             // Side-menu entries are buttons: each has the outlined button's edge.
-            "&[data-nx-nav]": { border: buttonEdge, marginBottom: 6, ...set("backgroundColor", t.secondaryFill) },
+            "&[data-nx-nav]": {
+              border: buttonEdge,
+              minHeight: 44,
+              marginBottom: "var(--nx-list-gap)",
+              marginInline: "var(--nx-decor-reach)",
+              ...set("backgroundColor", t.secondaryFill),
+            },
             "&[data-nx-nav].Mui-selected": { borderColor: "transparent" },
             // The chosen menu item, as the Look draws it.
             "&.Mui-selected": {
@@ -181,13 +204,13 @@ export function lookThemeOptions(
         styleOverrides: {
           root: { minHeight: 0, padding: "2px 0" },
           indicator: { display: "none" },
-          flexContainer: { gap: 8 },
+          flexContainer: { gap: "var(--nx-control-gap)", padding: "var(--nx-decor-reach)" },
         },
       },
       MuiTab: {
         styleOverrides: {
           root: {
-            minHeight: 34,
+            minHeight: 40,
             padding: "6px 14px",
             borderRadius: t.radiusControl,
             border: buttonEdge,

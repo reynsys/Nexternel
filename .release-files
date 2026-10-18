@@ -224,6 +224,7 @@ apps/ui/src/components/AdaptiveReading.tsx
 apps/ui/src/components/AddPanelTypePicker.tsx
 apps/ui/src/components/AppErrorBoundary.tsx
 apps/ui/src/components/BrandMark.tsx
+apps/ui/src/components/ButtonRow.tsx
 apps/ui/src/components/CapabilityPicker.tsx
 apps/ui/src/components/confirm/ConfirmProvider.tsx
 apps/ui/src/components/confirm/index.ts
@@ -272,6 +273,7 @@ apps/ui/src/lib/add-panel-discovery.test.ts
 apps/ui/src/lib/add-panel-discovery.ts
 apps/ui/src/lib/add-panel-validation.ts
 apps/ui/src/lib/area-labels.ts
+apps/ui/src/lib/button-rows-guard.test.ts
 apps/ui/src/lib/capability-icons.ts
 apps/ui/src/lib/capability-kind-labels.ts
 apps/ui/src/lib/capability-labels.ts

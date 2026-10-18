@@ -5,6 +5,7 @@ import { ItemIcon } from "../lib/icons/ItemIcon";
 import { overrideHasValue, type ItemOverride } from "../lib/panel-item-display";
 import { SWITCH_STYLES, type SwitchStyleId } from "../lib/switch-styles";
 import { IconPicker } from "./IconPicker";
+import { ButtonRow } from "./ButtonRow";
 
 type Props = {
   /** The item's own name (the reading's), shown as the placeholder. */
@@ -47,7 +48,7 @@ export function ItemOverrideFields({ defaultName, defaultIcon, kind, value, onCh
           helperText="Leave empty to use the reading's name."
           inputProps={{ maxLength: 60 }}
         />
-        <Stack direction="row" spacing={1} alignItems="center">
+        <ButtonRow direction="row" alignItems="center">
           <Typography variant="body2" color="text.secondary" sx={{ width: 40 }}>
             Icon
           </Typography>
@@ -70,7 +71,7 @@ export function ItemOverrideFields({ defaultName, defaultIcon, kind, value, onCh
               Reset
             </Button>
           )}
-        </Stack>
+        </ButtonRow>
         {isSwitch && (
           <FormControl fullWidth size="small">
             <InputLabel id="item-switch-style">Switch style</InputLabel>

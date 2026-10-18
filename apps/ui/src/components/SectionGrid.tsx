@@ -3,7 +3,6 @@ import GridLayout, { type Layout } from "react-grid-layout";
 import {
   Box,
   IconButton,
-  Stack,
   Tooltip,
   Typography,
   alpha,
@@ -50,6 +49,7 @@ import { useConfirm } from "./confirm";
 import type { PanelActivity } from "../lib/dashboard-data-runtime";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
+import { ButtonRow } from "./ButtonRow";
 
 const PANEL_DRAG_MIME = "application/x-nexternel-panel";
 
@@ -356,10 +356,9 @@ export function SectionGrid({
                   onCapabilityState={onCapabilityState}
                   toolbar={
                     editMode && (
-                    <Stack
+                    <ButtonRow
                       direction="row"
                       alignItems="center"
-                      spacing={0.5}
                       sx={{
                         flexShrink: 0,
                         px: 0.5,
@@ -439,7 +438,7 @@ export function SectionGrid({
                           <DeleteOutlineIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                    </Stack>
+                    </ButtonRow>
                   )
                   }
                 />

@@ -33,6 +33,7 @@ import {
   normalizePermissions,
   type RolePermissions,
 } from "../../lib/permissions";
+import { ButtonRow } from "../../components/ButtonRow";
 
 function PermissionEditor({
   value,
@@ -56,7 +57,7 @@ function PermissionEditor({
 
   return (
     <Stack spacing={2}>
-      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+      <ButtonRow direction="row" flexWrap="wrap" useFlexGap>
         <Button
           size="small"
           variant="outlined"
@@ -71,7 +72,7 @@ function PermissionEditor({
         >
           Viewer preset
         </Button>
-      </Stack>
+      </ButtonRow>
       {groups.map(([group, items]) => (
         <Box key={group}>
           <Typography variant="subtitle2" gutterBottom>
@@ -266,7 +267,7 @@ export function RolesPage() {
                     />
                   </TableCell>
                   <TableCell>{r.description ?? "—"}</TableCell>
-                  <TableCell align="right">
+                  <TableCell align="right"><ButtonRow justifyContent="flex-end" flexWrap="nowrap">
                     <Button size="small" onClick={() => openEdit(r)}>
                       Edit
                     </Button>
@@ -275,7 +276,7 @@ export function RolesPage() {
                         Delete
                       </Button>
                     )}
-                  </TableCell>
+                  </ButtonRow></TableCell>
                 </TableRow>
               ))}
             </TableBody>

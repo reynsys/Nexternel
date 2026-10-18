@@ -14,6 +14,7 @@ import { api } from "../../../api";
 import { IconPicker } from "../../../components/IconPicker";
 import { ItemIcon } from "../../../lib/icons/ItemIcon";
 import { StatusLimitsDialog, readingCanHaveLight } from "../../../components/status-light/StatusLightFields";
+import { ButtonRow } from "../../../components/ButtonRow";
 
 export type ReadingToEdit = {
   capabilityId: string;
@@ -75,7 +76,7 @@ export function ReadingSettingsDialog({
     <Dialog open={Boolean(reading)} onClose={onClose} fullWidth maxWidth="xs">
       <DialogTitle>Name &amp; icon</DialogTitle>
       <DialogContent>
-        <Stack spacing={2} sx={{ pt: 1 }}>
+        <ButtonRow sx={{ pt: 1 }}>
           <TextField
             label="Name"
             value={name}
@@ -116,7 +117,7 @@ export function ReadingSettingsDialog({
             </Stack>
           ) : null}
           {error && <Alert severity="error">{error}</Alert>}
-        </Stack>
+        </ButtonRow>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={busy}>

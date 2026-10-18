@@ -25,6 +25,7 @@ import { useConfirm } from "./confirm";
 import { ItemOverrideFields } from "./ItemOverrideFields";
 import type { ItemOverride } from "../lib/panel-item-display";
 import { insetSx } from "../skins/surfaceStyles";
+import { ButtonRow } from "./ButtonRow";
 
 type Props = {
   options: CameraRecord[];
@@ -94,7 +95,7 @@ export function PanelCameraOrderList({
   }
 
   return (
-    <Stack spacing={1.5}>
+    <ButtonRow>
       <Typography variant="subtitle2">{heading}</Typography>
       {selected.length === 0 ? (
         <Typography variant="body2" color="text.secondary">
@@ -116,7 +117,7 @@ export function PanelCameraOrderList({
               }}
               onDragEnd={() => setDragIndex(null)}
               secondaryAction={
-                <Stack direction="row" spacing={0.25}>
+                <ButtonRow direction="row">
                   {onOverridesChange && (
                     <IconButton
                       size="small"
@@ -153,7 +154,7 @@ export function PanelCameraOrderList({
                   >
                     <CloseIcon fontSize="small" />
                   </IconButton>
-                </Stack>
+                </ButtonRow>
               }
               sx={[
                 insetSx(),
@@ -226,6 +227,6 @@ export function PanelCameraOrderList({
           filter.
         </Typography>
       )}
-    </Stack>
+    </ButtonRow>
   );
 }

@@ -111,6 +111,13 @@ export type LookTokens = {
   barGap: string;
   barInset: string;
   /**
+   * Buttons, tabs and menu entries: the space between neighbours, and how far the Look's button
+   * decoration (corner pieces, shadows) reaches outside a button. Nexternel keeps both free:
+   * neighbouring buttons are controlGap + 2 × decorReach apart (ButtonRow, dialogs, tabs, menu).
+   */
+  controlGap: string;
+  decorReach: string;
+  /**
    * The Gears switch: fill, outline, outline width and shadow ("" = the accent-coloured gears).
    * "url(#nx-gear-metal)" gives polished metal.
    */

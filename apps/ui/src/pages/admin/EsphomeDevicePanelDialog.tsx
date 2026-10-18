@@ -36,6 +36,7 @@ import {
   summarizeEsphomeCompileLog,
   summarizeEsphomeUploadLog,
 } from "../../lib/esphome-install-guide";
+import { ButtonRow } from "../../components/ButtonRow";
 
 type Props = {
   open: boolean;
@@ -337,7 +338,7 @@ export function EsphomeDevicePanelDialog({
                     )}
 
                     {step.id === "usb" && (
-                      <Stack spacing={1.5}>
+                      <ButtonRow>
                         <Button
                           variant="contained"
                           disabled={busy || !canDownloadFirmware}
@@ -421,7 +422,7 @@ export function EsphomeDevicePanelDialog({
                             )}
                           </Stack>
                         </Collapse>
-                      </Stack>
+                      </ButtonRow>
                     )}
 
                     {step.id === "online" && (
@@ -502,14 +503,14 @@ export function EsphomeDevicePanelDialog({
               disabled={busy}
               sx={{ fontFamily: "monospace", fontSize: "0.75rem" }}
             />
-            <Stack direction="row" spacing={1}>
+            <ButtonRow direction="row">
               <Button variant="outlined" disabled={busy} onClick={() => void runValidate()}>
                 Check configuration
               </Button>
               <Button variant="contained" disabled={busy} onClick={() => void runSaveYaml()}>
                 Save
               </Button>
-            </Stack>
+            </ButtonRow>
           </Stack>
         )}
       </DialogContent>

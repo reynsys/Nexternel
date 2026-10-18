@@ -16,6 +16,7 @@ import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
 import { PluginPermissionsForm, defaultGrants } from "./plugins/PluginPermissionsForm";
 import { PluginSettingsForm } from "./plugins/PluginSettingsForm";
 import { PluginActivityView } from "./plugins/PluginActivityView";
+import { ButtonRow } from "../../../components/ButtonRow";
 
 const STATUS: Record<PluginInfo["status"], { label: string; color: "success" | "warning" | "error" | "default" | "info" }> = {
   running: { label: "Running", color: "success" },
@@ -314,14 +315,14 @@ function InstalledPlugin({
           {tab === "permissions" ? (
             <Stack spacing={2} sx={{ maxWidth: 560 }}>
               <PluginPermissionsForm requested={p.permissions} grants={grants} onChange={setGrants} />
-              <Stack direction="row" spacing={1}>
+              <ButtonRow direction="row">
                 <Button variant="contained" disabled={!grantsChanged || busy !== null} onClick={() => onGrants(grants)}>
                   Save permissions
                 </Button>
                 <Button disabled={!grantsChanged} onClick={() => setGrants(p.grants)}>
                   Undo
                 </Button>
-              </Stack>
+              </ButtonRow>
               {p.permissions.notify ? (
                 <FormControl size="small" fullWidth>
                   <InputLabel id={`bell-${p.id}`}>Messages in the bell</InputLabel>

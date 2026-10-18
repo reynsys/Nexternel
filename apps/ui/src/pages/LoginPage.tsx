@@ -4,12 +4,12 @@ import {
   Alert,
   Button,
   Paper,
-  Stack,
   TextField,
   Typography,
 } from "@mui/material";
 import { api, clearStoredTokens } from "../api";
 import { useSkin } from "../skins/SkinProvider";
+import { ButtonRow } from "../components/ButtonRow";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -43,7 +43,7 @@ export function LoginPage() {
 
   return (
     <Paper sx={{ p: 3, maxWidth: 420, mx: "auto" }}>
-      <Stack spacing={2} component="form" onSubmit={onSubmit}>
+      <ButtonRow component="form" onSubmit={onSubmit}>
         <Typography variant="h5">Sign in</Typography>
         <Typography variant="body2" color="text.secondary">
           Sign in with your username and password.
@@ -75,7 +75,7 @@ export function LoginPage() {
         <Button type="button" onClick={clearSavedLogin} disabled={busy} fullWidth>
           Clear saved login
         </Button>
-      </Stack>
+      </ButtonRow>
     </Paper>
   );
 }

@@ -91,12 +91,12 @@ export function DashboardTabBar({
           display: "flex",
           alignItems: "center",
           // The Look's spacing between room buttons, and room for their shadows inside the scroll area.
-          gap: t.nx.barGap,
+          gap: `max(${t.nx.barGap}, var(--nx-control-gap))`,
           minWidth: 0,
           flex: 1,
           overflowX: "auto",
-          py: `calc(4px + ${t.nx.barInset})`,
-          px: t.nx.barInset,
+          py: `calc(4px + ${t.nx.barInset} + var(--nx-decor-reach))`,
+          px: `calc(${t.nx.barInset} + var(--nx-decor-reach))`,
           // Swipeable on touch screens; no scrollbar strip under the tabs.
           scrollSnapType: "x proximity",
           scrollbarWidth: "none",

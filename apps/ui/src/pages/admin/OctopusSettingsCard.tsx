@@ -11,6 +11,7 @@ import {
   Typography,
 } from "@mui/material";
 import { api, type OctopusSettingsPublic } from "../../api";
+import { ButtonRow } from "../../components/ButtonRow";
 
 const emptyForm = {
   accountNumber: "",
@@ -212,7 +213,7 @@ export function OctopusSettingsCard({ embedded = false }: OctopusSettingsCardPro
           />
           {error && <Alert severity="error">{error}</Alert>}
           {info && <Alert severity="success">{info}</Alert>}
-          <Stack direction="row" spacing={1}>
+          <ButtonRow direction="row">
             <Button type="submit" variant="contained" disabled={busy || discoverBusy || testBusy}>
               {busy ? "Saving…" : "Save Octopus settings"}
             </Button>
@@ -223,7 +224,7 @@ export function OctopusSettingsCard({ embedded = false }: OctopusSettingsCardPro
             >
               {testBusy ? "Testing…" : "Test poll now"}
             </Button>
-          </Stack>
+          </ButtonRow>
         </Stack>
     </>
   );

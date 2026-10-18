@@ -22,6 +22,7 @@ import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
 import { api } from "../../api";
 import { AREA } from "../../lib/area-labels";
+import { ButtonRow } from "../../components/ButtonRow";
 
 type AreaRow = {
   id: string;
@@ -172,7 +173,7 @@ export function AreasPage() {
                     <TableCell align="right">{a.deviceCount}</TableCell>
                     <TableCell align="right">{a.sortOrder}</TableCell>
                     {isAdmin && (
-                      <TableCell align="right">
+                      <TableCell align="right"><ButtonRow justifyContent="flex-end" flexWrap="nowrap">
                         <IconButton
                           size="small"
                           aria-label={AREA.edit}
@@ -188,7 +189,7 @@ export function AreasPage() {
                         >
                           <DeleteRoundedIcon fontSize="small" />
                         </IconButton>
-                      </TableCell>
+                      </ButtonRow></TableCell>
                     )}
                   </TableRow>
                 ))

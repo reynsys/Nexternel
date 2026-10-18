@@ -34,6 +34,7 @@ import {
   type CameraRecord,
 } from "../../api";
 import { AREA } from "../../lib/area-labels";
+import { ButtonRow } from "../../components/ButtonRow";
 
 type AreaOption = { id: string; name: string };
 
@@ -285,7 +286,7 @@ export function CamerasPage() {
                     <TableCell>{c.areaName ?? "—"}</TableCell>
                     <TableCell>{c.enabled ? "Yes" : "No"}</TableCell>
                     {canEdit && (
-                      <TableCell align="right">
+                      <TableCell align="right"><ButtonRow justifyContent="flex-end" flexWrap="nowrap">
                         <IconButton
                           size="small"
                           aria-label="Edit camera"
@@ -301,7 +302,7 @@ export function CamerasPage() {
                         >
                           <DeleteRoundedIcon fontSize="small" />
                         </IconButton>
-                      </TableCell>
+                      </ButtonRow></TableCell>
                     )}
                   </TableRow>
                 ))

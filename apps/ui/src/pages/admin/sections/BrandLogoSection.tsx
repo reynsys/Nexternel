@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Alert, Button, Card, CardContent, Stack, Typography } from "@mui/material";
+import { Alert, Button, Card, CardContent, Typography } from "@mui/material";
 import {
   fileToBrandLogoDataUrl,
   getBrandLogo,
@@ -7,6 +7,7 @@ import {
 } from "../../../skins/brandLogo";
 import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
 import { BrandMark } from "../../../components/BrandMark";
+import { ButtonRow } from "../../../components/ButtonRow";
 
 export function BrandLogoSection() {
   const surfaceSx = useContentSurfaceSx();
@@ -44,7 +45,7 @@ export function BrandLogoSection() {
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Logo shown next to Nexternel in the side menu.
         </Typography>
-        <Stack direction="row" spacing={2} alignItems="center">
+        <ButtonRow direction="row" alignItems="center">
           <BrandMark logo={brandLogo} size={48} />
           <input
             ref={brandInputRef}
@@ -64,7 +65,7 @@ export function BrandLogoSection() {
               Reset default
             </Button>
           )}
-        </Stack>
+        </ButtonRow>
         {brandMsg && (
           <Alert severity="info" sx={{ mt: 2 }}>
             {brandMsg}

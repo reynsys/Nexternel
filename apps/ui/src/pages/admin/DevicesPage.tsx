@@ -26,6 +26,7 @@ import {
   type TypeFilter,
 } from "./devices/device-nav-utils";
 import { insetSx } from "../../skins/surfaceStyles";
+import { ButtonRow } from "../../components/ButtonRow";
 
 type AreaOption = { id: string; name: string };
 
@@ -562,7 +563,7 @@ export function DevicesPage() {
         gap={1}
       >
         <Typography variant="h4">Devices</Typography>
-        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+        <ButtonRow direction="row" flexWrap="wrap" useFlexGap>
           <Button
             variant="outlined"
             href={esphomeUrl}
@@ -587,7 +588,7 @@ export function DevicesPage() {
               </Button>
             </>
           )}
-        </Stack>
+        </ButtonRow>
       </Stack>
 
       <Typography color="text.secondary">
@@ -640,7 +641,7 @@ export function DevicesPage() {
                     {entry.sensorCount} sensor(s), {entry.relayCount} relay(s)
                   </Typography>
                 </Box>
-                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                <ButtonRow direction="row" flexWrap="wrap" useFlexGap>
                   <Button
                     size="small"
                     variant="contained"
@@ -656,7 +657,7 @@ export function DevicesPage() {
                   >
                     Remove file
                   </Button>
-                </Stack>
+                </ButtonRow>
               </Stack>
             ))}
           </Stack>
@@ -1045,7 +1046,7 @@ export function DevicesPage() {
       >
         <DialogTitle>Add device</DialogTitle>
         <DialogContent>
-          <Stack spacing={1.5} sx={{ mt: 0.5 }}>
+          <ButtonRow sx={{ mt: 0.5 }}>
             <Typography variant="body2" color="text.secondary">
               Choose how this device connects to Nexternel.
             </Typography>
@@ -1075,7 +1076,7 @@ export function DevicesPage() {
                 </Typography>
               </Stack>
             </Button>
-          </Stack>
+          </ButtonRow>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setAddDeviceChooserOpen(false)}>Cancel</Button>

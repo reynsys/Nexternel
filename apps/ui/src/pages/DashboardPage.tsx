@@ -118,6 +118,7 @@ import {
   DashboardDataRuntimeProvider,
   useDashboardDataRuntime,
 } from "../lib/dashboard-data-runtime";
+import { ButtonRow } from "../components/ButtonRow";
 
 function sectionContentSummary(panels: RuntimePanelInstance[]): string {
   const count = panels.length;
@@ -890,7 +891,7 @@ function DashboardPageContent() {
             <Typography variant="subtitle1" fontWeight={600}>
               Dashboard Options
             </Typography>
-            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+            <ButtonRow direction="row" flexWrap="wrap" useFlexGap>
               <Button variant="outlined" onClick={addSection}>
                 Add section
               </Button>
@@ -914,7 +915,7 @@ function DashboardPageContent() {
               <Button variant="outlined" color="inherit" disabled={saving} onClick={cancelEdit}>
                 Cancel
               </Button>
-            </Stack>
+            </ButtonRow>
           </Stack>
         </Stack>
       )}
@@ -1063,9 +1064,8 @@ function DashboardPageContent() {
               ]}
             >
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Stack
+                <ButtonRow
                   direction="row"
-                  spacing={1}
                   alignItems="center"
                   sx={{ width: "100%", pr: 1 }}
                   onClick={(e) => {
@@ -1196,7 +1196,7 @@ function DashboardPageContent() {
                       </Tooltip>
                     </Stack>
                   )}
-                </Stack>
+                </ButtonRow>
               </AccordionSummary>
               <AccordionDetails sx={{ pt: 0, px: 2, pb: 2 }}>
                 <SectionGrid

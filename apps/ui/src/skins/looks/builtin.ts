@@ -71,6 +71,8 @@ function standardRoles(theme: Theme) {
     insetShadow: "none",
     barEdge: `1px solid ${p.divider}`,
     barGap: "4px",
+    controlGap: "12px",
+    decorReach: "0px",
     barInset: "0px",
     miniPanelBorder: `1px solid ${p.divider}`,
     gearFill: "",
