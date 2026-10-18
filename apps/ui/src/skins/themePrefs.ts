@@ -30,6 +30,8 @@ export type ThemePrefs = {
   lookId?: string;
   /** The Look's moving decorations on (default) or off. Each panel can override it. */
   motion?: boolean;
+  /** The chosen font of a Look that offers several (font id); unset = the Look's first font. */
+  lookFont?: string;
   /**
    * Page gradient background id (`none` = solid theme background).
    * See gradientPalettes.ts
@@ -204,6 +206,7 @@ export function normalizeThemePrefs(raw: unknown): ThemePrefs {
         : DEFAULT_THEME_PREFS.skinId,
     lookId,
     motion: parsed.motion !== false,
+    ...(typeof parsed.lookFont === "string" && /^[a-z0-9][a-z0-9-]{0,39}$/.test(parsed.lookFont) ? { lookFont: parsed.lookFont } : {}),
     gradientId,
     solidContentPanels: !resolveLook(lookId).frosted,
     effectId,
@@ -253,6 +256,7 @@ export function toAccountThemePrefs(prefs: ThemePrefs, skinId: string) {
     skinId: prefs.skinId ?? skinId,
     lookId: prefs.lookId ?? "standard",
     motion: prefs.motion !== false,
+    ...(prefs.lookFont ? { lookFont: prefs.lookFont } : {}),
     gradientId: prefs.gradientId ?? GRADIENT_NONE_ID,
     solidContentPanels: Boolean(prefs.solidContentPanels),
     effectId: normalizeEffectId(prefs.effectId),

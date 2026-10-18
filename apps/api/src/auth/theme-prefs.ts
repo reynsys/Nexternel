@@ -8,6 +8,8 @@ export type ThemePrefsDto = {
   lookId?: string;
   /** The Look's animations on (default) or off. */
   motion?: boolean;
+  /** The chosen font of a Look that offers several (its id; the Look's first font when unset). */
+  lookFont?: string;
   gradientId?: string;
   solidContentPanels?: boolean;
   effectId?: string;
@@ -178,6 +180,10 @@ function lookField(o: Record<string, unknown>): string {
   return backdrop && !o.solidContentPanels ? "glass" : "standard";
 }
 
+function lookFontField(o: Record<string, unknown>): { lookFont?: string } {
+  return typeof o.lookFont === "string" && /^[a-z0-9][a-z0-9-]{0,39}$/.test(o.lookFont) ? { lookFont: o.lookFont } : {};
+}
+
 function normalizeGradientId(raw: unknown): string {
   if (typeof raw !== "string" || !raw.trim()) return "none";
   const id = raw.trim();
@@ -206,6 +212,7 @@ export function parseThemePrefsInput(
     skinId,
     lookId: lookField(o),
     motion: o.motion !== false,
+    ...lookFontField(o),
     gradientId: normalizeGradientId(o.gradientId),
     solidContentPanels: Boolean(o.solidContentPanels),
     ...effectFields(o),
@@ -231,6 +238,7 @@ export function themePrefsFromDb(raw: unknown): ThemePrefsDto {
         : DEFAULT.skinId,
     lookId: lookField(o),
     motion: o.motion !== false,
+    ...lookFontField(o),
     gradientId: normalizeGradientId(o.gradientId),
     solidContentPanels: Boolean(o.solidContentPanels),
     ...effectFields(o),

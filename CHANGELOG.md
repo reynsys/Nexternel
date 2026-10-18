@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.109
+
+- **Fonts:** a Look's font now applies to all text — menus, labels, buttons, small text and charts — not only headings.
+- **Font choice:** add-on Looks that come with several fonts let you choose one in **Settings → Appearance → Font**.
+
 ## V5.2.108
 
 - **Every button now looks like a button:** buttons that used to look like plain text (for example "Edit", "Remove", "Check for update") now have a visible outline, in every Look.

@@ -63,7 +63,7 @@ export function SkinProvider({ children }: { children: ReactNode }) {
   const theme = useMemo(() => {
     // The skin gives the layout's colours; the Look styles every building block from its roles.
     const base = skin.createTheme(shownPrefs);
-    const tokens = resolveTokens(look, base);
+    const tokens = resolveTokens(look, base, shownPrefs.lookFont);
     return createTheme(
       base,
       lookThemeOptions(base, tokens, {

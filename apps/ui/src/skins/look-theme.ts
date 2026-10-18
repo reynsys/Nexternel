@@ -35,7 +35,9 @@ export function lookThemeOptions(
   surface: { gradientActive: boolean; solidContentPanels: boolean }
 ): ThemeOptions {
   const glass = surface.gradientActive && !surface.solidContentPanels;
-  const heading = { textTransform: t.headingCase, letterSpacing: t.headingSpacing };
+  // Each MUI text variant keeps the font it was created with, so the Look's font is set on all of them.
+  const font = { fontFamily: t.font };
+  const heading = { ...font, textTransform: t.headingCase, letterSpacing: t.headingSpacing };
   const primary = base.palette.primary;
   const field = `${t.radiusUnit}px`;
   const popup = {
@@ -62,7 +64,13 @@ export function lookThemeOptions(
       h5: heading,
       h6: { ...heading, fontWeight: 600 },
       // Overlines are capitals already; a Look only adds its letter spacing.
-      overline: { letterSpacing: t.headingSpacing === "normal" ? undefined : t.headingSpacing },
+      overline: { ...font, letterSpacing: t.headingSpacing === "normal" ? undefined : t.headingSpacing },
+      subtitle1: font,
+      subtitle2: font,
+      body1: font,
+      body2: font,
+      button: font,
+      caption: font,
     },
     components: {
       MuiPaper: {

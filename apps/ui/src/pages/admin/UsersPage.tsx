@@ -119,6 +119,7 @@ export function UsersPage() {
       skinId,
       lookId: theme.lookId,
       motion: theme.motion,
+      lookFont: theme.lookFont,
       gradientId: theme.gradientId,
       solidContentPanels: theme.solidContentPanels,
       effectId: theme.effectId,

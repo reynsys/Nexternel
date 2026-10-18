@@ -34,8 +34,10 @@ export function echartsPaletteFromTheme(theme: Theme): EchartsThemePalette {
  * the dashboard card, so a dark card gets a clear background and the card's
  * own text colours, with dark mode turned on.
  */
-export function echartsInitTheme(theme: Theme): Record<string, unknown> | undefined {
-  if (theme.palette.mode !== "dark") return undefined;
+export function echartsInitTheme(theme: Theme): Record<string, unknown> {
+  // Chart text in the page's (Look's) font.
+  const fontFamily = String(theme.typography.fontFamily);
+  if (theme.palette.mode !== "dark") return { textStyle: { fontFamily } };
   const text = theme.palette.text.primary;
   const secondary = theme.palette.text.secondary;
   const split = theme.palette.divider;
@@ -48,7 +50,7 @@ export function echartsInitTheme(theme: Theme): Record<string, unknown> | undefi
   return {
     darkMode: true,
     backgroundColor: "transparent",
-    textStyle: { color: text },
+    textStyle: { color: text, fontFamily },
     title: {
       textStyle: { color: text },
       subtextStyle: { color: secondary },

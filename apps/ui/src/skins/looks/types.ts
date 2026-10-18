@@ -165,6 +165,9 @@ export type LookTokens = {
   brandRadius: string;
 };
 
+/** A font a Look offers. Its CSS (e.g. @font-face) comes with the Look's css. */
+export type LookFont = { id: string; label: string; family: string };
+
 export type UiLook = {
   id: string;
   label: string;
@@ -193,6 +196,8 @@ export type UiLook = {
    * roles: [data-nx-role="card" | "section" | "chrome" | "popup"], [data-nx-tabbar], [data-nx-panel-body].
    */
   css?: string;
+  /** Fonts the person can choose from in Settings → Appearance; the first is the default. Overrides tokens.font. */
+  fonts?: LookFont[];
   /** A Look that only works in one colour mode (e.g. HUD is always dark). */
   forceMode?: "light" | "dark";
 };

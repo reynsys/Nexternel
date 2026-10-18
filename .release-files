@@ -306,6 +306,8 @@ apps/ui/src/lib/icons/catalog.ts
 apps/ui/src/lib/icons/ItemIcon.tsx
 apps/ui/src/lib/look-choice.test.ts
 apps/ui/src/lib/look-choice.ts
+apps/ui/src/lib/look-font.test.ts
+apps/ui/src/lib/look-font.ts
 apps/ui/src/lib/look-roles-guard.test.ts
 apps/ui/src/lib/motion.test.ts
 apps/ui/src/lib/motion.ts

@@ -274,6 +274,8 @@ export type UserThemePrefs = {
   lookId?: string;
   /** The Look's animations on or off */
   motion?: boolean;
+  /** The chosen font of a Look that offers several */
+  lookFont?: string;
   /** Page gradient id, or `"none"` for solid background */
   gradientId?: string;
   /** Solid panels (true) or frosted over the background; follows the Look */

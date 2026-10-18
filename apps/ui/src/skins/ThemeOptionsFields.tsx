@@ -36,6 +36,7 @@ import {
   withLook,
 } from "./themePrefs";
 import { listLooks, resolveLook } from "./looks/registry";
+import { chosenLookFont } from "./looks/resolve";
 import { isGradientActive } from "./surfaceStyles";
 import {
   BACKGROUND_EFFECTS,
@@ -196,6 +197,31 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
             );
           })}
         </Box>
+        {(resolveLook(themePrefs.lookId).fonts?.length ?? 0) > 1 ? (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
+              Font{" "}
+              <Typography component="span" variant="caption" color="text.secondary">
+                — for all text while {resolveLook(themePrefs.lookId).label} is chosen.
+              </Typography>
+            </Typography>
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 1 }}>
+              {resolveLook(themePrefs.lookId).fonts!.map((f) => {
+                const selected = chosenLookFont(resolveLook(themePrefs.lookId), themePrefs.lookFont)?.id === f.id;
+                return (
+                  <ButtonBase
+                    key={f.id}
+                    aria-pressed={selected}
+                    onClick={() => set({ lookFont: f.id })}
+                    sx={[{ px: 1.25, py: 1, justifyContent: "flex-start" }, choiceSx(selected)]}
+                  >
+                    <Typography sx={{ fontFamily: f.family, fontSize: "1.05rem" }}>{f.label}</Typography>
+                  </ButtonBase>
+                );
+              })}
+            </Box>
+          </Box>
+        ) : null}
         <FormControlLabel
           sx={{ mt: 1 }}
           control={<Switch checked={themePrefs.motion !== false} onChange={(e) => set({ motion: e.target.checked })} />}
