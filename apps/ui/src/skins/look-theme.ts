@@ -100,6 +100,8 @@ export function lookThemeOptions(
       },
       MuiAppBar: { defaultProps: role("chrome"), styleOverrides: { root: { ...set("boxShadow", t.chromeShadow) } } },
       MuiButton: {
+        // Every button looks like a button: no bare text that might or might not be clickable.
+        defaultProps: { variant: "outlined" },
         styleOverrides: {
           root: ({ ownerState }) => {
             const tinted = !ownerState.color || ownerState.color === "primary" || ownerState.color === "inherit";

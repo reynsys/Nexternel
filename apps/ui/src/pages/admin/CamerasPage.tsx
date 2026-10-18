@@ -406,7 +406,6 @@ export function CamerasPage() {
               {selectedPreset && (
                 <Button
                   size="small"
-                  variant="text"
                   onClick={applyPresetPath}
                   sx={{ alignSelf: "flex-start" }}
                 >

@@ -78,7 +78,6 @@ export function DiagnosticReportCard() {
             Download .txt
           </Button>
           <Button
-            variant="text"
             color="inherit"
             disabled={busy}
             onClick={() => {

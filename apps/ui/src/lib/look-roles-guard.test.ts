@@ -15,6 +15,8 @@ const FIXED = /(bgcolor|backgroundColor|borderColor|boxShadow|border|background)
 const HAND_DRAWN_BOX = /\bborder:\s*(1\b|"1px solid")/g;
 /** A button styled where it is used: buttons take their look from the Look's button roles. */
 const BUTTON_STYLED_ON_THE_SPOT = /<(Button|IconButton)\b[^>]*?\bsx=\{\{[^}]*?\b(bgcolor|backgroundColor|border|borderColor|borderRadius|boxShadow)\b/gs;
+/** A button drawn as bare text: every button has a visible shape (the theme's default is "outlined"). */
+const TEXT_ONLY_BUTTON = /<Button\b[^>]*?\bvariant="text"/gs;
 /** Allowed: the status lights' own traffic-light shapes, and the chart test page. */
 const ALLOWED = new Set(["components/status-light/StatusLight.tsx", "echarts-lab.tsx"]);
 
@@ -29,13 +31,13 @@ function files(dir: string): string[] {
   });
 }
 
-test("screens use the Look's roles: no fixed colours, pixel corners, hand-drawn boxes or buttons styled on the spot", () => {
+test("screens use the Look's roles: no fixed colours, pixel corners, hand-drawn boxes or buttons styled on the spot or drawn as bare text", () => {
   const found: string[] = [];
   for (const file of files(SRC)) {
     const rel = relative(SRC, file).replace(/\\/g, "/");
     if (ALLOWED.has(rel)) continue;
     const text = readFileSync(file, "utf8");
-    for (const m of [...text.matchAll(FIXED), ...text.matchAll(HAND_DRAWN_BOX), ...text.matchAll(BUTTON_STYLED_ON_THE_SPOT)]) {
+    for (const m of [...text.matchAll(FIXED), ...text.matchAll(HAND_DRAWN_BOX), ...text.matchAll(BUTTON_STYLED_ON_THE_SPOT), ...text.matchAll(TEXT_ONLY_BUTTON)]) {
       const line = text.slice(0, m.index).split("\n").length;
       found.push(`${rel}:${line}  ${m[0]}`);
     }

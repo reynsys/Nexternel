@@ -27,7 +27,7 @@ export function AddonsSettingsPage() {
   const [key, setKey] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<{ text: string; ok: boolean } | null>(null);
+  const [done, setDone] = useState<{ text: string; ok: boolean; for: string } | null>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -51,7 +51,7 @@ export function AddonsSettingsPage() {
       await loadAddons();
       if (success) {
         const m = success(r.addons);
-        setDone(typeof m === "string" ? { text: m, ok: true } : m);
+        setDone({ ...(typeof m === "string" ? { text: m, ok: true } : m), for: label });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -118,7 +118,7 @@ export function AddonsSettingsPage() {
               {error}
             </Alert>
           ) : null}
-          {done ? (
+          {done && done.for !== "check" ? (
             <Alert severity={done.ok ? "success" : "warning"} sx={{ mt: 2 }} onClose={() => setDone(null)}>
               {done.text}
             </Alert>
@@ -138,6 +138,11 @@ export function AddonsSettingsPage() {
                 {busy === "check" ? <CircularProgress size={18} /> : "Check for add-on updates"}
               </Button>
             </Stack>
+            {done?.for === "check" ? (
+              <Alert severity={done.ok ? "success" : "warning"} sx={{ mb: 1.5 }} onClose={() => setDone(null)}>
+                {done.text}
+              </Alert>
+            ) : null}
             <Stack spacing={1.5}>
               {data.addons.map((a) => (
                 <Paper key={a.id} variant="inset" sx={{ p: 1.5 }}>

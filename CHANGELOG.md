@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.108
+
+- **Every button now looks like a button:** buttons that used to look like plain text (for example "Edit", "Remove", "Check for update") now have a visible outline, in every Look.
+- **Settings → Add-ons:** the result of **Check for add-on updates** now appears right under the button.
+
 ## V5.2.107
 
 - **Settings → Add-ons:** the button is now called **Check for add-on updates** and tells you what it found — for example "Updated: HUD Looks to 1.5.2" or "All add-ons are up to date".
