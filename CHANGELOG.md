@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.123
+
+- **Easier panel resizing:** the resize corner is now a clear round handle with an arrow; while you drag it near the bottom of the screen the page scrolls by itself so panels low on the page can be made taller; the size preview is striped in your accent colour so it stands out on any background.
+
 ## V5.2.122
 
 - **Fixed:** panels can be resized again in Dashboard Options.

@@ -306,6 +306,8 @@ apps/ui/src/lib/dashboard-tile.ts
 apps/ui/src/lib/device-utils.ts
 apps/ui/src/lib/display-mode.test.ts
 apps/ui/src/lib/display-mode.ts
+apps/ui/src/lib/edge-scroll.test.ts
+apps/ui/src/lib/edge-scroll.ts
 apps/ui/src/lib/esphome-install-guide.ts
 apps/ui/src/lib/group-by-area.ts
 apps/ui/src/lib/home-dashboard.ts

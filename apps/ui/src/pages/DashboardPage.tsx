@@ -1056,6 +1056,8 @@ function DashboardPageContent() {
           gridTemplateColumns: "repeat(12, minmax(0, 1fr))",
           gap: 2,
           alignItems: "start",
+          // While editing, room below the last panel to make it taller.
+          pb: editMode ? "35vh" : 0,
         }}
       >
         {ordered.map((section, index) => {

@@ -22,8 +22,11 @@ test("layout is saved only when a drag or resize ends", () => {
   const gridStart = sectionGridSource.indexOf("<GridLayout");
   const grid = sectionGridSource.slice(gridStart, sectionGridSource.indexOf("</GridLayout>", gridStart));
   assert.match(grid, /onDragStop=\{\(next\) => commitLayout\(next, null\)\}/);
-  assert.match(grid, /onResizeStop=\{\(next, _old, item\) => commitLayout\(next, item\.i\)\}/);
-  assert.doesNotMatch(grid, /onResize=|onDrag=/);
+  assert.match(grid, /onResizeStop=\{\(next, _old, item\) => \{[^}]*commitLayout\(next, item\.i\);/);
+  // While resizing only the edge scrolling follows the pointer; nothing is saved until the end.
+  assert.doesNotMatch(grid, /onDrag=/);
+  const during = grid.match(/onResize=\{[^\n]*\n/)?.[0] ?? "";
+  assert.doesNotMatch(during, /commitLayout|setGridLayout/);
 });
 
 test("RGL does not wire onLayoutChange (fires on every controlled layout update)", () => {

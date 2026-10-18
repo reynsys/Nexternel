@@ -50,6 +50,10 @@ import type { PanelActivity } from "../lib/dashboard-data-runtime";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 import { ButtonRow } from "./ButtonRow";
+import { createEdgeScroller } from "../lib/edge-scroll";
+
+/** Diagonal two-way arrow (Material "open in full"), drawn in the handle with a mask. */
+const RESIZE_ARROW = `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 11V3h-8l3.29 3.29-10 10L3 13v8h8l-3.29-3.29 10-10z"/></svg>')}")`;
 
 const PANEL_DRAG_MIME = "application/x-nexternel-panel";
 
@@ -121,6 +125,7 @@ export function SectionGrid({
   onCapabilityState,
 }: Props) {
   const theme = useTheme();
+  const edgeScroller = useMemo(() => createEdgeScroller(), []);
   const hostRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
   const [editPanelId, setEditPanelId] = useState<string | null>(null);
@@ -253,6 +258,11 @@ export function SectionGrid({
     <Box
       ref={hostRef}
       data-nx-section-grid={sectionId}
+      // Pressing the resize corner must not start the browser's own selection scrolling (it races
+      // ahead of the grid); the calm edge scrolling in lib/edge-scroll.ts takes care of it.
+      onMouseDownCapture={(e) => {
+        if ((e.target as Element).closest?.(".react-resizable-handle")) e.preventDefault();
+      }}
       onDragOver={(e) => {
         if (!canAcceptDrop) return;
         e.preventDefault();
@@ -273,9 +283,46 @@ export function SectionGrid({
       sx={{
         width: "100%",
         minHeight: panels.length ? 160 : 72,
-        // The resize corner sits above everything in a panel (its content layer is raised above
-        // the Look's panel frame), so it can always be grabbed while editing.
-        "& .react-grid-item > .react-resizable-handle": { zIndex: 20 },
+        // Resize corner: a clear round handle with a diagonal arrow, above everything in the panel
+        // (its content layer is raised above the Look's panel frame), so it is easy to find and grab.
+        "& .react-grid-item > .react-resizable-handle.react-resizable-handle-se": (t) => ({
+          zIndex: 20,
+          width: 30,
+          height: 30,
+          right: 4,
+          bottom: 4,
+          padding: 0,
+          backgroundImage: "none",
+          borderRadius: "50%",
+          backgroundColor: t.palette.primary.main,
+          boxShadow: `0 0 0 2px ${t.palette.background.paper}, 0 2px 8px rgba(0,0,0,.45)`,
+          transition: "transform .15s ease",
+          "&:hover": { transform: "scale(1.15)" },
+          "&::after": {
+            content: '""',
+            position: "absolute",
+            inset: 6,
+            width: "auto",
+            height: "auto",
+            border: 0,
+            backgroundColor: t.palette.primary.contrastText,
+            WebkitMaskImage: RESIZE_ARROW,
+            maskImage: RESIZE_ARROW,
+            maskSize: "contain",
+            WebkitMaskSize: "contain",
+            maskRepeat: "no-repeat",
+            WebkitMaskRepeat: "no-repeat",
+            transform: "rotate(90deg)",
+          },
+        }),
+        // The size preview while resizing or moving: accent stripes and a dashed outline, visible on any background.
+        "& .react-grid-item.react-grid-placeholder": (t) => ({
+          opacity: 1,
+          borderRadius: 1,
+          background: `repeating-linear-gradient(45deg, ${alpha(t.palette.primary.main, 0.38)} 0 10px, ${alpha(t.palette.primary.main, 0.14)} 10px 20px)`,
+          outline: `2px dashed ${t.palette.primary.main}`,
+          outlineOffset: "-2px",
+        }),
         borderRadius: 2,
         p: editMode ? 1.5 : 0.5,
         bgcolor: (t) =>
@@ -335,7 +382,12 @@ export function SectionGrid({
           compactType="vertical"
           preventCollision={false}
           draggableHandle=".widget-drag-handle"
-          onResizeStop={(next, _old, item) => commitLayout(next, item.i)}
+          onResizeStart={(_l, _o, _n, _p, e) => edgeScroller.start(e)}
+          onResize={(_l, _o, _n, _p, e) => edgeScroller.move(e)}
+          onResizeStop={(next, _old, item) => {
+            edgeScroller.stop();
+            commitLayout(next, item.i);
+          }}
           onDragStop={(next) => commitLayout(next, null)}
           resizeHandles={["se"]}
         >
