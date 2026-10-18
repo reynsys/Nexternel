@@ -349,10 +349,10 @@ export function GeneralWidgetEditor({ open, widget, onClose, onSave, automatic, 
                 value={clockFont}
                 onChange={(e) => setClockFont(e.target.value as ClockFont)}
               >
-                <MenuItem value="theme">Theme</MenuItem>
-                <MenuItem value="sans">Sans</MenuItem>
-                <MenuItem value="serif">Serif</MenuItem>
-                <MenuItem value="mono">Mono</MenuItem>
+                <MenuItem value="theme">Same as the dashboard (Appearance → Font)</MenuItem>
+                <MenuItem value="sans">Plain (Arial)</MenuItem>
+                <MenuItem value="serif">Classic (Georgia)</MenuItem>
+                <MenuItem value="mono">Typewriter</MenuItem>
               </Select>
             </FormControl>
             <FormControlLabel

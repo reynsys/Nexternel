@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.110
+
+- **Text size:** choose Smaller, Normal, Larger or Largest in **Settings → Appearance → Text size**. It applies to all text, for your account.
+- **Clock:** its Font choices are clearer. Pick "Same as the dashboard" to follow the font chosen in Appearance.
+
 ## V5.2.109
 
 - **Fonts:** a Look's font now applies to all text — menus, labels, buttons, small text and charts — not only headings.

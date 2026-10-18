@@ -72,6 +72,10 @@ export function SkinProvider({ children }: { children: ReactNode }) {
       })
     );
   }, [skin, shownPrefs, look]);
+  // Text size: all text is measured in rem, so the page's base size scales it everywhere.
+  useEffect(() => {
+    document.documentElement.style.fontSize = `${themePrefs.textSize ?? 100}%`;
+  }, [themePrefs.textSize]);
   // Animations: the person's choice, and off when the device asks apps to reduce motion.
   useEffect(() => {
     const reduce = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;

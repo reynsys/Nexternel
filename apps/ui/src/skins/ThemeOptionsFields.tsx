@@ -29,6 +29,7 @@ import {
 } from "./gradientPalettes";
 import {
   PRIMARY_SWATCHES,
+  TEXT_SIZES,
   normalizeAccentHex,
   normalizeBellPrefs,
   type BellPrefs,
@@ -222,6 +223,27 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
             </Box>
           </Box>
         ) : null}
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
+            Text size{" "}
+            <Typography component="span" variant="caption" color="text.secondary">
+              — all text in Nexternel, on this account.
+            </Typography>
+          </Typography>
+          <ToggleButtonGroup
+            exclusive
+            size="small"
+            value={themePrefs.textSize ?? 100}
+            onChange={(_, v: number | null) => v && set({ textSize: v })}
+            aria-label="Text size"
+          >
+            {TEXT_SIZES.map((s) => (
+              <ToggleButton key={s.value} value={s.value}>
+                {s.label}
+              </ToggleButton>
+            ))}
+          </ToggleButtonGroup>
+        </Box>
         <FormControlLabel
           sx={{ mt: 1 }}
           control={<Switch checked={themePrefs.motion !== false} onChange={(e) => set({ motion: e.target.checked })} />}

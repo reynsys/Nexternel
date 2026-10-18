@@ -10,6 +10,8 @@ export type ThemePrefsDto = {
   motion?: boolean;
   /** The chosen font of a Look that offers several (its id; the Look's first font when unset). */
   lookFont?: string;
+  /** Size of all text in per cent (90, 100, 110 or 125). */
+  textSize?: number;
   gradientId?: string;
   solidContentPanels?: boolean;
   effectId?: string;
@@ -65,6 +67,7 @@ const DEFAULT: ThemePrefsDto = {
   skinId: "mui-dashboard",
   lookId: "standard",
   motion: true,
+  textSize: 100,
   gradientId: "none",
   solidContentPanels: false,
   effectId: "off",
@@ -180,6 +183,11 @@ function lookField(o: Record<string, unknown>): string {
   return backdrop && !o.solidContentPanels ? "glass" : "standard";
 }
 
+const TEXT_SIZES = new Set([90, 100, 110, 125]);
+function textSizeField(o: Record<string, unknown>): number {
+  return typeof o.textSize === "number" && TEXT_SIZES.has(o.textSize) ? o.textSize : 100;
+}
+
 function lookFontField(o: Record<string, unknown>): { lookFont?: string } {
   return typeof o.lookFont === "string" && /^[a-z0-9][a-z0-9-]{0,39}$/.test(o.lookFont) ? { lookFont: o.lookFont } : {};
 }
@@ -213,6 +221,7 @@ export function parseThemePrefsInput(
     lookId: lookField(o),
     motion: o.motion !== false,
     ...lookFontField(o),
+    textSize: textSizeField(o),
     gradientId: normalizeGradientId(o.gradientId),
     solidContentPanels: Boolean(o.solidContentPanels),
     ...effectFields(o),
@@ -239,6 +248,7 @@ export function themePrefsFromDb(raw: unknown): ThemePrefsDto {
     lookId: lookField(o),
     motion: o.motion !== false,
     ...lookFontField(o),
+    textSize: textSizeField(o),
     gradientId: normalizeGradientId(o.gradientId),
     solidContentPanels: Boolean(o.solidContentPanels),
     ...effectFields(o),

@@ -276,6 +276,8 @@ export type UserThemePrefs = {
   motion?: boolean;
   /** The chosen font of a Look that offers several */
   lookFont?: string;
+  /** Size of all text in per cent */
+  textSize?: number;
   /** Page gradient id, or `"none"` for solid background */
   gradientId?: string;
   /** Solid panels (true) or frosted over the background; follows the Look */

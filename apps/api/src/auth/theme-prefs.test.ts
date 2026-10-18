@@ -26,3 +26,11 @@ test("animations are on unless turned off", () => {
   assert.equal(themePrefsFromDb({ ...base }).motion, true);
   assert.equal(parseThemePrefsInput({ ...base, motion: false })?.motion, false);
 });
+
+test("text size is one of the offered sizes, else normal; a Look font id is kept when well formed", () => {
+  assert.equal(themePrefsFromDb({ ...base }).textSize, 100);
+  assert.equal(parseThemePrefsInput({ ...base, textSize: 125 })?.textSize, 125);
+  assert.equal(parseThemePrefsInput({ ...base, textSize: 400 })?.textSize, 100);
+  assert.equal(parseThemePrefsInput({ ...base, lookFont: "michroma" })?.lookFont, "michroma");
+  assert.equal(parseThemePrefsInput({ ...base, lookFont: "<b>" })?.lookFont, undefined);
+});

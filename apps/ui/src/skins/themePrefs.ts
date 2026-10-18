@@ -32,6 +32,8 @@ export type ThemePrefs = {
   motion?: boolean;
   /** The chosen font of a Look that offers several (font id); unset = the Look's first font. */
   lookFont?: string;
+  /** Size of all text in per cent (see TEXT_SIZES). */
+  textSize?: number;
   /**
    * Page gradient background id (`none` = solid theme background).
    * See gradientPalettes.ts
@@ -133,6 +135,7 @@ export const DEFAULT_THEME_PREFS: ThemePrefs = {
   skinId: "mui-dashboard",
   lookId: "standard",
   motion: true,
+  textSize: 100,
   gradientId: GRADIENT_NONE_ID,
   solidContentPanels: true,
   effectId: "off",
@@ -206,6 +209,7 @@ export function normalizeThemePrefs(raw: unknown): ThemePrefs {
         : DEFAULT_THEME_PREFS.skinId,
     lookId,
     motion: parsed.motion !== false,
+    textSize: normalizeTextSize(parsed.textSize),
     ...(typeof parsed.lookFont === "string" && /^[a-z0-9][a-z0-9-]{0,39}$/.test(parsed.lookFont) ? { lookFont: parsed.lookFont } : {}),
     gradientId,
     solidContentPanels: !resolveLook(lookId).frosted,
@@ -222,6 +226,18 @@ export function normalizeThemePrefs(raw: unknown): ThemePrefs {
  * Choose a Look. A Look with a background of its own brings it along when the page has none,
  * and panels turn frosted or solid with it.
  */
+/** Text sizes offered in Settings → Appearance, in per cent of normal. */
+export const TEXT_SIZES = [
+  { value: 90, label: "Smaller" },
+  { value: 100, label: "Normal" },
+  { value: 110, label: "Larger" },
+  { value: 125, label: "Largest" },
+] as const;
+
+export function normalizeTextSize(raw: unknown): number {
+  return TEXT_SIZES.some((s) => s.value === raw) ? (raw as number) : 100;
+}
+
 export function withLook(prefs: ThemePrefs, lookId: string): ThemePrefs {
   const look = resolveLook(lookId);
   const plain =
@@ -257,6 +273,7 @@ export function toAccountThemePrefs(prefs: ThemePrefs, skinId: string) {
     lookId: prefs.lookId ?? "standard",
     motion: prefs.motion !== false,
     ...(prefs.lookFont ? { lookFont: prefs.lookFont } : {}),
+    textSize: normalizeTextSize(prefs.textSize),
     gradientId: prefs.gradientId ?? GRADIENT_NONE_ID,
     solidContentPanels: Boolean(prefs.solidContentPanels),
     effectId: normalizeEffectId(prefs.effectId),
