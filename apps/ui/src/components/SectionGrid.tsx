@@ -273,6 +273,9 @@ export function SectionGrid({
       sx={{
         width: "100%",
         minHeight: panels.length ? 160 : 72,
+        // The resize corner sits above everything in a panel (its content layer is raised above
+        // the Look's panel frame), so it can always be grabbed while editing.
+        "& .react-grid-item > .react-resizable-handle": { zIndex: 20 },
         borderRadius: 2,
         p: editMode ? 1.5 : 0.5,
         bgcolor: (t) =>

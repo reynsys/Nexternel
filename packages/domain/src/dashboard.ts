@@ -61,6 +61,8 @@ export const DashboardSectionV3Schema = z.object({
   icon: z.string().optional(),
   /** Width on 12-col section grid: 12 full, 6 half, 4 third, 3 quarter. */
   colSpan: z.number().int().optional(),
+  /** false: the section bar (icon, name, panel count) is hidden outside editing — just the frame. */
+  showTitle: z.boolean().optional(),
   panels: z.array(PanelInstanceSchema).default([]),
 });
 
@@ -77,6 +79,7 @@ export const LegacyDashboardSectionSchema = z.object({
   roomId: z.string().nullable().optional(),
   icon: z.string().optional(),
   colSpan: z.number().int().optional(),
+  showTitle: z.boolean().optional(),
   widgets: z.array(WidgetInstanceSchema).default([]),
   /** Optional when a partially migrated document already has panels. */
   panels: z.array(PanelInstanceSchema).optional(),
@@ -226,6 +229,7 @@ function normalizeSectionV3FromRaw(raw: unknown, index: number): DashboardSectio
         ? section.icon.trim()
         : undefined,
     colSpan: normalizeSectionColSpan(section.colSpan),
+    ...(section.showTitle === false ? { showTitle: false } : {}),
     panels,
   };
 }

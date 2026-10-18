@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.122
+
+- **Fixed:** panels can be resized again in Dashboard Options.
+- **Fixed:** a section bar you hide now stays hidden after saving (also on other screens). The option is now called **Section bar — Show / Hide**.
+
 ## V5.2.121
 
 - **Nothing cut off in small panels:** when a panel has more text than fits (small screens, large text), it now scrolls, and its bottom edge fades to show there is more — instead of cutting lines off at the top or bottom. Calendar rows no longer overlap.

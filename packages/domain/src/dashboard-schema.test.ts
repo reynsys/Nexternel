@@ -99,3 +99,16 @@ test("migrateDashboardDocument reads v3 sections with legacy widgets field", () 
   assert.equal(migrated.sections[0].panels[0]?.type, "panel.controls");
   assert.equal("widgets" in migrated.sections[0], false);
 });
+
+test("a section's hidden bar (showTitle: false) is kept when saved and loaded", () => {
+  const doc = {
+    schemaVersion: 3,
+    name: "Test",
+    sections: [{ id: "s1", title: "Main", order: 0, panels: [], showTitle: false }, { id: "s2", title: "Two", order: 1, panels: [] }],
+  };
+  const parsed = DashboardDocumentV3Schema.parse(doc);
+  assert.equal(parsed.sections[0]?.showTitle, false);
+  const migrated = migrateDashboardDocument(doc) as { sections: Array<{ showTitle?: boolean }> };
+  assert.equal(migrated.sections[0]?.showTitle, false);
+  assert.equal(migrated.sections[1]?.showTitle, undefined);
+});

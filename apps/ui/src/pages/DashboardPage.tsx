@@ -29,6 +29,8 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  ToggleButton,
+  ToggleButtonGroup,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
@@ -1174,17 +1176,19 @@ function DashboardPageContent() {
                       sx={{ flexShrink: 0 }}
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <FormControlLabel
-                        sx={{ mr: 0.5 }}
-                        control={
-                          <Switch
-                            size="small"
-                            checked={section.showTitle !== false}
-                            onChange={(e) => updateSection(section.id, { showTitle: e.target.checked })}
-                          />
-                        }
-                        label={<Typography variant="body2">Show section title</Typography>}
-                      />
+                      <Stack direction="row" alignItems="center" spacing={1} sx={{ mr: 0.5 }}>
+                        <Typography variant="body2">Section bar</Typography>
+                        <ToggleButtonGroup
+                          exclusive
+                          size="small"
+                          aria-label="Section bar"
+                          value={section.showTitle === false ? "hide" : "show"}
+                          onChange={(_e, v: "show" | "hide" | null) => v && updateSection(section.id, { showTitle: v === "show" })}
+                        >
+                          <ToggleButton value="show">Show</ToggleButton>
+                          <ToggleButton value="hide">Hide</ToggleButton>
+                        </ToggleButtonGroup>
+                      </Stack>
                       <FormControl size="small" sx={{ minWidth: 100 }}>
                         <InputLabel id={`span-${section.id}`}>Width</InputLabel>
                         <Select
