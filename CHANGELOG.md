@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.107
+
+- **Settings → Add-ons:** the button is now called **Check for add-on updates** and tells you what it found — for example "Updated: HUD Looks to 1.5.2" or "All add-ons are up to date".
+
 ## V5.2.106
 
 - **Animations on/off:** in **Settings → Appearance** you can switch off the moving decorations of add-on Looks, and each panel can choose its own in **Edit → Look**.

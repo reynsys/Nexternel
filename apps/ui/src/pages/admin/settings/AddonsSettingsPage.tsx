@@ -4,6 +4,7 @@ import { api, type AddonInfo, type AddonsResponse } from "../../../api";
 import { useConfirm } from "../../../components/confirm";
 import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
 import { loadAddons } from "../../../skins/looks/addon-loader";
+import { describeAddonCheck } from "../../../lib/addon-check";
 
 const STATUS: Record<AddonInfo["status"], { label: string; color: "success" | "warning" | "error" }> = {
   active: { label: "Active", color: "success" },
@@ -26,7 +27,7 @@ export function AddonsSettingsPage() {
   const [key, setKey] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<string | null>(null);
+  const [done, setDone] = useState<{ text: string; ok: boolean } | null>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -40,7 +41,7 @@ export function AddonsSettingsPage() {
     void refresh();
   }, [refresh]);
 
-  async function run(label: string, fn: () => Promise<{ addons: AddonInfo[] }>, success?: (a: AddonInfo[]) => string) {
+  async function run(label: string, fn: () => Promise<{ addons: AddonInfo[] }>, success?: (a: AddonInfo[]) => string | { text: string; ok: boolean }) {
     setBusy(label);
     setError(null);
     setDone(null);
@@ -48,7 +49,10 @@ export function AddonsSettingsPage() {
       const r = await fn();
       setData((d) => (d ? { ...d, addons: r.addons } : d));
       await loadAddons();
-      if (success) setDone(success(r.addons));
+      if (success) {
+        const m = success(r.addons);
+        setDone(typeof m === "string" ? { text: m, ok: true } : m);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -115,8 +119,8 @@ export function AddonsSettingsPage() {
             </Alert>
           ) : null}
           {done ? (
-            <Alert severity="success" sx={{ mt: 2 }} onClose={() => setDone(null)}>
-              {done}
+            <Alert severity={done.ok ? "success" : "warning"} sx={{ mt: 2 }} onClose={() => setDone(null)}>
+              {done.text}
             </Alert>
           ) : null}
         </CardContent>
@@ -127,8 +131,11 @@ export function AddonsSettingsPage() {
           <CardContent>
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1.5 }}>
               <Typography variant="h6">Installed</Typography>
-              <Button size="small" disabled={busy !== null} onClick={() => void run("check", () => api.checkAddons(), () => "Checked with the Nexternel shop.")}>
-                {busy === "check" ? <CircularProgress size={18} /> : "Check now"}
+              <Button size="small" disabled={busy !== null} onClick={() => {
+                  const before = data.addons;
+                  void run("check", () => api.checkAddons(), (after) => describeAddonCheck(before, after));
+                }}>
+                {busy === "check" ? <CircularProgress size={18} /> : "Check for add-on updates"}
               </Button>
             </Stack>
             <Stack spacing={1.5}>
