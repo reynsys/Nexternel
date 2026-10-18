@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Link as RouterLink, Navigate, Route, Routes } from "react-router-dom";
+import { Link as RouterLink, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { Alert, Button, CircularProgress, Stack } from "@mui/material";
 import { AppLayout } from "./layout/AppLayout";
 import { LoginPage } from "./pages/LoginPage";
@@ -27,8 +27,10 @@ import { PluginHostProvider } from "./plugins/PluginHostContext";
 import { DisplayPage } from "./pages/DisplayPage";
 
 function RequireAuth({ children }: { children: ReactNode }) {
+  const location = useLocation();
   if (!getStoredAccessToken()) {
-    return <Navigate to="/login" replace />;
+    // After signing in, come back here (e.g. a wall display's /display address).
+    return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
   }
   return children;
 }

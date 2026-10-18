@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.117
+
+- After signing in you return to the page you were opening (for example a wall display's Display mode address) instead of the home dashboard.
+
 ## V5.2.116
 
 - **Display mode for wall screens and tablets:** open **<your Nexternel address>/display** to show the dashboard alone, full screen, with larger text and lighter effects for small computers such as a Raspberry Pi. Optional: `?rotate=60` moves through the dashboards every minute, `?tabs=0` hides the room buttons. Details in **Settings → System → Addresses**.

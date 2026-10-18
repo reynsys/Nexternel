@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Alert,
   Button,
@@ -12,6 +12,7 @@ import { useSkin } from "../skins/SkinProvider";
 import { ButtonRow } from "../components/ButtonRow";
 
 export function LoginPage() {
+  const location = useLocation();
   const navigate = useNavigate();
   const { applyAccountPrefs } = useSkin();
   const [username, setUsername] = useState("");
@@ -27,7 +28,9 @@ export function LoginPage() {
     try {
       const data = await api.login(username.trim(), password);
       applyAccountPrefs(data.user.themePrefs);
-      navigate("/", { replace: true });
+      // Back to the page that asked for signing in (only addresses inside Nexternel).
+      const from = (location.state as { from?: string } | null)?.from;
+      navigate(from && from.startsWith("/") && !from.startsWith("//") && !from.startsWith("/login") ? from : "/", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {
