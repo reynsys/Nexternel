@@ -52,7 +52,7 @@ export function CalendarWidget({ widget: _widget }: { widget: WidgetInstance }) 
           ...genericTileQuerySx,
           display: "grid",
           gridTemplateColumns: "repeat(7, 1fr)",
-          gridTemplateRows: `auto repeat(${Math.ceil(cells.length / 7)}, minmax(0, 1fr))`,
+          gridTemplateRows: `auto repeat(${Math.ceil(cells.length / 7)}, minmax(min-content, 1fr))`, // rows never squeeze text; scrolls when short of room
           gap: 0.25,
           textAlign: "center",
         })}

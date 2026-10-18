@@ -35,6 +35,9 @@ import { loadAddons } from "./looks/addon-loader";
 import { useLiveChanges } from "../lib/live-changes";
 import { LIGHT_CSS, useDisplayMode } from "../lib/display-mode";
 
+/** Panel contents that scroll fade at the bottom while there is more below (see panelContentRootSx). */
+const MORE_BELOW_CSS = `@keyframes nx-more-below { 0%, 92% { --nx-more: 28px } 100% { --nx-more: 0px } }`;
+
 type SkinContextValue = {
   skin: UiSkin;
   skins: UiSkin[];
@@ -209,7 +212,7 @@ export function SkinProvider({ children }: { children: ReactNode }) {
         <CssBaseline />
         <AppearanceCssVars lookId={themePrefs.lookId} buttonsId={themePrefs.lookButtons} looksVersion={lookVer} />
         {/* Animations on/off for everything a Look moves (and per panel). */}
-        <GlobalStyles styles={MOTION_CSS + LIGHT_CSS} />
+        <GlobalStyles styles={MOTION_CSS + LIGHT_CSS + MORE_BELOW_CSS} />
         <GlobalStyles
           styles={{
             html: {

@@ -86,7 +86,7 @@ export function WeatherWidget({ widget }: { widget: WidgetInstance }) {
             minHeight: 0,
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
+            justifyContent: "safe center",
             gap: "clamp(8px, 4cqi, 28px)",
           }}
         >

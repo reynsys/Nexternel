@@ -38,6 +38,20 @@ export function dashboardTileBodySx(extra?: SxProps<Theme>): SxProps<Theme> {
 }
 
 /** Same flex contract for panel/widget roots rendered inside DashboardTileBody. */
+/**
+ * A scrolling area inside a panel: content that does not fit scrolls instead of being cut off,
+ * and the bottom edge fades while there is more below (MORE_BELOW_CSS in SkinProvider).
+ */
+export const panelScrollSx = {
+  overflowX: "hidden",
+  overflowY: "auto",
+  scrollbarWidth: "thin",
+  overscrollBehavior: "contain",
+  "--nx-more": "0px",
+  maskImage: "linear-gradient(to bottom, #000 calc(100% - var(--nx-more)), transparent)",
+  "@supports (animation-timeline: scroll())": { animation: "nx-more-below linear both", animationTimeline: "scroll(self)" },
+} as const;
+
 export function panelContentRootSx(extra?: SxProps<Theme>): SxProps<Theme> {
   return {
     flex: 1,
@@ -48,7 +62,8 @@ export function panelContentRootSx(extra?: SxProps<Theme>): SxProps<Theme> {
     height: "100%",
     minHeight: 0,
     minWidth: 0,
-    overflow: "hidden",
+    // Content taller than the panel (small screens, large text) scrolls instead of being cut off.
+    ...panelScrollSx,
     boxSizing: "border-box",
     ...(extra as object),
   };

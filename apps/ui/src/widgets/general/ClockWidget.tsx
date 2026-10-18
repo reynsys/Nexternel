@@ -183,7 +183,7 @@ export function ClockWidget({ widget }: { widget: WidgetInstance }) {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: "safe center",
       }}
     >
       {title && (
@@ -191,7 +191,7 @@ export function ClockWidget({ widget }: { widget: WidgetInstance }) {
           {title}
         </Typography>
       )}
-      <Box sx={panelContentRootSx({ alignItems: "center", justifyContent: "center" })}>
+      <Box sx={panelContentRootSx({ alignItems: "center", justifyContent: "safe center" })}>
         {clock.face === "analog" ? (
           <AnalogFace now={now} clock={clock} fontFamily={fontFamily} />
         ) : (

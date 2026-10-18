@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Box, Chip, Stack, Typography } from "@mui/material";
 import { api, type DeviceRecord, type WidgetInstance } from "../../api";
-import { panelContentRootSx } from "../../components/DashboardTileBody";
+import { panelContentRootSx, panelScrollSx } from "../../components/DashboardTileBody";
 import { parseDeviceStatusConfig } from "./config";
 import { genericTileLinesQuerySx } from "./tile-type";
 import { usePanelPoll } from "../../lib/usePanelPoll";
@@ -67,7 +67,7 @@ export function DeviceStatusWidget({ widget }: { widget: WidgetInstance }) {
         {disabled > 0 && <Chip size="small" label={`${disabled} disabled`} />}
       </Stack>
       {error && <PanelNotice>{error}</PanelNotice>}
-      <Box sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+      <Box sx={{ flex: 1, minHeight: 0, ...panelScrollSx }}>
         {list.length === 0 ? (
           <Typography variant="caption" color="text.secondary">
             {offlineOnly ? "No offline devices." : "No devices registered."}

@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.121
+
+- **Nothing cut off in small panels:** when a panel has more text than fits (small screens, large text), it now scrolls, and its bottom edge fades to show there is more — instead of cutting lines off at the top or bottom. Calendar rows no longer overlap.
+
 ## V5.2.120
 
 - **Sections without a title bar:** in **Dashboard Options**, switch off **Show section title** for a section to show just its frame around the panels — more room for the panels. Width, order and everything else stay as they are.

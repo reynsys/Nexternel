@@ -65,7 +65,7 @@ export function SystemInfoWidget({ widget }: { widget: WidgetInstance }) {
       )}
       {error && <PanelNotice>{error}</PanelNotice>}
       <Box sx={panelContentRootSx(genericTileLinesQuerySx)}>
-      <Stack spacing={0.5} sx={{ flex: 1, minHeight: 0, justifyContent: "center", p: 1.5 }}>
+      <Stack spacing={0.5} sx={{ flex: 1, minHeight: 0, justifyContent: "safe center", p: 1.5 }}>
         <Row label="Version" value={APP_VERSION} />
         <Row label="Uptime" value={uptimeSeconds != null ? formatUptime(uptimeSeconds) : "—"} />
         <Row label="CPU" value={info ? `${info.cpu.loadPercent}%` : "—"} />
