@@ -5,7 +5,6 @@ import { parseClockConfig } from "./clock-config.ts";
 test("a clock with no saved choices is a bold digital face in the theme", () => {
   const clock = parseClockConfig(undefined);
   assert.equal(clock.face, "digital");
-  assert.equal(clock.font, "theme");
   assert.equal(clock.color, "text");
   assert.equal(clock.bold, true);
   assert.equal(clock.italic, false);
@@ -21,7 +20,7 @@ test("saved clock choices are kept", () => {
   const clock = parseClockConfig({
     clockFace: "analog",
     clockDial: "minimal",
-    clockFont: "mono",
+    clockFont: "mono", // older own font choice: ignored, the dashboard font is used
     clockBold: false,
     clockItalic: true,
     clockColor: "accent",
@@ -29,7 +28,6 @@ test("saved clock choices are kept", () => {
   assert.deepEqual(clock, {
     face: "analog",
     dial: "minimal",
-    font: "mono",
     bold: false,
     italic: true,
     color: "accent",

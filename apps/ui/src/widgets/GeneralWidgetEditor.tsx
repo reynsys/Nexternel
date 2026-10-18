@@ -26,7 +26,6 @@ import {
   type ClockColor,
   type ClockDial,
   type ClockFace,
-  type ClockFont,
 } from "./general/clock-config";
 import { PanelTitleFields, type AutomaticTitle } from "../components/PanelTitleFields";
 import { readTitleIcon, writeTitleIcon } from "../lib/panel-title-icon";
@@ -68,7 +67,6 @@ export function GeneralWidgetEditor({ open, widget, onClose, onSave, automatic, 
   const [cameras, setCameras] = useState<CameraRecord[]>([]);
   const [clockFace, setClockFace] = useState<ClockFace>("digital");
   const [clockDial, setClockDial] = useState<ClockDial>("classic");
-  const [clockFont, setClockFont] = useState<ClockFont>("theme");
   const [clockColor, setClockColor] = useState<ClockColor>("text");
   const [clockBold, setClockBold] = useState(true);
   const [clockItalic, setClockItalic] = useState(false);
@@ -96,7 +94,6 @@ export function GeneralWidgetEditor({ open, widget, onClose, onSave, automatic, 
       const clock = parseClockConfig(widget.config);
       setClockFace(clock.face);
       setClockDial(clock.dial);
-      setClockFont(clock.font);
       setClockColor(clock.color);
       setClockBold(clock.bold);
       setClockItalic(clock.italic);
@@ -166,7 +163,8 @@ export function GeneralWidgetEditor({ open, widget, onClose, onSave, automatic, 
     if (type === "clock") {
       config.clockFace = clockFace;
       config.clockDial = clockDial;
-      config.clockFont = clockFont;
+      // Clocks use the dashboard font (Appearance → Font); an older own font choice is dropped.
+      delete config.clockFont;
       config.clockColor = clockColor;
       config.clockBold = clockBold;
       config.clockItalic = clockItalic;
@@ -339,20 +337,6 @@ export function GeneralWidgetEditor({ open, widget, onClose, onSave, automatic, 
               >
                 <MenuItem value="text">Theme text</MenuItem>
                 <MenuItem value="accent">Theme accent</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl fullWidth size="small">
-              <InputLabel id="clock-font">Font</InputLabel>
-              <Select
-                labelId="clock-font"
-                label="Font"
-                value={clockFont}
-                onChange={(e) => setClockFont(e.target.value as ClockFont)}
-              >
-                <MenuItem value="theme">Same as the dashboard (Appearance → Font)</MenuItem>
-                <MenuItem value="sans">Plain (Arial)</MenuItem>
-                <MenuItem value="serif">Classic (Georgia)</MenuItem>
-                <MenuItem value="mono">Typewriter</MenuItem>
               </Select>
             </FormControl>
             <FormControlLabel

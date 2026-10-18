@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Box, Typography, useTheme } from "@mui/material";
 import type { WidgetInstance } from "../../api";
 import { widgetTitleOr } from "./config";
-import { clockFontFamily, parseClockConfig, type ClockConfig } from "./clock-config";
+import { parseClockConfig, type ClockConfig } from "./clock-config";
 import { panelContentRootSx } from "../../components/DashboardTileBody";
 import { useDashboardTileChrome } from "../../lib/dashboard-tile-context";
 
@@ -171,7 +171,7 @@ export function ClockWidget({ widget }: { widget: WidgetInstance }) {
   const { showBodyHeading } = useDashboardTileChrome();
   const title = showBodyHeading ? widgetTitleOr(widget, "Clock") : undefined;
   const clock = parseClockConfig(widget.config);
-  const fontFamily = clockFontFamily(clock.font, theme.typography.fontFamily);
+  const fontFamily = String(theme.typography.fontFamily);
 
   return (
     <Box

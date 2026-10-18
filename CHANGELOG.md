@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.111
+
+- **Clock:** it now always uses the dashboard's font (Settings → Appearance), like every other panel; its own font setting is gone.
+
 ## V5.2.110
 
 - **Text size:** choose Smaller, Normal, Larger or Largest in **Settings → Appearance → Text size**. It applies to all text, for your account.
