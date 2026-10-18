@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { chosenLookFont } from "./look-font.ts";
+import { chosenLookButtons, chosenLookFont } from "./look-font.ts";
 
 const look = {
   fonts: [
@@ -14,4 +14,11 @@ test("a Look's font is the person's choice when offered, else its first", () => 
   assert.equal(chosenLookFont(look, "orbitron")?.id, "oxanium");
   assert.equal(chosenLookFont(look, undefined)?.id, "oxanium");
   assert.equal(chosenLookFont({}, "exo-2"), undefined);
+});
+
+test("a Look's button style is chosen the same way", () => {
+  const withStyles = { buttonStyles: [{ id: "corners", label: "Corners" }, { id: "bar", label: "Light bar" }] };
+  assert.equal(chosenLookButtons(withStyles, "bar")?.id, "bar");
+  assert.equal(chosenLookButtons(withStyles, "nope")?.id, "corners");
+  assert.equal(chosenLookButtons({}, "bar"), undefined);
 });

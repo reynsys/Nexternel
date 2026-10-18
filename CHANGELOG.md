@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.112
+
+- **Button styles:** add-on Looks that come with several button styles let you choose one in **Settings → Appearance → Buttons**.
+
 ## V5.2.111
 
 - **Clock:** it now always uses the dashboard's font (Settings → Appearance), like every other panel; its own font setting is gone.

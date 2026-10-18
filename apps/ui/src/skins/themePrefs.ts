@@ -32,6 +32,8 @@ export type ThemePrefs = {
   motion?: boolean;
   /** The chosen font of a Look that offers several (font id); unset = the Look's first font. */
   lookFont?: string;
+  /** The chosen button style of a Look that offers several (id); unset = the Look's first. */
+  lookButtons?: string;
   /** Size of all text in per cent (see TEXT_SIZES). */
   textSize?: number;
   /**
@@ -211,6 +213,7 @@ export function normalizeThemePrefs(raw: unknown): ThemePrefs {
     motion: parsed.motion !== false,
     textSize: normalizeTextSize(parsed.textSize),
     ...(typeof parsed.lookFont === "string" && /^[a-z0-9][a-z0-9-]{0,39}$/.test(parsed.lookFont) ? { lookFont: parsed.lookFont } : {}),
+    ...(typeof parsed.lookButtons === "string" && /^[a-z0-9][a-z0-9-]{0,39}$/.test(parsed.lookButtons) ? { lookButtons: parsed.lookButtons } : {}),
     gradientId,
     solidContentPanels: !resolveLook(lookId).frosted,
     effectId,
@@ -273,6 +276,7 @@ export function toAccountThemePrefs(prefs: ThemePrefs, skinId: string) {
     lookId: prefs.lookId ?? "standard",
     motion: prefs.motion !== false,
     ...(prefs.lookFont ? { lookFont: prefs.lookFont } : {}),
+    ...(prefs.lookButtons ? { lookButtons: prefs.lookButtons } : {}),
     textSize: normalizeTextSize(prefs.textSize),
     gradientId: prefs.gradientId ?? GRADIENT_NONE_ID,
     solidContentPanels: Boolean(prefs.solidContentPanels),

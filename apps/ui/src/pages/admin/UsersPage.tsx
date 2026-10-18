@@ -120,6 +120,7 @@ export function UsersPage() {
       lookId: theme.lookId,
       motion: theme.motion,
       lookFont: theme.lookFont,
+      lookButtons: theme.lookButtons,
       textSize: theme.textSize,
       gradientId: theme.gradientId,
       solidContentPanels: theme.solidContentPanels,

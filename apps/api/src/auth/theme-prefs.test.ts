@@ -34,3 +34,8 @@ test("text size is one of the offered sizes, else normal; a Look font id is kept
   assert.equal(parseThemePrefsInput({ ...base, lookFont: "michroma" })?.lookFont, "michroma");
   assert.equal(parseThemePrefsInput({ ...base, lookFont: "<b>" })?.lookFont, undefined);
 });
+
+test("a Look button style id is kept when well formed", () => {
+  assert.equal(parseThemePrefsInput({ ...base, lookButtons: "light-bar" })?.lookButtons, "light-bar");
+  assert.equal(parseThemePrefsInput({ ...base, lookButtons: "x y" })?.lookButtons, undefined);
+});

@@ -38,6 +38,7 @@ import {
 } from "./themePrefs";
 import { listLooks, resolveLook } from "./looks/registry";
 import { chosenLookFont } from "./looks/resolve";
+import { chosenLookButtons } from "../lib/look-font";
 import { isGradientActive } from "./surfaceStyles";
 import {
   BACKGROUND_EFFECTS,
@@ -217,6 +218,41 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
                     sx={[{ px: 1.25, py: 1, justifyContent: "flex-start" }, choiceSx(selected)]}
                   >
                     <Typography sx={{ fontFamily: f.family, fontSize: "1.05rem" }}>{f.label}</Typography>
+                  </ButtonBase>
+                );
+              })}
+            </Box>
+          </Box>
+        ) : null}
+        {(resolveLook(themePrefs.lookId).buttonStyles?.length ?? 0) > 1 ? (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
+              Buttons{" "}
+              <Typography component="span" variant="caption" color="text.secondary">
+                — how buttons are drawn while {resolveLook(themePrefs.lookId).label} is chosen.
+              </Typography>
+            </Typography>
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: 1 }}>
+              {resolveLook(themePrefs.lookId).buttonStyles!.map((b) => {
+                const selected = chosenLookButtons(resolveLook(themePrefs.lookId), themePrefs.lookButtons)?.id === b.id;
+                return (
+                  <ButtonBase
+                    key={b.id}
+                    aria-pressed={selected}
+                    onClick={() => set({ lookButtons: b.id })}
+                    sx={[
+                      { display: "grid", justifyItems: "start", textAlign: "left", gap: 0.25, px: 1.25, py: 1 },
+                      choiceSx(selected),
+                    ]}
+                  >
+                    <Typography variant="body2" fontWeight={600}>
+                      {b.label}
+                    </Typography>
+                    {b.description ? (
+                      <Typography variant="caption" color="text.secondary">
+                        {b.description}
+                      </Typography>
+                    ) : null}
                   </ButtonBase>
                 );
               })}

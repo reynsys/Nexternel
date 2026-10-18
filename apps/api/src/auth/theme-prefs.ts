@@ -10,6 +10,8 @@ export type ThemePrefsDto = {
   motion?: boolean;
   /** The chosen font of a Look that offers several (its id; the Look's first font when unset). */
   lookFont?: string;
+  /** The chosen button style of a Look that offers several (its id). */
+  lookButtons?: string;
   /** Size of all text in per cent (90, 100, 110 or 125). */
   textSize?: number;
   gradientId?: string;
@@ -188,8 +190,12 @@ function textSizeField(o: Record<string, unknown>): number {
   return typeof o.textSize === "number" && TEXT_SIZES.has(o.textSize) ? o.textSize : 100;
 }
 
-function lookFontField(o: Record<string, unknown>): { lookFont?: string } {
-  return typeof o.lookFont === "string" && /^[a-z0-9][a-z0-9-]{0,39}$/.test(o.lookFont) ? { lookFont: o.lookFont } : {};
+const OPTION_ID = /^[a-z0-9][a-z0-9-]{0,39}$/;
+function lookFontField(o: Record<string, unknown>): { lookFont?: string; lookButtons?: string } {
+  return {
+    ...(typeof o.lookFont === "string" && OPTION_ID.test(o.lookFont) ? { lookFont: o.lookFont } : {}),
+    ...(typeof o.lookButtons === "string" && OPTION_ID.test(o.lookButtons) ? { lookButtons: o.lookButtons } : {}),
+  };
 }
 
 function normalizeGradientId(raw: unknown): string {

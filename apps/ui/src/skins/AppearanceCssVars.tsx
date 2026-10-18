@@ -3,13 +3,23 @@ import { GlobalStyles } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import { metricValueColorFromTheme } from "./metricColors";
 import { resolveLook } from "./looks/registry";
+import { chosenLookButtons } from "../lib/look-font";
 
 /**
  * Appearance tokens as CSS variables — any widget/plugin can use these without
  * importing MUI (clock, future plugins, SVG, canvas). The Look's shape tokens are here too
  * (--nx-panel-radius and friends), and its id is on <html data-nx-look>.
  */
-export function AppearanceCssVars({ lookId, looksVersion = 0 }: { lookId?: string; looksVersion?: number }) {
+export function AppearanceCssVars({
+  lookId,
+  buttonsId,
+  looksVersion = 0,
+}: {
+  lookId?: string;
+  /** The person's button style choice (used when the Look offers button styles). */
+  buttonsId?: string;
+  looksVersion?: number;
+}) {
   const theme = useTheme();
   // looksVersion: a Look from an add-on may arrive after the first draw.
   const look = useMemo(() => resolveLook(lookId), [lookId, looksVersion]);
@@ -63,6 +73,13 @@ export function AppearanceCssVars({ lookId, looksVersion = 0 }: { lookId?: strin
   useEffect(() => {
     document.documentElement.setAttribute("data-nx-look", look.id);
   }, [look.id]);
+
+  // The chosen button style, for the Look's css: <html data-nx-buttons="id">.
+  const buttons = chosenLookButtons(look, buttonsId)?.id;
+  useEffect(() => {
+    if (buttons) document.documentElement.setAttribute("data-nx-buttons", buttons);
+    else document.documentElement.removeAttribute("data-nx-buttons");
+  }, [buttons]);
 
   // The Look's own CSS (fonts, frames, per-Look switch details) in one <style>, replaced on change.
   useEffect(() => {

@@ -185,7 +185,7 @@ export function SkinProvider({ children }: { children: ReactNode }) {
     <SkinContext.Provider value={value}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <AppearanceCssVars lookId={themePrefs.lookId} looksVersion={lookVer} />
+        <AppearanceCssVars lookId={themePrefs.lookId} buttonsId={themePrefs.lookButtons} looksVersion={lookVer} />
         {/* Animations on/off for everything a Look moves (and per panel). */}
         <GlobalStyles styles={MOTION_CSS} />
         <GlobalStyles

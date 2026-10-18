@@ -168,6 +168,12 @@ export type LookTokens = {
 /** A font a Look offers. Its CSS (e.g. @font-face) comes with the Look's css. */
 export type LookFont = { id: string; label: string; family: string };
 
+/**
+ * A button style a Look offers. While chosen, <html data-nx-buttons="id"> is set and the Look's css
+ * draws Nexternel's buttons for it (:root[data-nx-buttons="id"] .MuiButton-root …).
+ */
+export type LookButtonStyle = { id: string; label: string; description?: string };
+
 export type UiLook = {
   id: string;
   label: string;
@@ -198,6 +204,8 @@ export type UiLook = {
   css?: string;
   /** Fonts the person can choose from in Settings → Appearance; the first is the default. Overrides tokens.font. */
   fonts?: LookFont[];
+  /** Button styles the person can choose from in Settings → Appearance; the first is the default. */
+  buttonStyles?: LookButtonStyle[];
   /** A Look that only works in one colour mode (e.g. HUD is always dark). */
   forceMode?: "light" | "dark";
 };
