@@ -68,6 +68,9 @@ function PanelTitleTile({
         px: "var(--nx-title-inset, 8px)",
         overflow: "hidden",
         position: "relative",
+        // Status lights get smaller in a narrow title (container queries in StatusLight).
+        containerType: "inline-size",
+        containerName: "nx-title",
       }}
     >
       {icon.iconId !== null ? (

@@ -192,6 +192,11 @@ export type UiLook = {
   defaultBackground?: string;
   /** The Look's values; anything left out is Standard's. */
   tokens: (theme: Theme) => Partial<LookTokens>;
+  /**
+   * The panel's outline as an SVG path for a w × h panel (e.g. HUD cut corners). Effects that follow
+   * the panel's edge use it — the status light's glowing border — instead of a plain rectangle.
+   */
+  panelOutline?: (w: number, h: number) => string;
   /** Decoration drawn behind each panel's content, sized to the panel (e.g. HUD frames). Same as decor.panel. */
   PanelFrame?: ComponentType;
   /** Decorations for the other places (see DecorSlot). Animations inside them follow the Animations setting. */

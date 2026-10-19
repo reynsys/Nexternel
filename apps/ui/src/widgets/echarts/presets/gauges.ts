@@ -350,7 +350,8 @@ function place(ctx: EchartsBuildCtx, shape: Shape): Place {
   const w = ctx.tileWidth && ctx.tileWidth > 0 ? ctx.tileWidth : 240;
   const h = ctx.tileHeight && ctx.tileHeight > 0 ? ctx.tileHeight : 240;
   const short = Math.min(w, h);
-  const edge = Math.max(2, Math.round(short * 0.02));
+  // Clear of the panel's edge and its decoration, even on small panels.
+  const edge = Math.max(6, Math.round(short * 0.03));
   // Dial numbers: never below readable (and they follow Text size); with no room for all, fewer are shown.
   const labelFont = Math.max(chartFont(ctx, MIN_CHART_FONT), Math.round(short * 0.05));
   const splits = marksForRange(ctx.min, ctx.max);

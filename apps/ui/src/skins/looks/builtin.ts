@@ -147,6 +147,11 @@ export const glassLook: UiLook = {
   frosted: true,
   defaultBackground: "glow-aurora",
   tokens: glassTokens,
+  // Dialogs, menus and pop-ups are frosted glass too, like the panels.
+  css: `:root[data-nx-look="glass"] [data-nx-role="popup"] {
+  background-color: color-mix(in srgb, var(--nx-surface-paper) 72%, transparent) !important;
+  backdrop-filter: blur(18px) saturate(1.25);
+}`,
 };
 
 export const BUILTIN_LOOKS: UiLook[] = [standardLook, glassLook];

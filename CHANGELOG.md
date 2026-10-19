@@ -2,6 +2,12 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.125
+
+- **Status lights:** smaller in narrow panels so titles have more room; add-on Looks can give them their own shapes, and the glowing border follows the panel's own outline.
+- **Glass:** dialogs and menus are frosted glass like the panels.
+- Gauges keep a little more space from the panel edge.
+
 ## V5.2.124
 
 - **Autoscroll on wall displays:** panels with more content than fits slowly scroll down, pause and return to the top — switch it in **Users → Edit → Wall display → Autoscroll**.

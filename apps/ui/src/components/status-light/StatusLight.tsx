@@ -1,4 +1,4 @@
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Box, Tooltip } from "@mui/material";
 import { keyframes } from "@mui/material/styles";
 import {
@@ -16,6 +16,7 @@ import {
 } from "../../lib/dashboard-data-runtime";
 import { useOptionalSkin } from "../../skins/SkinProvider";
 import { lightToShow } from "../../lib/status-light-show";
+import { useLook } from "../../skins/looks/useLook";
 import {
   DEFAULT_STATUS_LIGHT_PREFS,
   normalizeStatusLightPrefs,
@@ -26,6 +27,10 @@ const STALE_COLOUR = "#5B6474";
 const DOT_OFF = "rgba(128, 138, 156, 0.28)";
 
 const pulse = keyframes`50% { opacity: .3; }`;
+
+/** In a narrow panel title (see the title tile's container), lights take less room. */
+const COMPACT = { "@container nx-title (max-width: 230px)": { width: 16 } } as const;
+const COMPACT_DOTS = { "@container nx-title (max-width: 230px)": { gap: "3px", "& > *": { width: 11, height: 11 } } } as const;
 
 /** The look a panel's lights use: the panel's own choice (Edit menu → Status light), else the starting look. */
 export type StatusLook = {
@@ -113,37 +118,50 @@ export function StatusLight({ capabilityId, kind, unit, look, placement }: Props
   const common = { role: "img", "aria-label": label, "data-nx-status-light": state };
   let node;
   if (look.style === "pill") {
+    // Outer part glows, inner part has the shape (a Look may give it its own, e.g. cut corners).
     node = (
       <Box
         {...common}
+        data-nx-status-style="pill"
         sx={{
-          // Narrower on phones, where panel titles have little room.
+          // Narrower on phones, and a small square in narrow panels, where titles have little room.
           width: placement === "inline" ? { xs: 32, sm: 46 } : 46,
           height: 16,
-          borderRadius: "8px",
+          display: "flex",
           flex: "none",
-          bgcolor: colour,
-          boxShadow: `0 0 10px -2px ${colour}`,
+          filter: `drop-shadow(0 0 4px ${colour})`,
+          ...COMPACT,
           ...centred,
           ...blinkSx,
         }}
-      />
+      >
+        <Box data-nx-status-shape sx={{ flex: 1, borderRadius: "8px", bgcolor: colour }} />
+      </Box>
     );
   } else if (look.style === "dots") {
     const lit = (s: StatusState) => state === "stale" || state === s;
     node = (
-      <Box {...common} sx={{ display: "flex", gap: "6px", alignItems: "center", flex: "none", ...centred, ...blinkSx }}>
-        {(["ok", "watch", "alert"] as const).map((s) => (
+      <Box
+        {...common}
+        data-nx-status-style="dots"
+        sx={{ display: "flex", gap: "6px", alignItems: "center", flex: "none", ...COMPACT_DOTS, ...centred, ...blinkSx }}
+      >
+        {(["ok", "watch", "alert"] as const).map((s, i) => (
           <Box
             key={s}
+            data-nx-dot={i + 1}
             sx={{
               width: 15,
               height: 15,
-              borderRadius: "50%",
-              bgcolor: lit(s) ? (state === "stale" ? STALE_COLOUR : look.colours[s]) : DOT_OFF,
-              boxShadow: lit(s) && state !== "stale" ? `0 0 8px ${look.colours[s]}` : "none",
+              display: "flex",
+              filter: lit(s) && state !== "stale" ? `drop-shadow(0 0 4px ${look.colours[s]})` : "none",
             }}
-          />
+          >
+            <Box
+              data-nx-status-shape
+              sx={{ flex: 1, borderRadius: "50%", bgcolor: lit(s) ? (state === "stale" ? STALE_COLOUR : look.colours[s]) : DOT_OFF }}
+            />
+          </Box>
         ))}
       </Box>
     );
@@ -160,8 +178,56 @@ export function StatusLight({ capabilityId, kind, unit, look, placement }: Props
     const height = placement === "gap-bar" ? 4 : 5;
     node = <Box {...common} sx={{ height, borderRadius: "5px", bgcolor: colour, ...edge, ...blinkSx }} />;
   } else {
-    // Glowing border: covers the box it sits in, so the reading inside stays clickable.
+    // Glowing border: covers the box it sits in, so the reading inside stays clickable. A Look with
+    // its own panel outline (e.g. HUD cut corners) gets a border that follows that outline.
+    return <GlowBorder common={common} colour={colour} blinkSx={blinkSx} />;
+  }
+
+  return (
+    <Tooltip title={label} placement="top" arrow>
+      {node}
+    </Tooltip>
+  );
+}
+
+function GlowBorder({ common, colour, blinkSx }: { common: Record<string, string>; colour: string; blinkSx: object }) {
+  const look = useLook();
+  const ref = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState<[number, number]>([0, 0]);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || !look.panelOutline) return undefined;
+    const measure = () => setSize([el.clientWidth, el.clientHeight]);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [look.panelOutline]);
+  if (look.panelOutline) {
+    const [w, h] = size;
     return (
+      <Box
+        ref={ref}
+        {...common}
+        data-nx-status-style="glow"
+        sx={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 1, ...blinkSx }}
+      >
+        {w > 0 && h > 0 ? (
+          <svg width="100%" height="100%" viewBox={`0 0 ${w} ${h}`} style={{ position: "absolute", inset: 0, overflow: "visible" }} aria-hidden>
+            <path
+              d={look.panelOutline(w, h)}
+              fill="none"
+              stroke={colour}
+              strokeWidth={2.5}
+              strokeLinejoin="round"
+              style={{ filter: `drop-shadow(0 0 4px ${colour}) drop-shadow(0 0 10px ${colour})` }}
+            />
+          </svg>
+        ) : null}
+      </Box>
+    );
+  }
+  return (
       <Box
         {...common}
         sx={{
@@ -174,13 +240,6 @@ export function StatusLight({ capabilityId, kind, unit, look, placement }: Props
           ...blinkSx,
         }}
       />
-    );
-  }
-
-  return (
-    <Tooltip title={label} placement="top" arrow>
-      {node}
-    </Tooltip>
   );
 }
 
