@@ -94,13 +94,15 @@ type Props = {
    * between a panel's title tile and its reading tile (takes no space of its own).
    */
   placement: "inline" | "under-title" | "in-tile" | "frame" | "gap-bar";
+  /** For "frame": whether the box is the whole panel (follows the Look's panel outline) or a box inside it. */
+  edge?: "panel" | "box";
 };
 
 /**
  * One reading's status light. Draws nothing for readings without a light (no limits set,
  * switched off) and outside a dashboard.
  */
-export function StatusLight({ capabilityId, kind, unit, look, placement }: Props) {
+export function StatusLight({ capabilityId, kind, unit, look, placement, edge = "box" }: Props) {
   const status = useCapabilityStatus(capabilityId);
   const value = useLiveValue(capabilityId ?? "");
   const shown = capabilityId ? lightToShow(status, kind, value) : null;
@@ -180,7 +182,7 @@ export function StatusLight({ capabilityId, kind, unit, look, placement }: Props
   } else {
     // Glowing border: covers the box it sits in, so the reading inside stays clickable. A Look with
     // its own panel outline (e.g. HUD cut corners) gets a border that follows that outline.
-    return <GlowBorder common={common} colour={colour} blinkSx={blinkSx} />;
+    return <GlowBorder common={common} colour={colour} blinkSx={blinkSx} edge={edge} />;
   }
 
   return (
@@ -190,20 +192,32 @@ export function StatusLight({ capabilityId, kind, unit, look, placement }: Props
   );
 }
 
-function GlowBorder({ common, colour, blinkSx }: { common: Record<string, string>; colour: string; blinkSx: object }) {
+function GlowBorder({
+  common,
+  colour,
+  blinkSx,
+  edge,
+}: {
+  common: Record<string, string>;
+  colour: string;
+  blinkSx: object;
+  edge: "panel" | "box";
+}) {
   const look = useLook();
+  // The whole panel follows the Look's panel outline; a box inside it follows the Look's box outline.
+  const outline = edge === "panel" ? look.panelOutline : look.boxOutline;
   const ref = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState<[number, number]>([0, 0]);
   useLayoutEffect(() => {
     const el = ref.current;
-    if (!el || !look.panelOutline) return undefined;
+    if (!el || !outline) return undefined;
     const measure = () => setSize([el.clientWidth, el.clientHeight]);
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [look.panelOutline]);
-  if (look.panelOutline) {
+  }, [outline]);
+  if (outline) {
     const [w, h] = size;
     return (
       <Box
@@ -215,7 +229,7 @@ function GlowBorder({ common, colour, blinkSx }: { common: Record<string, string
         {w > 0 && h > 0 ? (
           <svg width="100%" height="100%" viewBox={`0 0 ${w} ${h}`} style={{ position: "absolute", inset: 0, overflow: "visible" }} aria-hidden>
             <path
-              d={look.panelOutline(w, h)}
+              d={outline(w, h)}
               fill="none"
               stroke={colour}
               strokeWidth={2.5}
@@ -245,6 +259,9 @@ function GlowBorder({ common, colour, blinkSx }: { common: Record<string, string
 
 const UNSET_LABEL = "No limits set yet. Open Edit → Status light to set them.";
 const UNSET_LINE = "rgba(141, 151, 168, 0.75)";
+// Same parts as a real light (so a Look's shapes apply); an outline drawn inside the shape.
+const UNSET_FILL = "rgba(141, 151, 168, 0.12)";
+const UNSET_EDGE = `inset 0 0 0 1.5px ${UNSET_LINE}`;
 
 /**
  * The empty "not set up" light: same shape and place as a real one, outline only, for a reading
@@ -253,7 +270,6 @@ const UNSET_LINE = "rgba(141, 151, 168, 0.75)";
 function UnsetLight({ look, placement }: { look: StatusLook; placement: Props["placement"] }) {
   const common = { role: "img", "aria-label": UNSET_LABEL, "data-nx-status-light": "unset" };
   const centred = placement === "in-tile" ? ({ position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)", zIndex: 2 } as const) : {};
-  const outline = `1.5px solid ${UNSET_LINE}`;
   let node;
   if (look.style === "glow") {
     return (
@@ -264,9 +280,11 @@ function UnsetLight({ look, placement }: { look: StatusLook; placement: Props["p
     );
   } else if (look.style === "dots") {
     node = (
-      <Box {...common} sx={{ display: "flex", gap: "6px", alignItems: "center", flex: "none", ...centred }}>
+      <Box {...common} data-nx-status-style="dots" sx={{ display: "flex", gap: "6px", alignItems: "center", flex: "none", ...COMPACT_DOTS, ...centred }}>
         {[0, 1, 2].map((i) => (
-          <Box key={i} sx={{ width: 15, height: 15, borderRadius: "50%", boxSizing: "border-box", border: outline }} />
+          <Box key={i} data-nx-dot={i + 1} sx={{ width: 15, height: 15, display: "flex" }}>
+            <Box data-nx-status-shape sx={{ flex: 1, borderRadius: "50%", bgcolor: UNSET_FILL, boxShadow: UNSET_EDGE }} />
+          </Box>
         ))}
       </Box>
     );
@@ -286,16 +304,11 @@ function UnsetLight({ look, placement }: { look: StatusLook; placement: Props["p
     node = (
       <Box
         {...common}
-        sx={{
-          width: placement === "inline" ? { xs: 32, sm: 46 } : 46,
-          height: 16,
-          boxSizing: "border-box",
-          borderRadius: "8px",
-          flex: "none",
-          border: outline,
-          ...centred,
-        }}
-      />
+        data-nx-status-style="pill"
+        sx={{ width: placement === "inline" ? { xs: 32, sm: 46 } : 46, height: 16, display: "flex", flex: "none", ...COMPACT, ...centred }}
+      >
+        <Box data-nx-status-shape sx={{ flex: 1, borderRadius: "8px", bgcolor: UNSET_FILL, boxShadow: UNSET_EDGE }} />
+      </Box>
     );
   }
   return (

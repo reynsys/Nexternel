@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.126
+
+- **Fixed:** status lights without limits keep the Look's shape; the glowing border of small boxes inside a panel no longer shows a square behind it.
+
 ## V5.2.125
 
 - **Status lights:** smaller in narrow panels so titles have more room; add-on Looks can give them their own shapes, and the glowing border follows the panel's own outline.

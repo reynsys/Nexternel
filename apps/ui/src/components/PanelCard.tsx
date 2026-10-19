@@ -191,9 +191,17 @@ export function PanelCard({
   const lightCap = heading.item ?? null;
   const titlePlacement = lightCap && showTitleTile ? lightPlacement(statusLook, "title") : null;
   const readingPlacement = lightCap ? lightPlacement(statusLook, "reading") : null;
-  const lightAt = (placement: ReturnType<typeof lightPlacement>) =>
+  const lightAt = (placement: ReturnType<typeof lightPlacement>, edge: "panel" | "box" = "box") =>
     placement && lightCap ? (
-      <StatusLight capabilityId={lightCap.id} kind={lightCap.kind} unit={lightCap.unit} look={statusLook} placement={placement} />
+      <StatusLight
+        capabilityId={lightCap.id}
+        kind={lightCap.kind}
+        unit={lightCap.unit}
+        look={statusLook}
+        placement={placement}
+        // The title light's glowing border goes round the whole panel; the reading's round its tile.
+        edge={edge}
+      />
     ) : null;
   return (
     <Paper
@@ -220,7 +228,7 @@ export function PanelCard({
       }}
     >
       <LookDecor slot="panel" />
-      {titlePlacement === "frame" ? lightAt("frame") : null}
+      {titlePlacement === "frame" ? lightAt("frame", "panel") : null}
       {toolbar}
       <Box
         data-nx-panel-body

@@ -197,6 +197,8 @@ export type UiLook = {
    * the panel's edge use it — the status light's glowing border — instead of a plain rectangle.
    */
   panelOutline?: (w: number, h: number) => string;
+  /** The outline of a box inside a panel (a reading tile, a mini panel) as an SVG path, for the same effects. */
+  boxOutline?: (w: number, h: number) => string;
   /** Decoration drawn behind each panel's content, sized to the panel (e.g. HUD frames). Same as decor.panel. */
   PanelFrame?: ComponentType;
   /** Decorations for the other places (see DecorSlot). Animations inside them follow the Animations setting. */
