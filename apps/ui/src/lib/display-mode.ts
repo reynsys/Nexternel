@@ -6,17 +6,18 @@ import { useSyncExternalStore } from "react";
  *   ?text=90|100|110|125   text size (default 110, readable from across the room)
  *   ?tabs=0                hide the room buttons
  *   ?rotate=<seconds>      move to the next dashboard every so often (at least 10 s)
+ *   ?autoscroll=0          panels with more than fits do not scroll by themselves
  *   ?light=0               keep every effect (default: light — no blur, glows or background
  *                          effects, so small computers such as a Raspberry Pi stay smooth)
  */
-export type DisplayOptions = { active: boolean; textSize: number; tabs: boolean; rotate: number; light: boolean };
+export type DisplayOptions = { active: boolean; textSize: number; tabs: boolean; rotate: number; light: boolean; autoscroll: boolean };
 
-export const NOT_DISPLAY: DisplayOptions = { active: false, textSize: 100, tabs: true, rotate: 0, light: false };
+export const NOT_DISPLAY: DisplayOptions = { active: false, textSize: 100, tabs: true, rotate: 0, light: false, autoscroll: false };
 const TEXT_SIZES = [90, 100, 110, 125];
 
 /** The account's wall display settings (Users → Edit → Wall display); `start` = dashboard id. */
-export type WallPrefs = { textSize: number; tabs: boolean; rotate: number; light: boolean; start: string | null };
-export const DEFAULT_WALL: WallPrefs = { textSize: 110, tabs: true, rotate: 0, light: true, start: null };
+export type WallPrefs = { textSize: number; tabs: boolean; rotate: number; light: boolean; autoscroll: boolean; start: string | null };
+export const DEFAULT_WALL: WallPrefs = { textSize: 110, tabs: true, rotate: 0, light: true, autoscroll: true, start: null };
 
 const rotation = (n: number) => (Number.isFinite(n) && Math.round(n) >= 10 ? Math.min(Math.round(n), 3600) : 0);
 
@@ -27,6 +28,7 @@ export function normalizeWallPrefs(raw: unknown): WallPrefs {
     tabs: o.tabs !== false,
     rotate: typeof o.rotate === "number" ? rotation(o.rotate) : 0,
     light: o.light !== false,
+    autoscroll: o.autoscroll !== false,
     start: typeof o.start === "string" && /^[A-Za-z0-9-]{1,64}$/.test(o.start) ? o.start : null,
   };
 }
@@ -41,6 +43,7 @@ export function parseDisplayOptions(search: string, wall: WallPrefs = DEFAULT_WA
     tabs: q.has("tabs") ? q.get("tabs") !== "0" : wall.tabs,
     rotate: q.has("rotate") ? rotation(Number(q.get("rotate"))) : wall.rotate,
     light: q.has("light") ? q.get("light") !== "0" : wall.light,
+    autoscroll: q.has("autoscroll") ? q.get("autoscroll") !== "0" : wall.autoscroll,
   };
 }
 

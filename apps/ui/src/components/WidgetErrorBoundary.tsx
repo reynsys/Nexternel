@@ -6,6 +6,8 @@ type Props = {
   children: ReactNode;
   widgetId?: string;
   widgetType?: string;
+  /** When this changes (e.g. the panel's settings), a panel that failed is drawn again. */
+  resetKey?: string;
 };
 
 type State = { error: Error | null };
@@ -16,6 +18,11 @@ export class WidgetErrorBoundary extends Component<Props, State> {
 
   static getDerivedStateFromError(error: Error): State {
     return { error };
+  }
+
+  componentDidUpdate(prev: Props) {
+    // A fault is often tied to one set of settings: new settings get a fresh try.
+    if (this.state.error && prev.resetKey !== this.props.resetKey) this.setState({ error: null });
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
@@ -29,7 +36,8 @@ export class WidgetErrorBoundary extends Component<Props, State> {
       return (
         <Alert severity="warning" sx={{ m: 1, py: 0.5 }}>
           <Typography variant="caption" component="div">
-            Widget failed: {this.state.error.message}
+            This panel could not be drawn ({this.state.error.message}). It tries again when its settings change; the
+            details are in Settings → System → Diagnostic report.
           </Typography>
         </Alert>
       );

@@ -41,9 +41,9 @@ test("a Look button style id is kept when well formed", () => {
 });
 
 test("wall display settings are kept within the offered choices", () => {
-  assert.deepEqual(themePrefsFromDb({ ...base }).wall, { textSize: 110, tabs: true, rotate: 0, light: true, start: null });
-  assert.deepEqual(parseThemePrefsInput({ ...base, wall: { textSize: 125, tabs: false, rotate: 60, light: false, start: "abc-123" } })?.wall, {
-    textSize: 125, tabs: false, rotate: 60, light: false, start: "abc-123",
+  assert.deepEqual(themePrefsFromDb({ ...base }).wall, { textSize: 110, tabs: true, rotate: 0, light: true, autoscroll: true, start: null });
+  assert.deepEqual(parseThemePrefsInput({ ...base, wall: { textSize: 125, tabs: false, rotate: 60, light: false, autoscroll: false, start: "abc-123" } })?.wall, {
+    textSize: 125, tabs: false, rotate: 60, light: false, autoscroll: false, start: "abc-123",
   });
   assert.equal(parseThemePrefsInput({ ...base, wall: { rotate: 3, start: "<x>" } })?.wall?.rotate, 0);
   assert.equal(parseThemePrefsInput({ ...base, wall: { start: "<x>" } })?.wall?.start, null);

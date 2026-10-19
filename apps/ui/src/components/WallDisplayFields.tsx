@@ -74,6 +74,17 @@ export function WallDisplayFields({ value, onChange }: { value: WallPrefs | unde
       </div>
       <FormControlLabel control={<Switch checked={wall.tabs} onChange={(e) => set({ tabs: e.target.checked })} />} label="Show the room buttons" />
       <FormControlLabel
+        control={<Switch checked={wall.autoscroll} onChange={(e) => set({ autoscroll: e.target.checked })} />}
+        label={
+          <Typography variant="body2">
+            Autoscroll{" "}
+            <Typography component="span" variant="caption" color="text.secondary">
+              — panels with more than fits slowly scroll down, pause and return to the top
+            </Typography>
+          </Typography>
+        }
+      />
+      <FormControlLabel
         control={<Switch checked={wall.light} onChange={(e) => set({ light: e.target.checked })} />}
         label={
           <Typography variant="body2">

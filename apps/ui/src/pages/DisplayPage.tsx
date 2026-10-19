@@ -6,6 +6,7 @@ import { api } from "../api";
 import { dashboardPaths } from "../lib/dashboard-path";
 import { NOT_DISPLAY, displayPath, normalizeWallPrefs, parseDisplayOptions, setDisplayMode, useDisplayMode } from "../lib/display-mode";
 import { useSkin } from "../skins/SkinProvider";
+import { startAutoScroll } from "../lib/auto-scroll";
 
 /**
  * Display mode (/display, /display/<name>): the dashboard alone, full screen, for wall displays and
@@ -62,6 +63,9 @@ export function DisplayPage() {
       window.removeEventListener("keydown", onKey);
     };
   }, [navigate]);
+
+  // Autoscroll: panels with more than fits scroll slowly by themselves (Wall display setting).
+  useEffect(() => (display.active && display.autoscroll ? startAutoScroll() : undefined), [display.active, display.autoscroll]);
 
   // Optional: move to the next dashboard every `rotate` seconds, in tab order.
   useEffect(() => {

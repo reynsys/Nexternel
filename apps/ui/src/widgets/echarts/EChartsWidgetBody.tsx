@@ -185,6 +185,8 @@ export function EChartsWidgetBody({
       )}
       {chartReady && (
         <ReactECharts
+          // A different chart style starts from a fresh chart (no blending of one style into another).
+          key={preset.id}
           theme={initTheme}
           option={option}
           style={{ width: "100%", height: "100%", display: "block", flex: 1, minHeight: 0 }}

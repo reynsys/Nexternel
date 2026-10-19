@@ -29,7 +29,7 @@ export type ThemePrefsDto = {
 /** The notification bell for this person: when it shows and where (Settings → Appearance). */
 export type BellPrefs = { show: "always" | "new" | "never"; position: "menu" | "top" };
 
-export type WallPrefs = { textSize: number; tabs: boolean; rotate: number; light: boolean; start: string | null };
+export type WallPrefs = { textSize: number; tabs: boolean; rotate: number; light: boolean; autoscroll: boolean; start: string | null };
 const WALL_TEXT = new Set([90, 100, 110, 125]);
 function wallField(raw: unknown): WallPrefs {
   const o = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
@@ -39,6 +39,7 @@ function wallField(raw: unknown): WallPrefs {
     tabs: o.tabs !== false,
     rotate: rotate >= 10 ? Math.min(rotate, 3600) : 0,
     light: o.light !== false,
+    autoscroll: o.autoscroll !== false,
     start: typeof o.start === "string" && /^[A-Za-z0-9-]{1,64}$/.test(o.start) ? o.start : null,
   };
 }

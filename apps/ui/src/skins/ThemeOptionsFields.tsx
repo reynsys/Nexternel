@@ -394,6 +394,8 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
                 <IconButton
                   aria-label={s.label}
                   aria-pressed={selected}
+                  // A colour swatch shows its colour: Looks do not restyle it as a button.
+                  data-nx-swatch=""
                   onClick={() => set({ primary: s.color })}
                   sx={{
                     width: 32,

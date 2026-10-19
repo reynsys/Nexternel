@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.124
+
+- **Autoscroll on wall displays:** panels with more content than fits slowly scroll down, pause and return to the top — switch it in **Users → Edit → Wall display → Autoscroll**.
+- **Fixed:** a chart or gauge could show an error after its style was changed until the page was refreshed; charts now start fresh with a new style, and a panel that fails is drawn again when its settings change.
+
 ## V5.2.123
 
 - **Easier panel resizing:** the resize corner is now a clear round handle with an arrow; while you drag it near the bottom of the screen the page scrolls by itself so panels low on the page can be made taller; the size preview is striped in your accent colour so it stands out on any background.

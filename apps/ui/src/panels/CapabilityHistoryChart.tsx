@@ -124,6 +124,7 @@ function CapabilityHistoryChartCanvas({
 
   return (
     <ReactECharts
+          key={preset.id}
       theme={initTheme}
       option={option}
       style={{ width: "100%", height: "100%", display: "block", flex: 1, minHeight: 0 }}

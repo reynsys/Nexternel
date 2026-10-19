@@ -272,7 +272,7 @@ export function PanelCard({
               switchStyle,
             }}
           >
-            <WidgetErrorBoundary widgetId={w.id} widgetType={w.type}>
+            <WidgetErrorBoundary widgetId={w.id} widgetType={w.type} resetKey={`${w.type}:${JSON.stringify(w.config ?? {})}`}>
               <PanelHost
                 panel={w}
                 capabilities={capabilities}
