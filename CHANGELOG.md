@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.134
+
+- After an update, every screen (wall displays too) now loads the new version instead of an old copy.
+- Less empty space under the dashboard when the Dock is used.
+
 ## V5.2.133
 
 - **Room menu is now called Dashboard Menu** (Settings → Appearance).

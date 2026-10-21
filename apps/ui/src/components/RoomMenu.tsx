@@ -69,6 +69,8 @@ function RoomTile({ d, active, onGo, size, label }: { d: DashboardSummary; activ
 /** A floating island centred under the dashboard; the room under the pointer grows (like a Mac dock). */
 const TILE = 46;
 const GROW = 0.22; // the most a room grows; the dock keeps this much room above its rooms
+/** The dock's own height on wide screens: room for growing, the rooms, padding and edge. */
+const DOCK_HEIGHT = Math.ceil(TILE * GROW) + 10 + TILE + 10 + 2;
 function Dock({ dashboards, activeId, onGo, tools, loading, error }: Props) {
   const dock = useRef<HTMLDivElement>(null);
   const [centre, setCentre] = useState<number | null>(null);
@@ -146,8 +148,9 @@ function Dock({ dashboards, activeId, onGo, tools, loading, error }: Props) {
         <Box sx={{ width: "1px", alignSelf: "stretch", bgcolor: "divider", mx: 0.5, flexShrink: 0 }} />
         {tools("row", TILE)}
       </Box>
-      {/* Room at the end of the page so the dock never covers the last panel. */}
-      <Box sx={{ height: { xs: 96, md: 96 }, m: "0 !important", order: 99 }} />
+      {/* Room at the end of the page so the dock never covers the last panel: the dock's height
+          and its gap, less the page's own bottom space (40px on wide screens). */}
+      <Box sx={{ height: { xs: 96, md: DOCK_HEIGHT + 14 + 8 - 40 }, m: "0 !important", order: 99 }} />
     </>
   );
 }
