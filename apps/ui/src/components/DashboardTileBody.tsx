@@ -46,7 +46,10 @@ export const panelScrollSx = {
   overflowX: "hidden",
   overflowY: "auto",
   scrollbarWidth: "thin",
-  overscrollBehavior: "contain",
+  // The scrollbar shows only while the pointer is on the panel; the fade already tells there is more.
+  scrollbarColor: "transparent transparent",
+  "&:hover": { scrollbarColor: "rgba(128,128,128,.55) transparent" },
+  // No overscroll lock: once the panel's own content ends, the wheel scrolls the page again.
   "--nx-more": "0px",
   maskImage: "linear-gradient(to bottom, #000 calc(100% - var(--nx-more)), transparent)",
   "@supports (animation-timeline: scroll())": { animation: "nx-more-below linear both", animationTimeline: "scroll(self)" },

@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { Box, Button, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import { Box, Button, Stack, Tooltip, Typography } from "@mui/material";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import type { DashboardSummary } from "../api";
@@ -23,7 +23,7 @@ export const RAIL_FOLDED = 60;
 const RAIL_KEY = "nx-rail-open";
 
 /**
- * The room menu as a dock, a right rail or a rooms panel (the top tabs are DashboardTabBar).
+ * The room menu as a dock or a right rail (the top tabs are DashboardTabBar).
  * Every room is a button: the open one filled, like everywhere else.
  */
 export function RoomMenu(props: Props) {
@@ -152,7 +152,13 @@ function Dock({ dashboards, activeId, onGo, tools, loading, error }: Props) {
   );
 }
 
-/** A column on the right of the screen with all rooms; folds to icons. */
+/** Gap between the floating rail and the right edge of the screen. */
+const RAIL_EDGE = 14;
+
+/**
+ * A floating island on the right, centred top to bottom; it grows with the rooms (and scrolls when
+ * they no longer fit). Fold button on top, rooms in the middle, the bell and Dashboard Options at the bottom.
+ */
 function Rail({ dashboards, activeId, onGo, tools }: Props) {
   const [open, setOpen] = useState(() => {
     try {
@@ -168,42 +174,55 @@ function Rail({ dashboards, activeId, onGo, tools }: Props) {
     } catch {
       /* per-browser convenience only */
     }
-    document.documentElement.style.setProperty("--nx-rail-width", `${width}px`);
+    // The page keeps the rail's width plus its gap free on the right.
+    document.documentElement.style.setProperty("--nx-rail-width", `${width + RAIL_EDGE}px`);
     return () => {
       document.documentElement.style.removeProperty("--nx-rail-width");
     };
   }, [open, width]);
+  const SIZE = 42;
   return (
     <Box
       data-nx-room-menu="rail"
-      data-nx-role="chrome"
       sx={(t) => ({
         position: "fixed",
         zIndex: t.zIndex.appBar,
-        top: 0,
-        right: 0,
-        bottom: 0,
+        top: "50%",
+        right: RAIL_EDGE,
+        transform: "translateY(-50%)",
         width,
+        maxHeight: `calc(100vh - ${RAIL_EDGE * 2}px)`,
         display: "flex",
         flexDirection: "column",
         gap: "var(--nx-list-gap)",
         p: 1,
-        pt: 1.5,
-        borderLeft: `1px solid ${t.palette.divider}`,
-        bgcolor: "background.paper",
-        overflowY: "auto",
+        borderRadius: t.nx.radiusCard,
+        border: t.nx.popupBorder || `1px solid ${t.palette.divider}`,
+        bgcolor: t.nx.popupFill || "background.paper",
+        backdropFilter: "blur(14px)",
+        boxShadow: t.nx.popupShadow || "0 8px 30px rgba(0,0,0,.35)",
         transition: "width .2s ease",
       })}
     >
-      <Stack direction={open ? "row" : "column"} alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
-        <IconButton size="small" aria-label={open ? "Fold the room menu" : "Open the room menu"} onClick={() => setOpen((o) => !o)}>
+      <Tooltip title={open ? "Fold the room menu" : "Open the room menu"} placement="left">
+        <Button
+          variant="outlined"
+          aria-label={open ? "Fold the room menu" : "Open the room menu"}
+          onClick={() => setOpen((o) => !o)}
+          sx={{ minWidth: SIZE, width: SIZE, height: SIZE / 1.4, p: 0, alignSelf: open ? "flex-end" : "center", flexShrink: 0 }}
+        >
           {open ? <ChevronRightIcon fontSize="small" /> : <ChevronLeftIcon fontSize="small" />}
-        </IconButton>
-        {tools(open ? "row" : "column", 40)}
+        </Button>
+      </Tooltip>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: "var(--nx-list-gap)", minHeight: 0, overflowY: "auto", scrollbarWidth: "none" }}>
+        {dashboards.map((d) => (
+          <RoomTile key={d.id} d={d} active={d.id === activeId} onGo={() => onGo(d)} size={SIZE} label={open ? "beside" : "none"} />
+        ))}
+      </Box>
+      <Box sx={{ height: "1px", bgcolor: "divider", my: 0.5, flexShrink: 0 }} />
+      <Stack alignItems={open ? "flex-end" : "center"} sx={{ flexShrink: 0 }}>
+        {tools(open ? "row" : "column", SIZE)}
       </Stack>
-      {dashboards.map((d) => (
-        <RoomTile key={d.id} d={d} active={d.id === activeId} onGo={() => onGo(d)} size={42} label={open ? "beside" : "none"} />
-      ))}
     </Box>
   );
 }

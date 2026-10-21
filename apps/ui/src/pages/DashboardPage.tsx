@@ -917,7 +917,10 @@ function DashboardPageContent() {
 
   return (
     <DashboardErrorBoundary>
-    <Stack spacing={2} sx={{ mt: -1, pr: roomNav === "rail" ? "var(--nx-rail-width, 0px)" : 0, transition: "padding .2s ease" }}>
+    <Stack spacing={2} sx={{
+      // Top tabs line up with the menu's title row ("!important" beats the page column's spacing reset).
+      mt: roomNav === "tabs" && !display.active ? "-12px !important" : 0,
+      pr:roomNav === "rail" ? "var(--nx-rail-width, 0px)" : 0, transition: "padding .2s ease" }}>
       {pageLoading && (
         <Stack alignItems="center" justifyContent="center" sx={{ py: 8 }} spacing={1}>
           <CircularProgress size={28} />

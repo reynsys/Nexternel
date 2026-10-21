@@ -2,6 +2,12 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.131
+
+- The page scrolls again with the mouse pointer on a panel; panel scrollbars only show while the pointer is on the panel.
+- **New Right rail:** a floating menu on the right, centred, growing with the number of rooms; Dashboard Options sits apart at the bottom.
+- **Top tabs** sit higher, in line with the menu title, and the Dashboard Options cog is a button like the tabs.
+
 ## V5.2.130
 
 - **All dashboards now show at most 5 panels across** — no need to create a new dashboard. To switch a dashboard to 4 across, use **Panels across** in the Dashboard Options bar.

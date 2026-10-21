@@ -1,7 +1,7 @@
 import { dashboardPath } from "../lib/dashboard-path";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Button, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import { Box, Button, Stack, Tooltip, Typography } from "@mui/material";
 import { LookDecor } from "../skins/looks/LookDecor";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import { api, type DashboardSummary } from "../api";
@@ -227,15 +227,16 @@ export function DashboardTabBar({
       ) : null}
       {canEdit && (
         <Tooltip title="Dashboard Options">
-          <IconButton
+          <Button
             size="small"
-            color={editMode ? "primary" : "default"}
+            variant={editMode ? "contained" : "outlined"}
             aria-label="Dashboard Options"
             aria-pressed={editMode}
             onClick={() => onDashboardOptions?.()}
+            sx={{ minWidth: 34, width: 34, height: 34, p: 0, flexShrink: 0 }}
           >
             <SettingsOutlinedIcon fontSize="small" />
-          </IconButton>
+          </Button>
         </Tooltip>
       )}
       {/* Last, so the row's spacing does not shift the tabs; "!important" beats the row's gap margin. */}
