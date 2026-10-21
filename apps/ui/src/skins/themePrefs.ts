@@ -16,6 +16,7 @@ import {
 import { lookIdFromPrefs } from "../lib/look-choice";
 import { resolveLook } from "./looks/registry";
 import { normalizeWallPrefs, type WallPrefs } from "../lib/display-mode";
+import { normalizeRoomNav, type RoomNav } from "../lib/room-nav";
 
 export const THEME_PREFS_KEY = "nexternel.themePrefs";
 
@@ -35,6 +36,8 @@ export type ThemePrefs = {
   lookFont?: string;
   /** The chosen button style of a Look that offers several (id); unset = the Look's first. */
   lookButtons?: string;
+  /** Where the room menu sits (lib/room-nav.ts). */
+  roomNav?: RoomNav;
   /** Size of all text in per cent (see TEXT_SIZES). */
   textSize?: number;
   /**
@@ -215,6 +218,7 @@ export function normalizeThemePrefs(raw: unknown): ThemePrefs {
     lookId,
     motion: parsed.motion !== false,
     textSize: normalizeTextSize(parsed.textSize),
+    roomNav: normalizeRoomNav(parsed.roomNav),
     ...(typeof parsed.lookFont === "string" && /^[a-z0-9][a-z0-9-]{0,39}$/.test(parsed.lookFont) ? { lookFont: parsed.lookFont } : {}),
     ...(typeof parsed.lookButtons === "string" && /^[a-z0-9][a-z0-9-]{0,39}$/.test(parsed.lookButtons) ? { lookButtons: parsed.lookButtons } : {}),
     gradientId,
@@ -282,6 +286,7 @@ export function toAccountThemePrefs(prefs: ThemePrefs, skinId: string) {
     ...(prefs.lookFont ? { lookFont: prefs.lookFont } : {}),
     ...(prefs.lookButtons ? { lookButtons: prefs.lookButtons } : {}),
     textSize: normalizeTextSize(prefs.textSize),
+    roomNav: normalizeRoomNav(prefs.roomNav),
     gradientId: prefs.gradientId ?? GRADIENT_NONE_ID,
     solidContentPanels: Boolean(prefs.solidContentPanels),
     effectId: normalizeEffectId(prefs.effectId),

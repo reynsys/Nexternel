@@ -127,6 +127,7 @@ export function UsersPage() {
       lookFont: theme.lookFont,
       lookButtons: theme.lookButtons,
       textSize: theme.textSize,
+      roomNav: theme.roomNav,
       gradientId: theme.gradientId,
       solidContentPanels: theme.solidContentPanels,
       effectId: theme.effectId,

@@ -12,6 +12,8 @@ export type ThemePrefsDto = {
   lookFont?: string;
   /** The chosen button style of a Look that offers several (its id). */
   lookButtons?: string;
+  /** Where the room menu sits: dock (default), tabs, rail, panel. */
+  roomNav?: string;
   /** Size of all text in per cent (90, 100, 110 or 125). */
   textSize?: number;
   gradientId?: string;
@@ -245,6 +247,7 @@ export function parseThemePrefsInput(
     motion: o.motion !== false,
     ...lookFontField(o),
     textSize: textSizeField(o),
+    roomNav: ["dock", "tabs", "rail", "panel"].includes(o.roomNav as string) ? (o.roomNav as string) : "dock",
     gradientId: normalizeGradientId(o.gradientId),
     solidContentPanels: Boolean(o.solidContentPanels),
     ...effectFields(o),
@@ -273,6 +276,7 @@ export function themePrefsFromDb(raw: unknown): ThemePrefsDto {
     motion: o.motion !== false,
     ...lookFontField(o),
     textSize: textSizeField(o),
+    roomNav: ["dock", "tabs", "rail", "panel"].includes(o.roomNav as string) ? (o.roomNav as string) : "dock",
     gradientId: normalizeGradientId(o.gradientId),
     solidContentPanels: Boolean(o.solidContentPanels),
     ...effectFields(o),

@@ -253,6 +253,7 @@ apps/ui/src/components/PanelMotionField.tsx
 apps/ui/src/components/PanelNotice.tsx
 apps/ui/src/components/PanelTile.tsx
 apps/ui/src/components/PanelTitleFields.tsx
+apps/ui/src/components/RoomMenu.tsx
 apps/ui/src/components/SectionGrid.tsx
 apps/ui/src/components/SegmentButtonNav.tsx
 apps/ui/src/components/SlotBindingFields.tsx
@@ -366,6 +367,8 @@ apps/ui/src/lib/panel-size.test.ts
 apps/ui/src/lib/panel-size.ts
 apps/ui/src/lib/panel-title-icon.ts
 apps/ui/src/lib/permissions.ts
+apps/ui/src/lib/room-nav.test.ts
+apps/ui/src/lib/room-nav.ts
 apps/ui/src/lib/slot-bindings.ts
 apps/ui/src/lib/status-light-show.test.ts
 apps/ui/src/lib/status-light-show.ts

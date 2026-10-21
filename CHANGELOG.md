@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.127
+
+- **New room menu:** choose in **Settings → Appearance → Room menu** where your rooms are — a **Dock** at the bottom (new default; the room under the pointer grows, like on a Mac), **Top tabs** as before, a **Right rail** that folds away, or a **Rooms panel** beside the dashboard. Phones use the dock.
+
 ## V5.2.126
 
 - **Fixed:** status lights without limits keep the Look's shape; the glowing border of small boxes inside a panel no longer shows a square behind it.

@@ -123,6 +123,8 @@ import {
 import { ButtonRow } from "../components/ButtonRow";
 import { useLiveChanges } from "../lib/live-changes";
 import { displayPath, useDisplayMode } from "../lib/display-mode";
+import { useSkin } from "../skins/SkinProvider";
+import { normalizeRoomNav, shownRoomNav } from "../lib/room-nav";
 
 function sectionContentSummary(panels: RuntimePanelInstance[]): string {
   const count = panels.length;
@@ -139,6 +141,8 @@ function DashboardPageContent() {
   const [bootError, setBootError] = useState<string | null>(null);
   const { permissions, isAdmin } = useShellAuth();
   const display = useDisplayMode();
+  const { themePrefs: navPrefs } = useSkin();
+  const roomNav = shownRoomNav(normalizeRoomNav(navPrefs.roomNav), useMediaQuery(useTheme().breakpoints.down("md")));
   // Display mode only shows: no editing there.
   const canEditDashboards = !display.active && hasPermission(
     permissions,
@@ -882,7 +886,7 @@ function DashboardPageContent() {
 
   return (
     <DashboardErrorBoundary>
-    <Stack spacing={2}>
+    <Stack spacing={2} sx={{ pr: roomNav === "rail" ? "var(--nx-rail-width, 0px)" : 0, transition: "padding .2s ease" }}>
       {pageLoading && (
         <Stack alignItems="center" justifyContent="center" sx={{ py: 8 }} spacing={1}>
           <CircularProgress size={28} />
@@ -896,8 +900,9 @@ function DashboardPageContent() {
       )}
       {!pageLoading && !bootError && (
       <>
-      {display.active && !display.tabs ? null : (
+      {(display.active && !display.tabs) || roomNav === "panel" ? null : (
       <DashboardTabBar
+        variant={roomNav}
         activeId={dashboardId ?? undefined}
         refreshKey={tabRefreshKey}
         editMode={editMode}
@@ -1050,6 +1055,21 @@ function DashboardPageContent() {
         </Stack>
       )}
 
+      <Box sx={roomNav === "panel" ? { display: "grid", gridTemplateColumns: "200px minmax(0, 1fr)", gap: 2, alignItems: "start" } : undefined}>
+      {roomNav === "panel" ? (
+        <DashboardTabBar
+          variant="panel"
+          activeId={dashboardId ?? undefined}
+          refreshKey={tabRefreshKey}
+          editMode={editMode}
+          canEdit={canEditDashboards}
+          canClearNotifications={hasPermission(permissions, "manageUsers", isAdmin)}
+          onDashboardOptions={() => {
+            if (!canEditDashboards) return;
+            if (!editMode) enterEditMode();
+          }}
+        />
+      ) : null}
       <Box
         sx={{
           display: "grid",
@@ -1274,6 +1294,7 @@ function DashboardPageContent() {
             </Box>
           );
         })}
+      </Box>
       </Box>
 
       <Popover

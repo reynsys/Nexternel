@@ -283,6 +283,8 @@ export type UserThemePrefs = {
   lookFont?: string;
   /** The chosen button style of a Look that offers several */
   lookButtons?: string;
+  /** Where the room menu sits */
+  roomNav?: import("./lib/room-nav").RoomNav;
   /** Size of all text in per cent */
   textSize?: number;
   /** Page gradient id, or `"none"` for solid background */

@@ -51,6 +51,7 @@ import { useReducedMotion } from "./effects/BackgroundEffects";
 import type { UiSkin } from "./types";
 import { choiceSx, insetSx } from "./surfaceStyles";
 import { ButtonRow } from "../components/ButtonRow";
+import { ROOM_NAVS } from "../lib/room-nav";
 
 type Props = {
   themePrefs: ThemePrefs;
@@ -280,6 +281,34 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
               </ToggleButton>
             ))}
           </ToggleButtonGroup>
+        </Box>
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
+            Room menu{" "}
+            <Typography component="span" variant="caption" color="text.secondary">
+              — where the rooms (dashboards) are. Phones always use the dock.
+            </Typography>
+          </Typography>
+          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 1 }}>
+            {ROOM_NAVS.map((n) => {
+              const selected = (themePrefs.roomNav ?? "dock") === n.value;
+              return (
+                <ButtonBase
+                  key={n.value}
+                  aria-pressed={selected}
+                  onClick={() => set({ roomNav: n.value })}
+                  sx={[{ display: "grid", justifyItems: "start", textAlign: "left", gap: 0.25, px: 1.25, py: 1 }, choiceSx(selected)]}
+                >
+                  <Typography variant="body2" fontWeight={600}>
+                    {n.label}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {n.description}
+                  </Typography>
+                </ButtonBase>
+              );
+            })}
+          </Box>
         </Box>
         <FormControlLabel
           sx={{ mt: 1 }}

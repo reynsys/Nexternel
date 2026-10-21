@@ -48,3 +48,9 @@ test("wall display settings are kept within the offered choices", () => {
   assert.equal(parseThemePrefsInput({ ...base, wall: { rotate: 3, start: "<x>" } })?.wall?.rotate, 0);
   assert.equal(parseThemePrefsInput({ ...base, wall: { start: "<x>" } })?.wall?.start, null);
 });
+
+test("the room menu is one of the offered places, else the dock", () => {
+  assert.equal(themePrefsFromDb({ ...base }).roomNav, "dock");
+  assert.equal(parseThemePrefsInput({ ...base, roomNav: "rail" })?.roomNav, "rail");
+  assert.equal(parseThemePrefsInput({ ...base, roomNav: "x" })?.roomNav, "dock");
+});

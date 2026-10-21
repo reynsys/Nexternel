@@ -10,6 +10,8 @@ import { NotificationBell } from "./NotificationBell";
 import { useSkin } from "../skins/SkinProvider";
 import { useLiveChanges } from "../lib/live-changes";
 import { displayPath, useDisplayMode } from "../lib/display-mode";
+import type { RoomNav } from "../lib/room-nav";
+import { RoomMenu } from "./RoomMenu";
 
 type Props = {
   activeId?: string;
@@ -21,6 +23,8 @@ type Props = {
   onDashboardOptions?: () => void;
   /** May clear all notifications (bell beside the cog). */
   canClearNotifications?: boolean;
+  /** Which form to draw (lib/room-nav.ts); the page decides from the person's choice and the screen. */
+  variant?: RoomNav;
 };
 
 /**
@@ -34,6 +38,7 @@ export function DashboardTabBar({
   canEdit = true,
   onDashboardOptions,
   canClearNotifications = false,
+  variant = "tabs",
 }: Props) {
   const { skin } = useSkin();
   const display = useDisplayMode();
@@ -74,6 +79,43 @@ export function DashboardTabBar({
       cancelled = true;
     };
   }, [refreshKey, liveKey]);
+
+  const go = (d: DashboardSummary) => {
+    const path = dashboardPath(d, dashboards);
+    navigate(display.active ? displayPath(path) + window.location.search : path);
+  };
+  // The bell and the Dashboard Options cog travel with the room menu.
+  const tools = (dir: "row" | "column") => (
+    <Stack direction={dir} alignItems="center" spacing={0.5} sx={{ flexShrink: 0 }}>
+      {skin.id === "mui-dashboard" && !display.active ? <NotificationBell place="dashboard" canClear={canClearNotifications} /> : null}
+      {canEdit && (
+        <Tooltip title="Dashboard Options">
+          <IconButton
+            size="small"
+            color={editMode ? "primary" : "default"}
+            aria-label="Dashboard Options"
+            aria-pressed={editMode}
+            onClick={() => onDashboardOptions?.()}
+          >
+            <SettingsOutlinedIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
+    </Stack>
+  );
+  if (variant !== "tabs") {
+    return (
+      <RoomMenu
+        variant={variant}
+        dashboards={dashboards}
+        activeId={activeId}
+        loading={loading}
+        error={error}
+        onGo={go}
+        tools={tools}
+      />
+    );
+  }
 
   return (
     <Stack
