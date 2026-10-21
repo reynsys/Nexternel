@@ -31,7 +31,7 @@ test("clampLayoutToPanelLimits enforces platform minimum during resize", () => {
     h: 1,
   });
   assert.equal(clamped.w, 2);
-  assert.equal(clamped.h, 2);
+  assert.equal(clamped.h, 1); // switches may be half height
 });
 
 test("enforcePanelPlacement upgrades legacy persisted mins", () => {
@@ -98,14 +98,14 @@ test("panelSectionLayoutMatches compares persisted panel layout", () => {
   assert.equal(panelSectionLayoutMatches(panels, moved), false);
 });
 
-test("one status reading keeps the shared 2x2 floor", () => {
+test("one status reading may be half height (2x1)", () => {
   const floor = panelItemPlacementFloor({
     id: "s1",
     type: "panel.status",
     layout: { i: "s1", x: 0, y: 0, w: 4, h: 2 },
     config: { panelScope: { contentMode: "manual", capabilityIds: ["co2"] } },
   });
-  assert.deepEqual(floor, { minW: 2, minH: 2 });
+  assert.deepEqual(floor, { minW: 2, minH: 1 });
 });
 
 test("several status readings cannot shrink below one cell each", () => {

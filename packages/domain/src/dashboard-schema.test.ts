@@ -112,3 +112,10 @@ test("a section's hidden bar (showTitle: false) is kept when saved and loaded", 
   assert.equal(migrated.sections[0]?.showTitle, false);
   assert.equal(migrated.sections[1]?.showTitle, undefined);
 });
+
+test("a dashboard's panels-across setting (gridCols) is kept; new dashboards are 5 across", () => {
+  const doc = { schemaVersion: 3, name: "T", gridCols: 10, sections: [{ id: "s", title: "S", order: 0, panels: [] }] };
+  assert.equal((migrateDashboardDocument(doc) as { gridCols?: number }).gridCols, 10);
+  assert.equal((migrateDashboardDocument({ ...doc, gridCols: 7 }) as { gridCols?: number }).gridCols, undefined);
+  assert.equal((migrateDashboardDocument({ ...doc, gridCols: undefined }) as { gridCols?: number }).gridCols, undefined);
+});

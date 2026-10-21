@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { flowColumnsForWidth, flowCommit, flowGridForWidth, flowLayout, type FlowPanel } from "./flow-layout.ts";
+import {
+  rearrangeForColumns, flowColumnsForWidth, flowCommit, flowGridForWidth, flowLayout, type FlowPanel } from "./flow-layout.ts";
 
 const p = (i: string, x: number, y: number, w: number, h: number): FlowPanel => ({ i, x, y, w, h });
 
@@ -20,11 +21,11 @@ const DASHBOARDS: Record<string, FlowPanel[]> = {
 const pos = (l: { i: string; x: number; y: number; w: number; h: number }[]) =>
   Object.fromEntries(l.map((it) => [it.i, [it.x, it.y, it.w, it.h]]));
 
-test("column count follows the screen: phone 4, tablet 6, laptop 12, 1080p 14, 1440p 20", () => {
+test("column count follows the screen: phone 4, tablet 6, laptop 10, 1080p 14, 1440p 20 (16 px gaps)", () => {
   assert.equal(flowColumnsForWidth(316), 4); // phone section width
   assert.equal(flowColumnsForWidth(746), 6); // tablet portrait
   assert.equal(flowColumnsForWidth(850), 6); // tablet landscape
-  assert.equal(flowColumnsForWidth(1290), 12); // this laptop
+  assert.equal(flowColumnsForWidth(1290), 10); // this laptop
   assert.equal(flowColumnsForWidth(1590), 14); // 1080p desktop
   assert.equal(flowColumnsForWidth(2230), 20); // 1440p screen
   assert.equal(flowColumnsForWidth(9000), 24);
@@ -118,13 +119,29 @@ test("grid geometry: laptops keep their layout exactly, wide screens grow square
   // This laptop's real section width (measured on the live dashboard at 1600 px).
   const laptop = flowGridForWidth(1278);
   assert.deepEqual([laptop.cols, laptop.gridWidth, laptop.rowHeight], [12, 1278, 106.5]); // = before (width / 12)
-  for (const w of [852, 950, 996, 1100, 1366 - 300, 1590]) {
+  for (const w of [848, 950, 996, 1100, 1366 - 300, 1590]) {
     const g = flowGridForWidth(w);
     assert.deepEqual([g.cols, g.gridWidth, g.rowHeight], [12, w, w / 12], `width ${w}`);
   }
   const qhd = flowGridForWidth(2230);
   assert.equal(qhd.cols, 12);
-  assert.equal(qhd.gridWidth, 12 * (128 + 12) - 12); // capped at 128 px squares
-  assert.equal(flowGridForWidth(851).cols, 6); // just under (tablet landscape): flows
+  assert.equal(qhd.gridWidth, 12 * (128 + 16) - 16); // capped at 128 px squares, 16 px gaps
+  assert.equal(flowGridForWidth(847).cols, 6); // just under (tablet landscape): flows
   assert.deepEqual([flowGridForWidth(316).cols, flowGridForWidth(316).gridWidth], [4, 316]); // phone
+});
+
+test("fewer panels across: bigger squares, the same overall width limit, and the arrangement repacked in order", () => {
+  const g10 = flowGridForWidth(1278, 10);
+  assert.equal(g10.cols, 10);
+  assert.equal(g10.rowHeight, 1278 / 10); // bigger squares than at 12 columns
+  assert.equal(flowGridForWidth(2230, 10).gridWidth, flowGridForWidth(2230, 12).gridWidth);
+  const panels = [
+    { i: "a", x: 0, y: 0, w: 2, h: 2 }, { i: "b", x: 2, y: 0, w: 2, h: 2 }, { i: "c", x: 4, y: 0, w: 2, h: 2 },
+    { i: "d", x: 6, y: 0, w: 2, h: 2 }, { i: "e", x: 8, y: 0, w: 2, h: 2 }, { i: "f", x: 10, y: 0, w: 2, h: 2 },
+    { i: "wide", x: 0, y: 2, w: 12, h: 2 },
+  ];
+  const five = pos(rearrangeForColumns(panels, 10));
+  assert.deepEqual(five.e, [8, 0, 2, 2]); // five across
+  assert.deepEqual(five.f, [0, 2, 2, 2]); // the sixth starts the next row
+  assert.deepEqual(five.wide, [0, 4, 10, 2]); // narrowed to the new width
 });

@@ -34,8 +34,8 @@ export const DASHBOARD_BREAKPOINT_CONTAINER_WIDTH: Record<DashboardBreakpoint, n
   lg: 1200,
 };
 
-export const DASHBOARD_GRID_MARGIN_X = 12;
-export const DASHBOARD_GRID_MARGIN_Y = 12;
+export const DASHBOARD_GRID_MARGIN_X = 16;
+export const DASHBOARD_GRID_MARGIN_Y = 16;
 
 /** Legacy fallback when the section width is not yet measured. */
 export const DASHBOARD_ROW_HEIGHT = 56;

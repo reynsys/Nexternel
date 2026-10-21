@@ -10,7 +10,7 @@ import type { Layout } from "react-grid-layout";
 
 /** Readable square size the column count aims for (px), and the gap between squares. */
 export const FLOW_CELL_TARGET_PX = 96;
-export const FLOW_CELL_GAP_PX = 12;
+export const FLOW_CELL_GAP_PX = 16;
 export const FLOW_MIN_COLS = 4;
 export const FLOW_MAX_COLS = 24;
 /** Width of the grid dashboards are arranged on (and saved in). */
@@ -57,18 +57,19 @@ export const FLOW_MIN_PANEL_W = 2;
  *   Otherwise it keeps its shape, so its tiles stay the size of every other panel's.
  * Never shorter than the panel's minimum, or 2 squares.
  */
-export function flowShape(panel: FlowPanel, cols: number): { w: number; h: number } {
+export function flowShape(panel: FlowPanel, cols: number, design = DESIGN_COLS): { w: number; h: number } {
   const tooWide = panel.w > cols;
-  const strandedGap = cols < DESIGN_COLS && panel.w < cols && cols - panel.w < FLOW_MIN_PANEL_W;
+  const strandedGap = cols < design && panel.w < cols && cols - panel.w < FLOW_MIN_PANEL_W;
   if (!tooWide && !strandedGap) return { w: Math.max(1, panel.w), h: panel.h };
   const w = cols;
   const scaled = Math.round((panel.h * w) / panel.w);
-  return { w, h: Math.max(scaled, panel.minH ?? 2, 2) };
+  // Squeezed onto a narrow screen: never lower than it was, up to 2 squares (a half-height panel stays half height).
+  return { w, h: Math.max(scaled, panel.minH ?? 1, Math.min(panel.h, 2)) };
 }
 
 /** True when every panel sits at its saved place inside `cols` squares without overlapping. */
-function savedArrangementFits(panels: readonly FlowPanel[], cols: number): boolean {
-  if (cols < DESIGN_COLS) return false;
+function savedArrangementFits(panels: readonly FlowPanel[], cols: number, design = DESIGN_COLS): boolean {
+  if (cols < design) return false;
   const cells = new Set<string>();
   for (const p of panels) {
     if (p.x < 0 || p.y < 0 || p.x + p.w > cols) return false;
@@ -94,7 +95,7 @@ function withLimits(panel: FlowPanel, cols: number, place: { x: number; y: numbe
 }
 
 /** Place panels in order, each at the first spot (top row first, then leftmost) where it fits. */
-function packInOrder(panels: readonly FlowPanel[], cols: number): Layout[] {
+function packInOrder(panels: readonly FlowPanel[], cols: number, design = DESIGN_COLS): Layout[] {
   const rows: boolean[][] = [];
   const free = (x: number, y: number, w: number, h: number) => {
     for (let r = y; r < y + h; r++) {
@@ -111,7 +112,7 @@ function packInOrder(panels: readonly FlowPanel[], cols: number): Layout[] {
     }
   };
   return flowOrder(panels).map((panel) => {
-    const { w, h } = flowShape(panel, cols);
+    const { w, h } = flowShape(panel, cols, design);
     let x = 0;
     let y = 0;
     search: for (y = 0; ; y++) {
@@ -125,11 +126,23 @@ function packInOrder(panels: readonly FlowPanel[], cols: number): Layout[] {
 }
 
 /** Layout for a screen `cols` squares wide (see the module note). */
-export function flowLayout(panels: readonly FlowPanel[], cols: number): Layout[] {
-  if (savedArrangementFits(panels, cols)) {
+export function flowLayout(panels: readonly FlowPanel[], cols: number, design = DESIGN_COLS): Layout[] {
+  if (savedArrangementFits(panels, cols, design)) {
     return panels.map((p) => withLimits(p, cols, { x: p.x, y: p.y, w: p.w, h: p.h }));
   }
-  return packInOrder(panels, cols);
+  return packInOrder(panels, cols, design);
+}
+
+/**
+ * A dashboard's arrangement for a new number of columns (panels across): same order and
+ * shapes, wide panels narrowed to the new width, packed from the top left.
+ */
+export function rearrangeForColumns(panels: readonly FlowPanel[], cols: number): Layout[] {
+  return packInOrder(
+    panels.map((p) => ({ ...p, w: Math.min(p.w, cols) })),
+    cols,
+    cols
+  );
 }
 
 /**
@@ -143,7 +156,8 @@ export function flowCommit(
   saved: readonly FlowPanel[],
   edited: readonly Layout[],
   resizedId: string | null,
-  cols: number
+  cols: number,
+  design = DESIGN_COLS
 ): Layout[] {
   const byId = new Map(saved.map((p) => [p.i, p]));
   const shaped = edited.map((item) => {
@@ -151,17 +165,17 @@ export function flowCommit(
     if (!original || item.i === resizedId) return { ...item };
     return { ...item, w: original.w, h: original.h };
   });
-  if (cols >= DESIGN_COLS) return shaped;
+  if (cols >= design) return shaped;
   const ordered: FlowPanel[] = shaped.map((item) => ({
     i: item.i,
     x: item.x,
     y: item.y,
-    w: Math.min(item.w, DESIGN_COLS),
+    w: Math.min(item.w, design),
     h: item.h,
     minW: byId.get(item.i)?.minW,
     minH: byId.get(item.i)?.minH,
   }));
-  return packInOrder(ordered, DESIGN_COLS);
+  return packInOrder(ordered, design, design);
 }
 
 /** Largest square on wide screens (px): fuller use of the width without oversized panels. */
@@ -172,7 +186,7 @@ export const FLOW_CELL_MAX_PX = 128;
  * 1024 × 768, also with a Look's frame room); only tablets in portrait and phones flow.
  * Text stays readable at this size: dial and chart text has its own minimum (MIN_CHART_FONT).
  */
-export const DESIGN_MIN_CELL_PX = 60;
+export const DESIGN_MIN_CELL_PX = 56;
 
 /**
  * Grid geometry for a section `widthPx` wide.
@@ -181,14 +195,18 @@ export const DESIGN_MIN_CELL_PX = 60;
  * Narrower: fewer columns at a readable size, panels flowed in order, full width.
  * `rowHeight` follows the square width (as before), so a laptop looks exactly as it did.
  */
-export function flowGridForWidth(widthPx: number): { cols: number; gridWidth: number; rowHeight: number } {
-  if (widthPx <= 0) return { cols: DESIGN_COLS, gridWidth: 0, rowHeight: 56 };
-  const designCell = (widthPx + FLOW_CELL_GAP_PX) / DESIGN_COLS - FLOW_CELL_GAP_PX;
-  if (designCell < DESIGN_MIN_CELL_PX) {
-    const cols = Math.min(flowColumnsForWidth(widthPx), DESIGN_COLS - 2);
+export function flowGridForWidth(widthPx: number, design = DESIGN_COLS): { cols: number; gridWidth: number; rowHeight: number } {
+  if (widthPx <= 0) return { cols: design, gridWidth: 0, rowHeight: 56 };
+  // Fewer columns = bigger squares; the limits keep the same overall width as 12 columns would.
+  const k = DESIGN_COLS / design;
+  const designCell = (widthPx + FLOW_CELL_GAP_PX) / design - FLOW_CELL_GAP_PX;
+  if (designCell < DESIGN_MIN_CELL_PX * k) {
+    const fit = Math.floor((widthPx + FLOW_CELL_GAP_PX) / (FLOW_CELL_TARGET_PX * k + FLOW_CELL_GAP_PX));
+    const cols = Math.min(Math.max(FLOW_MIN_COLS, fit - (fit % 2)), design - 2);
     return { cols, gridWidth: widthPx, rowHeight: widthPx / cols };
   }
-  const cell = Math.min(FLOW_CELL_MAX_PX, designCell);
-  const gridWidth = Math.min(widthPx, Math.round(DESIGN_COLS * (cell + FLOW_CELL_GAP_PX) - FLOW_CELL_GAP_PX));
-  return { cols: DESIGN_COLS, gridWidth, rowHeight: gridWidth / DESIGN_COLS };
+  const maxGrid = DESIGN_COLS * (FLOW_CELL_MAX_PX + FLOW_CELL_GAP_PX) - FLOW_CELL_GAP_PX;
+  const cell = Math.min((maxGrid + FLOW_CELL_GAP_PX) / design - FLOW_CELL_GAP_PX, designCell);
+  const gridWidth = Math.min(widthPx, Math.round(design * (cell + FLOW_CELL_GAP_PX) - FLOW_CELL_GAP_PX));
+  return { cols: design, gridWidth, rowHeight: gridWidth / design };
 }

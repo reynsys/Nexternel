@@ -101,6 +101,8 @@ export const DashboardDocumentV3Schema = z.object({
   tabIcon: z.string().optional(),
   showTabLabel: z.boolean().optional().default(true),
   showSectionNav: z.boolean().optional().default(false),
+  /** Columns panels are arranged on: 12 (6 panels across), 10 (5 across), 8 (4 across). Absent = 12. */
+  gridCols: z.union([z.literal(12), z.literal(10), z.literal(8)]).optional(),
   sections: z.array(DashboardSectionV3Schema).default([]),
 });
 
@@ -248,7 +250,8 @@ function documentShell(
   tabIcon: string,
   showTabLabel: boolean,
   showSectionNav: boolean,
-  sections: DashboardSectionV3[]
+  sections: DashboardSectionV3[],
+  gridCols?: 12 | 10 | 8
 ): DashboardDocumentV3 {
   const validated = DashboardDocumentV3Schema.safeParse({
     schemaVersion: 3,
@@ -256,6 +259,7 @@ function documentShell(
     tabIcon,
     showTabLabel,
     showSectionNav,
+    ...(gridCols ? { gridCols } : {}),
     sections,
   });
   if (validated.success) return validated.data;
@@ -265,6 +269,7 @@ function documentShell(
     tabIcon,
     showTabLabel,
     showSectionNav,
+    ...(gridCols ? { gridCols } : {}),
     sections,
   };
 }
@@ -276,6 +281,8 @@ export function emptyDashboardDocument(name = "Dashboard"): DashboardDocumentV3 
     tabIcon: DEFAULT_DASHBOARD_TAB_ICON,
     showTabLabel: true,
     showSectionNav: false,
+    // New dashboards: 5 panels across.
+    gridCols: 10,
     sections: [
       {
         id: "section-main",
@@ -307,10 +314,11 @@ export function migrateDashboardDocument(raw: unknown): PersistedDashboardDocume
       : DEFAULT_DASHBOARD_TAB_ICON;
   const showTabLabel = doc.showTabLabel !== false;
   const showSectionNav = doc.showSectionNav === true;
+  const gridCols = doc.gridCols === 10 || doc.gridCols === 8 || doc.gridCols === 12 ? (doc.gridCols as 12 | 10 | 8) : undefined;
 
   if (doc.schemaVersion === 3 && Array.isArray(doc.sections)) {
     const sections = parseMigrationSections(doc.sections).sort((a, b) => a.order - b.order);
-    return documentShell(name, tabIcon, showTabLabel, showSectionNav, sections);
+    return documentShell(name, tabIcon, showTabLabel, showSectionNav, sections, gridCols);
   }
 
   if (doc.schemaVersion === 2 && Array.isArray(doc.sections)) {

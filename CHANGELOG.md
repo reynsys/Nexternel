@@ -2,6 +2,12 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.128
+
+- **Panels across:** in **Dashboard Options → Tab settings**, choose 6, 5 or 4 panels across for each dashboard — fewer means bigger panels (new dashboards start at 5).
+- **Half-height small panels:** switches, single readings and status lists can now be made half the height of a standard panel.
+- A little more space between panels.
+
 ## V5.2.127
 
 - **New room menu:** choose in **Settings → Appearance → Room menu** where your rooms are — a **Dock** at the bottom (new default; the room under the pointer grows, like on a Mac), **Top tabs** as before, a **Right rail** that folds away, or a **Rooms panel** beside the dashboard. Phones use the dock.

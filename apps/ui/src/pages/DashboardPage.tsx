@@ -125,6 +125,7 @@ import { useLiveChanges } from "../lib/live-changes";
 import { displayPath, useDisplayMode } from "../lib/display-mode";
 import { useSkin } from "../skins/SkinProvider";
 import { normalizeRoomNav, shownRoomNav } from "../lib/room-nav";
+import { rearrangeForColumns } from "../panels/flow-layout";
 
 function sectionContentSummary(panels: RuntimePanelInstance[]): string {
   const count = panels.length;
@@ -157,6 +158,8 @@ function DashboardPageContent() {
   const [tabIcon, setTabIcon] = useState("dashboard");
   const [showTabLabel, setShowTabLabel] = useState(true);
   const [showSectionNav, setShowSectionNav] = useState(false);
+  /** Columns panels are arranged on (12 = 6 across, 10 = 5 across, 8 = 4 across). */
+  const [gridCols, setGridCols] = useState<12 | 10 | 8>(12);
   const [sections, setSections] = useState<RuntimeDashboardSection[]>(
     () => emptyDocument().sections as RuntimeDashboardSection[]
   );
@@ -195,6 +198,7 @@ function DashboardPageContent() {
     tabIcon: string;
     showTabLabel: boolean;
     showSectionNav: boolean;
+    gridCols: 12 | 10 | 8;
     sections: RuntimeDashboardSection[];
   } | null>(null);
   const [panelDrag, setPanelDrag] = useState<{
@@ -268,6 +272,7 @@ function DashboardPageContent() {
     setTabIcon(normalized.tabIcon ?? "dashboard");
     setShowTabLabel(normalized.showTabLabel !== false);
     setShowSectionNav(normalized.showSectionNav === true);
+    setGridCols((normalized as { gridCols?: 12 | 10 | 8 }).gridCols ?? 12);
     setSections(normalized.sections);
     if (normalized.sections[0]) setAddSectionId(normalized.sections[0].id);
   }
@@ -427,6 +432,29 @@ function DashboardPageContent() {
       prev.map((s) => {
         if (s.id !== sectionId) return s;
         return typeof patch === "function" ? patch(s) : { ...s, ...patch };
+      })
+    );
+  }
+
+  /** Rearrange every section for a new number of columns (same order and shapes). */
+  function changePanelsAcross(cols: 12 | 10 | 8) {
+    if (cols === gridCols) return;
+    setGridCols(cols);
+    setSections((prev) =>
+      prev.map((s) => {
+        const list = sectionPanels(s);
+        if (!list.length) return s;
+        const placed = rearrangeForColumns(
+          list.map((w) => ({ i: w.id, x: w.layout.x, y: w.layout.y, w: w.layout.w, h: w.layout.h })),
+          cols
+        );
+        return sectionWithPanels(
+          s,
+          list.map((w) => {
+            const l = placed.find((x) => x.i === w.id);
+            return l ? enforcePanelPlacement({ ...w, layout: { i: w.id, x: l.x, y: l.y, w: l.w, h: l.h } }) : w;
+          })
+        );
       })
     );
   }
@@ -830,6 +858,7 @@ function DashboardPageContent() {
       tabIcon,
       showTabLabel,
       showSectionNav,
+      gridCols,
       sections: JSON.parse(JSON.stringify(normalizedSections)) as RuntimeDashboardSection[],
     });
     setEditMode(true);
@@ -842,6 +871,7 @@ function DashboardPageContent() {
       setTabIcon(editBaseline.tabIcon);
       setShowTabLabel(editBaseline.showTabLabel);
       setShowSectionNav(editBaseline.showSectionNav);
+      setGridCols(editBaseline.gridCols);
       setSections(editBaseline.sections);
     } else if (dashboardId) {
       void api.getDashboard(dashboardId).then((d) => {
@@ -865,6 +895,7 @@ function DashboardPageContent() {
         tabIcon,
         showTabLabel,
         showSectionNav,
+        gridCols,
         sections: sortSections(sections).map((s, i) => ({
           ...s,
           order: i,
@@ -983,6 +1014,26 @@ function DashboardPageContent() {
               }
               label="Show name on tab (off = icon only)"
             />
+            <Box>
+              <Typography variant="body2" fontWeight={600} sx={{ mb: 0.75 }}>
+                Panels across
+              </Typography>
+              <ToggleButtonGroup
+                exclusive
+                size="small"
+                aria-label="Panels across"
+                value={gridCols}
+                onChange={(_e, v: 12 | 10 | 8 | null) => v && changePanelsAcross(v)}
+              >
+                <ToggleButton value={12}>6</ToggleButton>
+                <ToggleButton value={10}>5</ToggleButton>
+                <ToggleButton value={8}>4</ToggleButton>
+              </ToggleButtonGroup>
+              <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+                How many standard panels fit side by side on a laptop. Fewer = bigger panels; the
+                panels are rearranged in the same order. Save to keep it.
+              </Typography>
+            </Box>
             <FormControlLabel
               control={
                 <Switch
@@ -1269,6 +1320,7 @@ function DashboardPageContent() {
               </AccordionSummary>
               <AccordionDetails sx={{ pt: titleHidden ? 2 : 0, px: 2, pb: 2 }}>
                 <SectionGrid
+                  gridCols={gridCols}
                   sectionId={section.id}
                   sectionRoomId={section.roomId ?? null}
                   sectionTitle={section.title}

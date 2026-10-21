@@ -124,7 +124,8 @@ export function registerCorePanelDescriptors(): void {
 
       scopeMode: def.scopeMode,
 
-      sizing: sizingFromCoreDefinition(def.defaultSize, rendererClass),
+      // The device status list may be half height like other small panels.
+      sizing: sizingFromCoreDefinition(def.defaultSize, def.kind === "panel.devices" ? "semantic-readings" : rendererClass),
 
       responsive: {
 

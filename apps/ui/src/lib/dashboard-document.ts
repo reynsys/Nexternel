@@ -39,6 +39,7 @@ export function emptyDocument(name = "Dashboard"): DashboardDocument {
     tabIcon: DEFAULT_DASHBOARD_TAB_ICON,
     showTabLabel: true,
     showSectionNav: false,
+    gridCols: 10,
     sections: [
       {
         id: "section-main",

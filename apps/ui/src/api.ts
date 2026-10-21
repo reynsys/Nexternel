@@ -2520,6 +2520,8 @@ export type DashboardDocument = {
   showTabLabel?: boolean;
   /** Section quick-jump chips below tab bar (off by default). */
   showSectionNav?: boolean;
+  /** Columns panels are arranged on: 12 (6 across), 10 (5 across), 8 (4 across). Absent = 12. */
+  gridCols?: 12 | 10 | 8;
   sections: DashboardSection[];
 };
 

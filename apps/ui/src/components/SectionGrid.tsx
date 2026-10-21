@@ -58,6 +58,8 @@ const RESIZE_ARROW = `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="
 const PANEL_DRAG_MIME = "application/x-nexternel-panel";
 
 type Props = {
+  /** Columns the dashboard's panels are arranged on (12, 10 or 8). */
+  gridCols?: number;
   sectionId: string;
   sectionRoomId?: string | null;
   sectionTitle?: string;
@@ -107,6 +109,7 @@ function isEditableWidget(widget: RuntimePanelInstance): boolean {
  * RGL inside accordion/collapse needs measured width — WidthProvider often stays at 0.
  */
 export function SectionGrid({
+  gridCols = 12,
   sectionId,
   sectionRoomId,
   sectionTitle,
@@ -167,10 +170,10 @@ export function SectionGrid({
     [panels]
   );
   /** This screen: exactly as arranged when it fits, otherwise flowed in order (flow-layout.ts). */
-  const grid = flowGridForWidth(width);
+  const grid = flowGridForWidth(width, gridCols);
   const cols = grid.cols;
   const rowHeight = Math.max(1, grid.rowHeight);
-  const flowed = useMemo(() => flowLayout(savedItems, cols), [savedItems, cols]);
+  const flowed = useMemo(() => flowLayout(savedItems, cols, gridCols), [savedItems, cols, gridCols]);
 
   const [gridLayout, setGridLayout] = useState<Layout[]>(flowed);
   const gridLayoutRef = useRef(gridLayout);
@@ -185,7 +188,7 @@ export function SectionGrid({
     (next: Layout[], resizedId: string | null) => {
       if (!editMode) return;
       if (next.length === 0 && panels.length > 0) return;
-      const persisted = clampSectionLayout(panels, flowCommit(savedItems, next, resizedId, cols));
+      const persisted = clampSectionLayout(panels, flowCommit(savedItems, next, resizedId, cols, gridCols));
       if (!panelSectionLayoutMatches(panels, persisted)) {
         onLayoutChange(sectionId, persisted);
         return;
@@ -194,7 +197,7 @@ export function SectionGrid({
       gridLayoutRef.current = flowed;
       setGridLayout(flowed);
     },
-    [editMode, onLayoutChange, panels, savedItems, cols, flowed, sectionId]
+    [editMode, onLayoutChange, panels, savedItems, cols, flowed, sectionId, gridCols]
   );
 
   const editing = editPanelId ? panels.find((p) => p.id === editPanelId) ?? null : null;
