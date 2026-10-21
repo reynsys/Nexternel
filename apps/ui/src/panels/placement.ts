@@ -183,18 +183,20 @@ export function panelItemPlacementFloor(panel: PlacementPanel): { minW: number; 
   if (!MULTI_ITEM_PANELS.has(kind) || count <= 1) {
     return { minW: base.minW, minH: base.minH };
   }
-  const cell = Math.max(base.minW, base.minH, PLATFORM_PLACEMENT_MIN_W);
+  // One reading needs 2 squares across and the type's own height (half height allowed).
+  const cellW = Math.max(base.minW, PLATFORM_PLACEMENT_MIN_W);
+  const cellH = base.minH;
   if (stacksDown(panel)) {
     return {
       minW: base.minW,
-      minH: Math.min(base.maxH, Math.max(base.minH, cell * count)),
+      minH: Math.min(base.maxH, Math.max(base.minH, cellH * count)),
     };
   }
   const cols = Math.min(count, 3);
   const rows = Math.ceil(count / cols);
   return {
-    minW: Math.min(base.maxW, Math.max(base.minW, cell * cols)),
-    minH: Math.min(base.maxH, Math.max(base.minH, cell * rows)),
+    minW: Math.min(base.maxW, Math.max(base.minW, cellW * cols)),
+    minH: Math.min(base.maxH, Math.max(base.minH, cellH * rows)),
   };
 }
 

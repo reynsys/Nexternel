@@ -159,7 +159,7 @@ function DashboardPageContent() {
   const [showTabLabel, setShowTabLabel] = useState(true);
   const [showSectionNav, setShowSectionNav] = useState(false);
   /** Columns panels are arranged on (12 = 6 across, 10 = 5 across, 8 = 4 across). */
-  const [gridCols, setGridCols] = useState<12 | 10 | 8>(12);
+  const [gridCols, setGridCols] = useState<12 | 10 | 8>(10);
   const [sections, setSections] = useState<RuntimeDashboardSection[]>(
     () => emptyDocument().sections as RuntimeDashboardSection[]
   );
@@ -272,7 +272,7 @@ function DashboardPageContent() {
     setTabIcon(normalized.tabIcon ?? "dashboard");
     setShowTabLabel(normalized.showTabLabel !== false);
     setShowSectionNav(normalized.showSectionNav === true);
-    setGridCols((normalized as { gridCols?: 12 | 10 | 8 }).gridCols ?? 12);
+    setGridCols((normalized as { gridCols?: 12 | 10 | 8 }).gridCols ?? 10);
     setSections(normalized.sections);
     if (normalized.sections[0]) setAddSectionId(normalized.sections[0].id);
   }
@@ -917,7 +917,7 @@ function DashboardPageContent() {
 
   return (
     <DashboardErrorBoundary>
-    <Stack spacing={2} sx={{ pr: roomNav === "rail" ? "var(--nx-rail-width, 0px)" : 0, transition: "padding .2s ease" }}>
+    <Stack spacing={2} sx={{ mt: -1, pr: roomNav === "rail" ? "var(--nx-rail-width, 0px)" : 0, transition: "padding .2s ease" }}>
       {pageLoading && (
         <Stack alignItems="center" justifyContent="center" sx={{ py: 8 }} spacing={1}>
           <CircularProgress size={28} />
@@ -931,7 +931,7 @@ function DashboardPageContent() {
       )}
       {!pageLoading && !bootError && (
       <>
-      {display.active && !display.tabs ? null : (
+      {(display.active && !display.tabs) || roomNav !== "tabs" ? null : (
       <DashboardTabBar
         variant={roomNav}
         activeId={dashboardId ?? undefined}
@@ -960,6 +960,19 @@ function DashboardPageContent() {
               Dashboard Options
             </Typography>
             <ButtonRow direction="row" flexWrap="wrap" useFlexGap>
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <Typography variant="body2">Panels across</Typography>
+                <ToggleButtonGroup
+                  exclusive
+                  size="small"
+                  aria-label="Panels across"
+                  value={gridCols}
+                  onChange={(_e, v: 10 | 8 | null) => v && changePanelsAcross(v)}
+                >
+                  <ToggleButton value={10}>5</ToggleButton>
+                  <ToggleButton value={8}>4</ToggleButton>
+                </ToggleButtonGroup>
+              </Stack>
               <Button variant="outlined" onClick={addSection}>
                 Add section
               </Button>
@@ -1014,26 +1027,6 @@ function DashboardPageContent() {
               }
               label="Show name on tab (off = icon only)"
             />
-            <Box>
-              <Typography variant="body2" fontWeight={600} sx={{ mb: 0.75 }}>
-                Panels across
-              </Typography>
-              <ToggleButtonGroup
-                exclusive
-                size="small"
-                aria-label="Panels across"
-                value={gridCols}
-                onChange={(_e, v: 12 | 10 | 8 | null) => v && changePanelsAcross(v)}
-              >
-                <ToggleButton value={12}>6</ToggleButton>
-                <ToggleButton value={10}>5</ToggleButton>
-                <ToggleButton value={8}>4</ToggleButton>
-              </ToggleButtonGroup>
-              <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
-                How many standard panels fit side by side on a laptop. Fewer = bigger panels; the
-                panels are rearranged in the same order. Save to keep it.
-              </Typography>
-            </Box>
             <FormControlLabel
               control={
                 <Switch
@@ -1332,6 +1325,22 @@ function DashboardPageContent() {
           );
         })}
       </Box>
+
+      {/* Dock and rail are fixed on screen; drawn last so they take no room above the dashboard. */}
+      {roomNav !== "tabs" && !(display.active && !display.tabs) ? (
+        <DashboardTabBar
+          variant={roomNav}
+          activeId={dashboardId ?? undefined}
+          refreshKey={tabRefreshKey}
+          editMode={editMode}
+          canEdit={canEditDashboards}
+          canClearNotifications={hasPermission(permissions, "manageUsers", isAdmin)}
+          onDashboardOptions={() => {
+            if (!canEditDashboards) return;
+            if (!editMode) enterEditMode();
+          }}
+        />
+      ) : null}
 
       <Popover
         open={Boolean(iconPickerAnchor) && Boolean(iconPickerSectionId)}

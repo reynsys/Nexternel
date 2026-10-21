@@ -417,15 +417,21 @@ export function SectionGrid({
                     <ButtonRow
                       direction="row"
                       alignItems="center"
-                      sx={{
+                      flexWrap="nowrap"
+                      sx={(t) => ({
                         flexShrink: 0,
                         px: 0.5,
-                        py: 0.25,
-                        borderBottom: "1px solid",
-                        borderColor: "divider",
-                        bgcolor: (t) =>
-                          alpha(t.palette.primary.main, t.palette.mode === "dark" ? 0.1 : 0.06),
-                      }}
+                        py: 0.5,
+                        gap: "6px",
+                        borderTopLeftRadius: "inherit",
+                        borderTopRightRadius: "inherit",
+                        bgcolor: alpha(t.palette.background.paper, 0.92),
+                        backdropFilter: "blur(6px)",
+                        boxShadow: `0 1px 0 ${t.palette.divider}`,
+                        "& .MuiIconButton-root": { minWidth: 32, minHeight: 32, width: 32, height: 32 },
+                        // Narrow panels: only the essentials, on one line.
+                        "@container (max-width: 250px)": { "& [data-nx-tb-extra]": { display: "none" } },
+                      })}
                     >
                       <Tooltip title="Drag to reposition in this section">
                         <IconButton
@@ -441,6 +447,7 @@ export function SectionGrid({
                         <IconButton
                           size="small"
                           aria-label={`Move ${itemKind} to another section`}
+                          data-nx-tb-extra=""
                           draggable={editMode}
                           sx={{ cursor: "grab", touchAction: "none" }}
                           onDragStart={(e) => {
@@ -458,7 +465,7 @@ export function SectionGrid({
                       </Tooltip>
                       <Typography
                         variant="caption"
-                        sx={{ flex: 1, color: mutedLabel }}
+                        sx={{ flex: 1, minWidth: 0, color: mutedLabel }}
                         noWrap
                       >
                         {widgetTypeLabel(w.type)}

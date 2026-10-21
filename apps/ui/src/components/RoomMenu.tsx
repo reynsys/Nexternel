@@ -28,8 +28,7 @@ const RAIL_KEY = "nx-rail-open";
  */
 export function RoomMenu(props: Props) {
   if (props.variant === "dock") return <Dock {...props} />;
-  if (props.variant === "rail") return <Rail {...props} />;
-  return <RoomsPanel {...props} />;
+  return <Rail {...props} />;
 }
 
 function RoomTile({ d, active, onGo, size, label }: { d: DashboardSummary; active: boolean; onGo: () => void; size: number; label: "beside" | "none" }) {
@@ -206,17 +205,5 @@ function Rail({ dashboards, activeId, onGo, tools }: Props) {
         <RoomTile key={d.id} d={d} active={d.id === activeId} onGo={() => onGo(d)} size={42} label={open ? "beside" : "none"} />
       ))}
     </Box>
-  );
-}
-
-/**
- * Room menu = Rooms panel: the rooms are a normal panel on the dashboard (Add Panel → Rooms);
- * the bell and the Dashboard Options cog sit in a slim row at the top right of the page.
- */
-function RoomsPanel({ tools }: Props) {
-  return (
-    <Stack data-nx-room-menu="panel" direction="row" justifyContent="flex-end" sx={{ minHeight: 0 }}>
-      {tools("row", 40)}
-    </Stack>
   );
 }

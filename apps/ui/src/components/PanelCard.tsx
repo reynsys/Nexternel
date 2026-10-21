@@ -229,7 +229,10 @@ export function PanelCard({
     >
       <LookDecor slot="panel" />
       {titlePlacement === "frame" ? lightAt("frame", "panel") : null}
-      {toolbar}
+      {/* The editing toolbar floats over the title row, so the panel's content keeps its full size. */}
+      {toolbar ? (
+        <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 6, containerType: "inline-size" }}>{toolbar}</Box>
+      ) : null}
       <Box
         data-nx-panel-body
         sx={{

@@ -101,7 +101,7 @@ export const DashboardDocumentV3Schema = z.object({
   tabIcon: z.string().optional(),
   showTabLabel: z.boolean().optional().default(true),
   showSectionNav: z.boolean().optional().default(false),
-  /** Columns panels are arranged on: 12 (6 panels across), 10 (5 across), 8 (4 across). Absent = 12. */
+  /** Columns panels are arranged on: 10 (5 standard panels across) or 8 (4 across). */
   gridCols: z.union([z.literal(12), z.literal(10), z.literal(8)]).optional(),
   sections: z.array(DashboardSectionV3Schema).default([]),
 });
@@ -236,6 +236,40 @@ function normalizeSectionV3FromRaw(raw: unknown, index: number): DashboardSectio
   };
 }
 
+/**
+ * Pack panels in their order (rows top to bottom, then left to right) onto `cols` columns, each at
+ * the first free spot; wide panels narrowed to fit. Used once to move a 12-column dashboard to 10.
+ */
+export function packPanelsForColumns<P extends { layout: PanelLayout }>(panels: P[], cols: number): P[] {
+  const rows: boolean[][] = [];
+  const free = (x: number, y: number, w: number, h: number) => {
+    for (let r = y; r < y + h; r++) for (let c = x; c < x + w; c++) if (rows[r]?.[c]) return false;
+    return true;
+  };
+  const take = (x: number, y: number, w: number, h: number) => {
+    for (let r = y; r < y + h; r++) {
+      const row = (rows[r] ??= []);
+      for (let c = x; c < x + w; c++) row[c] = true;
+    }
+  };
+  const ordered = panels.map((p, i) => ({ p, i })).sort((a, b) => a.p.layout.y - b.p.layout.y || a.p.layout.x - b.p.layout.x || a.i - b.i);
+  const placed = new Map<P, PanelLayout>();
+  for (const { p } of ordered) {
+    const w = Math.min(p.layout.w, cols), h = p.layout.h;
+    let x = 0, y = 0;
+    search: for (y = 0; ; y++) for (x = 0; x + w <= cols; x++) if (free(x, y, w, h)) break search;
+    take(x, y, w, h);
+    placed.set(p, { ...p.layout, x, y, w, h });
+  }
+  return panels.map((p) => ({ ...p, layout: placed.get(p)! }));
+}
+
+/** Panels across: every dashboard is 10 columns (5 standard panels) or 8; older 12-column ones move to 10 once. */
+function withPanelsAcross(sections: DashboardSectionV3[], gridCols: 12 | 10 | 8 | undefined): { sections: DashboardSectionV3[]; gridCols: 10 | 8 } {
+  if (gridCols === 10 || gridCols === 8) return { sections, gridCols };
+  return { sections: sections.map((s) => ({ ...s, panels: packPanelsForColumns(s.panels, 10) })), gridCols: 10 };
+}
+
 function parseMigrationSections(rawSections: unknown[]): DashboardSectionV3[] {
   const parsed: DashboardSectionV3[] = [];
   for (let i = 0; i < rawSections.length; i++) {
@@ -317,8 +351,8 @@ export function migrateDashboardDocument(raw: unknown): PersistedDashboardDocume
   const gridCols = doc.gridCols === 10 || doc.gridCols === 8 || doc.gridCols === 12 ? (doc.gridCols as 12 | 10 | 8) : undefined;
 
   if (doc.schemaVersion === 3 && Array.isArray(doc.sections)) {
-    const sections = parseMigrationSections(doc.sections).sort((a, b) => a.order - b.order);
-    return documentShell(name, tabIcon, showTabLabel, showSectionNav, sections, gridCols);
+    const across = withPanelsAcross(parseMigrationSections(doc.sections).sort((a, b) => a.order - b.order), gridCols);
+    return documentShell(name, tabIcon, showTabLabel, showSectionNav, across.sections, across.gridCols);
   }
 
   if (doc.schemaVersion === 2 && Array.isArray(doc.sections)) {

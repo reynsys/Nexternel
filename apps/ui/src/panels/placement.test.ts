@@ -108,7 +108,7 @@ test("one status reading may be half height (2x1)", () => {
   assert.deepEqual(floor, { minW: 2, minH: 1 });
 });
 
-test("several status readings cannot shrink below one cell each", () => {
+test("several status readings cannot shrink below one half-height cell each", () => {
   const across = enforcePanelPlacement({
     id: "s2",
     type: "panel.status",
@@ -132,7 +132,7 @@ test("several status readings cannot shrink below one cell each", () => {
     },
   });
   assert.equal(down.layout.w, 2);
-  assert.equal(down.layout.h, 6);
+  assert.equal(down.layout.h, 3); // three readings stacked: one half-height row each
 });
 
 test("layout persistence strips derived min/max fields", () => {

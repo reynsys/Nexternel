@@ -113,9 +113,16 @@ test("a section's hidden bar (showTitle: false) is kept when saved and loaded", 
   assert.equal(migrated.sections[1]?.showTitle, undefined);
 });
 
-test("a dashboard's panels-across setting (gridCols) is kept; new dashboards are 5 across", () => {
-  const doc = { schemaVersion: 3, name: "T", gridCols: 10, sections: [{ id: "s", title: "S", order: 0, panels: [] }] };
-  assert.equal((migrateDashboardDocument(doc) as { gridCols?: number }).gridCols, 10);
-  assert.equal((migrateDashboardDocument({ ...doc, gridCols: 7 }) as { gridCols?: number }).gridCols, undefined);
-  assert.equal((migrateDashboardDocument({ ...doc, gridCols: undefined }) as { gridCols?: number }).gridCols, undefined);
+test("every dashboard is 5 across: a 12-column one moves to 10 once, in order; 10 and 8 are kept", () => {
+  const p = (i: string, x: number, y: number, w: number, h: number) => ({ id: i, type: "panel.status", layout: { i, x, y, w, h } });
+  const old = { schemaVersion: 3, name: "T", sections: [{ id: "s", title: "S", order: 0, panels: [p("a", 0, 0, 2, 2), p("b", 2, 0, 2, 2), p("c", 4, 0, 2, 2), p("d", 6, 0, 2, 2), p("e", 8, 0, 2, 2), p("f", 10, 0, 2, 2), p("w", 0, 2, 12, 2)] }] };
+  const moved = migrateDashboardDocument(old) as unknown as { gridCols: number; sections: Array<{ panels: Array<{ id: string; layout: { x: number; y: number; w: number } }> }> };
+  assert.equal(moved.gridCols, 10);
+  const at = Object.fromEntries(moved.sections[0]!.panels.map((q) => [q.id, [q.layout.x, q.layout.y, q.layout.w]]));
+  assert.deepEqual(at.e, [8, 0, 2]);
+  assert.deepEqual(at.f, [0, 2, 2]);
+  assert.deepEqual(at.w, [0, 4, 10]);
+  const again = migrateDashboardDocument(moved) as unknown as { gridCols: number; sections: Array<{ panels: Array<{ id: string; layout: { x: number } }> }> };
+  assert.deepEqual(again.sections, moved.sections); // only once
+  assert.equal((migrateDashboardDocument({ ...old, gridCols: 8 }) as { gridCols?: number }).gridCols, 8);
 });

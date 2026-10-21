@@ -22,7 +22,7 @@ export function PanelReadingValue({ cap }: Props) {
       valueColor={valueColor}
       sx={{
         "& > div": {
-          fontSize: "clamp(1.25rem, 18cqi, 3.75rem)",
+          fontSize: "clamp(1rem, min(18cqi, 42cqb), 3.75rem)",
         },
         "& > span": {
           fontSize: "clamp(0.75rem, 10cqi, 1.35rem)",

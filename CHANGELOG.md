@@ -2,6 +2,13 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.130
+
+- **All dashboards now show at most 5 panels across** — no need to create a new dashboard. To switch a dashboard to 4 across, use **Panels across** in the Dashboard Options bar.
+- **Room menu:** choose Dock, Top tabs or Right rail. The Rooms panel is added like any other panel (Add Panel → Rooms).
+- No empty gap above the dashboard with the Dock or Right rail.
+- Half-height panels (switches, readings) now show all their content, also in edit mode.
+
 ## V5.2.129
 
 - **Rooms panel:** a new panel type (Add Panel → Rooms) that lists every room — put it anywhere, move and resize it like any panel.

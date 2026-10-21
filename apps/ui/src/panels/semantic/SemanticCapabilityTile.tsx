@@ -60,16 +60,27 @@ export function SemanticCapabilityTile({ item, showSecondary }: Props) {
             aria-label={classic ? undefined : `${item.label}: ${on ? "on" : "off"}`}
             aria-pressed={classic ? undefined : on}
             // The classic toggle keeps its old sizing; the new styles fit inside the tile.
-            sx={{ flex: 1, minHeight: 0, p: 1.5, height: "100%", ...(classic ? {} : { boxSizing: "border-box" }) }}
+            sx={{ flex: 1, minHeight: 0, p: { xs: 1, sm: 1.5 }, height: "100%", ...(classic ? {} : { boxSizing: "border-box" }) }}
           >
             {switchStyle === "tile" ? <SwitchTileFill on={on} /> : null}
-            <Stack spacing={1} alignItems="center" justifyContent="center" sx={{ flex: 1, position: "relative", minHeight: 0 }}>
+            <Stack
+              alignItems="center"
+              justifyContent="center"
+              sx={{
+                flex: 1,
+                position: "relative",
+                minHeight: 0,
+                gap: 1,
+                // A half-height tile: the state and the switch side by side.
+                "@container (max-height: 120px)": { flexDirection: "row", gap: 2 },
+              }}
+            >
               {/* The item's icon lives in its heading (or the title tile); the tile shows the state like any reading. */}
               <AdaptiveReading
                 value={on ? "On" : "Off"}
                 valueColor={on ? accent : muted}
                 sx={{
-                  "& > div": { fontSize: "clamp(1.25rem, 18cqi, 3.75rem)" },
+                  "& > div": { fontSize: "clamp(1rem, min(18cqi, 40cqb), 3.75rem)" },
                   ...(on && !classic ? { textShadow: "var(--nx-text-glow, none)" } : {}),
                 }}
               />

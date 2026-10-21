@@ -53,7 +53,7 @@ export function AdaptiveReading({
       <Typography
         component="div"
         sx={{
-          fontSize: "clamp(0.75rem, 18cqi, 1.65rem)",
+          fontSize: "clamp(0.75rem, min(18cqi, 42cqb), 1.65rem)",
           fontWeight: 800,
           lineHeight: 1.05,
           fontVariantNumeric: "tabular-nums",
