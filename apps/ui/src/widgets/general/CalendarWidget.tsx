@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import type { WidgetInstance } from "../../api";
 import { calendarTitleLabel } from "../../lib/panel-heading";
-import { genericTileLabelSize, genericTileQuerySx } from "./tile-type";
+import { genericTileQuerySx } from "./tile-type";
 import { panelContentRootSx } from "../../components/DashboardTileBody";
 import { useDashboardTileChrome } from "../../lib/dashboard-tile-context";
 
@@ -50,6 +50,9 @@ export function CalendarWidget({ widget: _widget }: { widget: WidgetInstance }) 
         sx={panelContentRootSx({
           p: 1,
           ...genericTileQuerySx,
+          // Sized by width and height, so the month fits a short panel instead of scrolling.
+          containerType: "size",
+          "--nx-cal-font": "clamp(0.7rem, min(3.6cqi, 10cqb), 2.25rem)",
           display: "grid",
           gridTemplateColumns: "repeat(7, 1fr)",
           gridTemplateRows: `auto repeat(${Math.ceil(cells.length / 7)}, minmax(min-content, 1fr))`, // rows never squeeze text; scrolls when short of room
@@ -62,7 +65,7 @@ export function CalendarWidget({ widget: _widget }: { widget: WidgetInstance }) 
             key={d}
             variant="caption"
             color="primary.main"
-            sx={{ fontSize: genericTileLabelSize, fontWeight: 600, lineHeight: 1.2 }}
+            sx={{ fontSize: "var(--nx-cal-font)", fontWeight: 600, lineHeight: 1.2 }}
           >
             {d}
           </Typography>
@@ -75,7 +78,7 @@ export function CalendarWidget({ widget: _widget }: { widget: WidgetInstance }) 
               alignItems: "center",
               justifyContent: "center",
               borderRadius: 0.5,
-              fontSize: genericTileLabelSize,
+              fontSize: "var(--nx-cal-font)",
               fontWeight: day === today ? 700 : 400,
               bgcolor: day === today ? "primary.main" : "transparent",
               color: day === today ? "primary.contrastText" : "text.primary",

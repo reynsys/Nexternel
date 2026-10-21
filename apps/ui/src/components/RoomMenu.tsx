@@ -204,10 +204,10 @@ function Rail({ dashboards, activeId, onGo, tools }: Props) {
         transition: "width .2s ease",
       })}
     >
-      <Tooltip title={open ? "Fold the room menu" : "Open the room menu"} placement="left">
+      <Tooltip title={open ? "Fold the Dashboard Menu" : "Open the Dashboard Menu"} placement="left">
         <Button
           variant="outlined"
-          aria-label={open ? "Fold the room menu" : "Open the room menu"}
+          aria-label={open ? "Fold the Dashboard Menu" : "Open the Dashboard Menu"}
           onClick={() => setOpen((o) => !o)}
           sx={{ minWidth: SIZE, width: SIZE, height: SIZE / 1.4, p: 0, alignSelf: open ? "flex-end" : "center", flexShrink: 0 }}
         >

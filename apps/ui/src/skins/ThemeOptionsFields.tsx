@@ -284,9 +284,9 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
         </Box>
         <Box sx={{ mt: 2 }}>
           <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
-            Room menu{" "}
+            Dashboard Menu{" "}
             <Typography component="span" variant="caption" color="text.secondary">
-              — where the rooms (dashboards) are. Phones always use the dock.
+              — where your dashboards are listed. Phones always use the dock.
             </Typography>
           </Typography>
           <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 1 }}>

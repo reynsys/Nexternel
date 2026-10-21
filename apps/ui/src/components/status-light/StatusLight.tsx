@@ -107,7 +107,7 @@ export function StatusLight({ capabilityId, kind, unit, look, placement, edge = 
   const value = useLiveValue(capabilityId ?? "");
   const shown = capabilityId ? lightToShow(status, kind, value) : null;
   if (!shown || look.style === "off") return null;
-  if (shown === "unset") return <UnsetLight look={look} placement={placement} />;
+  if (shown === "unset") return <UnsetLight look={look} placement={placement} edge={edge} />;
   const state = shown;
   const colour = statusColour(state, look);
   const blinkSx =
@@ -197,11 +197,14 @@ function GlowBorder({
   colour,
   blinkSx,
   edge,
+  unset = false,
 }: {
   common: Record<string, string>;
   colour: string;
   blinkSx: object;
   edge: "panel" | "box";
+  /** "No limits yet": a thin dashed line in the same place, no glow. */
+  unset?: boolean;
 }) {
   const look = useLook();
   // The whole panel follows the Look's panel outline; a box inside it follows the Look's box outline.
@@ -227,14 +230,27 @@ function GlowBorder({
         sx={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 1, ...blinkSx }}
       >
         {w > 0 && h > 0 ? (
-          <svg width="100%" height="100%" viewBox={`0 0 ${w} ${h}`} style={{ position: "absolute", inset: 0, overflow: "visible" }} aria-hidden>
+          // The glow is on the drawing as a whole (not the line), so it is never cut off in a rectangle.
+          <svg
+            width="100%"
+            height="100%"
+            viewBox={`0 0 ${w} ${h}`}
+            style={{
+              position: "absolute",
+              inset: 0,
+              overflow: "visible",
+              filter: unset ? "none" : `drop-shadow(0 0 3px ${colour}) drop-shadow(0 0 8px ${colour})`,
+            }}
+            aria-hidden
+          >
             <path
               d={outline(w, h)}
               fill="none"
               stroke={colour}
-              strokeWidth={2.5}
+              strokeWidth={unset ? 1.5 : 3}
+              strokeDasharray={unset ? "5 4" : undefined}
               strokeLinejoin="round"
-              style={{ filter: `drop-shadow(0 0 4px ${colour}) drop-shadow(0 0 10px ${colour})` }}
+              vectorEffect="non-scaling-stroke"
             />
           </svg>
         ) : null}
@@ -244,13 +260,17 @@ function GlowBorder({
   return (
       <Box
         {...common}
+        data-nx-status-style="glow"
         sx={{
           position: "absolute",
-          inset: 0,
+          // Drawn over the box's own 1px edge line, so no edge or corner shows outside it.
+          inset: "-1px",
           borderRadius: "inherit",
           pointerEvents: "none",
           zIndex: 1,
-          boxShadow: `inset 0 0 0 2px ${colour}, 0 0 16px -4px ${colour}`,
+          ...(unset
+            ? { border: `1.5px dashed ${colour}` }
+            : { border: `3px solid ${colour}`, boxShadow: `0 0 12px -2px ${colour}, inset 0 0 10px -4px ${colour}` }),
           ...blinkSx,
         }}
       />
@@ -267,17 +287,12 @@ const UNSET_EDGE = `inset 0 0 0 1.5px ${UNSET_LINE}`;
  * The empty "not set up" light: same shape and place as a real one, outline only, for a reading
  * that could have a light but has no limits yet. It never blinks.
  */
-function UnsetLight({ look, placement }: { look: StatusLook; placement: Props["placement"] }) {
+function UnsetLight({ look, placement, edge }: { look: StatusLook; placement: Props["placement"]; edge: "panel" | "box" }) {
   const common = { role: "img", "aria-label": UNSET_LABEL, "data-nx-status-light": "unset" };
   const centred = placement === "in-tile" ? ({ position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)", zIndex: 2 } as const) : {};
   let node;
   if (look.style === "glow") {
-    return (
-      <Box
-        {...common}
-        sx={{ position: "absolute", inset: 0, borderRadius: "inherit", pointerEvents: "none", zIndex: 1, border: `1px dashed ${UNSET_LINE}` }}
-      />
-    );
+    return <GlowBorder common={common} colour={UNSET_LINE} blinkSx={{}} edge={edge} unset />;
   } else if (look.style === "dots") {
     node = (
       <Box {...common} data-nx-status-style="dots" sx={{ display: "flex", gap: "6px", alignItems: "center", flex: "none", ...COMPACT_DOTS, ...centred }}>

@@ -2,6 +2,15 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.133
+
+- **Room menu is now called Dashboard Menu** (Settings → Appearance).
+
+## V5.2.132
+
+- **Wall display:** half-height panels, the calendar and system information fit without a scrollbar.
+- **Glowing border status light:** thicker, sits exactly on the panel's edge, no corners sticking out.
+
 ## V5.2.131
 
 - The page scrolls again with the mouse pointer on a panel; panel scrollbars only show while the pointer is on the panel.

@@ -53,8 +53,10 @@ export function panelItemGridSx(opts: {
   const layout = opts.layout ?? "card";
   const direction = opts.direction ?? "across";
   const rowSize = opts.rowSize ?? "standard";
-  const rowMin = ROW_MIN[rowSize];
   const cols = direction === "down" ? 1 : Math.min(Math.max(1, opts.itemCount), MAX_COLS[layout]);
+  // One row of items fills the panel at whatever height the panel has (half-height panels too);
+  // the row minimum only matters when several rows share the panel and may need to scroll.
+  const rowMin = Math.ceil(Math.max(1, opts.itemCount) / cols) <= 1 ? "0" : ROW_MIN[rowSize];
   const base: SxProps<Theme> = {
     flex: 1,
     minHeight: 0,

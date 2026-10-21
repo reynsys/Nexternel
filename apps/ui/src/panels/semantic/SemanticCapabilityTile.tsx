@@ -60,7 +60,15 @@ export function SemanticCapabilityTile({ item, showSecondary }: Props) {
             aria-label={classic ? undefined : `${item.label}: ${on ? "on" : "off"}`}
             aria-pressed={classic ? undefined : on}
             // The classic toggle keeps its old sizing; the new styles fit inside the tile.
-            sx={{ flex: 1, minHeight: 0, p: { xs: 1, sm: 1.5 }, height: "100%", ...(classic ? {} : { boxSizing: "border-box" }) }}
+            sx={{
+              flex: 1,
+              minHeight: 0,
+              p: { xs: 1, sm: 1.5 },
+              height: "100%",
+              // A half-height tile keeps its room for the state and the switch, not for padding.
+              "@container (max-height: 72px)": { py: 0.25 },
+              ...(classic ? {} : { boxSizing: "border-box" }),
+            }}
           >
             {switchStyle === "tile" ? <SwitchTileFill on={on} /> : null}
             <Stack
