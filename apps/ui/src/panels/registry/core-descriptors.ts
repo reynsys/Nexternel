@@ -53,7 +53,8 @@ function rendererForCoreKind(kind: string): {
     kind === "panel.calendar" ||
     kind === "panel.clock" ||
     kind === "panel.devices" ||
-    kind === "panel.system"
+    kind === "panel.system" ||
+    kind === "panel.rooms"
   ) {
     return { rendererClass: "composite-tile", implementationKind: "specialised" };
   }
@@ -90,6 +91,7 @@ function discoveryCategoryForCoreKind(kind: string): PanelCategoryId {
     case "panel.clock":
     case "panel.devices":
     case "panel.system":
+    case "panel.rooms":
       return "system";
 
     default:

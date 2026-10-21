@@ -159,6 +159,16 @@ export const CORE_PANEL_REGISTRY: readonly PanelDefinition[] = [
     sortOrder: 60,
     defaultSize: { w: 8, h: 4, minW: 4, minH: 2 },
   },
+  {
+    kind: "panel.rooms",
+    label: "Rooms",
+    description: "Every room (dashboard) as a button — press one to open it.",
+    scopeMode: "integration",
+    supportedKinds: [],
+    userSelectable: true,
+    sortOrder: 65,
+    defaultSize: { w: 2, h: 4, minW: 2, minH: 2 },
+  },
 ];
 
 export function getPanelDefinition(kind: PanelKind): PanelDefinition | undefined {

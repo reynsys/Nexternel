@@ -85,20 +85,22 @@ export function DashboardTabBar({
     navigate(display.active ? displayPath(path) + window.location.search : path);
   };
   // The bell and the Dashboard Options cog travel with the room menu.
-  const tools = (dir: "row" | "column") => (
-    <Stack direction={dir} alignItems="center" spacing={0.5} sx={{ flexShrink: 0 }}>
+  // In the dock, rail and rooms-panel corner the cog is a button like the rooms beside it.
+  const tools = (dir: "row" | "column", size = 44) => (
+    <Stack direction={dir} alignItems="center" sx={{ flexShrink: 0, gap: "var(--nx-control-gap)" }}>
       {skin.id === "mui-dashboard" && !display.active ? <NotificationBell place="dashboard" canClear={canClearNotifications} /> : null}
       {canEdit && (
         <Tooltip title="Dashboard Options">
-          <IconButton
-            size="small"
-            color={editMode ? "primary" : "default"}
+          <Button
+            variant={editMode ? "contained" : "outlined"}
             aria-label="Dashboard Options"
             aria-pressed={editMode}
             onClick={() => onDashboardOptions?.()}
+            data-nx-room=""
+            sx={{ minWidth: size, width: size, height: size, p: 0 }}
           >
             <SettingsOutlinedIcon fontSize="small" />
-          </IconButton>
+          </Button>
         </Tooltip>
       )}
     </Stack>

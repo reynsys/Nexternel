@@ -3,6 +3,7 @@ import BatteryFullIcon from "@mui/icons-material/BatteryFull";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import DevicesOtherIcon from "@mui/icons-material/DevicesOther";
 import MemoryIcon from "@mui/icons-material/Memory";
+import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
 import ToggleOnIcon from "@mui/icons-material/ToggleOn";
@@ -62,6 +63,7 @@ const KIND_ICONS: Record<string, SvgIconComponent> = {
   "panel.calendar": CalendarMonthIcon,
   "panel.weather": CloudIcon,
   "panel.system": MemoryIcon,
+  "panel.rooms": MeetingRoomIcon,
   "panel.devices": DevicesOtherIcon,
   "panel.status": SensorsIcon,
   "panel.controls": ToggleOnIcon,

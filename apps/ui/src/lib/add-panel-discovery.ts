@@ -14,6 +14,7 @@ export const DASHBOARD_ADD_PANEL_TYPES: ReadonlySet<string> = new Set([
   "panel.weather",
   "panel.calendar",
   "panel.system",
+  "panel.rooms",
 ]);
 
 
@@ -78,6 +79,7 @@ const ADD_PANEL_COPY: Record<string, { label?: string; description: string }> = 
     label: "System information",
     description: "How this home’s server is doing.",
   },
+  "panel.rooms": { description: "Every room as a button — a room menu inside your dashboard." },
 };
 
 function sectionLabel(section: PanelCategoryId): string {

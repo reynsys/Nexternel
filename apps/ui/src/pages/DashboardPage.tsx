@@ -931,7 +931,7 @@ function DashboardPageContent() {
       )}
       {!pageLoading && !bootError && (
       <>
-      {(display.active && !display.tabs) || roomNav === "panel" ? null : (
+      {display.active && !display.tabs ? null : (
       <DashboardTabBar
         variant={roomNav}
         activeId={dashboardId ?? undefined}
@@ -1106,21 +1106,6 @@ function DashboardPageContent() {
         </Stack>
       )}
 
-      <Box sx={roomNav === "panel" ? { display: "grid", gridTemplateColumns: "200px minmax(0, 1fr)", gap: 2, alignItems: "start" } : undefined}>
-      {roomNav === "panel" ? (
-        <DashboardTabBar
-          variant="panel"
-          activeId={dashboardId ?? undefined}
-          refreshKey={tabRefreshKey}
-          editMode={editMode}
-          canEdit={canEditDashboards}
-          canClearNotifications={hasPermission(permissions, "manageUsers", isAdmin)}
-          onDashboardOptions={() => {
-            if (!canEditDashboards) return;
-            if (!editMode) enterEditMode();
-          }}
-        />
-      ) : null}
       <Box
         sx={{
           display: "grid",
@@ -1346,7 +1331,6 @@ function DashboardPageContent() {
             </Box>
           );
         })}
-      </Box>
       </Box>
 
       <Popover

@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.129
+
+- **Rooms panel:** a new panel type (Add Panel → Rooms) that lists every room — put it anywhere, move and resize it like any panel.
+- **Smoother dock:** rooms grow gently under the pointer and stay inside the dock; no empty strip above the dashboard; the Dashboard Options button matches the other buttons.
+
 ## V5.2.128
 
 - **Panels across:** in **Dashboard Options → Tab settings**, choose 6, 5 or 4 panels across for each dashboard — fewer means bigger panels (new dashboards start at 5).

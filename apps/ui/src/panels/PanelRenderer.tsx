@@ -14,6 +14,7 @@ import { ControlsPanel } from "./ControlsPanel";
 import { DevicesPanel } from "./DevicesPanel";
 import { StatusPanel } from "./StatusPanel";
 import { SystemPanel } from "./SystemPanel";
+import { RoomsPanel } from "./RoomsPanel";
 import { WeatherPanel } from "./WeatherPanel";
 
 type Props = {
@@ -98,6 +99,8 @@ export function PanelRenderer({
       return <DevicesPanel config={devicesConfig} title={title} />;
     case "panel.system":
       return <SystemPanel title={title} />;
+    case "panel.rooms":
+      return <RoomsPanel />;
     case "panel.status":
       return (
         <StatusPanel

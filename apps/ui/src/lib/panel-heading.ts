@@ -83,6 +83,7 @@ function singlePurposeTitle(panel: PanelHeadingSource): { title: string; area: s
   if (kind === "panel.clock") return { title: "Clock", area: null };
   if (kind === "panel.weather") return { title: "Weather", area: null };
   if (kind === "panel.system") return { title: "System information", area: null };
+  if (kind === "panel.rooms") return { title: "Rooms", area: null };
   if (kind === "panel.devices") return { title: "Devices", area: null };
   if (kind === "panel.charts") return { title: "Charts", area: null };
   if (kind.startsWith("plugin.")) {

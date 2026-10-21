@@ -15,7 +15,7 @@ test("add panel lists weather and system under Generic, without a one-item group
   assert.equal(generic?.label, "Generic");
   assert.deepEqual(
     generic?.items.map((item) => item.label),
-    ["Clock", "Weather", "Calendar", "System information"]
+    ["Clock", "Weather", "Calendar", "System information", "Rooms"]
   );
 
   const controls = groups.find((group) => group.section === "controls");

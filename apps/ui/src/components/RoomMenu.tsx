@@ -5,7 +5,6 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import type { DashboardSummary } from "../api";
 import { getDashboardIcon } from "../lib/dashboard-icons";
 import type { RoomNav } from "../lib/room-nav";
-import { LookDecor } from "../skins/looks/LookDecor";
 import { BOTTOM_NAV_HEIGHT_PX } from "../skins/builtin/mui-dashboard/BottomNav";
 
 type Props = {
@@ -15,7 +14,7 @@ type Props = {
   loading: boolean;
   error: string | null;
   onGo: (d: DashboardSummary) => void;
-  tools: (dir: "row" | "column") => ReactNode;
+  tools: (dir: "row" | "column", size?: number) => ReactNode;
 };
 
 /** Room width the rail takes when open / folded (the page keeps this much free on the right). */
@@ -69,12 +68,14 @@ function RoomTile({ d, active, onGo, size, label }: { d: DashboardSummary; activ
 }
 
 /** A floating island centred under the dashboard; the room under the pointer grows (like a Mac dock). */
+const TILE = 46;
+const GROW = 0.22; // the most a room grows; the dock keeps this much room above its rooms
 function Dock({ dashboards, activeId, onGo, tools, loading, error }: Props) {
-  const anchor = useRef<HTMLDivElement>(null);
   const dock = useRef<HTMLDivElement>(null);
   const [centre, setCentre] = useState<number | null>(null);
+  // Centre under the dashboard (the dock's own parent), without taking any room in the page.
   useLayoutEffect(() => {
-    const el = anchor.current?.parentElement;
+    const el = dock.current?.parentElement;
     if (!el) return undefined;
     const measure = () => {
       const r = el.getBoundingClientRect();
@@ -89,25 +90,27 @@ function Dock({ dashboards, activeId, onGo, tools, loading, error }: Props) {
       window.removeEventListener("resize", measure);
     };
   }, []);
+  const frame = useRef(0);
   const magnify = (x: number | null) => {
-    dock.current?.querySelectorAll<HTMLElement>("[data-nx-room]").forEach((k) => {
-      if (x === null) {
-        k.style.transform = "";
-        return;
-      }
-      const r = k.getBoundingClientRect();
-      const dx = Math.abs(x - (r.left + r.width / 2));
-      k.style.transform = `scale(${(1 + Math.max(0, 0.35 - dx / 260)).toFixed(3)})`;
+    cancelAnimationFrame(frame.current);
+    frame.current = requestAnimationFrame(() => {
+      dock.current?.querySelectorAll<HTMLElement>("[data-nx-room]").forEach((k) => {
+        if (x === null) {
+          k.style.transform = "";
+          return;
+        }
+        const r = k.getBoundingClientRect();
+        const dx = Math.abs(x - (r.left + r.width / 2)) / (TILE * 2.2);
+        const g = dx >= 1 ? 0 : GROW * (Math.cos(dx * Math.PI) + 1) / 2;
+        k.style.transform = `scale(${(1 + g).toFixed(3)})`;
+      });
     });
   };
   return (
     <>
-      <Box ref={anchor} sx={{ height: 0, m: "0 !important" }} />
-      {/* Room at the end of the page so the dock never covers the last panel. */}
       <Box
         ref={dock}
         data-nx-room-menu="dock"
-        data-nx-role="popup"
         onMouseMove={(e) => magnify(e.clientX)}
         onMouseLeave={() => magnify(null)}
         sx={(t) => ({
@@ -120,28 +123,32 @@ function Dock({ dashboards, activeId, onGo, tools, loading, error }: Props) {
           transform: { xs: "none", md: "translateX(-50%)" },
           maxWidth: { xs: "none", md: "calc(100vw - 32px)" },
           display: "flex",
-          alignItems: "center",
-          gap: "var(--nx-control-gap)",
-          px: 1.5,
-          py: 1,
-          overflowX: "auto",
+          alignItems: "flex-end",
+          gap: "calc(var(--nx-control-gap) + 2px)",
+          px: 2,
+          // Room above the rooms so a growing room stays inside the dock.
+          pt: `${Math.ceil(TILE * GROW) + 10}px`,
+          pb: "10px",
+          overflowX: { xs: "auto", md: "visible" },
           scrollbarWidth: "none",
           borderRadius: t.nx.radiusCard,
-          border: `1px solid ${t.palette.divider}`,
-          bgcolor: "background.paper",
+          border: t.nx.popupBorder || `1px solid ${t.palette.divider}`,
+          bgcolor: t.nx.popupFill || "background.paper",
           backdropFilter: "blur(14px)",
-          boxShadow: "0 8px 30px rgba(0,0,0,.35)",
+          boxShadow: t.nx.popupShadow || "0 8px 30px rgba(0,0,0,.35)",
+          "& [data-nx-room]": { transition: "transform .18s cubic-bezier(.2,.7,.3,1)", transformOrigin: "bottom center", willChange: "transform" },
         })}
       >
         {loading ? <Typography variant="caption">Loading rooms…</Typography> : null}
         {error ? <Typography variant="caption" color="error">{error}</Typography> : null}
         {dashboards.map((d) => (
-          <RoomTile key={d.id} d={d} active={d.id === activeId} onGo={() => onGo(d)} size={44} label="none" />
+          <RoomTile key={d.id} d={d} active={d.id === activeId} onGo={() => onGo(d)} size={TILE} label="none" />
         ))}
         <Box sx={{ width: "1px", alignSelf: "stretch", bgcolor: "divider", mx: 0.5, flexShrink: 0 }} />
-        {tools("row")}
+        {tools("row", TILE)}
       </Box>
-      <Box sx={{ height: { xs: 80, md: 72 }, m: "0 !important", order: 99 }} />
+      {/* Room at the end of the page so the dock never covers the last panel. */}
+      <Box sx={{ height: { xs: 96, md: 96 }, m: "0 !important", order: 99 }} />
     </>
   );
 }
@@ -193,7 +200,7 @@ function Rail({ dashboards, activeId, onGo, tools }: Props) {
         <IconButton size="small" aria-label={open ? "Fold the room menu" : "Open the room menu"} onClick={() => setOpen((o) => !o)}>
           {open ? <ChevronRightIcon fontSize="small" /> : <ChevronLeftIcon fontSize="small" />}
         </IconButton>
-        {tools(open ? "row" : "column")}
+        {tools(open ? "row" : "column", 40)}
       </Stack>
       {dashboards.map((d) => (
         <RoomTile key={d.id} d={d} active={d.id === activeId} onGo={() => onGo(d)} size={42} label={open ? "beside" : "none"} />
@@ -202,37 +209,14 @@ function Rail({ dashboards, activeId, onGo, tools }: Props) {
   );
 }
 
-/** A panel beside the dashboard listing every room, in the same place on every dashboard. */
-function RoomsPanel({ dashboards, activeId, onGo, tools }: Props) {
+/**
+ * Room menu = Rooms panel: the rooms are a normal panel on the dashboard (Add Panel → Rooms);
+ * the bell and the Dashboard Options cog sit in a slim row at the top right of the page.
+ */
+function RoomsPanel({ tools }: Props) {
   return (
-    <Box
-      data-nx-room-menu="panel"
-      data-nx-role="card"
-      sx={(t) => ({
-        position: "sticky",
-        top: 16,
-        alignSelf: "start",
-        p: 1.5,
-        borderRadius: t.nx.radiusCard,
-        border: t.nx.panelBorder,
-        bgcolor: "background.paper",
-        overflow: "hidden",
-      })}
-    >
-      <Box sx={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
-        <LookDecor slot="panel" />
-      </Box>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1, position: "relative" }}>
-        <Typography variant="subtitle2" fontWeight={600}>
-          Rooms
-        </Typography>
-        {tools("row")}
-      </Stack>
-      <Stack sx={{ gap: "var(--nx-list-gap)", position: "relative" }}>
-        {dashboards.map((d) => (
-          <RoomTile key={d.id} d={d} active={d.id === activeId} onGo={() => onGo(d)} size={40} label="beside" />
-        ))}
-      </Stack>
-    </Box>
+    <Stack data-nx-room-menu="panel" direction="row" justifyContent="flex-end" sx={{ minHeight: 0 }}>
+      {tools("row", 40)}
+    </Stack>
   );
 }

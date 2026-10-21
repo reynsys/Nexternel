@@ -41,6 +41,7 @@ export function panelLabel(type: string): string {
     "panel.clock": "Clock",
     "panel.devices": "Devices",
     "panel.system": "System",
+    "panel.rooms": "Rooms",
   };
   return labels[kind] ?? "Panel";
 }

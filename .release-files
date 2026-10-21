@@ -473,6 +473,7 @@ apps/ui/src/panels/responsive/semantic-degradation.test.ts
 apps/ui/src/panels/responsive/semantic-styles.ts
 apps/ui/src/panels/responsive/thresholds.ts
 apps/ui/src/panels/responsive/types.ts
+apps/ui/src/panels/RoomsPanel.tsx
 apps/ui/src/panels/section-grid-feedback.test.ts
 apps/ui/src/panels/semantic/classify.ts
 apps/ui/src/panels/semantic/compose.ts

@@ -12,6 +12,7 @@ export const PANEL_KINDS = [
   "panel.clock",
   "panel.devices",
   "panel.system",
+  "panel.rooms",
 ] as const;
 
 export type PanelKind = (typeof PANEL_KINDS)[number];
