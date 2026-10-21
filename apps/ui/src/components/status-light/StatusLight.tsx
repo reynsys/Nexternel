@@ -220,6 +220,18 @@ function GlowBorder({
     ro.observe(el);
     return () => ro.disconnect();
   }, [outline]);
+  // A Look with its own frame: the frame itself lights up in the status colour (its lines, light bars
+  // and the edge of the boxes inside take the colour), instead of a second line laid over it.
+  useLayoutEffect(() => {
+    const host = ref.current?.parentElement;
+    if (!host || !outline || unset) return undefined;
+    host.style.setProperty("--nx-accent", colour);
+    host.style.setProperty("--nx-accent-soft", colour);
+    return () => {
+      host.style.removeProperty("--nx-accent");
+      host.style.removeProperty("--nx-accent-soft");
+    };
+  }, [outline, unset, colour]);
   if (outline) {
     const [w, h] = size;
     return (
@@ -239,7 +251,7 @@ function GlowBorder({
               position: "absolute",
               inset: 0,
               overflow: "visible",
-              filter: unset ? "none" : `drop-shadow(0 0 3px ${colour}) drop-shadow(0 0 8px ${colour})`,
+              filter: unset ? "none" : `drop-shadow(0 0 4px ${colour})`,
             }}
             aria-hidden
           >
@@ -247,7 +259,7 @@ function GlowBorder({
               d={outline(w, h)}
               fill="none"
               stroke={colour}
-              strokeWidth={unset ? 1.5 : 3}
+              strokeWidth={unset ? 1.5 : 2}
               strokeDasharray={unset ? "5 4" : undefined}
               strokeLinejoin="round"
               vectorEffect="non-scaling-stroke"
@@ -257,23 +269,56 @@ function GlowBorder({
       </Box>
     );
   }
+  return <PlainGlowBorder common={common} colour={colour} blinkSx={blinkSx} unset={unset} />;
+}
+
+/**
+ * Glowing border on a plain rounded box. The box clips what is drawn on or outside its own 1px edge,
+ * so the edge line itself takes the colour and the rest of the band is drawn just inside it, with the
+ * box's inner corner rounding, so it sits flush at the outer edge with no grey rim or corner showing.
+ */
+function PlainGlowBorder({
+  common,
+  colour,
+  blinkSx,
+  unset,
+}: {
+  common: Record<string, string>;
+  colour: string;
+  blinkSx: object;
+  unset: boolean;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [radius, setRadius] = useState<string>("inherit");
+  useLayoutEffect(() => {
+    const host = ref.current?.parentElement;
+    if (!host) return undefined;
+    const cs = getComputedStyle(host);
+    const inner = Math.max(0, parseFloat(cs.borderTopLeftRadius) - parseFloat(cs.borderTopWidth));
+    if (Number.isFinite(inner)) setRadius(`${inner}px`);
+    if (unset) return undefined;
+    host.style.setProperty("border-color", colour);
+    return () => {
+      host.style.removeProperty("border-color");
+    };
+  }, [colour, unset]);
   return (
-      <Box
-        {...common}
-        data-nx-status-style="glow"
-        sx={{
-          position: "absolute",
-          // Drawn over the box's own 1px edge line, so no edge or corner shows outside it.
-          inset: "-1px",
-          borderRadius: "inherit",
-          pointerEvents: "none",
-          zIndex: 1,
-          ...(unset
-            ? { border: `1.5px dashed ${colour}` }
-            : { border: `3px solid ${colour}`, boxShadow: `0 0 12px -2px ${colour}, inset 0 0 10px -4px ${colour}` }),
-          ...blinkSx,
-        }}
-      />
+    <Box
+      ref={ref}
+      {...common}
+      data-nx-status-style="glow"
+      sx={{
+        position: "absolute",
+        inset: 0,
+        borderRadius: radius,
+        pointerEvents: "none",
+        zIndex: 1,
+        ...(unset
+          ? { border: `1.5px dashed ${colour}` }
+          : { border: `3px solid ${colour}`, boxShadow: `inset 0 0 12px -2px ${colour}` }),
+        ...blinkSx,
+      }}
+    />
   );
 }
 

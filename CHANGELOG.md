@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.135
+
+- **Glowing border status light:** a solid, thicker band that sits flush on the panel's edge — no grey rim or corners showing outside it. In HUD, the panel's own frame lights up in the status colour.
+
 ## V5.2.134
 
 - After an update, every screen (wall displays too) now loads the new version instead of an old copy.
