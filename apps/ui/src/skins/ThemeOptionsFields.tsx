@@ -66,7 +66,7 @@ function kindOf(gradientId: string | undefined): BackgroundKind {
 function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
   return (
     <Box component="section">
-      <Typography variant="subtitle1" fontWeight={600}>
+      <Typography variant="subtitle1">
         {title}
       </Typography>
       {hint && (
@@ -83,7 +83,7 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
 function Row({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <Box sx={{ mt: 2 }}>
-      <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
+      <Typography variant="body2" fontWeight="fontWeightBold" sx={{ mb: 1 }}>
         {label}
         {hint ? (
           <Typography component="span" variant="caption" color="text.secondary">
@@ -134,7 +134,7 @@ function ChoiceTile({ selected, onClick, title, text, children, sx }: { selected
       ]}
     >
       {children}
-      <Typography variant="body2" fontWeight={600}>
+      <Typography variant="body2" fontWeight="fontWeightBold">
         {title}
       </Typography>
       {text ? (
@@ -255,7 +255,7 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
                   {[s.roles.main.solid, s.roles.second.solid, s.roles.third.solid].map((c) => (
                     <Box key={c} sx={{ width: 16, height: 16, borderRadius: "50%", bgcolor: c, border: `1px solid ${s.roles.line.edge}` }} />
                   ))}
-                  <Typography sx={{ ml: "auto", fontFamily: CORE_FONTS.find((f) => f.id === p.font)?.family, color: s.roles.text.main, fontWeight: 600, fontSize: "0.85rem" }}>Aa</Typography>
+                  <Typography sx={{ ml: "auto", fontFamily: CORE_FONTS.find((f) => f.id === p.font)?.family, color: s.roles.text.main, typography: "subtitle2" }}>Aa</Typography>
                 </Box>
               </ChoiceTile>
             );
@@ -423,8 +423,8 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
           <Row key={group.label} label={group.label}>
             <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))", gap: 1 }}>
               {group.fonts.map((f) => (
-                <ChoiceTile key={f.id} selected={fontId === f.id} onClick={() => set({ lookFont: f.id })} title={<Box component="span" sx={{ fontFamily: f.family, fontSize: "1.05rem" }}>{f.label}</Box>} text={f.text}>
-                  <Typography aria-hidden sx={{ fontFamily: f.family, fontSize: "1.4rem", fontWeight: 600, lineHeight: 1.1, color: "secondary.main" }}>
+                <ChoiceTile key={f.id} selected={fontId === f.id} onClick={() => set({ lookFont: f.id })} title={<Box component="span" sx={{ fontFamily: f.family, typography: "subtitle1" }}>{f.label}</Box>} text={f.text}>
+                  <Typography aria-hidden variant="h5" sx={{ fontFamily: f.family, lineHeight: 1.1, color: "secondary.main" }}>
                     21.4°
                   </Typography>
                 </ChoiceTile>
@@ -576,7 +576,7 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
     <Box sx={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(380px, 0.9fr)", gap: 3, alignItems: "start" }}>
       {settings}
       <Box sx={{ position: "sticky", top: 16 }}>
-        <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
+        <Typography variant="subtitle1" sx={{ mb: 1 }}>
           Preview
         </Typography>
         <AppearancePreview prefs={themePrefs} deviceDark={deviceDark} />

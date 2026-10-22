@@ -1,3 +1,4 @@
+import { PANEL_TEXT } from "../lib/appearance/type";
 import type { ResolvedPanelCapability } from "../api";
 import { AdaptiveReading } from "../components/AdaptiveReading";
 import { useMetricAppearance } from "../skins/useMetricAppearance";
@@ -22,10 +23,10 @@ export function PanelReadingValue({ cap }: Props) {
       valueColor={valueColor}
       sx={{
         "& > div": {
-          fontSize: "clamp(1rem, min(18cqi, 42cqb), 3.75rem)",
+          fontSize: PANEL_TEXT.value,
         },
         "& > span": {
-          fontSize: "clamp(0.75rem, 10cqi, 1.35rem)",
+          fontSize: PANEL_TEXT.unit,
         },
       }}
     />

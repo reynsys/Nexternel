@@ -43,7 +43,7 @@ export function CalendarWidget({ widget: _widget }: { widget: WidgetInstance }) 
       }}
     >
       {showBodyHeading && (
-        <Typography variant="subtitle2" fontWeight={600} color="text.primary" noWrap sx={{ mb: 1, flexShrink: 0 }}>
+        <Typography variant="subtitle2" color="text.primary" noWrap sx={{ mb: 1, flexShrink: 0 }}>
           {monthName}
         </Typography>
       )}
@@ -65,7 +65,7 @@ export function CalendarWidget({ widget: _widget }: { widget: WidgetInstance }) 
             key={d}
             variant="caption"
             color="primary.main"
-            sx={{ fontSize: "var(--nx-cal-font)", fontWeight: 600, lineHeight: 1.2 }}
+            sx={{ fontSize: "var(--nx-cal-font)", fontWeight: "fontWeightBold", lineHeight: 1.2 }}
           >
             {d}
           </Typography>

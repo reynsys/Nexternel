@@ -1,3 +1,4 @@
+import { ICON_SIZE, CODE_TEXT } from "../../../lib/appearance/type";
 import { useEffect, useState, type ReactNode } from "react";
 import {
   Alert,
@@ -119,7 +120,7 @@ function DetailShell({
               Back
             </Button>
           )}
-          <Typography variant="subtitle1" fontWeight={700}>
+          <Typography variant="subtitle1">
             {title}
           </Typography>
           {subtitle && (
@@ -151,7 +152,7 @@ function EmptyDetail() {
           minHeight: 280,
         }}
       >
-        <DevicesOtherRoundedIcon sx={{ fontSize: 48, color: "text.disabled", mb: 1.5 }} />
+        <DevicesOtherRoundedIcon sx={{ fontSize: ICON_SIZE.empty, color: "text.disabled", mb: 1.5 }} />
         <Typography variant="h6" color="text.secondary" gutterBottom>
           Select a device
         </Typography>
@@ -229,10 +230,10 @@ function OverviewTab({
       )}
 
       <Box sx={devicesActionGroupSx(theme)}>
-        <Typography variant="subtitle2" fontWeight={700} gutterBottom>
+        <Typography variant="subtitle2" gutterBottom>
           Connection
         </Typography>
-        <Typography variant="body2" fontFamily="monospace" color="text.secondary">
+        <Typography variant="body2" fontFamily={CODE_TEXT.fontFamily} color="text.secondary">
           {device.mqttTopicPrefix}
           {device.ipAddress ? ` · ${device.ipAddress}` : ""}
         </Typography>
@@ -247,7 +248,7 @@ function OverviewTab({
 
       {isAdmin && (
         <Box sx={devicesActionGroupSx(theme)}>
-          <Typography variant="subtitle2" fontWeight={700} gutterBottom>
+          <Typography variant="subtitle2" gutterBottom>
             Device
           </Typography>
           <ButtonRow direction="row" flexWrap="wrap" useFlexGap alignItems="center">
@@ -282,7 +283,7 @@ function OverviewTab({
 
       {isAdmin && isEsphome && (
         <Box sx={devicesActionGroupSx(theme)}>
-          <Typography variant="subtitle2" fontWeight={700} gutterBottom>
+          <Typography variant="subtitle2" gutterBottom>
             ESPHome
           </Typography>
           <ButtonRow direction="row" flexWrap="wrap" useFlexGap>
@@ -414,7 +415,7 @@ function CapabilitiesTab({
               </TableCell>
             )}
             <TableCell>
-              <Typography variant="caption" fontFamily="monospace">
+              <Typography variant="caption" fontFamily={CODE_TEXT.fontFamily}>
                 {s.mqttStateTopic}
               </Typography>
             </TableCell>
@@ -491,7 +492,7 @@ function CapabilitiesTab({
               </TableCell>
             )}
             <TableCell>
-              <Typography variant="caption" fontFamily="monospace">
+              <Typography variant="caption" fontFamily={CODE_TEXT.fontFamily}>
                 {r.mqttStateTopic}
               </Typography>
             </TableCell>
@@ -627,7 +628,7 @@ function AdvancedTab({
     <ButtonRow>
       {isEsphome && isAdmin && (
         <Box sx={devicesActionGroupSx(theme)}>
-          <Typography variant="subtitle2" fontWeight={700} gutterBottom>
+          <Typography variant="subtitle2" gutterBottom>
             Maintenance
           </Typography>
           <ButtonRow direction="row" flexWrap="wrap" useFlexGap>
@@ -654,7 +655,7 @@ function AdvancedTab({
       )}
       {isAdmin && (
         <Box sx={devicesActionGroupSx(theme)}>
-          <Typography variant="subtitle2" fontWeight={700} gutterBottom color="error">
+          <Typography variant="subtitle2" gutterBottom color="error">
             Danger zone
           </Typography>
           <Button
@@ -735,7 +736,7 @@ export function DeviceDetailPane({
               Back
             </Button>
           )}
-          <Typography variant="subtitle1" fontWeight={700}>
+          <Typography variant="subtitle1">
             {device.name}
           </Typography>
           <StatusChips device={device} />
@@ -752,7 +753,7 @@ export function DeviceDetailPane({
           borderBottom: "1px solid",
           borderColor: "divider",
           minHeight: 44,
-          "& .MuiTab-root": { minHeight: 44, textTransform: "none", fontWeight: 600 },
+          "& .MuiTab-root": { minHeight: 44, textTransform: "none", fontWeight: "fontWeightBold" },
         }}
       >
         <Tab value="overview" label="Overview" />
@@ -799,7 +800,7 @@ function ReadingName({
 }) {
   return (
     <Stack direction="row" spacing={1} alignItems="flex-start">
-      <ItemIcon iconId={icon} kind={kind} sx={{ fontSize: 18, color: "primary.main", mt: "1px" }} />
+      <ItemIcon iconId={icon} kind={kind} sx={{ fontSize: ICON_SIZE.title, color: "primary.main", mt: "1px" }} />
       <Box sx={{ minWidth: 0 }}>
         <Typography variant="body2">{name}</Typography>
         {deviceName && (

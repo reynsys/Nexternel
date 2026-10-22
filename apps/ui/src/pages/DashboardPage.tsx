@@ -4,7 +4,6 @@ import { type Layout } from "react-grid-layout";
 import {
   Accordion,
   AccordionDetails,
-  AccordionSummary,
   Alert,
   Box,
   Button,
@@ -24,6 +23,7 @@ import {
   useTheme,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import AddIcon from "@mui/icons-material/Add";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import {
@@ -947,7 +947,7 @@ function DashboardPageContent() {
               <DashIcon color="primary" sx={{ flexShrink: 0 }} />
               <Typography variant="body1" color="text.secondary" noWrap sx={{ minWidth: 0 }}>
                 Editing dashboard:{" "}
-                <Typography component="span" fontWeight={600} color="text.primary">
+                <Typography component="span" fontWeight="fontWeightBold" color="text.primary">
                   {name}
                 </Typography>
               </Typography>
@@ -1100,12 +1100,13 @@ function DashboardPageContent() {
                   : {},
               ]}
             >
-              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={titleHidden ? { display: "none" } : undefined}>
+              {/* The section's header (the Accordion's first child): name, panel count, and its buttons. */}
+              <Box sx={{ display: titleHidden ? "none" : "block", px: 2, py: 1.25 }}>
                 <Stack
                   direction="row"
                   alignItems="center"
                   spacing={1.25}
-                  sx={{ width: "100%", minWidth: 0, pr: 1, containerType: "inline-size" }}
+                  sx={{ width: "100%", minWidth: 0, containerType: "inline-size" }}
                 >
                   <SecIcon color="primary" fontSize="small" />
                   <Typography variant="h6" noWrap sx={{ minWidth: 0 }}>
@@ -1147,9 +1148,22 @@ function DashboardPageContent() {
                       </Tooltip>
                     </ButtonRow>
                   )}
+                  {/* Fold / open: a real button like every other, with its name. */}
+                  <Tooltip title={section.collapsed ? "Open this section" : "Fold this section"}>
+                    <Button
+                      variant="outlined"
+                      aria-label={section.collapsed ? "Open this section" : "Fold this section"}
+                      aria-expanded={!section.collapsed}
+                      aria-controls={`dash-section-body-${section.id}`}
+                      onClick={() => updateSection(section.id, { collapsed: !section.collapsed })}
+                      sx={{ minWidth: 36, width: 36, height: 36, p: 0, flexShrink: 0 }}
+                    >
+                      {section.collapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+                    </Button>
+                  </Tooltip>
                 </Stack>
-              </AccordionSummary>
-              <AccordionDetails sx={{ pt: titleHidden ? 2 : 0, px: 2, pb: 2 }}>
+              </Box>
+              <AccordionDetails id={`dash-section-body-${section.id}`} sx={{ pt: titleHidden ? 2 : 0, px: 2, pb: 2 }}>
                 <SectionGrid
                   gridCols={gridCols}
                   sectionId={section.id}

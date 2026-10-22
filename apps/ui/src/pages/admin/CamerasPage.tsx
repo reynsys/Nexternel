@@ -1,3 +1,4 @@
+import { CODE_TEXT } from "../../lib/appearance/type";
 import { DevicesTabs } from "../../components/DevicesTabs";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
@@ -279,7 +280,7 @@ export function CamerasPage() {
                   <TableRow key={c.id} hover>
                     <TableCell>{c.name}</TableCell>
                     <TableCell>
-                      <Typography variant="body2" fontFamily="monospace">
+                      <Typography variant="body2" fontFamily={CODE_TEXT.fontFamily}>
                         {c.connectionPreview ||
                           (c.host
                             ? `${c.host}${c.path ? c.path : ""}`
@@ -468,7 +469,7 @@ export function CamerasPage() {
                 />
               </Stack>
               {editing?.connectionPreview && (
-                <Typography variant="caption" color="text.secondary" fontFamily="monospace">
+                <Typography variant="caption" color="text.secondary" fontFamily={CODE_TEXT.fontFamily}>
                   Preview: {editing.connectionPreview}
                 </Typography>
               )}

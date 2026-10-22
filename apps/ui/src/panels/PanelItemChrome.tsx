@@ -1,3 +1,4 @@
+import { ICON_SIZE, ITEM_AREA_SIZE, ITEM_TITLE_SIZE } from "../lib/appearance/type";
 import { Box } from "@mui/material";
 import type { SvgIconComponent } from "@mui/icons-material";
 import type { SxProps, Theme } from "@mui/material/styles";
@@ -26,8 +27,8 @@ const singleLineSx = {
 /** Item name inside its tile — shared by every multi-item panel. */
 export const itemNameSx = {
   ...singleLineSx,
-  fontWeight: 600,
-  fontSize: "0.75rem",
+  fontWeight: "fontWeightBold",
+  fontSize: ITEM_TITLE_SIZE,
   lineHeight: `${ITEM_NAME_LINE_PX}px`,
   height: ITEM_NAME_LINE_PX,
   color: "text.primary",
@@ -35,7 +36,7 @@ export const itemNameSx = {
 
 const itemAreaSx = {
   ...singleLineSx,
-  fontSize: "0.6875rem",
+  fontSize: ITEM_AREA_SIZE,
   lineHeight: `${ITEM_AREA_LINE_PX}px`,
   height: ITEM_AREA_LINE_PX,
   color: "text.secondary",
@@ -94,7 +95,7 @@ export function PanelItemChrome({
   if (areaText && (areaText.toLowerCase() === panelArea || areaText.toLowerCase() === nameText?.trim().toLowerCase())) {
     areaText = null;
   }
-  const iconSx = { fontSize: 16, mt: "1px", flexShrink: 0, color: "primary.main" } as const;
+  const iconSx = { fontSize: ICON_SIZE.inline, mt: "1px", flexShrink: 0, color: "primary.main" } as const;
   const overrideIcon = itemId ? itemDisplay.overrides[itemId]?.icon : undefined;
   let iconNode: ReactNode = null;
   if (resolved.iconId !== null) {

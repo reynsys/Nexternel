@@ -1,3 +1,4 @@
+import { PANEL_TEXT } from "../../lib/appearance/type";
 import {
   Box,
   CardActionArea,
@@ -88,7 +89,7 @@ export function SemanticCapabilityTile({ item, showSecondary }: Props) {
                 value={on ? "On" : "Off"}
                 valueColor={on ? accent : muted}
                 sx={{
-                  "& > div": { fontSize: "clamp(1rem, min(18cqi, 40cqb), 3.75rem)" },
+                  "& > div": { fontSize: PANEL_TEXT.value },
                   ...(on && !classic ? { textShadow: "var(--nx-text-glow, none)" } : {}),
                 }}
               />

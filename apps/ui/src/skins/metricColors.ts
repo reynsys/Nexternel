@@ -27,8 +27,12 @@ export function readableOnBackground(fg: string, bg: string, fallback: string): 
   return fallback;
 }
 
-/** Accent metric colour for React tiles — falls back when accent matches the panel. */
+/**
+ * Colour of big values (temperatures, clock, energy): the scheme's value role (the second colour,
+ * already checked for readability on every surface). Older themes without a scheme: the accent.
+ */
 export function metricValueColorFromTheme(theme: Theme): string {
+  if (theme.nxScheme?.value) return theme.nxScheme.value;
   const bg = theme.palette.background.paper;
   const accent = theme.palette.primary.main;
   const fallback = theme.palette.text.primary;

@@ -1,3 +1,4 @@
+import { CODE_TEXT } from "../../../lib/appearance/type";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
@@ -217,7 +218,7 @@ export function UpdatesCard() {
                   <Collapse in={showLog}>
                     <Box
                       component="pre"
-                      sx={{ m: 0, mt: 1, p: 1.5, maxHeight: 260, overflow: "auto", borderRadius: 1, bgcolor: "action.hover", fontSize: "0.75rem", whiteSpace: "pre-wrap" }}
+                      sx={{ m: 0, mt: 1, p: 1.5, maxHeight: 260, overflow: "auto", borderRadius: 1, bgcolor: "action.hover", ...CODE_TEXT, whiteSpace: "pre-wrap" }}
                     >
                       {run_.log}
                     </Box>

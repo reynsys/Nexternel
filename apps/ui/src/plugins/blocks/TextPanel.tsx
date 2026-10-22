@@ -60,7 +60,7 @@ export function TextPanel({ pluginId, panelId, label }: { pluginId: string; pane
   return (
     <Stack spacing={1} sx={{ p: 1.5, height: "100%", minHeight: 0, overflowY: "auto", width: "100%" }}>
       {content.title ? (
-        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: "fontWeightBold" }}>
           {content.title}
         </Typography>
       ) : null}

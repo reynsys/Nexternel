@@ -71,7 +71,7 @@ export function PluginPermissionsForm({ requested, grants, onChange, controlPick
         return (
           <Box key={key}>
             {key === "control" ? (
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              <Typography variant="body2" sx={{ fontWeight: "fontWeightBold" }}>
                 {LABELS[key]}
               </Typography>
             ) : (
@@ -87,7 +87,7 @@ export function PluginPermissionsForm({ requested, grants, onChange, controlPick
                     }}
                   />
                 }
-                label={<Typography variant="body2" sx={{ fontWeight: 600 }}>{LABELS[key]}</Typography>}
+                label={<Typography variant="body2" sx={{ fontWeight: "fontWeightBold" }}>{LABELS[key]}</Typography>}
               />
             )}
             <Typography variant="body2" color="text.secondary" sx={{ pl: key === "control" ? 0 : 4 }}>

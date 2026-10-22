@@ -1,3 +1,4 @@
+import { CODE_TEXT } from "../../lib/appearance/type";
 import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
@@ -461,7 +462,7 @@ export function EsphomeDevicePanelDialog({
                     minRows={8}
                     fullWidth
                     InputProps={{ readOnly: true }}
-                    sx={{ mt: 1, fontFamily: "monospace", fontSize: "0.8rem" }}
+                    sx={{ mt: 1, "& textarea, & input": CODE_TEXT }}
                   />
                 </Collapse>
               </Box>
@@ -490,7 +491,7 @@ export function EsphomeDevicePanelDialog({
               </Typography>
             )}
             {yamlPath && (
-              <Typography variant="caption" color="text.secondary" fontFamily="monospace">
+              <Typography variant="caption" color="text.secondary" fontFamily={CODE_TEXT.fontFamily}>
                 {yamlPath}
               </Typography>
             )}
@@ -501,7 +502,7 @@ export function EsphomeDevicePanelDialog({
               minRows={14}
               fullWidth
               disabled={busy}
-              sx={{ fontFamily: "monospace", fontSize: "0.75rem" }}
+              sx={{ "& textarea, & input": CODE_TEXT }}
             />
             <ButtonRow direction="row">
               <Button variant="outlined" disabled={busy} onClick={() => void runValidate()}>

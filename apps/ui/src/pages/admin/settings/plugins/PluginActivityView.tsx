@@ -1,3 +1,4 @@
+import { CODE_TEXT } from "../../../../lib/appearance/type";
 import { useEffect, useState } from "react";
 import { Alert, Box, Stack, Typography } from "@mui/material";
 import { api, type PluginActivity } from "../../../../api";
@@ -62,7 +63,7 @@ export function PluginActivityView({ pluginId }: { pluginId: string }) {
               overflow: "auto",
               borderRadius: 1,
               bgcolor: "action.hover",
-              fontSize: "0.75rem",
+              ...CODE_TEXT,
               whiteSpace: "pre-wrap",
               wordBreak: "break-word",
             }}

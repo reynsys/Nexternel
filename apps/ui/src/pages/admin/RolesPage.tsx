@@ -1,3 +1,4 @@
+import { CODE_TEXT } from "../../lib/appearance/type";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   Alert,
@@ -257,7 +258,7 @@ export function RolesPage() {
                     </Stack>
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2" fontFamily="monospace">
+                    <Typography variant="body2" fontFamily={CODE_TEXT.fontFamily}>
                       {r.slug}
                     </Typography>
                   </TableCell>

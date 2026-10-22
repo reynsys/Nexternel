@@ -151,7 +151,7 @@ export function AddonsSettingsPage() {
               {data.addons.map((a) => (
                 <Paper key={a.id} variant="inset" sx={{ p: 1.5 }}>
                   <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-                    <Typography fontWeight={600}>{a.name}</Typography>
+                    <Typography fontWeight="fontWeightBold">{a.name}</Typography>
                     <Chip size="small" variant="outlined" label={KIND[a.kind] ?? a.kind} />
                     <Chip size="small" color={STATUS[a.status].color} label={STATUS[a.status].label} />
                     <Box sx={{ flex: 1 }} />

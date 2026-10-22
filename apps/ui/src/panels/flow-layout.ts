@@ -195,7 +195,17 @@ export const DESIGN_MIN_CELL_PX = 56;
  * Narrower: fewer columns at a readable size, panels flowed in order, full width.
  * `rowHeight` follows the square width (as before), so a laptop looks exactly as it did.
  */
-export function flowGridForWidth(widthPx: number, design = DESIGN_COLS): { cols: number; gridWidth: number; rowHeight: number } {
+export function flowGridForWidth(
+  widthPx: number,
+  design = DESIGN_COLS,
+  /** The least a row may be (the Look's panel frame and title row plus room for content). */
+  minRowPx = 0
+): { cols: number; gridWidth: number; rowHeight: number } {
+  const g = flowGridForWidthOnly(widthPx, design);
+  return { ...g, rowHeight: Math.max(g.rowHeight, minRowPx) };
+}
+
+function flowGridForWidthOnly(widthPx: number, design: number): { cols: number; gridWidth: number; rowHeight: number } {
   if (widthPx <= 0) return { cols: design, gridWidth: 0, rowHeight: 56 };
   // Fewer columns = bigger squares; the limits keep the same overall width as 12 columns would.
   const k = DESIGN_COLS / design;

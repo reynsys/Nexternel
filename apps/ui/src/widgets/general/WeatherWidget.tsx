@@ -1,3 +1,4 @@
+import { PANEL_TEXT } from "../../lib/appearance/type";
 import { Box, Stack, Typography } from "@mui/material";
 import { api, type WeatherResponse, type WidgetInstance } from "../../api";
 import { parseWeatherConfig, widgetTitleOr } from "./config";
@@ -9,9 +10,9 @@ import { usePanelPoll } from "../../lib/usePanelPoll";
 import { PanelNotice } from "../../components/PanelNotice";
 
 /** Weather type: sized by the tile's width and height (cqi / cqb), so it fits any tile shape. */
-const WX_READING = "clamp(1.1rem, min(9cqi, 24cqb), 3.6rem)";
-const WX_ICON = "clamp(1.4rem, min(8cqi, 22cqb), 3rem)";
-const WX_LABEL = "clamp(0.72rem, min(3.4cqi, 7.5cqb), 1.3rem)";
+const WX_READING = PANEL_TEXT.valueShared;
+const WX_ICON = PANEL_TEXT.picture;
+const WX_LABEL = PANEL_TEXT.label;
 
 /** Parse Open-Meteo daily `YYYY-MM-DD` as local calendar day (avoid UTC shift). */
 function weekdayShort(isoDate: string): string {
@@ -57,7 +58,7 @@ export function WeatherWidget({ widget }: { widget: WidgetInstance }) {
       }}
     >
       {title && (
-        <Typography variant="subtitle2" fontWeight={600} color="text.primary" noWrap sx={{ mb: 0.5, flexShrink: 0 }}>
+        <Typography variant="subtitle2" color="text.primary" noWrap sx={{ mb: 0.5, flexShrink: 0 }}>
           {title}
         </Typography>
       )}
@@ -150,7 +151,7 @@ export function WeatherWidget({ widget }: { widget: WidgetInstance }) {
           >
             {upcoming.map((day) => (
               <Stack key={day.date} alignItems="center" sx={{ minWidth: 0 }}>
-                <Typography color="primary.main" noWrap sx={{ fontSize: WX_LABEL, fontWeight: 600, lineHeight: 1.25 }}>
+                <Typography color="primary.main" noWrap sx={{ fontSize: WX_LABEL, fontWeight: "fontWeightBold", lineHeight: 1.25 }}>
                   {weekdayShort(day.date)}
                 </Typography>
                 <Box className="wx-day-icon" sx={{ lineHeight: 0, my: "2px" }}>

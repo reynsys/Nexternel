@@ -8,7 +8,6 @@
  * The label is a short word, such as a weekday, a day number, a place, or a forecast.
  * A clock face is one drawing and does not use this list.
  */
-export const genericTileReadingSize = "clamp(1rem, 8cqi, 4.5rem)";
 
 /**
  * Text for a block of `lines` lines that must fit its tile (a list, a month): it follows the tile's
@@ -24,7 +23,6 @@ export function genericTileFitLinesSize(
   const size = opts.widthCqi ? `min(${opts.widthCqi}cqi, ${byHeight})` : byHeight;
   return `clamp(0.7rem, ${size}, ${opts.max ?? "1.15rem"})`;
 }
-export const genericTileLabelSize = "clamp(0.85rem, 3.6cqi, 2.25rem)";
 
 /** Width query for a single figure or a short label. */
 export const genericTileQuerySx = {

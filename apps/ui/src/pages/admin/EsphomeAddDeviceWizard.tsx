@@ -568,7 +568,7 @@ export function EsphomeAddDeviceWizard({
                           alignItems="center"
                           sx={{ mb: 1 }}
                         >
-                          <Typography fontWeight={600}>
+                          <Typography fontWeight="fontWeightBold">
                             {builderComponentLabel(comp.kind)}
                           </Typography>
                           <IconButton

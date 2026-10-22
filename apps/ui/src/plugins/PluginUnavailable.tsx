@@ -22,7 +22,7 @@ export function PluginUnavailable({ pluginName, pluginId, reason = "missing" }: 
       alignItems="center"
       sx={{ px: 2, textAlign: "center" }}
     >
-      <Typography variant="body2" fontWeight={600} gutterBottom>
+      <Typography variant="body2" fontWeight="fontWeightBold" gutterBottom>
         Plugin unavailable
       </Typography>
       <Typography variant="caption" color="text.secondary" display="block">

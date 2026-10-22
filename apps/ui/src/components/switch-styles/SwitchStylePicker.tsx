@@ -33,13 +33,13 @@ export function SwitchStylePicker({ value, onChange }: { value: SwitchStyleId; o
               ) : s.id === "tile" ? (
                 <Box sx={{ position: "relative", width: 72, height: 56, display: "grid", placeItems: "center" }}>
                   <SwitchTileFill on />
-                  <Typography sx={{ position: "relative", color: "primary.main", fontWeight: 600 }}>On</Typography>
+                  <Typography sx={{ position: "relative", color: "primary.main", fontWeight: "fontWeightBold" }}>On</Typography>
                 </Box>
               ) : (
                 <SwitchStyleVisual style={s.id} on fontSize={s.id === "cyber" || s.id === "lever" || s.id === "rocker" ? "8.5px" : "9.5px"} />
               )}
             </Box>
-            <Typography variant="caption" fontWeight={600} textAlign="center">
+            <Typography variant="caption" fontWeight="fontWeightBold" textAlign="center">
               {s.label}
             </Typography>
           </ButtonBase>

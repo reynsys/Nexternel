@@ -289,6 +289,7 @@ apps/ui/src/lib/appearance/fonts.ts
 apps/ui/src/lib/appearance/presets.ts
 apps/ui/src/lib/appearance/scale.ts
 apps/ui/src/lib/appearance/scheme.ts
+apps/ui/src/lib/appearance/type.ts
 apps/ui/src/lib/area-labels.ts
 apps/ui/src/lib/auto-scroll.test.ts
 apps/ui/src/lib/auto-scroll.ts

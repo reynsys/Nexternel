@@ -28,7 +28,7 @@ import { isEchartsWidgetType } from "../widgets/echarts/config";
 import { getPanelContribution } from "../plugins/registry";
 import { panelTitleIcon } from "../lib/panel-title-icon";
 import type { AutomaticTitle } from "./PanelTitleFields";
-import { panelHeading } from "../lib/panel-heading";
+import { minPanelRowPx, panelHeading } from "../lib/panel-heading";
 import {
   panelAsGeneralWidget,
   resolveDashboardEditorKind,
@@ -170,7 +170,8 @@ export function SectionGrid({
     [panels]
   );
   /** This screen: exactly as arranged when it fits, otherwise flowed in order (flow-layout.ts). */
-  const grid = flowGridForWidth(width, gridCols);
+  // Rows are never shorter than the Look's panel frame and title need (thick frames, e.g. HUD, on phones).
+  const grid = flowGridForWidth(width, gridCols, minPanelRowPx(theme.nx?.panelInset));
   const cols = grid.cols;
   const rowHeight = Math.max(1, grid.rowHeight);
   const flowed = useMemo(() => flowLayout(savedItems, cols, gridCols), [savedItems, cols, gridCols]);
@@ -231,6 +232,7 @@ export function SectionGrid({
     ? {
         name: panelHeading(editing, capabilities, sectionRoomId, cameras).title || widgetTypeLabel(editing.type),
         kind: dashboardItemKind(editing.type),
+        section: { id: sectionId, title: sectionTitle ?? "" },
         moveTargets: onMovePanel ? moveTargets : [],
         onMove: (to) => {
           setEditPanelId(null);

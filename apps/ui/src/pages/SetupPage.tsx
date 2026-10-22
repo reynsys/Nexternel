@@ -1,3 +1,4 @@
+import { ICON_SIZE } from "../lib/appearance/type";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -44,8 +45,8 @@ function Choice({ icon, title, text, onClick }: { icon: ReactNode; title: string
       choiceSx(false),
     ]}
     >
-      <Box sx={{ color: "primary.main", mb: 1, "& svg": { fontSize: 36 } }}>{icon}</Box>
-      <Typography variant="subtitle1" fontWeight={600}>
+      <Box sx={{ color: "primary.main", mb: 1, "& svg": { fontSize: ICON_SIZE.feature } }}>{icon}</Box>
+      <Typography variant="subtitle1">
         {title}
       </Typography>
       <Typography variant="body2" color="text.secondary">
@@ -184,7 +185,7 @@ export function SetupPage() {
       <Card>
         <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
           <ButtonRow>
-            <Typography variant="h5" fontWeight={600}>
+            <Typography variant="h5">
               Welcome to Nexternel
             </Typography>
 

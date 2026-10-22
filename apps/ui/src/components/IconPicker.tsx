@@ -1,3 +1,4 @@
+import { ICON_SIZE } from "../lib/appearance/type";
 import { useMemo, useState } from "react";
 import { Box, ButtonBase, Dialog, DialogContent, DialogTitle, IconButton, InputAdornment, LinearProgress, Paper, Stack, TextField, Typography } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
@@ -92,11 +93,11 @@ export function IconPicker({ open, value, kind, autoIconId, autoLabel, allowNone
         <Stack spacing={2}>
           <Box sx={GRID_SX}>
             <Choice selected={value === "auto"} label={autoLabel} onClick={() => pick("auto")}>
-              <ItemIcon iconId={autoIconId ?? "auto"} kind={kind} sx={{ fontSize: 26, color: "primary.main" }} />
+              <ItemIcon iconId={autoIconId ?? "auto"} kind={kind} sx={{ fontSize: ICON_SIZE.picker, color: "primary.main" }} />
             </Choice>
             {allowNone && (
               <Choice selected={value === "none"} label="No icon" onClick={() => pick("none")}>
-                <BlockIcon sx={{ fontSize: 26, color: "text.secondary" }} />
+                <BlockIcon sx={{ fontSize: ICON_SIZE.picker, color: "text.secondary" }} />
               </Choice>
             )}
           </Box>
@@ -128,7 +129,7 @@ export function IconPicker({ open, value, kind, autoIconId, autoLabel, allowNone
               <Box sx={GRID_SX}>
                 {icons.map((e) => (
                   <Choice key={e.id} selected={value === e.id} label={e.label} onClick={() => pick(e.id)}>
-                    <e.Icon sx={{ fontSize: 26, color: "primary.main" }} />
+                    <e.Icon sx={{ fontSize: ICON_SIZE.picker, color: "primary.main" }} />
                   </Choice>
                 ))}
               </Box>

@@ -72,3 +72,9 @@ test("custom second and third colours are used, made readable but keeping their 
   assert.ok(Math.abs(hue(s.roles.second.solid) - hue("#F4511E")) < 6);
   assert.ok(s.audit.every((a) => a.pass));
 });
+
+test("a panel row keeps room for the frame, the title and content", async () => {
+  const { minPanelRowPx } = await import("../panel-heading.ts");
+  assert.equal(minPanelRowPx("4px"), 4 + 4 + 30 + 6 + 32);
+  assert.equal(minPanelRowPx("7px 8px 13px"), 7 + 13 + 30 + 6 + 32);
+});

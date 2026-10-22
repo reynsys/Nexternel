@@ -3,6 +3,8 @@ import { alpha, type Theme } from "@mui/material/styles";
 /** Colours derived from System → Appearance (MUI theme). */
 export type EchartsThemePalette = {
   accent: string;
+  /** Big values (the reading in a gauge): the scheme's value colour. */
+  value: string;
   accentSoft: string;
   textPrimary: string;
   textSecondary: string;
@@ -17,6 +19,7 @@ export function echartsPaletteFromTheme(theme: Theme): EchartsThemePalette {
   const accent = theme.palette.primary.main;
   return {
     accent,
+    value: theme.nxScheme?.value ?? theme.palette.text.primary,
     accentSoft: alpha(accent, mode === "dark" ? 0.45 : 0.35),
     textPrimary: theme.palette.text.primary,
     textSecondary: theme.palette.text.secondary,

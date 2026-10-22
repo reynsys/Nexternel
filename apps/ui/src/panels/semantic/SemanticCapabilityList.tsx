@@ -1,3 +1,4 @@
+import { ICON_SIZE, LIST_VALUE_SIZE, VALUE_WEIGHT } from "../../lib/appearance/type";
 import { Box, Switch, Typography } from "@mui/material";
 import { PanelTile } from "../../components/PanelTile";
 import { StatusLight } from "../../components/status-light/StatusLight";
@@ -36,7 +37,7 @@ function RowShell({ item, children }: { item: SemanticCapabilityView; children: 
       }}
     >
       {iconId !== null ? (
-        <ItemIcon iconId={iconId} kind={item.source.kind} sx={{ fontSize: 18, color: "primary.main", flexShrink: 0 }} />
+        <ItemIcon iconId={iconId} kind={item.source.kind} sx={{ fontSize: ICON_SIZE.title, color: "primary.main", flexShrink: 0 }} />
       ) : null}
       <Box component="p" title={name ?? undefined} sx={{ ...itemNameSx, flex: 1 }}>
         {name}
@@ -63,8 +64,8 @@ function ReadingRow({ item }: { item: SemanticCapabilityView }) {
         component="span"
         sx={{
           flexShrink: 0,
-          fontWeight: 700,
-          fontSize: "0.95rem",
+          fontWeight: VALUE_WEIGHT,
+          fontSize: LIST_VALUE_SIZE,
           fontVariantNumeric: "tabular-nums",
           color: valueColor ?? "text.primary",
           whiteSpace: "nowrap",
@@ -72,7 +73,7 @@ function ReadingRow({ item }: { item: SemanticCapabilityView }) {
       >
         {value}
         {unit ? (
-          <Typography component="span" sx={{ ml: "4px", fontSize: "0.75rem", fontWeight: 600, color: "text.secondary" }}>
+          <Typography component="span" sx={{ ml: "4px", typography: "caption", fontWeight: "fontWeightBold", color: "text.secondary" }}>
             {unit}
           </Typography>
         ) : null}

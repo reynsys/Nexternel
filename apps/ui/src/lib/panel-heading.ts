@@ -329,3 +329,19 @@ export function panelHeading(
     item: single ?? null,
   };
 }
+
+/** The least room a half-height panel's content gets below its title (a value, or "Off" and a switch). */
+export const PANEL_MIN_CONTENT_PX = 32;
+/** Space between a panel's title row and its content (PanelCard). */
+export const PANEL_TITLE_GAP_PX = 6;
+
+/**
+ * The least height of one grid row: the Look's panel frame room (top and bottom of panelInset), the
+ * title row, the gap and room for content — so a half-height panel shows its content in every Look.
+ */
+export function minPanelRowPx(panelInset: string | undefined): number {
+  const parts = String(panelInset ?? "4px").trim().split(/\s+/).map((v) => parseFloat(v) || 0);
+  const top = parts[0] ?? 0;
+  const bottom = parts.length >= 3 ? parts[2]! : top;
+  return Math.ceil(top + bottom + parseFloat(PANEL_TITLE_TILE_HEIGHT) + PANEL_TITLE_GAP_PX + PANEL_MIN_CONTENT_PX);
+}

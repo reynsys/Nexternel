@@ -2,6 +2,18 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.140
+
+- Panels keep enough room for their content in every style, including HUD on phones.
+
+## V5.2.139
+
+- **One set of text sizes everywhere,** following your chosen font; big values (temperatures, clock, gauges) all in your second colour.
+- A proper **fold button** on each section; **grip dots** back on panels while editing.
+- **Compact icon choice** (Change to open the list).
+- **Moving a panel to another section:** pick the section in the panel's Edit panel.
+- The dock and right rail match the side menu.
+
 ## V5.2.138
 
 - **All-new Appearance.** Pick a main colour and Nexternel finds a second and third colour that go with it (or choose them yourself); every text and button is checked to stay easy to read.

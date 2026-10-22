@@ -206,7 +206,7 @@ export function BuilderComponentPicker({
                   <ListItemText
                     primary={row.label}
                     secondary={`${row.description} · ${row.count} type${row.count === 1 ? "" : "s"}`}
-                    primaryTypographyProps={{ fontWeight: 600 }}
+                    primaryTypographyProps={{ fontWeight: "fontWeightBold" }}
                   />
                   <ChevronRightIcon fontSize="small" color="action" />
                 </ListItemButton>
@@ -240,7 +240,7 @@ export function BuilderComponentPicker({
                           </Typography>
                         </>
                       }
-                      primaryTypographyProps={{ variant: "body2", fontWeight: 500 }}
+                      primaryTypographyProps={{ variant: "body2", fontWeight: "fontWeightMedium" }}
                     />
                   </ListItemButton>
                 ))

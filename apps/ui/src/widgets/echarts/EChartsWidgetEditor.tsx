@@ -1,3 +1,4 @@
+import { CODE_TEXT } from "../../lib/appearance/type";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { PanelEditorShell } from "../../components/panel-editor/PanelEditorShell";
 import { readingCanHaveLight } from "../../lib/status-light-show";
@@ -413,7 +414,7 @@ export function EChartsWidgetEditor({
                     setJsonError(null);
                   }}
                   placeholder='{ "series": [{ "axisLine": { "lineStyle": { "width": 20 } } }] }'
-                  sx={{ fontFamily: "ui-monospace, monospace", "& textarea": { fontFamily: "inherit" } }}
+                  sx={{ fontFamily: CODE_TEXT.fontFamily, "& textarea": { fontFamily: "inherit" } }}
                 />
                 <Button size="small" onClick={() => setOverrideText("")}>
                   Reset override

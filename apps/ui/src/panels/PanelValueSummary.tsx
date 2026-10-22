@@ -1,3 +1,4 @@
+import { PANEL_TEXT } from "../lib/appearance/type";
 import { Stack, Typography } from "@mui/material";
 import { AdaptiveReading } from "../components/AdaptiveReading";
 import { useMetricAppearance } from "../skins/useMetricAppearance";
@@ -25,8 +26,8 @@ export function PanelValueSummary({ label, value, unit }: Props) {
         unit={unit}
         valueColor={valueColor}
         sx={{
-          "& > div": { fontSize: "clamp(1.1rem, 14cqi, 2.5rem)" },
-          "& > span": { fontSize: "clamp(0.7rem, 8cqi, 1rem)" },
+          "& > div": { fontSize: PANEL_TEXT.valueShared },
+          "& > span": { fontSize: PANEL_TEXT.unit },
         }}
       />
       <Typography variant="caption" color="text.secondary" textAlign="center" noWrap sx={{ maxWidth: "100%" }}>

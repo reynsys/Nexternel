@@ -1,3 +1,4 @@
+import { CODE_TEXT } from "../../lib/appearance/type";
 import { DevicesTabs } from "../../components/DevicesTabs";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -612,7 +613,7 @@ export function DevicesPage() {
 
       {isAdmin && unregistered.length > 0 && (
         <Card sx={{ p: 2 }}>
-          <Typography variant="subtitle1" fontWeight={600}>
+          <Typography variant="subtitle1">
             Server YAML not registered
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
@@ -631,13 +632,13 @@ export function DevicesPage() {
                 sx={[{ px: 1.5, py: 1 }, insetSx()]}
               >
                 <Box>
-                  <Typography fontWeight={500}>
+                  <Typography fontWeight="fontWeightMedium">
                     {entry.suggestion?.esphomeName || entry.fileName}
                   </Typography>
-                  <Typography variant="caption" color="text.secondary" fontFamily="monospace">
+                  <Typography variant="caption" color="text.secondary" fontFamily={CODE_TEXT.fontFamily}>
                     esphome/{entry.yamlPath}
                   </Typography>
-                  <Typography variant="caption" display="block" color="text.secondary" fontFamily="monospace">
+                  <Typography variant="caption" display="block" color="text.secondary" fontFamily={CODE_TEXT.fontFamily}>
                     {entry.mqttTopicPrefix}
                   </Typography>
                   <Typography variant="caption" display="block" color="text.secondary">
@@ -889,7 +890,7 @@ export function DevicesPage() {
                       {discoveredShellies.map((d) => (
                         <TableRow key={d.topicPrefix} hover>
                           <TableCell>
-                            <Typography variant="body2" fontWeight={600}>
+                            <Typography variant="body2" fontWeight="fontWeightBold">
                               {d.app || d.model || d.topicPrefix}
                             </Typography>
                             <Typography variant="caption" color="text.secondary">
@@ -1060,7 +1061,7 @@ export function DevicesPage() {
               onClick={() => openAddDeviceWizard()}
             >
               <Stack alignItems="flex-start" spacing={0.25}>
-                <Typography fontWeight={600}>ESPHome</Typography>
+                <Typography fontWeight="fontWeightBold">ESPHome</Typography>
                 <Typography variant="caption" color="text.secondary">
                   ESP32 / ESP8266 — wizard, YAML, compile, and OTA from Nexternel
                 </Typography>
@@ -1073,7 +1074,7 @@ export function DevicesPage() {
               onClick={() => openShellyCreate()}
             >
               <Stack alignItems="flex-start" spacing={0.25}>
-                <Typography fontWeight={600}>Shelly</Typography>
+                <Typography fontWeight="fontWeightBold">Shelly</Typography>
                 <Typography variant="caption" color="text.secondary">
                   Shelly switch or plug — find on MQTT or enter device ID manually
                 </Typography>

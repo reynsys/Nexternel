@@ -147,10 +147,11 @@ function Dock({ dashboards, activeId, onGo, tools, loading, error }: Props) {
           overflowX: { xs: "auto", md: "visible" },
           scrollbarWidth: "none",
           borderRadius: t.nx.radiusCard,
-          border: t.nx.popupBorder || `1px solid ${t.palette.divider}`,
-          bgcolor: t.nx.popupFill || "background.paper",
-          backdropFilter: "blur(14px)",
-          boxShadow: t.nx.popupShadow || "0 8px 30px rgba(0,0,0,.35)",
+          // A frame, like the side menu (the Look's chrome), floating with the pop-up shadow.
+          border: t.nx.chromeEdge,
+          bgcolor: t.nx.chromeFill,
+          backdropFilter: t.nxScheme.surfaces === "glass" ? "blur(14px)" : "none",
+          boxShadow: t.nx.popupShadow,
           "& [data-nx-room]": { transition: "transform .18s cubic-bezier(.2,.7,.3,1)", transformOrigin: "bottom center", willChange: "transform" },
         })}
       >
@@ -212,10 +213,11 @@ function Rail({ dashboards, activeId, onGo, tools }: Props) {
         gap: "var(--nx-list-gap)",
         p: 1,
         borderRadius: t.nx.radiusCard,
-        border: t.nx.popupBorder || `1px solid ${t.palette.divider}`,
-        bgcolor: t.nx.popupFill || "background.paper",
-        backdropFilter: "blur(14px)",
-        boxShadow: t.nx.popupShadow || "0 8px 30px rgba(0,0,0,.35)",
+        // A frame, like the side menu (the Look's chrome), floating with the pop-up shadow.
+        border: t.nx.chromeEdge,
+        bgcolor: t.nx.chromeFill,
+        backdropFilter: t.nxScheme.surfaces === "glass" ? "blur(14px)" : "none",
+        boxShadow: t.nx.popupShadow,
         transition: "width .2s ease",
       })}
     >

@@ -37,7 +37,7 @@ export function ClassicLayout() {
     >
       <AppBar position="static" elevation={0} color="transparent">
         <Toolbar sx={{ gap: 2, flexWrap: "wrap" }}>
-          <Typography variant="h6" sx={{ fontWeight: 600, mr: 1 }}>
+          <Typography variant="h6" sx={{ fontWeight: "fontWeightBold", mr: 1 }}>
             Nexternel {APP_VERSION}
           </Typography>
           <ButtonRow

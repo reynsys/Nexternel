@@ -1,3 +1,4 @@
+import { ICON_SIZE } from "../../../lib/appearance/type";
 import { useEffect, useMemo, useState } from "react";
 import {
   Box,
@@ -90,11 +91,11 @@ function DeviceNavRow({
       <ListItemText
         primary={
           <Stack direction="row" spacing={0.5} alignItems="center" flexWrap="wrap" useFlexGap>
-            <Typography variant="body2" fontWeight={600}>
+            <Typography variant="body2" fontWeight="fontWeightBold">
               {device.name}
             </Typography>
             {deviceNeedsAttention(device) && (
-              <WarningAmberRoundedIcon color="warning" sx={{ fontSize: 16 }} />
+              <WarningAmberRoundedIcon color="warning" sx={{ fontSize: ICON_SIZE.inline }} />
             )}
           </Stack>
         }
@@ -105,13 +106,13 @@ function DeviceNavRow({
                 size="small"
                 label={connectivityLabel(connectivity)}
                 color={connectivityChipColor(connectivity)}
-                sx={{ height: 22, "& .MuiChip-label": { px: 1, fontSize: "0.7rem" } }}
+                sx={{ height: 22, "& .MuiChip-label": { px: 1, typography: "caption" } }}
               />
               <Chip
                 size="small"
                 variant="outlined"
                 label={deviceTypeLabel(device)}
-                sx={{ height: 22, "& .MuiChip-label": { px: 1, fontSize: "0.7rem" } }}
+                sx={{ height: 22, "& .MuiChip-label": { px: 1, typography: "caption" } }}
               />
               {lifecycle && (
                 <Chip
@@ -125,7 +126,7 @@ function DeviceNavRow({
                       : "default"
                   }
                   label={lifecycle}
-                  sx={{ height: 22, "& .MuiChip-label": { px: 1, fontSize: "0.7rem" } }}
+                  sx={{ height: 22, "& .MuiChip-label": { px: 1, typography: "caption" } }}
                 />
               )}
             </Stack>
@@ -159,7 +160,7 @@ function SectionHeader({
         sx={{
           letterSpacing: "0.06em",
           color: tone === "warning" ? "warning.main" : "text.secondary",
-          fontWeight: 700,
+          fontWeight: "fontWeightBold",
         }}
       >
         {title}
@@ -244,7 +245,7 @@ export function DeviceNavigator({
   return (
     <Box sx={devicesPanelChromeSx(contentSurface, theme)}>
       <Box sx={devicesPanelHeaderSx(theme)}>
-        <Typography variant="subtitle1" fontWeight={700}>
+        <Typography variant="subtitle1">
           Device list
         </Typography>
         <Typography variant="caption" color="text.secondary">
@@ -343,11 +344,11 @@ export function DeviceNavigator({
                   <ListItemText
                     primary={
                       <Stack direction="row" spacing={0.5} alignItems="center">
-                        <Typography variant="body2" fontWeight={600}>
+                        <Typography variant="body2" fontWeight="fontWeightBold">
                           Octopus Home Mini
                         </Typography>
                         {octopusNeedsAttention && (
-                          <WarningAmberRoundedIcon color="warning" sx={{ fontSize: 16 }} />
+                          <WarningAmberRoundedIcon color="warning" sx={{ fontSize: ICON_SIZE.inline }} />
                         )}
                       </Stack>
                     }

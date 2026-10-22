@@ -290,7 +290,7 @@ export function CameraWidget({ widget }: { widget: WidgetInstance }) {
       }}
     >
       {showHeading && (
-        <Typography variant="subtitle2" noWrap title={title} sx={{ fontWeight: 600 }}>
+        <Typography variant="subtitle2" noWrap title={title} sx={{ fontWeight: "fontWeightBold" }}>
           {title}
         </Typography>
       )}

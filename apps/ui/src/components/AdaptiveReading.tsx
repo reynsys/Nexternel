@@ -1,3 +1,4 @@
+import { PANEL_TEXT, VALUE_WEIGHT } from "../lib/appearance/type";
 import { Stack, Typography } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material/styles";
 
@@ -53,8 +54,8 @@ export function AdaptiveReading({
       <Typography
         component="div"
         sx={{
-          fontSize: "clamp(0.75rem, min(18cqi, 42cqb), 1.65rem)",
-          fontWeight: 800,
+          fontSize: PANEL_TEXT.valueCompact,
+          fontWeight: VALUE_WEIGHT,
           lineHeight: 1.05,
           fontVariantNumeric: "tabular-nums",
           color: valueColor ?? "text.primary",
@@ -72,8 +73,8 @@ export function AdaptiveReading({
         <Typography
           component="span"
           sx={{
-            fontSize: "clamp(0.65rem, 10cqi, 0.95rem)",
-            fontWeight: 700,
+            fontSize: PANEL_TEXT.unit,
+            fontWeight: "fontWeightBold",
             color: unitColor ?? "text.secondary",
             lineHeight: 1.1,
             minWidth: 0,

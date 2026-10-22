@@ -122,7 +122,7 @@ export function NotificationBell({ canClear, place = "bar" }: { canClear?: boole
           <Badge
             badgeContent={unread}
             max={99}
-            sx={{ "& .MuiBadge-badge": { bgcolor: badgeColour, color: "#fff", fontWeight: 700 } }}
+            sx={{ "& .MuiBadge-badge": { bgcolor: badgeColour, color: "#fff", fontWeight: "fontWeightBold" } }}
           >
             <NotificationsNoneRoundedIcon fontSize="small" />
           </Badge>
@@ -137,7 +137,7 @@ export function NotificationBell({ canClear, place = "bar" }: { canClear?: boole
         slotProps={{ paper: { sx: { width: "min(380px, calc(100vw - 32px))", maxHeight: "70vh" } } }}
       >
         <Stack direction="row" alignItems="center" sx={{ px: 2, py: 1.5 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, flex: 1 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: "fontWeightBold", flex: 1 }}>
             Notifications
           </Typography>
           {canClear && items.length > 0 ? (
@@ -169,7 +169,7 @@ export function NotificationBell({ canClear, place = "bar" }: { canClear?: boole
                   borderColor: isNew(n) ? lineColour(n) : "transparent",
                 }}
               >
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                <Typography variant="body2" sx={{ fontWeight: "fontWeightBold" }}>
                   {n.title}
                 </Typography>
                 {n.body ? (

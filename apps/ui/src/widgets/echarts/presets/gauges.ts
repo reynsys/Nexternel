@@ -1,3 +1,4 @@
+import { VALUE_WEIGHT } from "../../../lib/appearance/type";
 import type { EchartsBuildCtx, EchartsPreset } from "../types";
 import { MIN_CHART_FONT, chartFont } from "../types";
 
@@ -25,6 +26,8 @@ type Ink = {
   accent: string;
   soft: string;
   text: string;
+  /** Colour of the reading (a big value). */
+  value: string;
   muted: string;
   track: string;
 };
@@ -218,6 +221,7 @@ function inkOf(ctx: EchartsBuildCtx): Ink {
     accent: ctx.accent || palette?.accent || "#1A73E8",
     soft: palette?.accentSoft || "rgba(26,115,232,0.45)",
     text: palette?.textPrimary || "#e8eaed",
+    value: palette?.value || palette?.textPrimary || "#e8eaed",
     muted: palette?.textSecondary || "#9aa0a6",
     track: palette?.splitLine || "rgba(255,255,255,0.18)",
   };
@@ -555,8 +559,9 @@ function seriesFor(
           valueAnimation: true,
           offsetCenter: laid.detail,
           fontSize: laid.readingFont,
-          fontWeight: 600,
-          color: ink.text,
+          fontWeight: VALUE_WEIGHT,
+          // The reading is a big value: the scheme's value colour, like every panel.
+          color: ink.value,
           formatter: (v: number) => readingText(ctx, v),
         },
     data: [{ value: ctx.value }],

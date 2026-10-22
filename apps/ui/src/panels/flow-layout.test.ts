@@ -145,3 +145,10 @@ test("fewer panels across: bigger squares, the same overall width limit, and the
   assert.deepEqual(five.f, [0, 2, 2, 2]); // the sixth starts the next row
   assert.deepEqual(five.wide, [0, 4, 10, 2]); // narrowed to the new width
 });
+
+test("rows are never shorter than the Look's panel frame and title need", () => {
+  const phone = flowGridForWidth(358);
+  assert.equal(flowGridForWidth(358, 12, 88).rowHeight, Math.max(phone.rowHeight, 88));
+  // A wide screen's rows are already taller: the minimum changes nothing there.
+  assert.equal(flowGridForWidth(1278, 10, 88).rowHeight, flowGridForWidth(1278, 10).rowHeight);
+});

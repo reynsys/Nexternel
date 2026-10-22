@@ -1,6 +1,7 @@
 import { alpha, type Theme, type ThemeOptions } from "@mui/material/styles";
 import type { LookTokens } from "./looks/types";
 import type { Roles } from "../lib/appearance/scheme";
+import { TYPE_SCALE, WEIGHTS } from "../lib/appearance/type";
 import { contentPanelStyles, insetStyle } from "./surfaceStyles";
 
 declare module "@mui/material/Paper" {
@@ -61,22 +62,26 @@ export function lookThemeOptions(
     // Every "1×, 1.5×, 2×" corner in Nexternel is measured in this.
     shape: { borderRadius: t.radiusUnit },
     palette: { divider: t.line, background: { default: t.ground, paper: t.paper } },
+    // The type scale (lib/appearance/type.ts): one size and weight per kind of text, in the Look's font.
     typography: {
       fontFamily: t.font,
+      fontWeightRegular: WEIGHTS.regular,
+      fontWeightMedium: WEIGHTS.medium,
+      fontWeightBold: WEIGHTS.bold,
       h1: heading,
       h2: heading,
       h3: heading,
-      h4: { ...heading, fontWeight: 600 },
-      h5: heading,
-      h6: { ...heading, fontWeight: 600 },
+      h4: { ...heading, ...TYPE_SCALE.h4 },
+      h5: { ...heading, ...TYPE_SCALE.h5 },
+      h6: { ...heading, ...TYPE_SCALE.h6 },
       // Overlines are capitals already; a Look only adds its letter spacing.
-      overline: { ...font, letterSpacing: t.headingSpacing === "normal" ? undefined : t.headingSpacing },
-      subtitle1: font,
-      subtitle2: font,
-      body1: font,
-      body2: font,
-      button: font,
-      caption: font,
+      overline: { ...font, ...TYPE_SCALE.overline, ...(t.headingSpacing === "normal" ? {} : { letterSpacing: t.headingSpacing }) },
+      subtitle1: { ...font, ...TYPE_SCALE.subtitle1 },
+      subtitle2: { ...font, ...TYPE_SCALE.subtitle2 },
+      body1: { ...font, ...TYPE_SCALE.body1 },
+      body2: { ...font, ...TYPE_SCALE.body2 },
+      button: { ...font, ...TYPE_SCALE.button },
+      caption: { ...font, ...TYPE_SCALE.caption },
     },
     components: {
       MuiPaper: {

@@ -100,7 +100,7 @@ export function AppNavbar({
         }}
       >
         <Box sx={{ p: 2 }}>
-          <Typography variant="subtitle1" fontWeight={700}>
+          <Typography variant="subtitle1">
             Nexternel {APP_VERSION}
           </Typography>
           {signedIn && (

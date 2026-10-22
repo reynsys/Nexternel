@@ -7,6 +7,8 @@ export type PanelPlace = {
   /** The panel's name, for the question before removing it. */
   name: string;
   kind: "panel" | "plugin";
+  /** The section the panel is in now. */
+  section: { id: string; title: string };
   /** The dashboard's other sections. */
   moveTargets: { id: string; title: string }[];
   onMove: (sectionId: string) => void;
@@ -27,28 +29,32 @@ export function PanelPlaceActions() {
   if (!place) return null;
   return (
     <Stack spacing={2} sx={{ borderTop: 1, borderColor: "divider", pt: 2 }}>
-      {place.moveTargets.length ? (
-        <Box>
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            Move to another section
-          </Typography>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <FormControl size="small" sx={{ flex: 1, minWidth: 0 }}>
-              <InputLabel id="panel-move-target">Section</InputLabel>
-              <Select labelId="panel-move-target" label="Section" value={target} onChange={(e) => setTarget(e.target.value)}>
-                {place.moveTargets.map((t) => (
-                  <MenuItem key={t.id} value={t.id}>
-                    {t.title || "Untitled section"}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <Button variant="outlined" disabled={!target} onClick={() => place.onMove(target)}>
-              Move
-            </Button>
-          </Stack>
-        </Box>
-      ) : null}
+      <Box>
+        <Typography variant="subtitle2" sx={{ mb: 1 }}>
+          Section
+        </Typography>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <FormControl size="small" sx={{ flex: 1, minWidth: 0 }} disabled={!place.moveTargets.length}>
+            <InputLabel id="panel-move-target">Section</InputLabel>
+            <Select labelId="panel-move-target" label="Section" value={target || place.section.id} onChange={(e) => setTarget(e.target.value)}>
+              <MenuItem value={place.section.id}>{place.section.title || "Untitled section"} (now)</MenuItem>
+              {place.moveTargets.map((t) => (
+                <MenuItem key={t.id} value={t.id}>
+                  {t.title || "Untitled section"}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <Button variant="outlined" disabled={!target || target === place.section.id} onClick={() => place.onMove(target)}>
+            Move
+          </Button>
+        </Stack>
+        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.75 }}>
+          {place.moveTargets.length
+            ? "Pick another section and press Move to move this panel there."
+            : "This dashboard has one section. Add another (Add section, at the top) to move panels between them."}
+        </Typography>
+      </Box>
       {askRemove ? (
         <Box>
           <Typography variant="body2">

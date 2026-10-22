@@ -1,3 +1,4 @@
+import { metricValueColorFromTheme } from "../../skins/metricColors";
 import { useEffect, useState } from "react";
 import { Box, Typography, useTheme } from "@mui/material";
 import type { WidgetInstance } from "../../api";
@@ -17,7 +18,8 @@ function useNow(intervalMs = 1000) {
 
 function AnalogFace({ now, clock, fontFamily }: { now: Date; clock: ClockConfig; fontFamily: string }) {
   const theme = useTheme();
-  const ink = clock.color === "accent" ? theme.palette.primary.main : theme.palette.text.primary;
+  // "Colour": the value colour of the scheme (the second colour), like every big value.
+  const ink = clock.color === "accent" ? metricValueColorFromTheme(theme) : theme.palette.text.primary;
   const muted = theme.palette.text.secondary;
   const line = theme.palette.divider;
   const accent = theme.palette.primary.main;
@@ -129,7 +131,7 @@ function DigitalFace({
     day: "numeric",
     month: "long",
   });
-  const fill = clock.color === "accent" ? theme.palette.primary.main : theme.palette.text.primary;
+  const fill = clock.color === "accent" ? metricValueColorFromTheme(theme) : theme.palette.text.primary;
   const weight = clock.bold ? 700 : 400;
 
   return (
@@ -187,7 +189,7 @@ export function ClockWidget({ widget }: { widget: WidgetInstance }) {
       }}
     >
       {title && (
-        <Typography variant="subtitle2" fontWeight={600} noWrap sx={{ mb: 0.5, flexShrink: 0 }}>
+        <Typography variant="subtitle2" noWrap sx={{ mb: 0.5, flexShrink: 0 }}>
           {title}
         </Typography>
       )}

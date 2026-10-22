@@ -173,7 +173,7 @@ export function PluginsSettingsPage() {
               {available.map((e) => (
                 <Stack key={e.id} direction={{ xs: "column", sm: "row" }} spacing={2} alignItems={{ sm: "center" }}>
                   <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography sx={{ fontWeight: 600 }}>
+                    <Typography sx={{ fontWeight: "fontWeightBold" }}>
                       {e.name} <Typography component="span" variant="body2" color="text.secondary">{e.version}</Typography>
                     </Typography>
                     <Typography variant="body2" color="text.secondary">{e.description}</Typography>
@@ -272,7 +272,7 @@ function InstalledPlugin({
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} alignItems={{ sm: "center" }}>
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-            <Typography sx={{ fontWeight: 600 }}>{p.name}</Typography>
+            <Typography sx={{ fontWeight: "fontWeightBold" }}>{p.name}</Typography>
             <Typography variant="body2" color="text.secondary">{p.version}</Typography>
             <Chip size="small" label={status.label} color={status.color} />
             {p.source === "file" ? <Chip size="small" variant="outlined" color="warning" label="From a file" /> : null}

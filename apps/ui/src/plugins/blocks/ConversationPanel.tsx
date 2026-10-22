@@ -179,7 +179,7 @@ export function ConversationPanel({
           multiline
           maxRows={3}
           inputProps={{ "aria-label": "Question", maxLength: 2000 }}
-          sx={{ flex: 1, fontSize: "0.875rem", py: 0.5 }}
+          sx={{ flex: 1, typography: "body2", py: 0.5 }}
         />
         <IconButton
           size="small"

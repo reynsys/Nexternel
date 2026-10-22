@@ -53,7 +53,7 @@ export function DeviceStatusWidget({ widget }: { widget: WidgetInstance }) {
       }}
     >
       {title && (
-        <Typography variant="subtitle2" fontWeight={600} noWrap sx={{ mb: 0.5, flexShrink: 0 }}>
+        <Typography variant="subtitle2" noWrap sx={{ mb: 0.5, flexShrink: 0 }}>
           {title}
         </Typography>
       )}
@@ -89,7 +89,7 @@ export function DeviceStatusWidget({ widget }: { widget: WidgetInstance }) {
                 }}
               >
                 <Box sx={{ minWidth: 0 }}>
-                  <Typography variant="subtitle2" fontWeight={600} noWrap display="block">
+                  <Typography variant="subtitle2" noWrap display="block">
                     {d.name}
                   </Typography>
                   <Typography variant="caption" color="text.secondary" noWrap display="block">

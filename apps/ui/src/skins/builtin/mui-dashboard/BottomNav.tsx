@@ -1,3 +1,4 @@
+import { TYPE_SCALE } from "../../../lib/appearance/type";
 import { useState } from "react";
 import { Link as RouterLink, useLocation } from "react-router-dom";
 import BottomNavigation from "@mui/material/BottomNavigation";
@@ -59,7 +60,7 @@ export function BottomNav({ signedIn, isAdmin, permissions, authLoading = false 
             bgcolor: "transparent",
             "& .MuiBottomNavigationAction-root": { minWidth: 0, px: 0.5 },
             "& .MuiBottomNavigationAction-label, & .MuiBottomNavigationAction-label.Mui-selected": {
-              fontSize: "0.6875rem",
+              fontSize: TYPE_SCALE.overline.fontSize,
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",

@@ -27,7 +27,7 @@ function Row({ label, value }: { label: string; value: string }) {
       <Typography sx={{ ...labelSx, fontSize: LINES_SIZE, lineHeight: 1.2 }}>
         {label}
       </Typography>
-      <Typography noWrap sx={{ ...valueSx, fontWeight: 600, fontSize: LINES_SIZE, lineHeight: 1.2 }}>
+      <Typography noWrap sx={{ ...valueSx, fontWeight: "fontWeightBold", fontSize: LINES_SIZE, lineHeight: 1.2 }}>
         {value}
       </Typography>
     </Stack>
@@ -62,7 +62,7 @@ export function SystemInfoWidget({ widget }: { widget: WidgetInstance }) {
       }}
     >
       {title && (
-        <Typography variant="subtitle2" fontWeight={600} noWrap sx={{ mb: 0.75, flexShrink: 0 }}>
+        <Typography variant="subtitle2" noWrap sx={{ mb: 0.75, flexShrink: 0 }}>
           {title}
         </Typography>
       )}

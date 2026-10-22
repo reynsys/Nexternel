@@ -335,8 +335,8 @@ export function GeneralWidgetEditor({ open, widget, onClose, onSave, automatic, 
                 value={clockColor}
                 onChange={(e) => setClockColor(e.target.value as ClockColor)}
               >
-                <MenuItem value="text">Theme text</MenuItem>
-                <MenuItem value="accent">Theme accent</MenuItem>
+                <MenuItem value="text">Text colour</MenuItem>
+                <MenuItem value="accent">Value colour (like other big values)</MenuItem>
               </Select>
             </FormControl>
             <FormControlLabel

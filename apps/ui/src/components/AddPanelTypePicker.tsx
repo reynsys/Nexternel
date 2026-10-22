@@ -67,7 +67,7 @@ export function AddPanelTypePicker({ catalog, value, onChange }: Props) {
                 <ListItemText
                   primary={item.label}
                   secondary={item.description}
-                  primaryTypographyProps={{ variant: "body2", fontWeight: 600 }}
+                  primaryTypographyProps={{ variant: "body2", fontWeight: "fontWeightBold" }}
                   secondaryTypographyProps={{ variant: "caption" }}
                 />
               </ListItemButton>

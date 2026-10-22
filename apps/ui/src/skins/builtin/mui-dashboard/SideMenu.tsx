@@ -126,7 +126,7 @@ export function SideMenu({
         {!collapsed && (
           <Typography
             variant="subtitle1"
-            sx={(t) => ({ fontWeight: 700, lineHeight: 1.2, flex: 1, textTransform: t.nx.headingCase, letterSpacing: t.nx.headingSpacing })}
+            sx={(t) => ({ fontWeight: "fontWeightBold", lineHeight: 1.2, flex: 1, textTransform: t.nx.headingCase, letterSpacing: t.nx.headingSpacing })}
           >
             Nexternel
           </Typography>
@@ -202,7 +202,7 @@ export function SideMenu({
                   {initial}
                 </Avatar>
                 <Box sx={{ minWidth: 0, flex: 1 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.3 }} noWrap title={userName}>
+                  <Typography variant="body2" sx={{ fontWeight: "fontWeightBold", lineHeight: 1.3 }} noWrap title={userName}>
                     {userName}
                   </Typography>
                   <Typography variant="caption" color="text.secondary" noWrap display="block" title={roleName}>

@@ -1,5 +1,7 @@
+import { ICON_SIZE } from "../lib/appearance/type";
 import type { ReactNode } from "react";
-import { Box, Paper } from "@mui/material";
+import { Box, Paper, Tooltip } from "@mui/material";
+import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import { readPanelStatusLight } from "@nexternel/domain";
 import type { CameraRecord, Capability } from "../api";
 import type { RuntimePanelInstance } from "../lib/panel-compatibility/types";
@@ -63,7 +65,6 @@ function PanelTitleTile({
     <Box
       data-nx-title-tile
       className={actions ? PANEL_DRAG_HANDLE : undefined}
-      title={actions ? "Drag to move this panel" : undefined}
       sx={{
         ...(actions ? { cursor: "grab", touchAction: "none", "&:active": { cursor: "grabbing" } } : {}),
         flexShrink: 0,
@@ -84,8 +85,14 @@ function PanelTitleTile({
         containerName: "nx-title",
       }}
     >
+      {actions ? (
+        // The grip: shows the title is where a panel is picked up to move it.
+        <Tooltip title="Drag to move this panel">
+          <DragIndicatorIcon aria-label="Drag to move this panel" sx={{ fontSize: ICON_SIZE.title, flexShrink: 0, color: "text.secondary", ml: -0.5 }} />
+        </Tooltip>
+      ) : null}
       {icon.iconId !== null ? (
-        <ItemIcon iconId={icon.iconId} kind={icon.kind} sx={{ fontSize: 18, flexShrink: 0, color: "primary.main" }} />
+        <ItemIcon iconId={icon.iconId} kind={icon.kind} sx={{ fontSize: ICON_SIZE.title, flexShrink: 0, color: "primary.main" }} />
       ) : null}
       <Box
         sx={{
