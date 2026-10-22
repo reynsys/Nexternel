@@ -83,6 +83,7 @@ import {
   type RuntimePanelInstance,
 } from "../lib/panel-compatibility";
 import { DashboardTabBar } from "../components/DashboardTabBar";
+import { PageBar } from "../components/PageBar";
 import { DashboardSettingsPanel, type DashboardSettingsPage } from "../components/dashboard-editor/DashboardSettingsPanel";
 import { SectionSettingsPanel } from "../components/dashboard-editor/SectionSettingsPanel";
 import { SidePanel, SidePanelProvider } from "../components/side-panel/SidePanel";
@@ -233,6 +234,7 @@ function DashboardPageContent() {
 
 
   const ordered = useMemo(() => sortSections(sections), [sections]);
+  const DashIcon = getDashboardIcon(tabIcon);
   // The section whose settings open comes into view, so its changes can be seen.
   const settingsSectionId = settingsPanel?.type === "section" ? settingsPanel.id : null;
   useEffect(() => {
@@ -891,9 +893,8 @@ function DashboardPageContent() {
     <Stack
       spacing={2}
       sx={{
-        // Room on the right for the rail and for an open side panel (whichever is wider).
-        pr: `max(${roomNav === "rail" ? "var(--nx-rail-width, 0px)" : "0px"}, var(--nx-side-panel-width, 0px))`,
-        transition: "padding .2s ease",
+        // Room on the right for the rail. A side panel opens over the right edge; the dashboard stays put.
+        pr: roomNav === "rail" && !editMode ? "var(--nx-rail-width, 0px)" : 0,
       }}
     >
       {pageLoading && (
@@ -925,29 +926,14 @@ function DashboardPageContent() {
       )}
 
       {editMode && canEditDashboards && (
-        // The edit bar stays at the top of the screen while scrolling.
-        <Box
-          data-nx-edit-bar=""
-          data-nx-role="chrome"
-          sx={(t) => ({
-            position: "sticky",
-            // Just below the phone's top bar; at the very top on wide screens.
-            top: "var(--nx-top-bar, 0px)",
-            zIndex: t.zIndex.appBar,
-            mx: { xs: -2, md: -3 },
-            px: { xs: 2, md: 3 },
-            py: 1.25,
-            // The Look's chrome (like the side menu and top bar).
-            bgcolor: t.nx.chromeFill || "background.paper",
-            borderBottom: t.nx.chromeEdge || `1px solid ${t.palette.divider}`,
-            boxShadow: t.nx.chromeShadow || "none",
-            backdropFilter: "blur(10px)",
-          })}
-        >
+        // The edit bar: across the top of the page, beside the side menu; stays while scrolling.
+        <PageBar>
           <ButtonRow
             direction="row"
             justifyContent="space-between"
             sx={{
+              flex: 1,
+              minWidth: 0,
               containerType: "inline-size",
               // A narrow screen shows Add section and Dashboard settings as icons (names on pointing).
               "@container (max-width: 560px)": {
@@ -957,12 +943,15 @@ function DashboardPageContent() {
               },
             }}
           >
-            <Typography variant="body1" color="text.secondary" noWrap sx={{ minWidth: 0, flex: "1 1 160px" }}>
-              Editing dashboard:{" "}
-              <Typography component="span" fontWeight={600} color="text.primary">
-                {name}
+            <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0, flex: "1 1 160px" }}>
+              <DashIcon color="primary" sx={{ flexShrink: 0 }} />
+              <Typography variant="body1" color="text.secondary" noWrap sx={{ minWidth: 0 }}>
+                Editing dashboard:{" "}
+                <Typography component="span" fontWeight={600} color="text.primary">
+                  {name}
+                </Typography>
               </Typography>
-            </Typography>
+            </Stack>
             <ButtonRow direction="row">
               <Tooltip title="Add section">
                 <Button variant="outlined" data-nx-icon-button="" aria-label="Add section" startIcon={<AddIcon />} onClick={addSection}>
@@ -988,7 +977,7 @@ function DashboardPageContent() {
               </Button>
             </ButtonRow>
           </ButtonRow>
-        </Box>
+        </PageBar>
       )}
 
       <DashboardSettingsPanel

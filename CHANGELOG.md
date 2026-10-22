@@ -2,6 +2,14 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.137
+
+- The edit bar is now a proper bar across the top, matching the side menu, with the dashboard's icon.
+- Each panel has a single **Edit** button; moving to another section and removing are in its Edit panel.
+- Opening a side panel no longer shrinks or shuffles the dashboard.
+- Status lights stay visible while editing; section edges are easier to see.
+- The panel "Animations" choice only appears where something can actually move.
+
 ## V5.2.136
 
 - **Tidy, simple edit mode.** One bar at the top (Add section, Dashboard settings, Save, Cancel) that stays in view. Settings open in a **side panel** on the right while the dashboard stays visible: Dashboard settings (name, icon, panels across, all dashboards), Section settings (name, icon, width, position, delete), Add panel and Edit panel. No pop-up windows.

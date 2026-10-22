@@ -86,7 +86,8 @@ function standardRoles(theme: Theme) {
     barEdgeSpace: "0px",
     sectionInset: "0px",
     sectionFill: p.background.paper,
-    sectionBorder: `1px solid ${p.divider}`,
+    // A section's edge reads clearly on any background (stronger than the divider lines inside it).
+    sectionBorder: `1px solid ${alpha(p.text.primary, dark ? 0.28 : 0.24)}`,
     sectionShadow: dark ? "none" : "0 1px 3px rgba(0,0,0,0.06)",
     sectionRadius: `${r * 2}px`,
     buttonShape: "none",

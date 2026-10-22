@@ -746,7 +746,7 @@ export function PanelWidgetEditor({
 
           )}
 
-          <PanelMotionField value={motion} onChange={setMotion} />
+          <PanelMotionField value={motion} onChange={setMotion} switches={hasSwitches} />
           {hasSwitches && (
             <Stack spacing={1}>
               <Typography variant="subtitle2">Switch style</Typography>

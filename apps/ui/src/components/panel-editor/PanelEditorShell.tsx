@@ -5,6 +5,7 @@ import type { RuntimePanelInstance } from "../../lib/panel-compatibility/types";
 import { PanelCard } from "../PanelCard";
 import { ButtonRow } from "../ButtonRow";
 import { SidePanel } from "../side-panel/SidePanel";
+import { PanelPlaceActions } from "./PanelPlaceActions";
 
 export type PanelEditorTabId = "content" | "look" | "light";
 
@@ -98,7 +99,10 @@ export function PanelEditorShell({
         </>
       }
     >
-      <Stack spacing={2}>{current?.content}</Stack>
+      <Stack spacing={2}>
+        {current?.content}
+        <PanelPlaceActions />
+      </Stack>
     </SidePanel>
   );
 }

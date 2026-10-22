@@ -8,6 +8,7 @@ import { isGradientActive } from "../../surfaceStyles";
 import { SideMenu, useSideMenuCollapsed } from "./SideMenu";
 import { AppNavbar } from "./AppNavbar";
 import { BottomNav, BOTTOM_NAV_HEIGHT_PX } from "./BottomNav";
+import { PAGE_BAR_SLOT_ID } from "../../../components/PageBar";
 
 /** Free MUI dashboard-style shell: permanent side menu + mobile app bar. */
 export function MuiDashboardLayout() {
@@ -50,8 +51,21 @@ export function MuiDashboardLayout() {
           "@media (orientation: landscape)": { "--nx-top-bar": "48px" },
           "@media (min-width: 600px)": { "--nx-top-bar": "64px" },
           "@media (min-width: 900px)": { "--nx-top-bar": "0px" },
+          // With a page bar shown, the page starts just under it.
+          [`& #${PAGE_BAR_SLOT_ID}:not(:empty) + *`]: { pt: 2 },
         }}
       >
+        {/* A page's own bar (PageBar), across the top beside the side menu; stays while scrolling. */}
+        <Box
+          id={PAGE_BAR_SLOT_ID}
+          sx={(t) => ({
+            position: "sticky",
+            top: "var(--nx-top-bar)",
+            zIndex: t.zIndex.appBar,
+            mt: "var(--nx-top-bar)",
+            "&:empty": { display: "none" },
+          })}
+        />
         <Stack
           spacing={2}
           sx={{

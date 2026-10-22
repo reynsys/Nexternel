@@ -276,8 +276,7 @@ export function PanelCard({
             rangeNote={rangeNote}
             isChartsPanel={isChartsPanel}
             icon={titleIcon}
-            // While arranging, the title holds the panel's buttons instead of its light.
-            light={titlePlacement === "inline" && !editActions ? lightAt("inline") : null}
+            light={titlePlacement === "inline" ? lightAt("inline") : null}
             actions={editActions}
           />
         ) : null}

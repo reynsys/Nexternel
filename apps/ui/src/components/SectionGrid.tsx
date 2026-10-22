@@ -3,24 +3,20 @@ import GridLayout, { type Layout } from "react-grid-layout";
 import {
   Box,
   Button,
-  Divider,
-  ListSubheader,
-  Menu,
-  MenuItem,
+  Stack,
   Tooltip,
   Typography,
   alpha,
   useTheme,
 } from "@mui/material";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
-import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import DriveFileMoveOutlinedIcon from "@mui/icons-material/DriveFileMoveOutlined";
 import type { CameraRecord, Capability, PanelInstance } from "../api";
 import type { RuntimePanelInstance } from "../lib/panel-compatibility/types";
 import { runtimeConfigToPanelRecord } from "../lib/panel-compatibility/panel-config";
 import { toRenderPanel } from "../lib/panel-compatibility/render-adapter";
 import { PANEL_DRAG_HANDLE, PANEL_NO_DRAG, PanelCard } from "./PanelCard";
+import { PanelPlaceActions, PanelPlaceContext, type PanelPlace } from "./panel-editor/PanelPlaceActions";
+import { SidePanel } from "./side-panel/SidePanel";
 import { PanelPreview } from "./panel-editor/PanelEditorShell";
 import { PluginPanelEditor } from "./panel-editor/PluginPanelEditor";
 import { mergeRuntimePanelPatch } from "../lib/panel-compatibility/normalize-panel";
@@ -100,132 +96,15 @@ function dashboardItemKind(type: string): "panel" | "plugin" {
   return isPluginPanelType(migrated) ? "plugin" : "panel";
 }
 
-function isEditableWidget(widget: RuntimePanelInstance): boolean {
-  return resolveDashboardEditorKind(widget) !== null;
-}
 
-/**
- * A panel's buttons while arranging, in its title: Edit, and More (move to another section, remove).
- * Removing asks first, in the same menu.
- */
-function PanelEditActions({
-  name,
-  kind,
-  canEdit,
-  onEdit,
-  moveTargets,
-  onMove,
-  onRemove,
-}: {
-  name: string;
-  kind: "panel" | "plugin";
-  canEdit: boolean;
-  onEdit: () => void;
-  moveTargets: { id: string; title: string }[];
-  onMove: (sectionId: string) => void;
-  onRemove: () => void;
-}) {
-  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
-  const [askRemove, setAskRemove] = useState(false);
-  const close = () => {
-    setAnchor(null);
-    setAskRemove(false);
-  };
-  const square = { minWidth: 32, width: 32, height: 32, p: 0 } as const;
+/** A panel's button while arranging, in its title: Edit (move and remove are in its Edit menu too). */
+function PanelEditButton({ name, kind, onEdit }: { name: string; kind: "panel" | "plugin"; onEdit: () => void }) {
   return (
-    <>
-      {canEdit ? (
-        <Tooltip title={`Edit this ${kind}`}>
-          <Button
-            variant="outlined"
-            size="small"
-            aria-label={`Edit ${name}`}
-            onClick={onEdit}
-            // A narrow panel keeps its title for the name: Edit is then in the More menu.
-            sx={{ ...square, "@container nx-title (max-width: 210px)": { display: "none" } }}
-          >
-            <EditOutlinedIcon fontSize="small" />
-          </Button>
-        </Tooltip>
-      ) : null}
-      <Tooltip title="More: edit, move to another section, remove">
-        <Button
-          variant="outlined"
-          size="small"
-          aria-label={`More for ${name}`}
-          aria-haspopup="menu"
-          onClick={(e) => setAnchor(e.currentTarget)}
-          sx={square}
-        >
-          <MoreHorizIcon fontSize="small" />
-        </Button>
-      </Tooltip>
-      <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={close} className={PANEL_NO_DRAG}>
-        {askRemove
-          ? [
-              <ListSubheader key="q" sx={{ lineHeight: 1.4, py: 1, maxWidth: 260, whiteSpace: "normal" }}>
-                Remove “{name}”? Save the dashboard to keep this change.
-              </ListSubheader>,
-              <MenuItem
-                key="yes"
-                sx={{ color: "error.main" }}
-                onClick={() => {
-                  close();
-                  onRemove();
-                }}
-              >
-                <DeleteOutlineIcon fontSize="small" sx={{ mr: 1 }} />
-                Remove
-              </MenuItem>,
-              <MenuItem key="no" onClick={() => setAskRemove(false)}>
-                Keep it
-              </MenuItem>,
-            ]
-          : [
-              ...(canEdit
-                ? [
-                    <MenuItem
-                      key="edit"
-                      onClick={() => {
-                        close();
-                        onEdit();
-                      }}
-                    >
-                      <EditOutlinedIcon fontSize="small" sx={{ mr: 1 }} />
-                      Edit this {kind}
-                    </MenuItem>,
-                    <Divider key="d0" />,
-                  ]
-                : []),
-              <ListSubheader key="h" sx={{ lineHeight: 2.2 }}>
-                Move to section
-              </ListSubheader>,
-              ...(moveTargets.length
-                ? moveTargets.map((t) => (
-                    <MenuItem
-                      key={t.id}
-                      onClick={() => {
-                        close();
-                        onMove(t.id);
-                      }}
-                    >
-                      <DriveFileMoveOutlinedIcon fontSize="small" sx={{ mr: 1 }} />
-                      {t.title || "Untitled section"}
-                    </MenuItem>
-                  ))
-                : [
-                    <MenuItem key="none" disabled>
-                      There is no other section yet
-                    </MenuItem>,
-                  ]),
-              <Divider key="d" />,
-              <MenuItem key="rm" sx={{ color: "error.main" }} onClick={() => setAskRemove(true)}>
-                <DeleteOutlineIcon fontSize="small" sx={{ mr: 1 }} />
-                Remove this {kind}…
-              </MenuItem>,
-            ]}
-      </Menu>
-    </>
+    <Tooltip title={`Edit this ${kind}`}>
+      <Button variant="outlined" size="small" aria-label={`Edit ${name}`} onClick={onEdit} sx={{ minWidth: 32, width: 32, height: 32, p: 0 }}>
+        <EditOutlinedIcon fontSize="small" />
+      </Button>
+    </Tooltip>
   );
 }
 
@@ -347,6 +226,22 @@ export function SectionGrid({
       height: item.h * rowHeight + (item.h - 1) * DASHBOARD_GRID_MARGIN_Y,
     };
   })();
+  /** Where the panel being edited sits: its Edit menu can move it to another section or remove it. */
+  const editingPlace: PanelPlace | null = editing
+    ? {
+        name: panelHeading(editing, capabilities, sectionRoomId, cameras).title || widgetTypeLabel(editing.type),
+        kind: dashboardItemKind(editing.type),
+        moveTargets: onMovePanel ? moveTargets : [],
+        onMove: (to) => {
+          setEditPanelId(null);
+          onMovePanel?.(sectionId, to, editing.id);
+        },
+        onRemove: () => {
+          setEditPanelId(null);
+          onRemovePanel(sectionId, editing.id);
+        },
+      }
+    : null;
   const renderPreview = (patch: Partial<PanelInstance>) =>
     editing ? (
       <PanelPreview
@@ -456,7 +351,6 @@ export function SectionGrid({
           resizeHandles={["se"]}
         >
           {panels.map((w) => {
-            const canEdit = isEditableWidget(w);
             const itemKind = dashboardItemKind(w.type);
             const tileTitle = panelHeading(w, capabilities, sectionRoomId, cameras).title;
             return (
@@ -475,17 +369,7 @@ export function SectionGrid({
                   onCapabilityState={onCapabilityState}
                   editFallbackTitle={widgetTypeLabel(w.type)}
                   editActions={
-                    editMode ? (
-                      <PanelEditActions
-                        name={tileTitle || widgetTypeLabel(w.type)}
-                        kind={itemKind}
-                        canEdit={canEdit}
-                        onEdit={() => setEditPanelId(w.id)}
-                        moveTargets={onMovePanel ? moveTargets : []}
-                        onMove={(to) => onMovePanel?.(sectionId, to, w.id)}
-                        onRemove={() => onRemovePanel(sectionId, w.id)}
-                      />
-                    ) : undefined
+                    editMode ? <PanelEditButton name={tileTitle || widgetTypeLabel(w.type)} kind={itemKind} onEdit={() => setEditPanelId(w.id)} /> : undefined
                   }
                 />
               </div>
@@ -499,6 +383,7 @@ export function SectionGrid({
         </Typography>
       )}
 
+      <PanelPlaceContext.Provider value={editingPlace}>
       {editorKind === "scoped-panel" && editing && editingSaved && (
         <PanelWidgetEditor
           open
@@ -556,6 +441,18 @@ export function SectionGrid({
           }}
         />
       )}
+      {editing && editorKind === null && (
+        // A panel type without settings of its own: its Edit menu has only where it sits.
+        <SidePanel open onClose={() => setEditPanelId(null)} title={`Edit ${editingPlace?.name ?? "panel"}`}>
+          <Stack spacing={2}>
+            <Typography variant="body2" color="text.secondary">
+              This panel has no settings of its own.
+            </Typography>
+            <PanelPlaceActions />
+          </Stack>
+        </SidePanel>
+      )}
+      </PanelPlaceContext.Provider>
     </Box>
   );
 }
