@@ -27,10 +27,47 @@ export function AppearanceCssVars({
     const accent = theme.palette.primary.main;
     const metricValue = metricValueColorFromTheme(theme);
     const t = theme.nx;
+    const R = theme.nxScheme;
+    // Every role of the Appearance engine as a CSS variable (pages, charts, plugins can use them).
+    const roleVars: Record<string, string> = R
+      ? {
+          "--nx-page": R.surface.background,
+          "--nx-frame": R.surface.frame,
+          "--nx-panel": R.surface.panel,
+          "--nx-popup": R.surface.popup,
+          "--nx-control": R.surface.control,
+          "--nx-control-hover": R.surface.controlHover,
+          "--nx-text": R.text.main,
+          "--nx-text-quiet": R.text.quiet,
+          "--nx-edge": R.line.edge,
+          "--nx-line": R.line.divider,
+          "--nx-control-edge": R.line.control,
+          "--nx-focus": R.line.focus,
+          "--nx-value": R.value,
+          ...Object.fromEntries(
+            (["main", "second", "third"] as const).flatMap((k) => [
+              [`--nx-${k}`, R[k].solid],
+              [`--nx-${k}-hover`, R[k].solidHover],
+              [`--nx-${k}-ink`, R[k].ink],
+              [`--nx-${k}-soft`, R[k].soft],
+              [`--nx-${k}-text`, R[k].text],
+            ])
+          ),
+          ...Object.fromEntries(
+            (["ok", "watch", "alert"] as const).flatMap((k) => [
+              [`--nx-status-${k}`, R.status[k].solid],
+              [`--nx-status-${k}-text`, R.status[k].text],
+            ])
+          ),
+          ...Object.fromEntries(R.series.map((c, i) => [`--nx-series-${i + 1}`, c])),
+        }
+      : {};
     return {
+      ...roleVars,
       "--nx-accent": accent,
       "--nx-accent-soft": alpha(accent, theme.palette.mode === "dark" ? 0.72 : 0.55),
-      "--nx-metric-value": metricValue,
+      // Big values: the scheme's value colour (the second colour), the same in every panel.
+      "--nx-metric-value": R ? R.value : metricValue,
       "--nx-text-primary": theme.palette.text.primary,
       "--nx-text-secondary": theme.palette.text.secondary,
       "--nx-surface-paper": theme.palette.background.paper,

@@ -34,6 +34,22 @@ import { isGradientActive } from "./surfaceStyles";
 import { loadAddons } from "./looks/addon-loader";
 import { useLiveChanges } from "../lib/live-changes";
 import { LIGHT_CSS, useDisplayMode } from "../lib/display-mode";
+import { isMineBackground, mineBackground, schemeForPrefs, shownMode } from "./appearance-scheme";
+import type { Scheme } from "../lib/appearance/scheme";
+import { coreFont } from "../lib/appearance/fonts";
+
+/** The device's light / dark setting, followed when Appearance → Mode is Automatic. */
+function useDeviceDark(): boolean {
+  const [dark, setDark] = useState(() => (typeof window !== "undefined" ? window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? true : true));
+  useEffect(() => {
+    const query = window.matchMedia?.("(prefers-color-scheme: dark)");
+    if (!query) return undefined;
+    const on = () => setDark(query.matches);
+    query.addEventListener("change", on);
+    return () => query.removeEventListener("change", on);
+  }, []);
+  return dark;
+}
 
 /** Panel contents that scroll fade at the bottom while there is more below (see panelContentRootSx). */
 const MORE_BELOW_CSS = `@keyframes nx-more-below { 0%, 92% { --nx-more: 28px } 100% { --nx-more: 0px } }`;
@@ -50,6 +66,8 @@ type SkinContextValue = {
   looksVersion: number;
   /** The text size in use as a factor (1 = Normal), for drawings that size text in pixels (charts, gauges). */
   textScale: number;
+  /** Every colour by role, from the Appearance engine (lib/appearance). */
+  scheme: Scheme;
 };
 
 const SkinContext = createContext<SkinContextValue | null>(null);
@@ -62,14 +80,18 @@ export function SkinProvider({ children }: { children: ReactNode }) {
   const lookVer = useSyncExternalStore(subscribeLooks, looksVersion, looksVersion);
   // eslint-disable-next-line react-hooks/exhaustive-deps -- lookVer: a Look from an add-on may arrive later
   const look = useMemo(() => resolveLook(themePrefs.lookId), [themePrefs.lookId, lookVer]);
-  // A Look that only works in one colour mode (HUD) shows in that mode; the saved choice is kept.
-  const shownPrefs = useMemo(
-    () => (look.forceMode && look.forceMode !== themePrefs.mode ? { ...themePrefs, mode: look.forceMode } : themePrefs),
-    [look, themePrefs]
-  );
+  const deviceDark = useDeviceDark();
+  // The mode in use: a Look that only works in one mode (HUD) wins, then Automatic (the device's),
+  // then the choice. The saved choice is kept.
+  const shownPrefs = useMemo(() => {
+    const mode = look.forceMode ?? shownMode(themePrefs, deviceDark);
+    return mode !== themePrefs.mode ? { ...themePrefs, mode } : themePrefs;
+  }, [look, themePrefs, deviceDark]);
+  // Every colour by role (lib/appearance): the person's colours, mode and the Look's surfaces.
+  const scheme = useMemo(() => schemeForPrefs(shownPrefs, shownPrefs.mode, Boolean(look.frosted)), [shownPrefs, look]);
   const theme = useMemo(() => {
-    // The skin gives the layout's colours; the Look styles every building block from its roles.
-    const base = skin.createTheme(shownPrefs);
+    // The skin gives the layout's colours from the scheme; the Look styles every building block from its roles.
+    const base = createTheme(skin.createTheme(shownPrefs, scheme), { nxScheme: scheme.roles });
     const tokens = resolveTokens(look, base, shownPrefs.lookFont);
     return createTheme(
       base,
@@ -78,13 +100,16 @@ export function SkinProvider({ children }: { children: ReactNode }) {
         solidContentPanels: Boolean(shownPrefs.solidContentPanels),
       })
     );
-  }, [skin, shownPrefs, look]);
+  }, [skin, shownPrefs, look, scheme]);
   // Text size: all text is measured in rem, so the page's base size scales it everywhere.
   const display = useDisplayMode();
   const textScale = (display.active ? display.textSize : (themePrefs.textSize ?? 100)) / 100;
+  // A wide or narrow font is scaled to take about the same room as the default one.
+  const fontScale = look.fonts?.some((f) => f.id === themePrefs.lookFont) ? 1 : (coreFont(themePrefs.lookFont)?.scale ?? 1);
   useEffect(() => {
-    document.documentElement.style.fontSize = `${display.active ? display.textSize : (themePrefs.textSize ?? 100)}%`;
-  }, [themePrefs.textSize, display.active, display.textSize]);
+    const size = (display.active ? display.textSize : (themePrefs.textSize ?? 100)) * fontScale;
+    document.documentElement.style.fontSize = `${Math.round(size * 10) / 10}%`;
+  }, [themePrefs.textSize, display.active, display.textSize, fontScale]);
   // Animations: the person's choice, and off when the device asks apps to reduce motion.
   useEffect(() => {
     const reduce = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
@@ -179,18 +204,16 @@ export function SkinProvider({ children }: { children: ReactNode }) {
   );
 
   // With a plain background, a Look may bring its own (e.g. the HUD's grid).
-  const lookBackground = useMemo(
-    () => (!gradientCss(shownPrefs.gradientId) && look.background ? look.background(shownPrefs.mode) : null),
-    [look, shownPrefs.gradientId, shownPrefs.mode]
-  );
-  const pageGradient = useMemo(
-    () => gradientCss(shownPrefs.gradientId, shownPrefs.mode) ?? lookBackground?.image ?? null,
-    [shownPrefs.gradientId, shownPrefs.mode, lookBackground]
-  );
-  const pageBaseColour = useMemo(
-    () => gradientBaseColour(shownPrefs.gradientId, shownPrefs.mode) ?? lookBackground?.colour ?? null,
-    [shownPrefs.gradientId, shownPrefs.mode, lookBackground]
-  );
+  // A background made from the person's own colours, else a ready-made one, else the Look's own.
+  const mine = isMineBackground(shownPrefs.gradientId) ? mineBackground(scheme, shownPrefs.gradientId!) : null;
+  const lookBackground = !mine && !gradientCss(shownPrefs.gradientId) && look.background ? look.background(shownPrefs.mode) : null;
+  const pageGradient = mine?.css ?? gradientCss(shownPrefs.gradientId, shownPrefs.mode) ?? lookBackground?.image ?? null;
+  // The page's own colour (under everything): the background's edge, the Look's, or the scheme's page colour.
+  const pageBaseColour =
+    (mine ? scheme.roles.surfaceSolid.background : null) ??
+    gradientBaseColour(shownPrefs.gradientId, shownPrefs.mode) ??
+    lookBackground?.colour ??
+    scheme.roles.surfaceSolid.background;
 
   const value = useMemo(
     () => ({
@@ -202,8 +225,9 @@ export function SkinProvider({ children }: { children: ReactNode }) {
       applyAccountPrefs,
       looksVersion: lookVer,
       textScale,
+      scheme,
     }),
-    [skin, skins, setSkinId, themePrefs, setThemePrefs, applyAccountPrefs, lookVer, textScale]
+    [skin, skins, setSkinId, themePrefs, setThemePrefs, applyAccountPrefs, lookVer, textScale, scheme]
   );
 
   return (
@@ -225,7 +249,7 @@ export function SkinProvider({ children }: { children: ReactNode }) {
              */
             body: {
               minHeight: "100%",
-              ...(pageBaseColour ? { backgroundColor: pageBaseColour } : {}),
+              backgroundColor: pageBaseColour,
             },
             /*
              * Page-wide layers (background, effects): fixed and as tall as the screen can get
@@ -249,10 +273,11 @@ export function SkinProvider({ children }: { children: ReactNode }) {
           <div
             aria-hidden="true"
             className="nx-page-layer"
+            data-nx-background={shownPrefs.gradientId ?? "none"}
             style={{
               zIndex: -2,
               backgroundImage: pageGradient,
-              backgroundSize: gradientCss(shownPrefs.gradientId) ? "100% 100%" : (lookBackground?.size ?? "100% 100%"),
+              backgroundSize: mine || gradientCss(shownPrefs.gradientId) ? "100% 100%" : (lookBackground?.size ?? "100% 100%"),
             }}
           />
         ) : null}

@@ -6,25 +6,25 @@ import type { LookTokens, UiLook } from "./types";
 function standardTokens(theme: Theme): LookTokens {
   const r = Number(theme.shape.borderRadius) || 0;
   const dark = theme.palette.mode === "dark";
-  const accent = theme.palette.primary.main;
+  const R = theme.nxScheme;
   return {
     panelRadius: `${r * 2}px`,
-    panelBorder: `1px solid ${theme.palette.divider}`,
+    panelBorder: `1px solid ${R.line.edge}`,
     panelShadow: "none",
     mainTileRadius: `${r * 1.5}px`,
     tileRadius: `${r * 2}px`,
     miniPanelRadius: "12px",
     controlRadius: `${r}px`,
     pillRadius: "999px",
-    controlSurface: alpha(theme.palette.text.primary, dark ? 0.1 : 0.08),
+    controlSurface: R.surface.control,
     controlRaise: `0 1px 2px rgba(0,0,0,${dark ? 0.45 : 0.2})`,
     controlPress: `inset 0 1px 3px rgba(0,0,0,${dark ? 0.45 : 0.22})`,
     knob: "#ffffff",
     knobShadow: "0 1px 3px rgba(0,0,0,0.4)",
-    trackOn: accent,
-    accentInk: theme.palette.primary.contrastText,
-    accentSoft: alpha(accent, 0.16),
-    chip: alpha(theme.palette.text.primary, 0.12),
+    trackOn: R.main.solid,
+    accentInk: R.main.ink,
+    accentSoft: R.main.soft,
+    chip: R.surface.controlHover,
     glow: "0 0 0 transparent",
     textGlow: "none",
     ...standardRoles(theme),
@@ -35,12 +35,13 @@ function standardTokens(theme: Theme): LookTokens {
 function standardRoles(theme: Theme) {
   const r = Number(theme.shape.borderRadius) || 0;
   const dark = theme.palette.mode === "dark";
-  const fg = dark ? "#fff" : "#000";
-  const p = theme.palette;
+  // Every colour from the Appearance engine's roles; Standard decides only shapes and the shadow.
+  const R = theme.nxScheme;
+  const edge = `1px solid ${R.line.edge}`;
   return {
-    ground: p.background.default,
-    paper: p.background.paper,
-    line: p.divider,
+    ground: R.surfaceSolid.background,
+    paper: R.surfaceSolid.panel,
+    line: R.line.divider,
     font: String(theme.typography.fontFamily),
     headingCase: "none" as const,
     headingSpacing: "normal",
@@ -48,33 +49,33 @@ function standardRoles(theme: Theme) {
     radiusControl: "8px",
     radiusChip: "16px",
     radiusCard: "12px",
-    chromeFill: p.background.paper,
-    chromeEdge: `1px solid ${alpha(fg, 0.08)}`,
+    chromeFill: R.surface.frame,
+    chromeEdge: edge,
     chromeShadow: "",
-    cardFill: p.background.paper,
-    cardBorder: `1px solid ${alpha(fg, 0.08)}`,
-    cardShadow: "",
-    popupFill: "",
-    popupBorder: "",
-    popupShadow: "",
+    cardFill: R.surface.panel,
+    cardBorder: edge,
+    cardShadow: dark ? "" : "0 1px 3px rgba(0,0,0,0.06)",
+    popupFill: R.surface.popup,
+    popupBorder: edge,
+    popupShadow: dark ? "0 16px 48px rgba(0,0,0,0.5)" : "0 16px 40px rgba(0,0,0,0.14)",
     fieldFill: "",
     fieldBorderColour: "",
     fieldShadow: "",
     choiceFill: "transparent",
-    choiceBorder: `1px solid ${p.divider}`,
+    choiceBorder: `1px solid ${R.line.control}`,
     choiceShadow: "none",
-    choiceSelectedFill: p.action.selected,
-    choiceSelectedBorder: `1px solid ${p.primary.main}`,
+    choiceSelectedFill: R.main.soft,
+    choiceSelectedBorder: `1px solid ${R.main.solid}`,
     choiceSelectedShadow: "none",
     insetFill: "transparent",
-    insetBorder: `1px solid ${p.divider}`,
+    insetBorder: `1px solid ${R.line.divider}`,
     insetShadow: "none",
-    barEdge: `1px solid ${p.divider}`,
+    barEdge: edge,
     barGap: "4px",
     controlGap: "12px",
     decorReach: "0px",
     barInset: "0px",
-    miniPanelBorder: `1px solid ${p.divider}`,
+    miniPanelBorder: `1px solid ${R.line.divider}`,
     gearFill: "",
     gearStroke: "",
     gearStrokeWidth: "",
@@ -85,9 +86,8 @@ function standardRoles(theme: Theme) {
     dividerSpace: "1px",
     barEdgeSpace: "0px",
     sectionInset: "0px",
-    sectionFill: p.background.paper,
-    // A section's edge reads clearly on any background (stronger than the divider lines inside it).
-    sectionBorder: `1px solid ${alpha(p.text.primary, dark ? 0.28 : 0.24)}`,
+    sectionFill: R.surface.frame,
+    sectionBorder: edge,
     sectionShadow: dark ? "none" : "0 1px 3px rgba(0,0,0,0.06)",
     sectionRadius: `${r * 2}px`,
     buttonShape: "none",
@@ -97,18 +97,18 @@ function standardRoles(theme: Theme) {
     primaryBorder: "",
     primaryShadow: "",
     secondaryFill: "",
-    secondaryInk: "",
-    secondaryBorder: "",
+    secondaryInk: R.main.text,
+    secondaryBorder: `1px solid ${R.line.control}`,
     secondaryShadow: "",
     quietInk: "",
-    selectedFill: p.primary.main,
-    selectedInk: p.primary.contrastText,
+    selectedFill: R.main.solid,
+    selectedInk: R.main.ink,
     selectedShadow: "",
-    avatarFill: p.primary.dark,
-    avatarInk: p.primary.contrastText,
+    avatarFill: R.main.solid,
+    avatarInk: R.main.ink,
     avatarBorder: "",
-    brandFill: "linear-gradient(135deg, hsl(210, 98%, 60%) 0%, hsl(210, 100%, 35%) 100%)",
-    brandBorder: `1px solid ${p.primary.main}`,
+    brandFill: `linear-gradient(135deg, ${R.main.solid} 0%, ${R.second.solid} 100%)`,
+    brandBorder: `1px solid ${R.main.solid}`,
     brandShadow: "",
     brandRadius: "999px",
   };
@@ -150,7 +150,7 @@ export const glassLook: UiLook = {
   tokens: glassTokens,
   // Dialogs, menus and pop-ups are frosted glass too, like the panels.
   css: `:root[data-nx-look="glass"] [data-nx-role="popup"] {
-  background-color: color-mix(in srgb, var(--nx-surface-paper) 72%, transparent) !important;
+  background-color: var(--nx-popup) !important;
   backdrop-filter: blur(18px) saturate(1.25);
 }`,
 };

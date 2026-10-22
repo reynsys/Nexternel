@@ -1,4 +1,4 @@
-import { alpha, type Theme } from "@mui/material/styles";
+import type { Theme } from "@mui/material/styles";
 import { gradientCss } from "./gradientPalettes";
 import type { ThemePrefs } from "./themePrefs";
 import { resolveLook } from "./looks/registry";
@@ -19,106 +19,64 @@ const GLASS_TINT = "linear-gradient(var(--nx-glass-tint, transparent), var(--nx-
 export function isGradientActive(prefs: Pick<ThemePrefs, "gradientId" | "effectId" | "lookId">): boolean {
   return (
     Boolean(gradientCss(prefs.gradientId)) ||
+    prefs.gradientId === "mine-glow" ||
+    prefs.gradientId === "mine-gradient" ||
     (Boolean(prefs.effectId) && prefs.effectId !== "off") ||
     // A Look with its own background (3D, HUD) counts as one: menus turn clear over it.
     Boolean(resolveLook(prefs.lookId).background)
   );
 }
 
-/**
- * Chrome surfaces (side menu, dashboard section shells) — fully clear so the
- * fixed page gradient shows through.
+/** See-through surfaces (the Glass style) blur what is behind them; solid ones do not. */
+const blurOf = (t: Theme, px: number) => (t.nxScheme?.surfaces === "glass" ? GLASS_BLUR(px) : "none");
+
+/*
+ * Surfaces take their fill from the Appearance engine's roles (theme.nxScheme): the chosen style
+ * decides whether they are solid or see-through, the same for every part. The old "is there a
+ * background picture" switch is no longer used (kept in the signatures for older callers).
  */
-export function chromeSurfaceSx(gradientActive: boolean) {
-  if (!gradientActive) {
-    return { bgcolor: "background.paper" as const };
-  }
+
+/** Frames: side menu, dashboard sections. */
+export function chromeSurfaceSx(_gradientActive?: boolean) {
   return {
-    bgcolor: "transparent",
+    bgcolor: (t: Theme) => t.nxScheme.surface.frame,
     backgroundImage: "none",
+    backdropFilter: (t: Theme) => blurOf(t, 14),
   };
 }
 
-/**
- * Bars and menus that stay in place while the page scrolls under them (phone top bar, bottom
- * menu, slide-out menu). With a background they keep a near-solid tint, so scrolled panels
- * never show through their text.
- */
-export function barSurfaceSx(gradientActive: boolean) {
-  if (!gradientActive) {
-    return { bgcolor: "background.paper" as const };
-  }
+/** Bars that stay while the page scrolls under them (top bar, bottom menu, page bar): frames too. */
+export function barSurfaceSx(_gradientActive?: boolean) {
+  return chromeSurfaceSx();
+}
+
+/** Panel fill as plain style values (for theme overrides). */
+export function contentPanelStyles(theme: Theme, _opts?: { gradientActive: boolean; solidContentPanels: boolean }) {
+  const glass = theme.nxScheme?.surfaces === "glass";
   return {
-    bgcolor: (t: Theme) => alpha(t.palette.background.default, 0.9),
-    backgroundImage: "none",
+    backgroundColor: theme.nxScheme?.surface.panel ?? theme.palette.background.paper,
+    backgroundImage: glass ? GLASS_TINT : "none",
+    backdropFilter: glass ? GLASS_BLUR(10) : "none",
+    WebkitBackdropFilter: glass ? GLASS_BLUR(10) : "none",
   };
 }
 
-/** Shared frosted / solid styles for panels. */
-export function contentPanelStyles(
-  theme: Theme,
-  opts: { gradientActive: boolean; solidContentPanels: boolean }
-) {
-  if (!opts.gradientActive || opts.solidContentPanels) {
-    return {
-      backgroundColor: theme.palette.background.paper,
-      backgroundImage: "none",
-      backdropFilter: "none",
-      WebkitBackdropFilter: "none",
-    };
-  }
+/** The one main-tile surface inside a panel. Every panel uses this border and fill. */
+export function nestedContentPanelSx(theme: Theme, _gradientActive?: boolean, _solidContentPanels = false) {
   return {
-    backgroundColor: alpha(
-      theme.palette.background.paper,
-      theme.palette.mode === "dark" ? 0.42 : 0.55
-    ),
-    backgroundImage: GLASS_TINT,
-    backdropFilter: GLASS_BLUR(10),
-    WebkitBackdropFilter: GLASS_BLUR(10),
-  };
-}
-
-/** The one main-tile surface. Every panel uses this border and fill. */
-export function nestedContentPanelSx(
-  theme: Theme,
-  gradientActive: boolean,
-  solidContentPanels = false
-) {
-  if (gradientActive && !solidContentPanels) {
-    return {
-      border: `var(--nx-tile-border, 1px solid ${theme.palette.divider})`,
-      borderRadius: "var(--nx-tile-radius, 20px)",
-      ...contentPanelStyles(theme, { gradientActive, solidContentPanels }),
-    };
-  }
-  return {
-    border: `var(--nx-tile-border, 1px solid ${theme.palette.divider})`,
+    border: `var(--nx-tile-border, 1px solid ${theme.nxScheme?.line.divider ?? theme.palette.divider})`,
     borderRadius: "var(--nx-tile-radius, 20px)",
     boxShadow: "var(--nx-tile-shadow, none)",
-    bgcolor: `var(--nx-tile-fill, ${alpha(
-      theme.palette.text.primary,
-      theme.palette.mode === "dark" ? 0.06 : 0.04
-    )})`,
+    bgcolor: `var(--nx-tile-fill, ${theme.nxScheme?.surface.control ?? theme.palette.background.paper})`,
   };
 }
 
-/**
- * Panel fill — frosted over the gradient, or solid light/dark
- * when Appearance → “Solid content panels” is on.
- */
-export function contentSurfaceSx(
-  gradientActive: boolean,
-  solidContentPanels = false
-) {
-  if (!gradientActive || solidContentPanels) {
-    return { bgcolor: "background.paper" as const };
-  }
+/** Panel fill. */
+export function contentSurfaceSx(_gradientActive?: boolean, _solidContentPanels = false) {
   return {
-    bgcolor: (t: Theme) =>
-      alpha(t.palette.background.paper, t.palette.mode === "dark" ? 0.42 : 0.55),
-    backgroundImage: GLASS_TINT,
-    backdropFilter: GLASS_BLUR(10),
-    WebkitBackdropFilter: GLASS_BLUR(10),
+    bgcolor: (t: Theme) => t.nxScheme.surface.panel,
+    backgroundImage: (t: Theme) => (t.nxScheme.surfaces === "glass" ? GLASS_TINT : "none"),
+    backdropFilter: (t: Theme) => blurOf(t, 10),
   };
 }
 
@@ -156,13 +114,15 @@ export function insetSx() {
   return (t: Theme) => insetStyle(t.nx);
 }
 
-/** A dashboard section (the box around a group of panels). Clear over a page background. */
-export function sectionSx(gradientActive: boolean) {
+/** A dashboard section (the box around a group of panels): a frame. */
+export function sectionSx(_gradientActive?: boolean) {
   return (t: Theme) => ({
     border: t.nx.sectionBorder,
     borderRadius: t.nx.sectionRadius,
     padding: t.nx.sectionInset,
-    boxShadow: gradientActive ? "none" : t.nx.sectionShadow,
-    ...(gradientActive ? { backgroundColor: "transparent", backgroundImage: "none" } : { backgroundColor: t.nx.sectionFill }),
+    boxShadow: t.nx.sectionShadow,
+    backgroundColor: t.nx.sectionFill,
+    backgroundImage: "none",
+    backdropFilter: blurOf(t, 14),
   });
 }

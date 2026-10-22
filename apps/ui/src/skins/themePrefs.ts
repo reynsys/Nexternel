@@ -17,22 +17,35 @@ import { lookIdFromPrefs } from "../lib/look-choice";
 import { resolveLook } from "./looks/registry";
 import { normalizeWallPrefs, type WallPrefs } from "../lib/display-mode";
 import { normalizeRoomNav, type RoomNav } from "../lib/room-nav";
+import { HARMONIES, type Harmony } from "../lib/appearance/scale";
+
+export function normalizeHarmony(raw: unknown): Harmony {
+  return HARMONIES.some((h) => h.id === raw) ? (raw as Harmony) : "split";
+}
 
 export const THEME_PREFS_KEY = "nexternel.themePrefs";
 
 export type ThemeMode = "light" | "dark";
 
 export type ThemePrefs = {
+  /** Light or dark (when autoMode is on: the device's choice last seen; the page follows the device). */
   mode: ThemeMode;
-  /** Primary accent hex */
+  /** Follow the device's light / dark setting. */
+  autoMode?: boolean;
+  /** Main colour (hex): buttons, chosen items, focus. */
   primary: string;
+  /** How the second and third colours are found from the main one (lib/appearance/scale.ts). */
+  harmony?: Harmony;
+  /** Second and third colours chosen by hand (used when harmony is "custom"). */
+  second?: string;
+  third?: string;
   /** Layout skin id (also kept in localStorage for offline boot) */
   skinId?: string;
   /** The dashboard's Look (Standard, Glass, or an installed Look pack). See skins/looks. */
   lookId?: string;
   /** The Look's moving decorations on (default) or off. Each panel can override it. */
   motion?: boolean;
-  /** The chosen font of a Look that offers several (font id); unset = the Look's first font. */
+  /** The chosen font (lib/appearance/fonts.ts, or one of the Look's own); unset = the Look's first font, or Inter. */
   lookFont?: string;
   /** The chosen button style of a Look that offers several (id); unset = the Look's first. */
   lookButtons?: string;
@@ -194,7 +207,7 @@ export function normalizeThemePrefs(raw: unknown): ThemePrefs {
   const gradientId =
     !gradientRaw || gradientRaw === GRADIENT_NONE_ID
       ? GRADIENT_NONE_ID
-      : getGradientPalette(gradientRaw)
+      : getGradientPalette(gradientRaw) || gradientRaw === "mine-glow" || gradientRaw === "mine-gradient"
         ? gradientRaw
         : GRADIENT_NONE_ID;
 
@@ -208,9 +221,15 @@ export function normalizeThemePrefs(raw: unknown): ThemePrefs {
     backdrop: gradientId !== GRADIENT_NONE_ID || effectId !== "off",
   });
 
+  const second = typeof parsed.second === "string" ? normalizeAccentHex(parsed.second) : null;
+  const third = typeof parsed.third === "string" ? normalizeAccentHex(parsed.third) : null;
   return {
     mode: parsed.mode === "light" ? "light" : "dark",
+    ...(parsed.autoMode === true ? { autoMode: true } : {}),
     primary: primaryRaw ?? DEFAULT_THEME_PREFS.primary,
+    harmony: normalizeHarmony(parsed.harmony),
+    ...(second ? { second } : {}),
+    ...(third ? { third } : {}),
     skinId:
       typeof parsed.skinId === "string" && parsed.skinId.trim()
         ? parsed.skinId.trim()
@@ -279,7 +298,11 @@ export function setThemePrefs(prefs: ThemePrefs): void {
 export function toAccountThemePrefs(prefs: ThemePrefs, skinId: string) {
   return {
     mode: prefs.mode,
+    ...(prefs.autoMode ? { autoMode: true } : {}),
     primary: prefs.primary,
+    harmony: normalizeHarmony(prefs.harmony),
+    ...(prefs.second ? { second: prefs.second } : {}),
+    ...(prefs.third ? { third: prefs.third } : {}),
     skinId: prefs.skinId ?? skinId,
     lookId: prefs.lookId ?? "standard",
     motion: prefs.motion !== false,

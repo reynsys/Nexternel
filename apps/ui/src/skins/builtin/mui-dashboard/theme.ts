@@ -1,66 +1,49 @@
 import { createTheme, alpha, type Theme } from "@mui/material/styles";
 import type { ThemePrefs } from "../../themePrefs";
+import { buildScheme, type Scheme } from "../../../lib/appearance/scheme";
+import { DEFAULT_FONT_ID, coreFont } from "../../../lib/appearance/fonts";
 
-function lightSurfaces() {
-  return {
-    default: "#f0f2f5",
-    paper: "#ffffff",
-  };
-}
-
-function darkSurfaces() {
-  return {
-    default: "hsl(220, 30%, 6%)",
-    paper: "hsl(220, 30%, 7%)",
-  };
-}
-
-/** MUI dashboard skin theme — mode + primary from Theme Configurator. */
-export function createMuiDashboardTheme(prefs: ThemePrefs): Theme {
-  const mode = prefs.mode;
-  const primary = prefs.primary;
-  const surfaces = mode === "dark" ? darkSurfaces() : lightSurfaces();
-
+/**
+ * MUI dashboard skin theme. Every colour comes from the Appearance engine's roles (lib/appearance):
+ * the page, panels, text, lines, the main / second / third colours and the status colours.
+ */
+export function createMuiDashboardTheme(prefs: ThemePrefs, scheme?: Scheme): Theme {
+  const s = scheme ?? buildScheme({ mode: prefs.mode, surfaces: "solid", main: prefs.primary, harmony: prefs.harmony ?? "split" });
+  const r = s.roles;
+  const solid = (c: { solid: string; solidHover: string; ink: string; text: string }) => ({
+    main: c.solid,
+    dark: c.solidHover,
+    light: c.text,
+    contrastText: c.ink,
+  });
   return createTheme({
     palette: {
-      mode,
-      primary: {
-        main: primary,
-        // Let MUI pick readable ink (dark on bright orange, light on deep accents)
-      },
-      secondary: {
-        main: mode === "dark" ? alpha(primary, 0.85) : primary,
-      },
-      background: surfaces,
-      divider: alpha(mode === "dark" ? "#fff" : "#000", mode === "dark" ? 0.12 : 0.08),
-      text: {
-        primary: mode === "dark" ? "#fff" : "#1a1f36",
-        secondary: mode === "dark" ? "hsl(220, 20%, 65%)" : "rgba(0,0,0,0.6)",
-      },
+      mode: r.mode,
+      primary: solid(r.main),
+      secondary: solid(r.second),
+      success: solid(r.status.ok),
+      warning: solid(r.status.watch),
+      error: solid(r.status.alert),
+      info: solid(r.third),
+      background: { default: r.surfaceSolid.background, paper: r.surfaceSolid.panel },
+      divider: r.line.divider,
+      text: { primary: r.text.main, secondary: r.text.quiet, disabled: alpha(r.text.quiet, 0.6) },
       action: {
-        hover: alpha(primary, 0.08),
-        // Keep soft for generic lists; nav uses solid primary (see MuiListItemButton)
-        selected: alpha(primary, 0.16),
+        hover: alpha(r.main.solid, 0.1),
+        selected: r.main.soft,
+        disabledBackground: alpha(r.text.quiet, 0.12),
+        disabled: alpha(r.text.quiet, 0.55),
       },
     },
     typography: {
-      fontFamily: '"Inter", "IBM Plex Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+      fontFamily: coreFont(DEFAULT_FONT_ID)!.family,
       h4: { fontWeight: 600 },
       h6: { fontWeight: 600 },
     },
     shape: { borderRadius: 10 },
-    // Building blocks are styled from the chosen Look (skins/look-theme.ts); only the menu's
-    // own link colour stays here.
+    // Building blocks are styled from the chosen Look (skins/look-theme.ts).
     components: {
-      MuiLink: {
-        styleOverrides: {
-          root: {
-            "&.MuiLink-underlineHover:hover": {
-              color: primary,
-            },
-          },
-        },
-      },
+      MuiLink: { styleOverrides: { root: { "&.MuiLink-underlineHover:hover": { color: r.main.text } } } },
     },
   });
 }

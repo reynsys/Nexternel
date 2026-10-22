@@ -224,6 +224,7 @@ apps/ui/src/api.ts
 apps/ui/src/App.tsx
 apps/ui/src/components/AdaptiveReading.tsx
 apps/ui/src/components/AddPanelTypePicker.tsx
+apps/ui/src/components/appearance/AppearancePreview.tsx
 apps/ui/src/components/AppErrorBoundary.tsx
 apps/ui/src/components/BrandMark.tsx
 apps/ui/src/components/ButtonRow.tsx
@@ -281,6 +282,13 @@ apps/ui/src/lib/addon-check.ts
 apps/ui/src/lib/add-panel-discovery.test.ts
 apps/ui/src/lib/add-panel-discovery.ts
 apps/ui/src/lib/add-panel-validation.ts
+apps/ui/src/lib/appearance/appearance.test.ts
+apps/ui/src/lib/appearance/color.ts
+apps/ui/src/lib/appearance/fonts-load.ts
+apps/ui/src/lib/appearance/fonts.ts
+apps/ui/src/lib/appearance/presets.ts
+apps/ui/src/lib/appearance/scale.ts
+apps/ui/src/lib/appearance/scheme.ts
 apps/ui/src/lib/area-labels.ts
 apps/ui/src/lib/auto-scroll.test.ts
 apps/ui/src/lib/auto-scroll.ts
@@ -501,6 +509,7 @@ apps/ui/src/plugins/PluginUnavailable.tsx
 apps/ui/src/plugins/registry.ts
 apps/ui/src/skins/activeSkin.ts
 apps/ui/src/skins/AppearanceCssVars.tsx
+apps/ui/src/skins/appearance-scheme.ts
 apps/ui/src/skins/brandLogo.ts
 apps/ui/src/skins/builtin/classic/Layout.tsx
 apps/ui/src/skins/builtin/classic/skin.ts

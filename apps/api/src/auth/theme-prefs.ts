@@ -2,7 +2,15 @@
 
 export type ThemePrefsDto = {
   mode: "light" | "dark";
+  /** Follow the device's light / dark setting. */
+  autoMode?: boolean;
+  /** Main colour. */
   primary: string;
+  /** How the second and third colours are found from the main one. */
+  harmony?: "split" | "analogous" | "triadic" | "complementary" | "custom";
+  /** Second and third colours chosen by hand (harmony "custom"). */
+  second?: string;
+  third?: string;
   skinId: string;
   /** The dashboard's Look (Standard, Glass or an installed Look pack). */
   lookId?: string;
@@ -137,6 +145,9 @@ const GRADIENT_IDS = new Set([
   "lime-sherbet",
   "grayscale",
   "asphalt",
+  // Backgrounds made from the person's own colours
+  "mine-glow",
+  "mine-gradient",
   // Soft glow backgrounds
   "glow-blue",
   "glow-black",
@@ -239,9 +250,14 @@ export function parseThemePrefsInput(
       ? o.skinId.trim()
       : null;
   if (!mode || !primary || !skinId) return null;
+  const harmonies = ["split", "analogous", "triadic", "complementary", "custom"] as const;
   return {
     mode,
+    ...(o.autoMode === true ? { autoMode: true } : {}),
     primary,
+    harmony: harmonies.includes(o.harmony as (typeof harmonies)[number]) ? (o.harmony as ThemePrefsDto["harmony"]) : "split",
+    ...(typeof o.second === "string" && HEX.test(o.second) ? { second: o.second } : {}),
+    ...(typeof o.third === "string" && HEX.test(o.third) ? { third: o.third } : {}),
     skinId,
     lookId: lookField(o),
     motion: o.motion !== false,

@@ -1,5 +1,6 @@
 import { alpha, type Theme, type ThemeOptions } from "@mui/material/styles";
 import type { LookTokens } from "./looks/types";
+import type { Roles } from "../lib/appearance/scheme";
 import { contentPanelStyles, insetStyle } from "./surfaceStyles";
 
 declare module "@mui/material/Paper" {
@@ -13,9 +14,12 @@ declare module "@mui/material/styles" {
   interface Theme {
     /** The chosen Look's role values (skins/looks/types.ts) — hand-built parts read these. */
     nx: LookTokens;
+    /** Every colour by role, from the Appearance engine (lib/appearance/scheme.ts). */
+    nxScheme: Roles;
   }
   interface ThemeOptions {
     nx?: LookTokens;
+    nxScheme?: Roles;
   }
 }
 

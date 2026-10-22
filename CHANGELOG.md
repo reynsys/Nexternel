@@ -2,6 +2,16 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.138
+
+- **All-new Appearance.** Pick a main colour and Nexternel finds a second and third colour that go with it (or choose them yourself); every text and button is checked to stay easy to read.
+- **Ready-made themes** and a **live preview** in Settings → Appearance.
+- **Mode: Light, Dark or Automatic** (follows your device).
+- **17 built-in fonts** for every style, working offline.
+- **Backgrounds made from your own colours.**
+- Standard is solid and Glass is see-through — everywhere, consistently.
+- Choosing a light glow background no longer switches you to Light mode.
+
 ## V5.2.137
 
 - The edit bar is now a proper bar across the top, matching the side menu, with the dashboard's icon.
