@@ -27,7 +27,12 @@ import { LookDecor } from "../skins/looks/LookDecor";
 import { readPanelSwitchStyle } from "../lib/switch-styles";
 import { readPanelMotion } from "../lib/motion";
 import type { PanelActivity } from "../lib/dashboard-data-runtime";
-import { StatusLight, lightPlacement, resolveStatusLook, useStatusLightPrefs } from "./status-light/StatusLight";
+import { StatusLight, lightPlacement, resolveStatusLook, useGlowEdgeSx, useStatusLightPrefs } from "./status-light/StatusLight";
+
+/** Grabbing a panel's title moves it while the dashboard is being arranged. */
+export const PANEL_DRAG_HANDLE = "nx-panel-drag-handle";
+/** Parts of the title that are buttons, not a place to grab. */
+export const PANEL_NO_DRAG = "nx-panel-no-drag";
 
 /** One title tile for every panel — same row heights and typography everywhere. */
 function PanelTitleTile({
@@ -37,9 +42,12 @@ function PanelTitleTile({
   isChartsPanel,
   icon,
   light,
+  actions,
 }: {
   /** Status light for the panel's only reading (inline at the right, or a bar along the bottom). */
   light?: ReactNode;
+  /** While arranging the dashboard: the panel's Edit / More buttons; the title itself is the drag handle. */
+  actions?: ReactNode;
   tileTitle: string | null;
   areaLabel: string | null;
   rangeNote: string | null;
@@ -54,7 +62,10 @@ function PanelTitleTile({
   return (
     <Box
       data-nx-title-tile
+      className={actions ? PANEL_DRAG_HANDLE : undefined}
+      title={actions ? "Drag to move this panel" : undefined}
       sx={{
+        ...(actions ? { cursor: "grab", touchAction: "none", "&:active": { cursor: "grabbing" } } : {}),
         flexShrink: 0,
         height: PANEL_TITLE_TILE_HEIGHT,
         minHeight: PANEL_TITLE_TILE_HEIGHT,
@@ -137,6 +148,11 @@ function PanelTitleTile({
       ) : null}
       </Box>
       {light}
+      {actions ? (
+        <Box className={PANEL_NO_DRAG} sx={{ display: "flex", gap: "var(--nx-control-gap)", flexShrink: 0, cursor: "default" }}>
+          {actions}
+        </Box>
+      ) : null}
     </Box>
   );
 }
@@ -149,8 +165,10 @@ type PanelCardProps = {
   editMode?: boolean;
   activity?: PanelActivity;
   onCapabilityState?: (capabilityId: string, value: unknown, quality?: string, updatedAt?: string) => void;
-  /** The dashboard's move / edit / remove bar, shown above the panel while arranging. */
-  toolbar?: ReactNode;
+  /** While arranging the dashboard: the panel's buttons, in its title (the title is then the drag handle). */
+  editActions?: ReactNode;
+  /** Name shown in the title while arranging when the panel has none of its own (e.g. "Clock"). */
+  editFallbackTitle?: string;
 };
 
 /**
@@ -165,7 +183,8 @@ export function PanelCard({
   editMode = false,
   activity,
   onCapabilityState,
-  toolbar,
+  editActions,
+  editFallbackTitle,
 }: PanelCardProps) {
   const gradientActive = useGradientActive();
   const solidContentPanels = useSolidContentPanels();
@@ -173,13 +192,14 @@ export function PanelCard({
   const motion = readPanelMotion(runtimeConfigToPanelRecord(w.config));
   const statusPrefs = useStatusLightPrefs();
   const heading = panelHeading(w, capabilities, sectionRoomId, cameras);
-  const tileTitle = heading.title;
+  // While arranging, every panel shows its name, so each one can be told apart and grabbed.
+  const tileTitle = heading.title ?? (editActions ? editFallbackTitle ?? null : null);
   const areaLabel = heading.area;
   const rangeNote =
     normalizePanelKind(w.type) === "panel.charts"
       ? chartRangeLabel(readPanelChartRange(runtimeConfigToPanelRecord(w.config)))
       : null;
-  const showTitleTile = Boolean(tileTitle || areaLabel || rangeNote);
+  const showTitleTile = Boolean(tileTitle || areaLabel || rangeNote || editActions);
   const isChartsPanel = normalizePanelKind(w.type) === "panel.charts";
   const titleIcon = panelTitleIcon(w.type, runtimeConfigToPanelRecord(w.config), heading);
   // Lights belong to readings: a panel with one reading shows it here; a panel with
@@ -191,6 +211,8 @@ export function PanelCard({
   const lightCap = heading.item ?? null;
   const titlePlacement = lightCap && showTitleTile ? lightPlacement(statusLook, "title") : null;
   const readingPlacement = lightCap ? lightPlacement(statusLook, "reading") : null;
+  // A lit glowing border round the whole panel: the panel's own edge takes the colour.
+  const glowEdgeSx = useGlowEdgeSx(lightCap?.id, lightCap?.kind, statusLook, titlePlacement === "frame");
   const lightAt = (placement: ReturnType<typeof lightPlacement>, edge: "panel" | "box" = "box") =>
     placement && lightCap ? (
       <StatusLight
@@ -207,8 +229,8 @@ export function PanelCard({
     <Paper
       // This panel's own Animations choice (absent = follows Settings → Appearance).
       data-nx-panel-motion={motion === "follow" ? undefined : motion}
-      elevation={editMode ? 2 : 0}
-      variant={editMode ? "elevation" : "outlined"}
+      elevation={0}
+      variant="outlined"
       sx={{
         flex: 1,
         minHeight: 0,
@@ -220,19 +242,16 @@ export function PanelCard({
         // The Look's panel shape (skins/looks): corners, border and shadow.
         borderRadius: "var(--nx-panel-radius, 20px)",
         border: "var(--nx-panel-border, 1px solid rgba(255,255,255,0.12))",
-        ...(editMode ? {} : { boxShadow: "var(--nx-panel-shadow, none)" }),
+        boxShadow: "var(--nx-panel-shadow, none)",
         position: "relative",
         ...contentSurfaceSx(gradientActive, solidContentPanels),
         // A Look may give panels their own fill (not over frosted glass).
         ...(gradientActive && !solidContentPanels ? {} : { backgroundColor: "var(--nx-panel-fill, var(--nx-surface-paper))" }),
+        ...glowEdgeSx,
       }}
     >
       <LookDecor slot="panel" />
       {titlePlacement === "frame" ? lightAt("frame", "panel") : null}
-      {/* The editing toolbar floats over the title row, so the panel's content keeps its full size. */}
-      {toolbar ? (
-        <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 6, containerType: "inline-size" }}>{toolbar}</Box>
-      ) : null}
       <Box
         data-nx-panel-body
         sx={{
@@ -257,7 +276,9 @@ export function PanelCard({
             rangeNote={rangeNote}
             isChartsPanel={isChartsPanel}
             icon={titleIcon}
-            light={titlePlacement === "inline" ? lightAt("inline") : null}
+            // While arranging, the title holds the panel's buttons instead of its light.
+            light={titlePlacement === "inline" && !editActions ? lightAt("inline") : null}
+            actions={editActions}
           />
         ) : null}
         {titlePlacement === "under-title" ? lightAt("gap-bar") : null}

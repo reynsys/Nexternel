@@ -2,6 +2,13 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.136
+
+- **Tidy, simple edit mode.** One bar at the top (Add section, Dashboard settings, Save, Cancel) that stays in view. Settings open in a **side panel** on the right while the dashboard stays visible: Dashboard settings (name, icon, panels across, all dashboards), Section settings (name, icon, width, position, delete), Add panel and Edit panel. No pop-up windows.
+- Panels show their own names while arranging; drag them by the title; **Edit** and **More** (move to another section, remove) sit in the title.
+- Panels no longer stick out past the right side of their section, and nothing moves when switching into edit mode.
+- No more hint text, dotted line or empty space in edit mode.
+
 ## V5.2.135
 
 - **Glowing border status light:** a solid, thicker band that sits flush on the panel's edge — no grey rim or corners showing outside it. In HUD, the panel's own frame lights up in the status colour.

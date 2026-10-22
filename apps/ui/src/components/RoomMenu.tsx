@@ -69,8 +69,8 @@ function RoomTile({ d, active, onGo, size, label }: { d: DashboardSummary; activ
 /** A floating island centred under the dashboard; the room under the pointer grows (like a Mac dock). */
 const TILE = 46;
 const GROW = 0.22; // the most a room grows; the dock keeps this much room above its rooms
-/** The dock's own height on wide screens: room for growing, the rooms, padding and edge. */
-const DOCK_HEIGHT = Math.ceil(TILE * GROW) + 10 + TILE + 10 + 2;
+/** Space between the dock and the bottom of the screen (wide screens). */
+const DOCK_GAP = 14;
 function Dock({ dashboards, activeId, onGo, tools, loading, error }: Props) {
   const dock = useRef<HTMLDivElement>(null);
   const [centre, setCentre] = useState<number | null>(null);
@@ -89,6 +89,20 @@ function Dock({ dashboards, activeId, onGo, tools, loading, error }: Props) {
     return () => {
       ro.disconnect();
       window.removeEventListener("resize", measure);
+    };
+  }, []);
+  // The page keeps room at its end for the dock (its height, its gap to the screen edge and a little
+  // air), so the dock never covers the last panel.
+  useEffect(() => {
+    const el = dock.current;
+    if (!el) return undefined;
+    const set = () => document.documentElement.style.setProperty("--nx-dock-space", `${Math.ceil(el.offsetHeight) + DOCK_GAP + 12}px`);
+    set();
+    const ro = new ResizeObserver(set);
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      document.documentElement.style.removeProperty("--nx-dock-space");
     };
   }, []);
   const frame = useRef(0);
@@ -118,7 +132,7 @@ function Dock({ dashboards, activeId, onGo, tools, loading, error }: Props) {
           position: "fixed",
           zIndex: t.zIndex.appBar,
           // On phones it sits just above the phone's own menu bar.
-          bottom: { xs: `calc(${BOTTOM_NAV_HEIGHT_PX}px + env(safe-area-inset-bottom) + 8px)`, md: 14 },
+          bottom: { xs: `calc(${BOTTOM_NAV_HEIGHT_PX}px + env(safe-area-inset-bottom) + 8px)`, md: DOCK_GAP },
           left: { xs: 8, md: centre === null ? "50%" : `${centre}px` },
           right: { xs: 8, md: "auto" },
           transform: { xs: "none", md: "translateX(-50%)" },
@@ -148,9 +162,7 @@ function Dock({ dashboards, activeId, onGo, tools, loading, error }: Props) {
         <Box sx={{ width: "1px", alignSelf: "stretch", bgcolor: "divider", mx: 0.5, flexShrink: 0 }} />
         {tools("row", TILE)}
       </Box>
-      {/* Room at the end of the page so the dock never covers the last panel: the dock's height
-          and its gap, less the page's own bottom space (40px on wide screens). */}
-      <Box sx={{ height: { xs: 96, md: DOCK_HEIGHT + 14 + 8 - 40 }, m: "0 !important", order: 99 }} />
+
     </>
   );
 }

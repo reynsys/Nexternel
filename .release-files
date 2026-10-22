@@ -230,6 +230,8 @@ apps/ui/src/components/ButtonRow.tsx
 apps/ui/src/components/CapabilityPicker.tsx
 apps/ui/src/components/confirm/ConfirmProvider.tsx
 apps/ui/src/components/confirm/index.ts
+apps/ui/src/components/dashboard-editor/DashboardSettingsPanel.tsx
+apps/ui/src/components/dashboard-editor/SectionSettingsPanel.tsx
 apps/ui/src/components/DashboardErrorBoundary.tsx
 apps/ui/src/components/DashboardIconPicker.tsx
 apps/ui/src/components/DashboardTabBar.tsx
@@ -256,6 +258,7 @@ apps/ui/src/components/PanelTitleFields.tsx
 apps/ui/src/components/RoomMenu.tsx
 apps/ui/src/components/SectionGrid.tsx
 apps/ui/src/components/SegmentButtonNav.tsx
+apps/ui/src/components/side-panel/SidePanel.tsx
 apps/ui/src/components/SlotBindingFields.tsx
 apps/ui/src/components/status-light/StatusLightFields.tsx
 apps/ui/src/components/status-light/StatusLight.tsx

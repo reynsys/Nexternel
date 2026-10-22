@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type DragEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { type Layout } from "react-grid-layout";
 import {
@@ -11,32 +11,21 @@ import {
   Checkbox,
   Chip,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   FormControl,
   FormControlLabel,
-  IconButton,
   InputLabel,
   MenuItem,
-  Popover,
   Select,
   Stack,
-  Switch,
   TextField,
   Tooltip,
   Typography,
   useMediaQuery,
   useTheme,
-  ToggleButton,
-  ToggleButtonGroup,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
-import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
-import FolderOpenIcon from "@mui/icons-material/FolderOpen";
-import TabRoundedIcon from "@mui/icons-material/TabRounded";
+import AddIcon from "@mui/icons-material/Add";
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import {
   api,
   type CameraRecord,
@@ -65,9 +54,7 @@ import {
   newId,
   nextWidgetPlacement,
   normalizeSectionColSpan,
-  sectionColSpanLabel,
   sortSections,
-  type SectionColSpan,
 } from "../lib/dashboard-document";
 import { SlotBindingFields } from "../components/SlotBindingFields";
 import { PanelCameraContentFields } from "../components/PanelCameraContentFields";
@@ -96,10 +83,10 @@ import {
   type RuntimePanelInstance,
 } from "../lib/panel-compatibility";
 import { DashboardTabBar } from "../components/DashboardTabBar";
-import { ManageDashboardsPanel } from "../components/ManageDashboardsPanel";
+import { DashboardSettingsPanel, type DashboardSettingsPage } from "../components/dashboard-editor/DashboardSettingsPanel";
+import { SectionSettingsPanel } from "../components/dashboard-editor/SectionSettingsPanel";
+import { SidePanel, SidePanelProvider } from "../components/side-panel/SidePanel";
 import { DashboardErrorBoundary } from "../components/DashboardErrorBoundary";
-import { useConfirm } from "../components/confirm";
-import { DashboardIconPicker } from "../components/DashboardIconPicker";
 import { getDashboardIcon } from "../lib/dashboard-icons";
 import { useShellAuth } from "../skins/useShellAuth";
 import { hasPermission } from "../lib/permissions";
@@ -150,7 +137,6 @@ function DashboardPageContent() {
     "editDashboards",
     isAdmin
   );
-  const { confirm } = useConfirm();
   const theme = useTheme();
   const isNarrow = useMediaQuery(theme.breakpoints.down("md"));
   const gradientActive = useGradientActive();
@@ -188,11 +174,11 @@ function DashboardPageContent() {
   const [addPanelTitle, setAddPanelTitle] = useState("");
   const [addPanelStatusLight, setAddPanelStatusLight] = useState<PanelStatusLight>(() => readPanelStatusLight(null));
   const [addSectionId, setAddSectionId] = useState<string>("");
-  const [iconPickerSectionId, setIconPickerSectionId] = useState<string | null>(null);
-  const [iconPickerAnchor, setIconPickerAnchor] = useState<HTMLElement | null>(null);
   const [tabRefreshKey, setTabRefreshKey] = useState(0);
-  const [tabSettingsOpen, setTabSettingsOpen] = useState(false);
-  const [manageDashboardsOpen, setManageDashboardsOpen] = useState(false);
+  /** The side panel with the dashboard's or one section's settings (one at a time). */
+  const [settingsPanel, setSettingsPanel] = useState<
+    { type: "dashboard"; page: DashboardSettingsPage } | { type: "section"; id: string } | null
+  >(null);
   const [editBaseline, setEditBaseline] = useState<{
     name: string;
     tabIcon: string;
@@ -200,10 +186,6 @@ function DashboardPageContent() {
     showSectionNav: boolean;
     gridCols: 12 | 10 | 8;
     sections: RuntimeDashboardSection[];
-  } | null>(null);
-  const [panelDrag, setPanelDrag] = useState<{
-    panelId: string;
-    fromSectionId: string;
   } | null>(null);
 
   const addPanelIsCore = isCorePanelCatalogType(addPanelType);
@@ -251,6 +233,14 @@ function DashboardPageContent() {
 
 
   const ordered = useMemo(() => sortSections(sections), [sections]);
+  // The section whose settings open comes into view, so its changes can be seen.
+  const settingsSectionId = settingsPanel?.type === "section" ? settingsPanel.id : null;
+  useEffect(() => {
+    if (!settingsSectionId) return;
+    requestAnimationFrame(() =>
+      document.getElementById(`dash-section-${settingsSectionId}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" })
+    );
+  }, [settingsSectionId]);
 
   function applyLive(
     capabilityId: string,
@@ -501,16 +491,15 @@ function DashboardPageContent() {
     };
     setSections((prev) => [...prev, section]);
     setAddSectionId(section.id);
+    // Straight to its settings, to name it.
+    setSettingsPanel({ type: "section", id: section.id });
   }
 
   function removeSection(sectionId: string) {
-    setSections((prev) => {
-      if (prev.length <= 1) {
-        setError("Keep at least one section");
-        return prev;
-      }
-      return prev.filter((s) => s.id !== sectionId);
-    });
+    // A dashboard keeps at least one section (Section settings does not offer it then).
+    if (sections.length <= 1) return;
+    setSections((prev) => prev.filter((s) => s.id !== sectionId));
+    setSettingsPanel(null);
   }
 
   function moveSection(sectionId: string, dir: -1 | 1) {
@@ -815,24 +804,6 @@ function DashboardPageContent() {
     });
   }
 
-  function handleSectionPanelDrop(e: DragEvent, toSectionId: string) {
-    e.preventDefault();
-    try {
-      const raw = e.dataTransfer.getData("application/x-nexternel-panel");
-      const parsed = JSON.parse(raw) as { panelId?: string; sectionId?: string };
-      if (
-        typeof parsed.panelId === "string" &&
-        typeof parsed.sectionId === "string" &&
-        parsed.sectionId !== toSectionId
-      ) {
-        movePanelToSection(parsed.sectionId, toSectionId, parsed.panelId);
-      }
-    } catch {
-      /* ignore */
-    }
-    setPanelDrag(null);
-  }
-
   function updatePanel(
     sectionId: string,
     panelId: string,
@@ -880,8 +851,8 @@ function DashboardPageContent() {
     }
     setEditMode(false);
     setEditBaseline(null);
-    setTabSettingsOpen(false);
-    setManageDashboardsOpen(false);
+    setSettingsPanel(null);
+    setAddPanelOpen(false);
     setError(null);
   }
 
@@ -905,8 +876,8 @@ function DashboardPageContent() {
       await api.saveDashboard(dashboardId, { name, document });
       setEditBaseline(null);
       setEditMode(false);
-      setTabSettingsOpen(false);
-      setManageDashboardsOpen(false);
+      setSettingsPanel(null);
+      setAddPanelOpen(false);
       setTabRefreshKey((k) => k + 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed");
@@ -917,10 +888,14 @@ function DashboardPageContent() {
 
   return (
     <DashboardErrorBoundary>
-    <Stack spacing={2} sx={{
-      // Top tabs line up with the menu's title row ("!important" beats the page column's spacing reset).
-      mt: roomNav === "tabs" && !display.active ? "-12px !important" : 0,
-      pr:roomNav === "rail" ? "var(--nx-rail-width, 0px)" : 0, transition: "padding .2s ease" }}>
+    <Stack
+      spacing={2}
+      sx={{
+        // Room on the right for the rail and for an open side panel (whichever is wider).
+        pr: `max(${roomNav === "rail" ? "var(--nx-rail-width, 0px)" : "0px"}, var(--nx-side-panel-width, 0px))`,
+        transition: "padding .2s ease",
+      }}
+    >
       {pageLoading && (
         <Stack alignItems="center" justifyContent="center" sx={{ py: 8 }} spacing={1}>
           <CircularProgress size={28} />
@@ -934,7 +909,7 @@ function DashboardPageContent() {
       )}
       {!pageLoading && !bootError && (
       <>
-      {(display.active && !display.tabs) || roomNav !== "tabs" ? null : (
+      {(display.active && !display.tabs) || roomNav !== "tabs" || editMode ? null : (
       <DashboardTabBar
         variant={roomNav}
         activeId={dashboardId ?? undefined}
@@ -950,129 +925,124 @@ function DashboardPageContent() {
       )}
 
       {editMode && canEditDashboards && (
-        <Stack spacing={1.5}>
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={1}
-            flexWrap="wrap"
-            useFlexGap
-            alignItems={{ sm: "center" }}
+        // The edit bar stays at the top of the screen while scrolling.
+        <Box
+          data-nx-edit-bar=""
+          data-nx-role="chrome"
+          sx={(t) => ({
+            position: "sticky",
+            // Just below the phone's top bar; at the very top on wide screens.
+            top: "var(--nx-top-bar, 0px)",
+            zIndex: t.zIndex.appBar,
+            mx: { xs: -2, md: -3 },
+            px: { xs: 2, md: 3 },
+            py: 1.25,
+            // The Look's chrome (like the side menu and top bar).
+            bgcolor: t.nx.chromeFill || "background.paper",
+            borderBottom: t.nx.chromeEdge || `1px solid ${t.palette.divider}`,
+            boxShadow: t.nx.chromeShadow || "none",
+            backdropFilter: "blur(10px)",
+          })}
+        >
+          <ButtonRow
+            direction="row"
             justifyContent="space-between"
+            sx={{
+              containerType: "inline-size",
+              // A narrow screen shows Add section and Dashboard settings as icons (names on pointing).
+              "@container (max-width: 560px)": {
+                "& [data-nx-label]": { display: "none" },
+                "& [data-nx-icon-button] .MuiButton-startIcon": { m: 0 },
+                "& [data-nx-icon-button]": { minWidth: 40, px: 1 },
+              },
+            }}
           >
-            <Typography variant="subtitle1" fontWeight={600}>
-              Dashboard Options
+            <Typography variant="body1" color="text.secondary" noWrap sx={{ minWidth: 0, flex: "1 1 160px" }}>
+              Editing dashboard:{" "}
+              <Typography component="span" fontWeight={600} color="text.primary">
+                {name}
+              </Typography>
             </Typography>
-            <ButtonRow direction="row" flexWrap="wrap" useFlexGap>
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <Typography variant="body2">Panels across</Typography>
-                <ToggleButtonGroup
-                  exclusive
-                  size="small"
-                  aria-label="Panels across"
-                  value={gridCols}
-                  onChange={(_e, v: 10 | 8 | null) => v && changePanelsAcross(v)}
+            <ButtonRow direction="row">
+              <Tooltip title="Add section">
+                <Button variant="outlined" data-nx-icon-button="" aria-label="Add section" startIcon={<AddIcon />} onClick={addSection}>
+                  <span data-nx-label="">Add section</span>
+                </Button>
+              </Tooltip>
+              <Tooltip title="Dashboard settings">
+                <Button
+                  data-nx-icon-button=""
+                  aria-label="Dashboard settings"
+                  variant={settingsPanel?.type === "dashboard" ? "contained" : "outlined"}
+                  startIcon={<SettingsOutlinedIcon />}
+                  onClick={() => setSettingsPanel({ type: "dashboard", page: "this" })}
                 >
-                  <ToggleButton value={10}>5</ToggleButton>
-                  <ToggleButton value={8}>4</ToggleButton>
-                </ToggleButtonGroup>
-              </Stack>
-              <Button variant="outlined" onClick={addSection}>
-                Add section
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<TabRoundedIcon />}
-                onClick={() => setTabSettingsOpen(true)}
-              >
-                Tab settings
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<FolderOpenIcon />}
-                onClick={() => setManageDashboardsOpen(true)}
-              >
-                Manage dashboards
-              </Button>
+                  <span data-nx-label="">Dashboard settings</span>
+                </Button>
+              </Tooltip>
               <Button variant="contained" disabled={saving} onClick={() => void save()}>
                 {saving ? "Saving…" : "Save"}
               </Button>
-              <Button variant="outlined" color="inherit" disabled={saving} onClick={cancelEdit}>
+              <Button variant="outlined" disabled={saving} onClick={cancelEdit}>
                 Cancel
               </Button>
             </ButtonRow>
-          </Stack>
-        </Stack>
+          </ButtonRow>
+        </Box>
       )}
 
-      <Dialog
-        open={tabSettingsOpen}
-        onClose={() => setTabSettingsOpen(false)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>This tab (horizontal menu)</DialogTitle>
-        <DialogContent>
-          <Stack spacing={1.5} sx={{ mt: 0.5 }}>
-            <TextField
-              size="small"
-              label="Tab name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              helperText="Shown on the top dashboard tabs — Save to keep changes"
-              fullWidth
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={showTabLabel}
-                  onChange={(e) => setShowTabLabel(e.target.checked)}
-                />
-              }
-              label="Show name on tab (off = icon only)"
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={showSectionNav}
-                  onChange={(e) => setShowSectionNav(e.target.checked)}
-                />
-              }
-              label="Show section quick-jump row"
-            />
-            <DashboardIconPicker value={tabIcon} onChange={setTabIcon} />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setTabSettingsOpen(false)}>Close</Button>
-        </DialogActions>
-      </Dialog>
+      <DashboardSettingsPanel
+        open={editMode && settingsPanel?.type === "dashboard"}
+        page={settingsPanel?.type === "dashboard" ? settingsPanel.page : "this"}
+        onPage={(page) => setSettingsPanel({ type: "dashboard", page })}
+        onClose={() => setSettingsPanel(null)}
+        dashboardId={dashboardId ?? undefined}
+        name={name}
+        onName={setName}
+        icon={tabIcon}
+        onIcon={setTabIcon}
+        showName={showTabLabel}
+        onShowName={setShowTabLabel}
+        gridCols={gridCols}
+        onGridCols={changePanelsAcross}
+        sectionShortcuts={showSectionNav}
+        onSectionShortcuts={setShowSectionNav}
+        onDashboardsChanged={() => setTabRefreshKey((k) => k + 1)}
+        onCurrentMeta={(meta) => {
+          setName(meta.name);
+          setTabIcon(meta.tabIcon);
+          setShowTabLabel(meta.showTabLabel);
+          setTabRefreshKey((k) => k + 1);
+        }}
+      />
 
-      <Dialog
-        open={manageDashboardsOpen}
-        onClose={() => setManageDashboardsOpen(false)}
-        fullWidth
-        maxWidth="md"
-      >
-        <DialogTitle>Manage dashboards</DialogTitle>
-        <DialogContent>
-          <ManageDashboardsPanel
-            compact
-            currentDashboardId={dashboardId ?? undefined}
-            onDashboardsChanged={() => {
-              setTabRefreshKey((k) => k + 1);
-            }}
-            onCurrentTabMeta={(meta) => {
-              setName(meta.name);
-              setTabIcon(meta.tabIcon);
-              setShowTabLabel(meta.showTabLabel);
-              setTabRefreshKey((k) => k + 1);
-            }}
+      {(() => {
+        const idx = settingsPanel?.type === "section" ? ordered.findIndex((x) => x.id === settingsPanel.id) : -1;
+        const sec = idx >= 0 ? ordered[idx] : null;
+        return (
+          <SectionSettingsPanel
+            section={
+              editMode && sec
+                ? {
+                    id: sec.id,
+                    title: sec.title,
+                    icon: sec.icon,
+                    showTitle: sec.showTitle,
+                    colSpan: normalizeSectionColSpan(sec.colSpan),
+                    panelCount: sectionPanelCount(sec),
+                    isFirst: idx === 0,
+                    isLast: idx === ordered.length - 1,
+                    isOnly: ordered.length === 1,
+                  }
+                : null
+            }
+            onClose={() => setSettingsPanel(null)}
+            onChange={(patch) => sec && updateSection(sec.id, patch)}
+            onMove={(dir) => sec && moveSection(sec.id, dir)}
+            onDelete={() => sec && removeSection(sec.id)}
           />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setManageDashboardsOpen(false)}>Close</Button>
-        </DialogActions>
-      </Dialog>
+        );
+      })()}
 
       {error && <Alert severity="error">{error}</Alert>}
 
@@ -1108,11 +1078,9 @@ function DashboardPageContent() {
           gridTemplateColumns: "repeat(12, minmax(0, 1fr))",
           gap: 2,
           alignItems: "start",
-          // While editing, room below the last panel to make it taller.
-          pb: editMode ? "35vh" : 0,
         }}
       >
-        {ordered.map((section, index) => {
+        {ordered.map((section) => {
           const span = isNarrow ? 12 : normalizeSectionColSpan(section.colSpan);
           // A section without its title bar shows just its frame round the panels (always open).
           const titleHidden = !editMode && section.showTitle === false;
@@ -1127,18 +1095,6 @@ function DashboardPageContent() {
               onChange={(_e, expanded) =>
                 updateSection(section.id, { collapsed: !expanded })
               }
-              onDragOver={(e) => {
-                if (
-                  !editMode ||
-                  !panelDrag ||
-                  panelDrag.fromSectionId === section.id
-                ) {
-                  return;
-                }
-                e.preventDefault();
-                e.dataTransfer.dropEffect = "move";
-              }}
-              onDrop={(e) => handleSectionPanelDrop(e, section.id)}
               disableGutters
               data-nx-role="section"
               sx={[
@@ -1149,155 +1105,60 @@ function DashboardPageContent() {
                 },
                 // The Look's dashboard section (border, corners, fill, shadow) and the room it keeps for a frame.
                 sectionSx(gradientActive),
+                // The section whose settings are open is outlined.
+                settingsPanel?.type === "section" && settingsPanel.id === section.id
+                  ? (t) => ({ boxShadow: `0 0 0 2px ${t.palette.primary.main}` })
+                  : {},
               ]}
             >
               <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={titleHidden ? { display: "none" } : undefined}>
-                <ButtonRow
+                <Stack
                   direction="row"
                   alignItems="center"
-                  sx={{ width: "100%", pr: 1 }}
-                  onClick={(e) => {
-                    if (editMode) e.stopPropagation();
-                  }}
+                  spacing={1.25}
+                  sx={{ width: "100%", minWidth: 0, pr: 1, containerType: "inline-size" }}
                 >
-                  {editMode ? (
-                    <IconButton
-                      size="small"
-                      aria-label="Section icon"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIconPickerSectionId(section.id);
-                        setIconPickerAnchor(e.currentTarget);
-                      }}
-                    >
-                      <SecIcon fontSize="small" />
-                    </IconButton>
-                  ) : (
-                    <SecIcon color="primary" fontSize="small" />
-                  )}
-                  {editMode ? (
-                    <>
-                      <TextField
-                        size="small"
-                        label="Section"
-                        value={section.title}
-                        onChange={(e) => updateSection(section.id, { title: e.target.value })}
-                        onClick={(e) => e.stopPropagation()}
-                        sx={{ width: { xs: "100%", sm: 220 }, maxWidth: 280, flexShrink: 0 }}
-                      />
-                      <Tooltip title="Delete this section and all panels inside it">
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          color="error"
-                          sx={{ flexShrink: 0 }}
-                          onClick={() => {
-                            void (async () => {
-                              const panelCount = sectionPanelCount(section);
-                              const ok = await confirm({
-                                title: "Remove this section?",
-                                message:
-                                  `Remove “${section.title}” and ${panelCount} panel${panelCount === 1 ? "" : "s"} inside it? Save the dashboard to keep this change.`,
-                                confirmLabel: "Remove this section",
-                              });
-                              if (ok) removeSection(section.id);
-                            })();
-                          }}
-                        >
-                          Remove this Section
-                        </Button>
-                      </Tooltip>
-                    </>
-                  ) : (
-                    <Typography variant="h6" sx={{ flex: 1 }} noWrap>
-                      {section.title}
-                    </Typography>
-                  )}
-                  <Box sx={{ flex: 1, minWidth: 8 }} />
-                  <Typography
-                    variant="caption"
-                    sx={{ flexShrink: 0, color: "primary.main", fontWeight: 500 }}
-                  >
+                  <SecIcon color="primary" fontSize="small" />
+                  <Typography variant="h6" noWrap sx={{ minWidth: 0 }}>
+                    {section.title || (editMode ? "Untitled section" : "")}
+                  </Typography>
+                  <Typography variant="caption" sx={{ flexShrink: 0, color: "text.secondary" }}>
                     {sectionContentSummary(sectionPanels(section))}
                   </Typography>
+                  <Box sx={{ flex: 1 }} />
                   {editMode && (
-                    <Stack
+                    <ButtonRow
                       direction="row"
-                      spacing={0.5}
-                      alignItems="center"
-                      flexWrap="wrap"
-                      useFlexGap
-                      sx={{ flexShrink: 0 }}
+                      flexWrap="nowrap"
+                      sx={{
+                        flexShrink: 0,
+                        // A narrow section shows the buttons' icons only (their names show on pointing).
+                        "@container (max-width: 520px)": {
+                          "& [data-nx-label]": { display: "none" },
+                          "& .MuiButton-startIcon": { m: 0 },
+                          "& .MuiButton-root": { minWidth: 40, px: 1 },
+                        },
+                      }}
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <Stack direction="row" alignItems="center" spacing={1} sx={{ mr: 0.5 }}>
-                        <Typography variant="body2">Section bar</Typography>
-                        <ToggleButtonGroup
-                          exclusive
-                          size="small"
-                          aria-label="Section bar"
-                          value={section.showTitle === false ? "hide" : "show"}
-                          onChange={(_e, v: "show" | "hide" | null) => v && updateSection(section.id, { showTitle: v === "show" })}
-                        >
-                          <ToggleButton value="show">Show</ToggleButton>
-                          <ToggleButton value="hide">Hide</ToggleButton>
-                        </ToggleButtonGroup>
-                      </Stack>
-                      <FormControl size="small" sx={{ minWidth: 100 }}>
-                        <InputLabel id={`span-${section.id}`}>Width</InputLabel>
-                        <Select
-                          labelId={`span-${section.id}`}
-                          label="Width"
-                          value={normalizeSectionColSpan(section.colSpan)}
-                          onChange={(e) =>
-                            updateSection(section.id, {
-                              colSpan: Number(e.target.value) as SectionColSpan,
-                            })
-                          }
-                        >
-                          {([12, 6, 4, 3] as SectionColSpan[]).map((n) => (
-                            <MenuItem key={n} value={n}>
-                              {sectionColSpanLabel(n)}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                      <Tooltip title="Move section up on the page">
-                        <span>
-                          <IconButton
-                            size="small"
-                            aria-label="Move section up"
-                            disabled={index === 0}
-                            onClick={() => moveSection(section.id, -1)}
-                          >
-                            <ArrowUpwardIcon fontSize="small" />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
-                      <Tooltip title="Move section down on the page">
-                        <span>
-                          <IconButton
-                            size="small"
-                            aria-label="Move section down"
-                            disabled={index === ordered.length - 1}
-                            onClick={() => moveSection(section.id, 1)}
-                          >
-                            <ArrowDownwardIcon fontSize="small" />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
                       <Tooltip title="Add a panel to this section">
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          onClick={() => openAddPanel(section.id)}
-                        >
-                          Add Panel
+                        <Button variant="outlined" aria-label="Add panel" startIcon={<AddIcon />} onClick={() => openAddPanel(section.id)}>
+                          <span data-nx-label="">Add panel</span>
                         </Button>
                       </Tooltip>
-                    </Stack>
+                      <Tooltip title="Name, icon, width, position, delete">
+                        <Button
+                          aria-label="Section settings"
+                          variant={settingsPanel?.type === "section" && settingsPanel.id === section.id ? "contained" : "outlined"}
+                          startIcon={<SettingsOutlinedIcon />}
+                          onClick={() => setSettingsPanel({ type: "section", id: section.id })}
+                        >
+                          <span data-nx-label="">Section settings</span>
+                        </Button>
+                      </Tooltip>
+                    </ButtonRow>
                   )}
-                </ButtonRow>
+                </Stack>
               </AccordionSummary>
               <AccordionDetails sx={{ pt: titleHidden ? 2 : 0, px: 2, pb: 2 }}>
                 <SectionGrid
@@ -1314,11 +1175,7 @@ function DashboardPageContent() {
                   onRemovePanel={removePanel}
                   onUpdatePanel={updatePanel}
                   onMovePanel={movePanelToSection}
-                  panelDrag={panelDrag}
-                  onPanelDragStart={(sid, pid) =>
-                    setPanelDrag({ fromSectionId: sid, panelId: pid })
-                  }
-                  onPanelDragEnd={() => setPanelDrag(null)}
+                  moveTargets={ordered.filter((x) => x.id !== section.id).map((x) => ({ id: x.id, title: x.title }))}
                   onCapabilityState={applyLive}
                 />
               </AccordionDetails>
@@ -1330,7 +1187,9 @@ function DashboardPageContent() {
       </Box>
 
       {/* Dock and rail are fixed on screen; drawn last so they take no room above the dashboard. */}
-      {roomNav !== "tabs" && !(display.active && !display.tabs) ? (
+      {/* While editing, the edit bar's Save and Cancel are the way out (moving to another dashboard
+          would drop unsaved changes), so the Dashboard Menu is hidden. */}
+      {roomNav !== "tabs" && !editMode && !(display.active && !display.tabs) ? (
         <DashboardTabBar
           variant={roomNav}
           activeId={dashboardId ?? undefined}
@@ -1345,43 +1204,33 @@ function DashboardPageContent() {
         />
       ) : null}
 
-      <Popover
-        open={Boolean(iconPickerAnchor) && Boolean(iconPickerSectionId)}
-        anchorEl={iconPickerAnchor}
-        onClose={() => {
-          setIconPickerAnchor(null);
-          setIconPickerSectionId(null);
-        }}
-        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-      >
-        <Box sx={{ p: 2, width: 320 }}>
-          <DashboardIconPicker
-            dense
-            value={
-              ordered.find((s) => s.id === iconPickerSectionId)?.icon ??
-              DEFAULT_SECTION_ICON
-            }
-            onChange={(iconId) => {
-              if (iconPickerSectionId) {
-                updateSection(iconPickerSectionId, { icon: iconId });
-              }
-              setIconPickerAnchor(null);
-              setIconPickerSectionId(null);
-            }}
-          />
-        </Box>
-      </Popover>
-
-      <Dialog
-        open={addPanelOpen}
+      <SidePanel
+        open={editMode && addPanelOpen}
         onClose={() => setAddPanelOpen(false)}
-        fullWidth
-        maxWidth="sm"
-        keepMounted={false}
+        title="Add panel"
+        footer={
+          <ButtonRow direction="row">
+            <Button variant="outlined" fullWidth onClick={() => setAddPanelOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              fullWidth
+              disabled={!addPanelValidation.ok}
+              onClick={() => {
+                try {
+                  addPanel();
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : "Could not add panel");
+                }
+              }}
+            >
+              Add panel
+            </Button>
+          </ButtonRow>
+        }
       >
-        <DialogTitle>Add Panel</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
+          <Stack spacing={2} sx={{ pt: 1 }}>
             <FormControl fullWidth>
               <InputLabel id="panel-section-target">Section</InputLabel>
               <Select
@@ -1506,24 +1355,7 @@ function DashboardPageContent() {
               readings={addPanelReadings}
             />
           </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setAddPanelOpen(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            disabled={!addPanelValidation.ok}
-            onClick={() => {
-              try {
-                addPanel();
-              } catch (err) {
-                setError(err instanceof Error ? err.message : "Could not add panel");
-              }
-            }}
-          >
-            Add Panel
-          </Button>
-        </DialogActions>
-      </Dialog>
+      </SidePanel>
       </>
       )}
     </Stack>
@@ -1535,7 +1367,9 @@ function DashboardPageContent() {
 export function DashboardPage() {
   return (
     <DashboardDataRuntimeProvider>
-      <DashboardPageContent />
+      <SidePanelProvider>
+        <DashboardPageContent />
+      </SidePanelProvider>
     </DashboardDataRuntimeProvider>
   );
 }

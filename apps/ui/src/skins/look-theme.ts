@@ -226,6 +226,8 @@ export function lookThemeOptions(
           },
         },
       },
+      // Choice buttons (5 / 4, Full / Half…) write their words like every other button.
+      MuiToggleButton: { styleOverrides: { root: { textTransform: t.buttonCase } } },
       MuiSwitch: {
         styleOverrides: {
           switchBase: { "&.Mui-checked": { color: primary.main }, "&.Mui-checked + .MuiSwitch-track": { backgroundColor: primary.main } },

@@ -1,9 +1,10 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { Box, Button, Drawer, Stack, Tab, Tabs, Typography } from "@mui/material";
+import { Box, Button, Stack, Tab, Tabs, Typography } from "@mui/material";
 import type { CameraRecord, Capability } from "../../api";
 import type { RuntimePanelInstance } from "../../lib/panel-compatibility/types";
 import { PanelCard } from "../PanelCard";
 import { ButtonRow } from "../ButtonRow";
+import { SidePanel } from "../side-panel/SidePanel";
 
 export type PanelEditorTabId = "content" | "look" | "light";
 
@@ -54,57 +55,51 @@ export function PanelEditorShell({
   const current = shown.find((t) => t.id === tab) ?? shown[0];
 
   return (
-    <Drawer
-      anchor="right"
+    <SidePanel
       open={open}
       onClose={onCancel}
-      PaperProps={{ sx: { width: { xs: "100%", sm: 480 }, display: "flex", flexDirection: "column" } }}
+      title={title}
+      subtitle={kindLabel}
+      top={
+        <>
+          {preview ? (
+            <Box sx={{ pb: 1.5 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
+                Preview
+              </Typography>
+              {preview}
+            </Box>
+          ) : null}
+          {shown.length > 1 ? (
+            <Tabs
+              value={current?.id ?? false}
+              onChange={(_, v: PanelEditorTabId) => setTab(v)}
+              variant="fullWidth"
+              sx={{ borderBottom: 1, borderColor: "divider", minHeight: 40, "& .MuiTab-root": { minHeight: 40 } }}
+            >
+              {shown.map((t) => (
+                <Tab key={t.id} value={t.id} label={t.label} sx={{ textTransform: "none" }} />
+              ))}
+            </Tabs>
+          ) : null}
+        </>
+      }
+      footer={
+        <>
+          {footerNote}
+          <ButtonRow direction="row" sx={{ mt: footerNote ? 1 : 0 }}>
+            <Button variant="outlined" onClick={onCancel} fullWidth>
+              Cancel
+            </Button>
+            <Button variant="contained" onClick={onApply} fullWidth disabled={applyDisabled}>
+              Apply
+            </Button>
+          </ButtonRow>
+        </>
+      }
     >
-      <Box sx={{ px: 2, pt: 2, pb: 1, flexShrink: 0 }}>
-        <Typography variant="h6" noWrap title={title}>
-          {title}
-        </Typography>
-        {kindLabel ? (
-          <Typography variant="caption" color="text.secondary">
-            {kindLabel}
-          </Typography>
-        ) : null}
-      </Box>
-      {preview ? (
-        <Box sx={{ px: 2, pb: 1.5, flexShrink: 0 }}>
-          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
-            Preview
-          </Typography>
-          {preview}
-        </Box>
-      ) : null}
-      {shown.length > 1 ? (
-        <Tabs
-          value={current?.id ?? false}
-          onChange={(_, v: PanelEditorTabId) => setTab(v)}
-          variant="fullWidth"
-          sx={{ flexShrink: 0, borderBottom: 1, borderColor: "divider", minHeight: 40, "& .MuiTab-root": { minHeight: 40 } }}
-        >
-          {shown.map((t) => (
-            <Tab key={t.id} value={t.id} label={t.label} sx={{ textTransform: "none" }} />
-          ))}
-        </Tabs>
-      ) : null}
-      <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", px: 2, py: 2 }}>
-        <Stack spacing={2}>{current?.content}</Stack>
-      </Box>
-      <Box sx={{ flexShrink: 0, px: 2, py: 1.5, borderTop: 1, borderColor: "divider" }}>
-        {footerNote}
-        <ButtonRow direction="row" sx={{ mt: footerNote ? 1 : 0 }}>
-          <Button variant="outlined" onClick={onCancel} fullWidth>
-            Cancel
-          </Button>
-          <Button variant="contained" onClick={onApply} fullWidth disabled={applyDisabled}>
-            Apply
-          </Button>
-        </ButtonRow>
-      </Box>
-    </Drawer>
+      <Stack spacing={2}>{current?.content}</Stack>
+    </SidePanel>
   );
 }
 

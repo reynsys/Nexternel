@@ -1,22 +1,26 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import GridLayout, { type Layout } from "react-grid-layout";
 import {
   Box,
-  IconButton,
+  Button,
+  Divider,
+  ListSubheader,
+  Menu,
+  MenuItem,
   Tooltip,
   Typography,
   alpha,
   useTheme,
 } from "@mui/material";
-import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import DriveFileMoveOutlinedIcon from "@mui/icons-material/DriveFileMoveOutlined";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import TuneIcon from "@mui/icons-material/Tune";
+import DriveFileMoveOutlinedIcon from "@mui/icons-material/DriveFileMoveOutlined";
 import type { CameraRecord, Capability, PanelInstance } from "../api";
 import type { RuntimePanelInstance } from "../lib/panel-compatibility/types";
 import { runtimeConfigToPanelRecord } from "../lib/panel-compatibility/panel-config";
 import { toRenderPanel } from "../lib/panel-compatibility/render-adapter";
-import { PanelCard } from "./PanelCard";
+import { PANEL_DRAG_HANDLE, PANEL_NO_DRAG, PanelCard } from "./PanelCard";
 import { PanelPreview } from "./panel-editor/PanelEditorShell";
 import { PluginPanelEditor } from "./panel-editor/PluginPanelEditor";
 import { mergeRuntimePanelPatch } from "../lib/panel-compatibility/normalize-panel";
@@ -45,17 +49,13 @@ import {
   gridLayoutsEqual,
   panelSectionLayoutMatches,
 } from "../panels/placement";
-import { useConfirm } from "./confirm";
 import type { PanelActivity } from "../lib/dashboard-data-runtime";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
-import { ButtonRow } from "./ButtonRow";
 import { createEdgeScroller } from "../lib/edge-scroll";
 
 /** Diagonal two-way arrow (Material "open in full"), drawn in the handle with a mask. */
 const RESIZE_ARROW = `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 11V3h-8l3.29 3.29-10 10L3 13v8h8l-3.29-3.29 10-10z"/></svg>')}")`;
-
-const PANEL_DRAG_MIME = "application/x-nexternel-panel";
 
 type Props = {
   /** Columns the dashboard's panels are arranged on (12, 10 or 8). */
@@ -78,9 +78,8 @@ type Props = {
     patch: Partial<PanelInstance>
   ) => void;
   onMovePanel?: (fromSectionId: string, toSectionId: string, panelId: string) => void;
-  panelDrag?: { panelId: string; fromSectionId: string } | null;
-  onPanelDragStart?: (sectionId: string, panelId: string) => void;
-  onPanelDragEnd?: () => void;
+  /** The dashboard's other sections, for "Move to section". */
+  moveTargets?: { id: string; title: string }[];
   onCapabilityState?: (
     capabilityId: string,
     value: unknown,
@@ -106,6 +105,131 @@ function isEditableWidget(widget: RuntimePanelInstance): boolean {
 }
 
 /**
+ * A panel's buttons while arranging, in its title: Edit, and More (move to another section, remove).
+ * Removing asks first, in the same menu.
+ */
+function PanelEditActions({
+  name,
+  kind,
+  canEdit,
+  onEdit,
+  moveTargets,
+  onMove,
+  onRemove,
+}: {
+  name: string;
+  kind: "panel" | "plugin";
+  canEdit: boolean;
+  onEdit: () => void;
+  moveTargets: { id: string; title: string }[];
+  onMove: (sectionId: string) => void;
+  onRemove: () => void;
+}) {
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  const [askRemove, setAskRemove] = useState(false);
+  const close = () => {
+    setAnchor(null);
+    setAskRemove(false);
+  };
+  const square = { minWidth: 32, width: 32, height: 32, p: 0 } as const;
+  return (
+    <>
+      {canEdit ? (
+        <Tooltip title={`Edit this ${kind}`}>
+          <Button
+            variant="outlined"
+            size="small"
+            aria-label={`Edit ${name}`}
+            onClick={onEdit}
+            // A narrow panel keeps its title for the name: Edit is then in the More menu.
+            sx={{ ...square, "@container nx-title (max-width: 210px)": { display: "none" } }}
+          >
+            <EditOutlinedIcon fontSize="small" />
+          </Button>
+        </Tooltip>
+      ) : null}
+      <Tooltip title="More: edit, move to another section, remove">
+        <Button
+          variant="outlined"
+          size="small"
+          aria-label={`More for ${name}`}
+          aria-haspopup="menu"
+          onClick={(e) => setAnchor(e.currentTarget)}
+          sx={square}
+        >
+          <MoreHorizIcon fontSize="small" />
+        </Button>
+      </Tooltip>
+      <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={close} className={PANEL_NO_DRAG}>
+        {askRemove
+          ? [
+              <ListSubheader key="q" sx={{ lineHeight: 1.4, py: 1, maxWidth: 260, whiteSpace: "normal" }}>
+                Remove “{name}”? Save the dashboard to keep this change.
+              </ListSubheader>,
+              <MenuItem
+                key="yes"
+                sx={{ color: "error.main" }}
+                onClick={() => {
+                  close();
+                  onRemove();
+                }}
+              >
+                <DeleteOutlineIcon fontSize="small" sx={{ mr: 1 }} />
+                Remove
+              </MenuItem>,
+              <MenuItem key="no" onClick={() => setAskRemove(false)}>
+                Keep it
+              </MenuItem>,
+            ]
+          : [
+              ...(canEdit
+                ? [
+                    <MenuItem
+                      key="edit"
+                      onClick={() => {
+                        close();
+                        onEdit();
+                      }}
+                    >
+                      <EditOutlinedIcon fontSize="small" sx={{ mr: 1 }} />
+                      Edit this {kind}
+                    </MenuItem>,
+                    <Divider key="d0" />,
+                  ]
+                : []),
+              <ListSubheader key="h" sx={{ lineHeight: 2.2 }}>
+                Move to section
+              </ListSubheader>,
+              ...(moveTargets.length
+                ? moveTargets.map((t) => (
+                    <MenuItem
+                      key={t.id}
+                      onClick={() => {
+                        close();
+                        onMove(t.id);
+                      }}
+                    >
+                      <DriveFileMoveOutlinedIcon fontSize="small" sx={{ mr: 1 }} />
+                      {t.title || "Untitled section"}
+                    </MenuItem>
+                  ))
+                : [
+                    <MenuItem key="none" disabled>
+                      There is no other section yet
+                    </MenuItem>,
+                  ]),
+              <Divider key="d" />,
+              <MenuItem key="rm" sx={{ color: "error.main" }} onClick={() => setAskRemove(true)}>
+                <DeleteOutlineIcon fontSize="small" sx={{ mr: 1 }} />
+                Remove this {kind}…
+              </MenuItem>,
+            ]}
+      </Menu>
+    </>
+  );
+}
+
+/**
  * RGL inside accordion/collapse needs measured width — WidthProvider often stays at 0.
  */
 export function SectionGrid({
@@ -122,9 +246,7 @@ export function SectionGrid({
   onRemovePanel,
   onUpdatePanel,
   onMovePanel,
-  panelDrag,
-  onPanelDragStart,
-  onPanelDragEnd,
+  moveTargets = [],
   onCapabilityState,
 }: Props) {
   const theme = useTheme();
@@ -132,15 +254,12 @@ export function SectionGrid({
   const hostRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
   const [editPanelId, setEditPanelId] = useState<string | null>(null);
-  const [dropHighlight, setDropHighlight] = useState(false);
-  const { confirm } = useConfirm();
+  // Leaving edit mode (Save or Cancel) closes a panel's Edit menu.
+  useEffect(() => {
+    if (!editMode) setEditPanelId(null);
+  }, [editMode]);
 
   const mutedLabel = alpha(theme.palette.text.primary, theme.palette.mode === "dark" ? 0.62 : 0.55);
-  const canAcceptDrop =
-    editMode &&
-    panelDrag &&
-    panelDrag.fromSectionId !== sectionId &&
-    Boolean(onMovePanel);
 
   const prevWidthRef = useRef(0);
 
@@ -148,7 +267,9 @@ export function SectionGrid({
     const el = hostRef.current;
     if (!el) return;
     const measure = () => {
-      const w = Math.floor(el.getBoundingClientRect().width);
+      // The grid sits inside the box's padding, so it gets the content width.
+      const cs = getComputedStyle(el);
+      const w = Math.floor(el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight));
       if (w > 0 && w !== prevWidthRef.current) {
         prevWidthRef.current = w;
         setWidth(w);
@@ -237,26 +358,6 @@ export function SectionGrid({
       />
     ) : null;
 
-  function handleDrop(e: DragEvent) {
-    e.preventDefault();
-    setDropHighlight(false);
-    if (!canAcceptDrop) return;
-    try {
-      const raw = e.dataTransfer.getData(PANEL_DRAG_MIME);
-      const parsed = JSON.parse(raw) as { panelId?: string; sectionId?: string };
-      if (
-        typeof parsed.panelId === "string" &&
-        typeof parsed.sectionId === "string" &&
-        parsed.sectionId !== sectionId
-      ) {
-        onMovePanel?.(parsed.sectionId, sectionId, parsed.panelId);
-      }
-    } catch {
-      /* ignore */
-    }
-    onPanelDragEnd?.();
-  }
-
   return (
     <Box
       ref={hostRef}
@@ -266,23 +367,6 @@ export function SectionGrid({
       onMouseDownCapture={(e) => {
         if ((e.target as Element).closest?.(".react-resizable-handle")) e.preventDefault();
       }}
-      onDragOver={(e) => {
-        if (!canAcceptDrop) return;
-        e.preventDefault();
-        e.dataTransfer.dropEffect = "move";
-        setDropHighlight(true);
-      }}
-      onDragEnter={(e) => {
-        if (!canAcceptDrop) return;
-        e.preventDefault();
-        setDropHighlight(true);
-      }}
-      onDragLeave={(e) => {
-        if (!hostRef.current?.contains(e.relatedTarget as Node)) {
-          setDropHighlight(false);
-        }
-      }}
-      onDrop={handleDrop}
       sx={{
         width: "100%",
         minHeight: panels.length ? 160 : 72,
@@ -326,19 +410,8 @@ export function SectionGrid({
           outline: `2px dashed ${t.palette.primary.main}`,
           outlineOffset: "-2px",
         }),
-        borderRadius: 2,
-        p: editMode ? 1.5 : 0.5,
-        bgcolor: (t) =>
-          dropHighlight
-            ? alpha(t.palette.primary.main, t.palette.mode === "dark" ? 0.14 : 0.1)
-            : editMode
-              ? t.palette.mode === "dark"
-                ? "rgba(255,255,255,0.03)"
-                : "rgba(0,0,0,0.02)"
-              : "transparent",
-        outline: editMode || dropHighlight ? "1px dashed" : "none",
-        outlineColor: dropHighlight ? "primary.main" : "divider",
-        transition: "outline-color 0.15s ease, background-color 0.15s ease",
+        // The same in both modes: arranging the dashboard does not move or resize anything.
+        p: 0.5,
         /* RGL sets pixel height on .react-grid-item; children must fill it. */
         // Each panel keeps its own content inside (PanelCard clips); the grid cell does not, so a
         // Look's panel shadows and frames are never cut off.
@@ -358,19 +431,6 @@ export function SectionGrid({
         },
       }}
     >
-      {editMode && panels.length > 0 && (
-        <Typography variant="caption" sx={{ display: "block", mb: 1, color: mutedLabel }}>
-          Drag the handle to move within this section · use the move icon to drag to another section
-        </Typography>
-      )}
-      {editMode && canAcceptDrop && dropHighlight && (
-        <Typography
-          variant="caption"
-          sx={{ display: "block", mb: 1, color: "primary.main", fontWeight: 600 }}
-        >
-          Drop here to move into this section
-        </Typography>
-      )}
       {width > 0 && panels.length > 0 && (
         <GridLayout
           className="layout"
@@ -384,7 +444,8 @@ export function SectionGrid({
           isResizable={editMode}
           compactType="vertical"
           preventCollision={false}
-          draggableHandle=".widget-drag-handle"
+          draggableHandle={`.${PANEL_DRAG_HANDLE}`}
+          draggableCancel={`.${PANEL_NO_DRAG}`}
           onResizeStart={(_l, _o, _n, _p, e) => edgeScroller.start(e)}
           onResize={(_l, _o, _n, _p, e) => edgeScroller.move(e)}
           onResizeStop={(next, _old, item) => {
@@ -412,99 +473,19 @@ export function SectionGrid({
                   editMode={editMode}
                   activity={activity}
                   onCapabilityState={onCapabilityState}
-                  toolbar={
-                    editMode && (
-                    <ButtonRow
-                      direction="row"
-                      alignItems="center"
-                      flexWrap="nowrap"
-                      sx={(t) => ({
-                        flexShrink: 0,
-                        px: 0.5,
-                        py: 0.5,
-                        gap: "6px",
-                        borderTopLeftRadius: "inherit",
-                        borderTopRightRadius: "inherit",
-                        bgcolor: alpha(t.palette.background.paper, 0.92),
-                        backdropFilter: "blur(6px)",
-                        boxShadow: `0 1px 0 ${t.palette.divider}`,
-                        "& .MuiIconButton-root": { minWidth: 32, minHeight: 32, width: 32, height: 32 },
-                        // Narrow panels: only the essentials, on one line.
-                        "@container (max-width: 250px)": { "& [data-nx-tb-extra]": { display: "none" } },
-                      })}
-                    >
-                      <Tooltip title="Drag to reposition in this section">
-                        <IconButton
-                          size="small"
-                          className="widget-drag-handle"
-                          aria-label={`Drag ${itemKind} in section`}
-                          sx={{ cursor: "grab", touchAction: "none" }}
-                        >
-                          <DragIndicatorIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Drag to another section">
-                        <IconButton
-                          size="small"
-                          aria-label={`Move ${itemKind} to another section`}
-                          data-nx-tb-extra=""
-                          draggable={editMode}
-                          sx={{ cursor: "grab", touchAction: "none" }}
-                          onDragStart={(e) => {
-                            e.dataTransfer.setData(
-                              PANEL_DRAG_MIME,
-                              JSON.stringify({ panelId: w.id, sectionId })
-                            );
-                            e.dataTransfer.effectAllowed = "move";
-                            onPanelDragStart?.(sectionId, w.id);
-                          }}
-                          onDragEnd={() => onPanelDragEnd?.()}
-                        >
-                          <DriveFileMoveOutlinedIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Typography
-                        variant="caption"
-                        sx={{ flex: 1, minWidth: 0, color: mutedLabel }}
-                        noWrap
-                      >
-                        {widgetTypeLabel(w.type)}
-                      </Typography>
-                      {canEdit && (
-                        <Tooltip title={`Edit ${itemKind}`}>
-                          <IconButton
-                            size="small"
-                            aria-label={`Edit ${itemKind}`}
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onClick={() => setEditPanelId(w.id)}
-                          >
-                            <TuneIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                      <Tooltip title={`Remove ${itemKind}`}>
-                        <IconButton
-                          size="small"
-                          color="error"
-                          aria-label={`Remove ${itemKind}`}
-                          onMouseDown={(e) => e.stopPropagation()}
-                          onClick={() => {
-                            void (async () => {
-                              const label = tileTitle || widgetTypeLabel(w.type);
-                              const ok = await confirm({
-                                title: `Remove ${itemKind}?`,
-                                message: `Remove “${label}” from this section? Save the dashboard to keep this change.`,
-                                confirmLabel: `Remove ${itemKind}`,
-                              });
-                              if (ok) onRemovePanel(sectionId, w.id);
-                            })();
-                          }}
-                        >
-                          <DeleteOutlineIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </ButtonRow>
-                  )
+                  editFallbackTitle={widgetTypeLabel(w.type)}
+                  editActions={
+                    editMode ? (
+                      <PanelEditActions
+                        name={tileTitle || widgetTypeLabel(w.type)}
+                        kind={itemKind}
+                        canEdit={canEdit}
+                        onEdit={() => setEditPanelId(w.id)}
+                        moveTargets={onMovePanel ? moveTargets : []}
+                        onMove={(to) => onMovePanel?.(sectionId, to, w.id)}
+                        onRemove={() => onRemovePanel(sectionId, w.id)}
+                      />
+                    ) : undefined
                   }
                 />
               </div>
@@ -514,9 +495,7 @@ export function SectionGrid({
       )}
       {panels.length === 0 && (
         <Typography sx={{ p: 2, textAlign: "center", color: mutedLabel }}>
-          {editMode
-            ? "No panels yet — use Add Panel."
-            : "Empty section."}
+          {editMode ? "No panels yet — use Add panel." : "Empty section."}
         </Typography>
       )}
 

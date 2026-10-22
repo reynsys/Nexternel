@@ -220,18 +220,6 @@ function GlowBorder({
     ro.observe(el);
     return () => ro.disconnect();
   }, [outline]);
-  // A Look with its own frame: the frame itself lights up in the status colour (its lines, light bars
-  // and the edge of the boxes inside take the colour), instead of a second line laid over it.
-  useLayoutEffect(() => {
-    const host = ref.current?.parentElement;
-    if (!host || !outline || unset) return undefined;
-    host.style.setProperty("--nx-accent", colour);
-    host.style.setProperty("--nx-accent-soft", colour);
-    return () => {
-      host.style.removeProperty("--nx-accent");
-      host.style.removeProperty("--nx-accent-soft");
-    };
-  }, [outline, unset, colour]);
   if (outline) {
     const [w, h] = size;
     return (
@@ -273,9 +261,9 @@ function GlowBorder({
 }
 
 /**
- * Glowing border on a plain rounded box. The box clips what is drawn on or outside its own 1px edge,
- * so the edge line itself takes the colour and the rest of the band is drawn just inside it, with the
- * box's inner corner rounding, so it sits flush at the outer edge with no grey rim or corner showing.
+ * Glowing border on a plain rounded box: a band drawn just inside the box's edge, with the box's inner
+ * corner rounding. (The box clips what is drawn on its own edge line; a panel colours that line itself
+ * while its light is lit — useGlowEdgeSx — so band and edge read as one, with no grey rim.)
  */
 function PlainGlowBorder({
   common,
@@ -292,16 +280,11 @@ function PlainGlowBorder({
   const [radius, setRadius] = useState<string>("inherit");
   useLayoutEffect(() => {
     const host = ref.current?.parentElement;
-    if (!host) return undefined;
+    if (!host) return;
     const cs = getComputedStyle(host);
     const inner = Math.max(0, parseFloat(cs.borderTopLeftRadius) - parseFloat(cs.borderTopWidth));
     if (Number.isFinite(inner)) setRadius(`${inner}px`);
-    if (unset) return undefined;
-    host.style.setProperty("border-color", colour);
-    return () => {
-      host.style.removeProperty("border-color");
-    };
-  }, [colour, unset]);
+  }, []);
   return (
     <Box
       ref={ref}
@@ -376,6 +359,26 @@ function UnsetLight({ look, placement, edge }: { look: StatusLook; placement: Pr
       {node}
     </Tooltip>
   );
+}
+
+/**
+ * The edge of a panel whose glowing border is lit takes the status colour: its own edge line (plain
+ * Looks) and its accent colour (Looks that draw their own frame, e.g. HUD, so the frame lights up).
+ * Empty when there is nothing lit to show.
+ */
+export function useGlowEdgeSx(
+  capabilityId: string | null | undefined,
+  kind: string | null | undefined,
+  look: StatusLook,
+  active: boolean
+): Record<string, string> {
+  const status = useCapabilityStatus(capabilityId ?? undefined);
+  const value = useLiveValue(capabilityId ?? "");
+  if (!active || !capabilityId || look.style !== "glow") return {};
+  const shown = lightToShow(status, kind, value);
+  if (!shown || shown === "unset") return {};
+  const c = statusColour(shown, look);
+  return { borderColor: c, "--nx-accent": c, "--nx-accent-soft": c };
 }
 
 /** Which placement a light gets for a box, given the look. */

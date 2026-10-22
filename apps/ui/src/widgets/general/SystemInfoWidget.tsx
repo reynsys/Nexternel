@@ -4,7 +4,10 @@ import { APP_VERSION } from "../../version";
 import { panelContentRootSx } from "../../components/DashboardTileBody";
 import { useMetricAppearance } from "../../skins/useMetricAppearance";
 import { useWidgetBodyHeading } from "./heading";
-import { genericTileLinesQuerySx, genericTileLinesSize } from "./tile-type";
+import { genericTileFitLinesSize, genericTileLinesQuerySx } from "./tile-type";
+
+/** Six rows; the room that is not text: padding (2 × 12px) and five 4px gaps. */
+const LINES_SIZE = genericTileFitLinesSize(6, { reservedPx: 24 + 5 * 4 });
 import { usePanelPoll } from "../../lib/usePanelPoll";
 import { PanelNotice } from "../../components/PanelNotice";
 
@@ -21,10 +24,10 @@ function Row({ label, value }: { label: string; value: string }) {
   const { valueSx, labelSx } = useMetricAppearance();
   return (
     <Stack direction="row" justifyContent="space-between" spacing={1}>
-      <Typography sx={{ ...labelSx, fontSize: genericTileLinesSize, lineHeight: 1.2 }}>
+      <Typography sx={{ ...labelSx, fontSize: LINES_SIZE, lineHeight: 1.2 }}>
         {label}
       </Typography>
-      <Typography noWrap sx={{ ...valueSx, fontWeight: 600, fontSize: genericTileLinesSize, lineHeight: 1.2 }}>
+      <Typography noWrap sx={{ ...valueSx, fontWeight: 600, fontSize: LINES_SIZE, lineHeight: 1.2 }}>
         {value}
       </Typography>
     </Stack>
@@ -65,7 +68,7 @@ export function SystemInfoWidget({ widget }: { widget: WidgetInstance }) {
       )}
       {error && <PanelNotice>{error}</PanelNotice>}
       <Box sx={panelContentRootSx(genericTileLinesQuerySx)}>
-      <Stack spacing={0.5} sx={{ flex: 1, minHeight: 0, justifyContent: "safe center", px: 1.5, py: 1 }}>
+      <Stack spacing={0.5} sx={{ flex: 1, minHeight: 0, justifyContent: "safe center", p: 1.5 }}>
         <Row label="Version" value={APP_VERSION} />
         <Row label="Uptime" value={uptimeSeconds != null ? formatUptime(uptimeSeconds) : "—"} />
         <Row label="CPU" value={info ? `${info.cpu.loadPercent}%` : "—"} />

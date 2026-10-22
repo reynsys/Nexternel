@@ -41,17 +41,30 @@ export function MuiDashboardLayout() {
         sx={{
           flexGrow: 1,
           bgcolor: hasGradient ? "transparent" : "background.default",
-          overflow: "auto",
+          // Nothing wider than the page shows a sideways scrollbar. "clip" (not a scrolling box), so
+          // the page scrolls as a whole and a bar can stay at the top of the screen (sticky).
+          overflowX: "clip",
           minWidth: 0,
+          // Height of the phone's top bar (MUI toolbar heights); none on wide screens.
+          "--nx-top-bar": "56px",
+          "@media (orientation: landscape)": { "--nx-top-bar": "48px" },
+          "@media (min-width: 600px)": { "--nx-top-bar": "64px" },
+          "@media (min-width: 900px)": { "--nx-top-bar": "0px" },
         }}
       >
         <Stack
           spacing={2}
           sx={{
             mx: { xs: 2, md: 3 },
-            // Phones: room for the bottom bar.
-            pb: { xs: `${BOTTOM_NAV_HEIGHT_PX + 24}px`, md: 5 },
-            pt: { xs: 10, md: 3 },
+            // Room at the end of the page: the phone's bottom bar, and a dock menu when one is shown
+            // (it sets --nx-dock-space), so nothing at the end is ever covered.
+            pb: {
+              xs: `calc(${BOTTOM_NAV_HEIGHT_PX + 24}px + var(--nx-dock-space, 0px))`,
+              md: "max(40px, var(--nx-dock-space, 0px))",
+            },
+            // The page starts just below the phone's top bar; on wide screens its first row lines
+            // up with the side menu's title row.
+            pt: { xs: "calc(var(--nx-top-bar) + 24px)", md: 1.5 },
           }}
         >
           {signedIn ? <MaintenanceBanner /> : null}

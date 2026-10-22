@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import type { WidgetInstance } from "../../api";
 import { calendarTitleLabel } from "../../lib/panel-heading";
-import { genericTileQuerySx } from "./tile-type";
+import { genericTileFitLinesSize, genericTileLinesQuerySx } from "./tile-type";
 import { panelContentRootSx } from "../../components/DashboardTileBody";
 import { useDashboardTileChrome } from "../../lib/dashboard-tile-context";
 
@@ -28,6 +28,7 @@ export function CalendarWidget({ widget: _widget }: { widget: WidgetInstance }) 
   const cells: (number | null)[] = [];
   for (let i = 0; i < firstDay; i++) cells.push(null);
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  const weeks = Math.ceil(cells.length / 7);
 
   const { showBodyHeading } = useDashboardTileChrome();
 
@@ -49,13 +50,12 @@ export function CalendarWidget({ widget: _widget }: { widget: WidgetInstance }) 
       <Box
         sx={panelContentRootSx({
           p: 1,
-          ...genericTileQuerySx,
-          // Sized by width and height, so the month fits a short panel instead of scrolling.
-          containerType: "size",
-          "--nx-cal-font": "clamp(0.7rem, min(3.6cqi, 10cqb), 2.25rem)",
+          // The month fits its tile: day names plus the weeks, sized by width and height.
+          ...genericTileLinesQuerySx,
+          "--nx-cal-font": genericTileFitLinesSize(1 + weeks, { reservedPx: weeks * 2, widthCqi: 3.6, max: "2.25rem" }),
           display: "grid",
           gridTemplateColumns: "repeat(7, 1fr)",
-          gridTemplateRows: `auto repeat(${Math.ceil(cells.length / 7)}, minmax(min-content, 1fr))`, // rows never squeeze text; scrolls when short of room
+          gridTemplateRows: `auto repeat(${weeks}, minmax(min-content, 1fr))`, // rows never squeeze text; scrolls when short of room
           gap: 0.25,
           textAlign: "center",
         })}
