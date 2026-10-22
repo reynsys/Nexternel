@@ -6,7 +6,7 @@ import type {
   PanelItemDirection,
   PanelItemStyle,
 } from "../../lib/panel-appearance";
-import { itemTilesFit } from "../../lib/panel-item-grid";
+import { itemTilesLayout } from "../../lib/panel-item-grid";
 import { usePanelSize } from "../../lib/panel-size-context";
 import { panelContentContainerSx } from "../../components/DashboardTileBody";
 import { usePanelResponsiveSemanticState } from "../responsive";
@@ -52,17 +52,15 @@ export function GenericSemanticPanel({
     );
   }
 
-  const asList =
-    items.length > 1 &&
-    (itemStyle === "list" ||
-      (itemStyle === "auto" &&
-        !itemTilesFit({ count: items.length, width: size.width, height: size.height, direction })));
+  // Tiles while they have the room, then compact tiles (one line each), then a list.
+  const fit = items.length > 1 ? itemTilesLayout({ count: items.length, width: size.width, height: size.height, direction }) : "tiles";
+  const asList = items.length > 1 && (itemStyle === "list" || (itemStyle === "auto" && fit === "list"));
 
   if (asList) {
     return <SemanticCapabilityList items={items} />;
   }
 
-  const rowSize = mode === "controls" && items.length === 1 ? "fluid" : "standard";
+  const rowSize = (mode === "controls" && items.length === 1) || fit === "compact" ? "fluid" : "standard";
   return (
     <PanelItemGrid
       layout={layout}

@@ -4,7 +4,6 @@ import { Alert, Button, CircularProgress, Stack } from "@mui/material";
 import { AppLayout } from "./layout/AppLayout";
 import { LoginPage } from "./pages/LoginPage";
 import { SetupPage } from "./pages/SetupPage";
-import { DashboardsPage } from "./pages/DashboardsPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { SettingsLayout } from "./pages/admin/settings/SettingsLayout";
 import { SettingsIndexRedirect } from "./pages/admin/settings/SettingsIndexRedirect";
@@ -204,16 +203,8 @@ export function App() {
 
         <Route path="views" element={<Navigate to="/admin/settings/system" replace />} />
 
-        <Route
-          path="manage/dashboards"
-          element={
-            <RequireAuth>
-              <RequirePermission permission="editDashboards">
-                <DashboardsPage />
-              </RequirePermission>
-            </RequireAuth>
-          }
-        />
+        {/* The old dashboards page: everything it did is in Dashboard settings → All dashboards. */}
+        <Route path="manage/dashboards" element={<Navigate to="/" replace />} />
 
         <Route path="live" element={<Navigate to="/" replace />} />
 

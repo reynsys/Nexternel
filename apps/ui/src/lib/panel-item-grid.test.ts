@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { itemTilesFit } from "./panel-item-grid.ts";
+import { itemTilesFit, itemTilesLayout } from "./panel-item-grid.ts";
 
 test("one item is always a tile", () => {
   assert.equal(itemTilesFit({ count: 1, width: 40, height: 40 }), true);
@@ -27,4 +27,11 @@ test("stacked readings need room for every row", () => {
 
 test("unmeasured panels keep tiles until a size is known", () => {
   assert.equal(itemTilesFit({ count: 4, width: 0, height: 0 }), true);
+});
+
+test("short panels keep their readings side by side as compact tiles before turning into a list", () => {
+  // Air Quality on a 1280-wide wall display: 676 × 60 inside the panel.
+  assert.equal(itemTilesLayout({ count: 3, width: 676, height: 60 }), "compact");
+  assert.equal(itemTilesLayout({ count: 3, width: 1005, height: 115 }), "tiles");
+  assert.equal(itemTilesLayout({ count: 3, width: 150, height: 60 }), "list");
 });

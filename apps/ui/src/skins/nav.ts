@@ -22,7 +22,7 @@ export type NavItem = {
 /** True when `pathname` is this item's page (or one of its sub-pages). */
 export function navItemActive(item: NavItem, pathname: string): boolean {
   if (item.to === "/") {
-    return pathname === "/" || pathname.startsWith("/d/") || pathname.startsWith("/dashboards") || pathname.startsWith("/manage/dashboards");
+    return pathname === "/" || pathname.startsWith("/d/") || pathname.startsWith("/dashboards");
   }
   return [item.to, ...(item.alsoActiveFor ?? [])].some(
     (path) => pathname === path || pathname.startsWith(`${path}/`)

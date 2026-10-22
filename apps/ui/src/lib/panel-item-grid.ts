@@ -94,6 +94,12 @@ export const PANEL_ITEM_MIN_COL = MIN_COL;
 /** Smallest readable reading/switch tile, including its name line (px). */
 export const ITEM_TILE_MIN_WIDTH_PX = 112;
 export const ITEM_TILE_MIN_HEIGHT_PX = 84;
+/**
+ * A compact tile: name on the left, value on the right, one line high. Used when tiles do not have the
+ * height for name above value (PanelItemChrome switches by itself below ITEM_TILE_MIN_HEIGHT_PX).
+ */
+export const ITEM_TILE_COMPACT_MIN_WIDTH_PX = 150;
+export const ITEM_TILE_COMPACT_MIN_HEIGHT_PX = 34;
 const ITEM_TILE_GAP_PX = 8;
 const ITEM_GRID_PADDING_PX = 0;
 
@@ -101,6 +107,25 @@ const ITEM_GRID_PADDING_PX = 0;
  * Whether `count` tiles fit the panel's content box at a readable size.
  * When they do not, the panel shows a list instead of shrinking or dropping items.
  */
+/** How the readings of a multi-reading panel are shown: tiles, compact tiles (one line each), or a list. */
+export function itemTilesLayout(opts: {
+  count: number;
+  width: number;
+  height: number;
+  direction?: PanelItemDirection;
+}): "tiles" | "compact" | "list" {
+  if (itemTilesFit(opts)) return "tiles";
+  const { count, width, height, direction = "across" } = opts;
+  const maxCols =
+    direction === "down"
+      ? 1
+      : Math.max(1, Math.floor((width + ITEM_TILE_GAP_PX) / (ITEM_TILE_COMPACT_MIN_WIDTH_PX + ITEM_TILE_GAP_PX)));
+  const cols = Math.min(count, maxCols);
+  const rows = Math.ceil(count / cols);
+  const needH = rows * ITEM_TILE_COMPACT_MIN_HEIGHT_PX + (rows - 1) * ITEM_TILE_GAP_PX;
+  return needH <= height ? "compact" : "list";
+}
+
 export function itemTilesFit(opts: {
   count: number;
   width: number;

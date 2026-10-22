@@ -36,6 +36,11 @@ type Props = {
   onDashboardsChanged?: () => void;
   /** When the open dashboard is edited here, push it into the page's state. */
   onCurrentTabMeta?: (meta: { name: string; tabIcon: string; showTabLabel: boolean }) => void;
+  /**
+   * The open dashboard is being edited: going to another dashboard would drop its unsaved changes,
+   * so Open and Create wait until it is saved or cancelled.
+   */
+  editing?: boolean;
 };
 
 const square = { minWidth: 32, width: 32, height: 32, p: 0 } as const;
@@ -43,9 +48,9 @@ const square = { minWidth: 32, width: 32, height: 32, p: 0 } as const;
 /**
  * Every dashboard on this system: create, open, order in the Dashboard Menu, the one that opens
  * at sign-in (star), edit name and icon, delete. Editing and deleting happen in the dashboard's own
- * row (no pop-up windows). Used in Dashboard settings → All dashboards and on /manage/dashboards.
+ * row (no pop-up windows). Used in Dashboard settings → All dashboards.
  */
-export function ManageDashboardsPanel({ compact, currentDashboardId, onDashboardsChanged, onCurrentTabMeta }: Props) {
+export function ManageDashboardsPanel({ compact, currentDashboardId, onDashboardsChanged, onCurrentTabMeta, editing = false }: Props) {
   const navigate = useNavigate();
   const [dashboards, setDashboards] = useState<DashboardSummary[]>([]);
   const [name, setName] = useState("");
@@ -177,6 +182,9 @@ export function ManageDashboardsPanel({ compact, currentDashboardId, onDashboard
         the one that opens when someone signs in.
       </Typography>
       {error && <Alert severity="error">{error}</Alert>}
+      {editing ? (
+        <Alert severity="info">Save or cancel the changes on this dashboard to open or create another one.</Alert>
+      ) : null}
       {dashboards.length > 0 && !dashboards.some((d) => d.isDefault) && (
         <Alert severity="warning">No sign-in dashboard yet — choose one with its star.</Alert>
       )}
@@ -273,7 +281,7 @@ export function ManageDashboardsPanel({ compact, currentDashboardId, onDashboard
 
       <Stack direction="row" spacing={1} alignItems="flex-start">
         <TextField size="small" label="New dashboard name" value={name} onChange={(e) => setName(e.target.value)} sx={{ flex: 1 }} />
-        <Button variant="contained" disabled={busy} onClick={() => void create()}>
+        <Button variant="contained" disabled={busy || editing} onClick={() => void create()}>
           Create
         </Button>
       </Stack>
@@ -283,7 +291,7 @@ export function ManageDashboardsPanel({ compact, currentDashboardId, onDashboard
           ? [
               <MenuItem
                 key="open"
-                disabled={menu.d.id === currentDashboardId}
+                disabled={menu.d.id === currentDashboardId || editing}
                 onClick={() => {
                   const d = menu.d;
                   setMenu(null);
@@ -304,6 +312,8 @@ export function ManageDashboardsPanel({ compact, currentDashboardId, onDashboard
               </MenuItem>,
               <MenuItem
                 key="delete"
+                // The dashboard being edited cannot be deleted from inside its own editing.
+                disabled={editing && menu.d.id === currentDashboardId}
                 sx={{ color: "error.main" }}
                 onClick={() => {
                   const d = menu.d;

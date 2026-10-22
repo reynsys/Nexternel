@@ -435,7 +435,6 @@ apps/ui/src/pages/admin/settings/SystemStatusPage.tsx
 apps/ui/src/pages/admin/settings/UpdatesCard.tsx
 apps/ui/src/pages/admin/UsersPage.tsx
 apps/ui/src/pages/DashboardPage.tsx
-apps/ui/src/pages/DashboardsPage.tsx
 apps/ui/src/pages/DisplayPage.tsx
 apps/ui/src/pages/LoginPage.tsx
 apps/ui/src/pages/SetupPage.tsx

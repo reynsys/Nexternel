@@ -11,6 +11,7 @@ import { ItemIcon } from "../lib/icons/ItemIcon";
 import { resolveItemHeading } from "../lib/panel-item-display";
 import { panelItemContextLine } from "./panel-item-context";
 import { StatusLight, lightPlacement } from "../components/status-light/StatusLight";
+import { ITEM_TILE_MIN_HEIGHT_PX } from "../lib/panel-item-grid";
 
 const ITEM_NAME_LINE_PX = 18;
 const ITEM_AREA_LINE_PX = 16;
@@ -118,7 +119,8 @@ export function PanelItemChrome({
   const readingPlacement = statusLook ? lightPlacement(statusLook, "reading") : null;
 
   const heading = nameText || iconNode ? (
-    <Box sx={{ display: "flex", alignItems: "flex-start", gap: "6px", minWidth: 0 }}>
+    // A title row like the panel's own: its status light takes less room when the row is narrow.
+    <Box sx={{ display: "flex", alignItems: "flex-start", gap: "6px", minWidth: 0, containerType: "inline-size", containerName: "nx-title" }}>
       {iconNode}
       <Box sx={{ minWidth: 0, flex: 1 }}>
         {nameText ? (
@@ -127,7 +129,7 @@ export function PanelItemChrome({
           </Box>
         ) : null}
         {reserveArea ? (
-          <Box component="p" title={areaText ?? undefined} sx={itemAreaSx}>
+          <Box component="p" data-nx-item-area="" title={areaText ?? undefined} sx={itemAreaSx}>
             {areaText ?? " "}
           </Box>
         ) : null}
@@ -146,11 +148,12 @@ export function PanelItemChrome({
   }
 
   return (
+    // The reading's own box: a size container, so a short one lays its name and value side by side.
+    <Box sx={{ flex: 1, width: "100%", height: "100%", minHeight: 0, minWidth: 0, containerType: "size", containerName: "nx-item" }}>
     <Box
       data-nx-mini-panel
       sx={{
         position: "relative",
-        flex: 1,
         width: "100%",
         height: "100%",
         minHeight: 0,
@@ -162,10 +165,19 @@ export function PanelItemChrome({
         p: "3px",
         border: "var(--nx-mini-panel-border, 1px solid rgba(255,255,255,0.12))",
         borderRadius: "var(--nx-mini-panel-radius, 12px)",
+        // Too short for name above value: one line, name on the left and value on the right.
+        [`@container nx-item (max-height: ${ITEM_TILE_MIN_HEIGHT_PX - 1}px)`]: {
+          flexDirection: "row",
+          alignItems: "stretch",
+          "& > [data-nx-item-heading]": { flex: "1 1 55%", display: "flex", flexDirection: "column", justifyContent: "center", pb: "5px" },
+          "& > [data-nx-panel-tile]": { flex: "1 1 45%" },
+        },
+        // Very short: the name only (the area line goes).
+        "@container nx-item (max-height: 55px)": { "& [data-nx-item-area]": { display: "none" } },
       }}
     >
       {titlePlacement === "frame" ? lightAt("frame") : null}
-      <Box sx={{ position: "relative", flexShrink: 0, px: "7px", pt: "5px", pb: "8px" }}>
+      <Box data-nx-item-heading="" sx={{ position: "relative", flexShrink: 0, minWidth: 0, px: "7px", pt: "5px", pb: "8px" }}>
         {heading}
         {titlePlacement === "under-title" ? lightAt("under-title") : null}
       </Box>
@@ -173,6 +185,7 @@ export function PanelItemChrome({
         {lightAt(readingPlacement)}
         <Box sx={panelContentRootSx(contentSx)}>{children}</Box>
       </PanelTile>
+    </Box>
     </Box>
   );
 }

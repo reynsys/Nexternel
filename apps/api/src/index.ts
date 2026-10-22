@@ -12,7 +12,7 @@ import { ensureDashboardSchema } from "./dashboards/ensure-schema.js";
 import { ensureCameraSchema } from "./cameras/ensure-schema.js";
 import { ensureOctopusSchema } from "./octopus/ensure-schema.js";
 import { ensureBackupScheduleSchema, startBackupScheduler } from "./backup/scheduled.js";
-import { ensureDevicesSchema } from "./devices/ensure-schema.js";
+import { ensureDevicesSchema , repairAutoSensorNames } from "./devices/ensure-schema.js";
 import { ensureEsphomeBuilderSchema } from "./devices/ensure-esphome-builder-schema.js";
 import { syncAllCamerasToGo2rtc } from "./cameras/service.js";
 import { ensureUsersRoleSchema } from "./auth/ensure-users-role.js";
@@ -143,6 +143,8 @@ try {
   await ensureUsersAvatarSchema();
   await ensureRolesSchema();
   await ensureDevicesSchema();
+  // Readable names for readings named automatically before (e.g. "Pm 2 5" → "PM2.5").
+  await repairAutoSensorNames();
   await ensureEsphomeBuilderSchema();
   await ensureCapabilitySchema();
   await ensureStatusLightSchema();

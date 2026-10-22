@@ -1,3 +1,4 @@
+import { humanizeTechnicalId } from "../devices/display-name.js";
 import { access, readFile, readdir, unlink } from "fs/promises";
 import { join } from "path";
 
@@ -155,7 +156,7 @@ function parseSwitchBlock(block: string): {
 
   return {
     entityId,
-    name: label || entityId.replace(/_/g, " "),
+    name: label || humanizeTechnicalId(entityId),
     gpioPin: parsePin(block),
   };
 }
@@ -362,7 +363,7 @@ function parseNestedPlatformSensors(
     const entityId =
       resolveSensorEntityId(sub, `${platform}_${def.subKey}`) ??
       `${platform}_${def.subKey}`;
-    const name = parseYamlName(sub) ?? def.subKey.replace(/_/g, " ");
+    const name = parseYamlName(sub) ?? humanizeTechnicalId(def.subKey);
     const unit = parseUnit(sub) ?? def.defaultUnit;
     let sensorType = def.sensorType;
     if (entityId.includes("temperature")) sensorType = "temperature";
@@ -464,7 +465,7 @@ function parseSensorBlocks(yaml: string): EsphomeImportSuggestion["sensors"] {
 
     addSensor({
       entityId,
-      name: parseYamlName(block) ?? entityId.replace(/_/g, " "),
+      name: parseYamlName(block) ?? humanizeTechnicalId(entityId),
       sensorType,
       unit: parseUnit(block),
     });

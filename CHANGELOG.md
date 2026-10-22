@@ -2,6 +2,13 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.141
+
+- Panels with several readings keep their readings side by side on every screen, switching to a compact one-line form when short (no more cut-off lists on wall displays).
+- Readings named from device ids are written properly: PM2.5, PM1.0, PM10, CO2…
+- PM1.0 now has a status light out of the box.
+- While editing a dashboard, opening or creating another one waits until you save or cancel.
+
 ## V5.2.140
 
 - Panels keep enough room for their content in every style, including HUD on phones.

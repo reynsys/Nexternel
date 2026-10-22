@@ -29,6 +29,8 @@ export const DEFAULT_STATUS_LIMITS: Record<string, StatusLimits> = {
   temperature: { alertLow: 16, watchLow: 18, watchHigh: 24, alertHigh: 27 },
   humidity: { alertLow: 30, watchLow: 40, watchHigh: 60, alertHigh: 70 },
   co2: { watchHigh: 1000, alertHigh: 2000 },
+  // PM1.0 has no official limit; these sit a little below PM2.5's (PM1.0 is part of PM2.5).
+  pm1: { watchHigh: 10, alertHigh: 25 },
   pm25: { watchHigh: 12, alertHigh: 35 },
   pm10: { watchHigh: 45, alertHigh: 100 },
   battery: { alertLow: 15, watchLow: 30 },

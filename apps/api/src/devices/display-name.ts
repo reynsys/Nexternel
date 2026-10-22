@@ -27,10 +27,45 @@ export function preferCatalogDisplayName(
   const name = candidateName.trim();
   const id = (technicalId ?? "").trim();
   if (name && !isTechnicalDisplayName(name, id)) return name;
-  if (id) {
-    return id
-      .replace(/_/g, " ")
-      .replace(/\b\w/g, (ch) => ch.toUpperCase());
-  }
+  if (id) return humanizeTechnicalId(id);
   return name || "Sensor";
+}
+
+/** Measurement names written the usual way (after title-casing). */
+const KNOWN_TERMS: [RegExp, string][] = [
+  [/\bPm ?10(?:\.0)?\b/g, "PM10"],
+  [/\bPm ?(\d+(?:\.\d+)?)\b/g, "PM$1"],
+  [/\bCo2\b/g, "CO2"],
+  [/\bTvoc\b/g, "TVOC"],
+  [/\bVoc\b/g, "VOC"],
+  [/\bNox\b/g, "NOx"],
+  [/\bAqi\b/g, "AQI"],
+  [/\bUv\b/g, "UV"],
+  [/\bWifi\b/g, "Wi-Fi"],
+  [/\bRssi\b/g, "RSSI"],
+  [/\bIp\b/g, "IP"],
+];
+
+/**
+ * A readable name from a technical id: "pm_2_5" → "PM2.5", "pm_1_0" → "PM1.0", "pm_10_0" → "PM10",
+ * "living_room_co2" → "Living Room CO2". Digits split by "_" are one number with a decimal point
+ * (ESPHome ids cannot hold a dot).
+ */
+export function humanizeTechnicalId(id: string): string {
+  let out = id
+    .trim()
+    .replace(/(\d)_(?=\d)/g, "$1.")
+    .replace(/_/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/\b\w/g, (ch) => ch.toUpperCase());
+  for (const [re, to] of KNOWN_TERMS) out = out.replace(re, to);
+  return out;
+}
+
+/** The readable name Nexternel made from a technical id before humanizeTechnicalId (to repair saved names). */
+export function oldHumanizedId(id: string): string {
+  return id
+    .trim()
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (ch) => ch.toUpperCase());
 }
