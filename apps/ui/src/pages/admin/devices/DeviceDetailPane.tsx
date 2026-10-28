@@ -329,7 +329,7 @@ function OverviewTab({
               disabled={busy}
               onClick={() => void actions.onSyncEsphome(device)}
             >
-              Sync from YAML
+              Re-read its ESPHome file
             </Button>
             <Button
               {...devicesOutlinedButton}
@@ -346,7 +346,7 @@ function OverviewTab({
               rel="noopener noreferrer"
               endIcon={<OpenInNewRoundedIcon />}
             >
-              ESPHome dashboard
+              Open in ESPHome
             </Button>
           </ButtonRow>
         </Box>
@@ -409,7 +409,7 @@ function CapabilitiesTab({
                   </FormControl>
                 ) : (
                   <Typography variant="caption" color="text.secondary">
-                    Sync capabilities
+                    Not ready yet
                   </Typography>
                 )}
               </TableCell>
@@ -486,7 +486,7 @@ function CapabilitiesTab({
                   </FormControl>
                 ) : (
                   <Typography variant="caption" color="text.secondary">
-                    Sync capabilities
+                    Not ready yet
                   </Typography>
                 )}
               </TableCell>
@@ -602,7 +602,7 @@ function ConfigurationTab({
             disabled={busy}
             onClick={() => void actions.onSyncEsphome(device)}
           >
-            Sync from YAML
+            Re-read its ESPHome file
           </Button>
         </ButtonRow>
       )}

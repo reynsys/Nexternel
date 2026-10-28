@@ -15,6 +15,8 @@ export type ExportedRoom = {
   name: string;
   description: string | null;
   sortOrder: number;
+  /** Absent in backups made before areas had icons. */
+  icon?: string | null;
 };
 
 export type ExportedSensor = {

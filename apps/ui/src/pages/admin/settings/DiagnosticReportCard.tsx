@@ -1,16 +1,14 @@
 import { useCallback, useState } from "react";
-import { Alert, Button, Card, CardContent, Typography } from "@mui/material";
+import { Alert, Box, Button, Typography } from "@mui/material";
 import { api, getStoredAccessToken, type ServerDiagnostics } from "../../../api";
 import { buildClientSnapshot } from "../../../diagnostics/buildClientSnapshot";
 import { clearDiagnosticErrors } from "../../../diagnostics/errorRing";
 import { formatDiagnosticsReport, type AuthExtras } from "../../../diagnostics/formatReport";
 import { copyTextToClipboard, downloadTextFile } from "../../../lib/copyText";
-import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
 import { ButtonRow } from "../../../components/ButtonRow";
 
 /** One text report of this browser and the server — to copy into a support message. */
 export function DiagnosticReportCard() {
-  const surfaceSx = useContentSurfaceSx();
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -58,13 +56,12 @@ export function DiagnosticReportCard() {
   }
 
   return (
-    <Card sx={surfaceSx}>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
-          Diagnostic report
+    <Box>
+        <Typography variant="subtitle1" gutterBottom>
+          Report for support
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Versions, service status, and recent errors in this browser — useful when asking for help.
+          Versions, status and recent errors seen in this browser, to send when you ask for help.
         </Typography>
         {status && (
           <Alert severity={status.ok ? "success" : "warning"} sx={{ mb: 2 }} onClose={() => setStatus(null)}>
@@ -76,7 +73,7 @@ export function DiagnosticReportCard() {
             Copy report
           </Button>
           <Button variant="outlined" disabled={busy} onClick={() => void run("download")}>
-            Download .txt
+            Download
           </Button>
           <Button
             color="inherit"
@@ -89,7 +86,6 @@ export function DiagnosticReportCard() {
             Clear error log
           </Button>
         </ButtonRow>
-      </CardContent>
-    </Card>
+    </Box>
   );
 }

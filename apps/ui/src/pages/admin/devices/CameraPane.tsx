@@ -1,28 +1,20 @@
-import { CODE_TEXT } from "../../lib/appearance/type";
-import { DevicesTabs } from "../../components/DevicesTabs";
+import { CODE_TEXT } from "../../../lib/appearance/type";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   Alert,
+  Box,
   Button,
-  Card,
-  CardContent,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   FormControl,
   FormControlLabel,
-  IconButton,
   InputLabel,
   MenuItem,
   Select,
   Stack,
   Switch,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
   TextField,
   Typography,
 } from "@mui/material";
@@ -33,10 +25,10 @@ import {
   api,
   type CameraBrandPreset,
   type CameraRecord,
-} from "../../api";
-import { AREA } from "../../lib/area-labels";
-import { ButtonRow } from "../../components/ButtonRow";
-import { useLiveChanges } from "../../lib/live-changes";
+} from "../../../api";
+import { AREA } from "../../../lib/area-labels";
+import { ButtonRow } from "../../../components/ButtonRow";
+import { useLiveChanges } from "../../../lib/live-changes";
 
 type AreaOption = { id: string; name: string };
 
@@ -63,7 +55,17 @@ function slugFromName(name: string): string {
     .slice(0, 80);
 }
 
-export function CamerasPage() {
+/**
+ * One camera on the Devices page: its details with Edit and Delete ("new" = adding a camera). The
+ * camera editor opens as before.
+ */
+export type CameraPaneProps = { cameraId: string; onSaved: (id: string) => void; onDeleted: () => void; onCancelNew: () => void };
+
+export function CameraPane(props: CameraPaneProps) {
+  return <CamerasPage pane={props} />;
+}
+
+function CamerasPage({ pane }: { pane: CameraPaneProps }) {
   const [cameras, setCameras] = useState<CameraRecord[]>([]);
   const [areas, setAreas] = useState<AreaOption[]>([]);
   const [presets, setPresets] = useState<CameraBrandPreset[]>([]);
@@ -101,6 +103,11 @@ export function CamerasPage() {
   useEffect(() => {
     void load();
   }, []);
+  // Adding a camera: the editor opens straight away.
+  useEffect(() => {
+    if (pane.cameraId === "new") openCreate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pane.cameraId]);
 
   const selectedPreset = useMemo(
     () => presets.find((p) => p.id === form.brandPreset) ?? null,
@@ -187,11 +194,15 @@ export function CamerasPage() {
         });
         setInfo(`Updated ${form.name.trim()}.`);
       } else {
-        await api.createCamera({
+        const created = await api.createCamera({
           ...body,
           password: form.password,
         });
         setInfo(`Added ${form.name.trim()}.`);
+        setDialogOpen(false);
+        await load();
+        pane.onSaved(created.camera.id);
+        return;
       }
       setDialogOpen(false);
       await load();
@@ -208,8 +219,8 @@ export function CamerasPage() {
     try {
       await api.deleteCamera(deleteTarget.id);
       setDeleteTarget(null);
-      setInfo(`Deleted ${deleteTarget.name}.`);
       await load();
+      pane.onDeleted();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Delete failed");
     } finally {
@@ -217,31 +228,9 @@ export function CamerasPage() {
     }
   }
 
+  const cam = cameras.find((c) => c.id === pane.cameraId) ?? null;
   return (
-    <Stack spacing={2}>
-      <DevicesTabs />
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        justifyContent="space-between"
-        alignItems={{ xs: "stretch", sm: "center" }}
-        gap={1}
-      >
-        <Typography variant="h4">Cameras</Typography>
-        {canEdit && (
-          <Button
-            variant="contained"
-            startIcon={<VideocamRoundedIcon />}
-            onClick={openCreate}
-          >
-            Add camera
-          </Button>
-        )}
-      </Stack>
-      <Typography color="text.secondary">
-        Enter host, path, username and password separately (like MotionEye). Nexternel builds
-        the RTSP URL for go2rtc so special characters in passwords never break the link. Prefer
-        sub-streams (/ch01/1) for dashboard tiles — /0 is usually the heavy main stream.
-      </Typography>
+    <Stack spacing={2} sx={{ p: 2 }}>
       {error && (
         <Alert severity="error" onClose={() => setError(null)}>
           {error}
@@ -252,73 +241,56 @@ export function CamerasPage() {
           {info}
         </Alert>
       )}
-
-      <Card>
-        <CardContent sx={{ px: { xs: 1, sm: 2 }, "&:last-child": { pb: 2 } }}>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Host / path</TableCell>
-                <TableCell>{AREA.singular}</TableCell>
-                <TableCell>Enabled</TableCell>
-                {canEdit && <TableCell align="right">Actions</TableCell>}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {cameras.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={canEdit ? 5 : 4}>
-                    <Typography color="text.secondary">
-                      No cameras yet.
-                      {canEdit ? " Use “Add camera” with host, path, and credentials." : ""}
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                cameras.map((c) => (
-                  <TableRow key={c.id} hover>
-                    <TableCell>{c.name}</TableCell>
-                    <TableCell>
-                      <Typography variant="body2" fontFamily={CODE_TEXT.fontFamily}>
-                        {c.connectionPreview ||
-                          (c.host
-                            ? `${c.host}${c.path ? c.path : ""}`
-                            : c.streamId)}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>{c.areaName ?? "—"}</TableCell>
-                    <TableCell>{c.enabled ? "Yes" : "No"}</TableCell>
-                    {canEdit && (
-                      <TableCell align="right"><ButtonRow justifyContent="flex-end" flexWrap="nowrap">
-                        <IconButton
-                          size="small"
-                          aria-label="Edit camera"
-                          onClick={() => openEdit(c)}
-                        >
-                          <EditRoundedIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          aria-label="Delete camera"
-                          color="error"
-                          onClick={() => setDeleteTarget(c)}
-                        >
-                          <DeleteRoundedIcon fontSize="small" />
-                        </IconButton>
-                      </ButtonRow></TableCell>
-                    )}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      {cam ? (
+        <>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <VideocamRoundedIcon color="primary" />
+            <Typography variant="h6" sx={{ flex: 1, minWidth: 0 }} noWrap>
+              {cam.name}
+            </Typography>
+            {canEdit ? (
+              <ButtonRow direction="row" flexWrap="nowrap">
+                <Button variant="outlined" startIcon={<EditRoundedIcon />} onClick={() => openEdit(cam)}>
+                  Edit
+                </Button>
+                <Button variant="outlined" color="error" startIcon={<DeleteRoundedIcon />} onClick={() => setDeleteTarget(cam)}>
+                  Delete
+                </Button>
+              </ButtonRow>
+            ) : null}
+          </Stack>
+          <Stack spacing={1.5}>
+            <Box>
+              <Typography variant="subtitle2">{AREA.singular}</Typography>
+              <Typography variant="body2" color="text.secondary">{cam.areaName ?? "None"}</Typography>
+            </Box>
+            <Box>
+              <Typography variant="subtitle2">Address</Typography>
+              <Typography variant="body2" color="text.secondary" fontFamily={CODE_TEXT.fontFamily}>
+                {cam.connectionPreview || (cam.host ? `${cam.host}${cam.path ? cam.path : ""}` : cam.streamId)}
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="subtitle2">Live picture</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {cam.enabled ? "On — shown in camera panels." : "Off — camera panels show nothing until it is switched on (Edit)."}
+              </Typography>
+            </Box>
+          </Stack>
+        </>
+      ) : pane.cameraId !== "new" ? (
+        <Typography color="text.secondary">This camera no longer exists.</Typography>
+      ) : (
+        <Typography color="text.secondary">Fill in the camera's details to add it.</Typography>
+      )}
 
       <Dialog
         open={dialogOpen}
-        onClose={() => !busy && setDialogOpen(false)}
+        onClose={() => {
+          if (busy) return;
+          setDialogOpen(false);
+          if (pane.cameraId === "new") pane.onCancelNew();
+        }}
         fullWidth
         maxWidth="sm"
       >
@@ -326,6 +298,11 @@ export function CamerasPage() {
           <DialogTitle>{editing ? "Edit camera" : "Add camera"}</DialogTitle>
           <DialogContent>
             <Stack spacing={2} sx={{ mt: 1 }}>
+              <Typography variant="body2" color="text.secondary">
+                A network camera's live picture. Enter its address, path and login separately — Nexternel builds the stream link, so any
+                characters in the password are fine. For dashboard panels use the camera's smaller stream (often <b>/ch01/1</b>); <b>/0</b> is
+                usually the full-size one.
+              </Typography>
               <TextField
                 label="Name"
                 value={form.name}
@@ -346,12 +323,11 @@ export function CamerasPage() {
                 placeholder="e.g. Driveway"
               />
               <TextField
-                label="Stream id"
+                label="Stream id (optional)"
                 value={form.streamId}
                 onChange={(e) => setForm((f) => ({ ...f, streamId: e.target.value }))}
-                required
                 fullWidth
-                helperText="Short id used by go2rtc (letters, numbers, - _)"
+                helperText="A short name for the stream (letters, numbers, - and _). Filled in from the name if left empty."
               />
               <FormControl fullWidth>
                 <InputLabel id="cam-area">{AREA.singular}</InputLabel>
@@ -435,13 +411,13 @@ export function CamerasPage() {
                 />
               </Stack>
               <TextField
-                label="RTSP path"
+                label="Path on the camera"
                 value={form.path}
                 onChange={(e) => setForm((f) => ({ ...f, path: e.target.value }))}
                 required
                 fullWidth
                 placeholder="/ch01/1"
-                helperText="e.g. /ch01/1 (sub), /ch02/1, /ch03/1 — not including rtsp:// or password"
+                helperText="e.g. /ch01/1 (smaller stream), /ch02/1, /ch03/1 — without rtsp:// or the password"
               />
               <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
                 <TextField
@@ -475,7 +451,7 @@ export function CamerasPage() {
               )}
 
               <TextField
-                label="Sort order"
+                label="Order in camera lists"
                 type="number"
                 value={form.sortOrder}
                 onChange={(e) => setForm((f) => ({ ...f, sortOrder: e.target.value }))}
@@ -488,12 +464,18 @@ export function CamerasPage() {
                     onChange={(_, checked) => setForm((f) => ({ ...f, enabled: checked }))}
                   />
                 }
-                label="Enabled (register stream with go2rtc)"
+                label="Live picture on"
               />
             </Stack>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setDialogOpen(false)} disabled={busy}>
+            <Button
+              onClick={() => {
+                setDialogOpen(false);
+                if (pane.cameraId === "new") pane.onCancelNew();
+              }}
+              disabled={busy}
+            >
               Cancel
             </Button>
             <Button type="submit" variant="contained" disabled={busy}>
@@ -512,8 +494,7 @@ export function CamerasPage() {
         <DialogTitle>Delete camera</DialogTitle>
         <DialogContent>
           <Typography>
-            Delete <strong>{deleteTarget?.name}</strong>? Dashboard widgets bound to it will
-            stop showing video until reconfigured.
+            Delete <strong>{deleteTarget?.name}</strong>? Camera panels that show it will be empty until you choose another camera.
           </Typography>
         </DialogContent>
         <DialogActions>

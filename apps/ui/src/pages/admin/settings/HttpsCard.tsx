@@ -47,10 +47,8 @@ export function HttpsCard() {
                   <Link href={`${status.localAddresses[0] ?? ""}/display`}>{status.localAddresses[0] ?? ""}/display</Link>
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                  Display mode: the dashboard alone, full screen, with larger text and lighter effects for small computers
-                  such as a Raspberry Pi. Changes made anywhere show by themselves. Add <b>?rotate=60</b> to move through
-                  the dashboards every minute, <b>?tabs=0</b> to hide the room buttons, <b>?text=125</b> for even larger
-                  text, <b>?light=0</b> to keep every effect. Press Esc to leave.
+                  The dashboard alone, full screen, with larger text and lighter effects. Each wall display's own settings are in Users → Edit →
+                  Wall display.
                 </Typography>
               </Box>
               {status.settings.domain && status.domainCertificate ? (
@@ -62,11 +60,10 @@ export function HttpsCard() {
                 </Box>
               ) : (
                 <Box>
-                  <Typography variant="subtitle2">Secure address (https): coming soon</Typography>
+                  <Typography variant="subtitle2">Secure address (https)</Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Nexternel will offer each home its own secure name that every phone, tablet and browser trusts
-                    straight away, with nothing to install on any device. Everything works on the addresses above in
-                    the meantime.
+                    Planned: each home will get its own secure name that every phone, tablet and browser trusts straight away. Until then, use
+                    the addresses above.
                   </Typography>
                 </Box>
               )}

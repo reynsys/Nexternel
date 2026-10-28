@@ -3,6 +3,8 @@ import { humanizeTechnicalId, oldHumanizedId } from "./display-name.js";
 
 /** Columns from db/migrations that are not in the original init.sql devices table. */
 export async function ensureDevicesSchema(): Promise<void> {
+  // An area's icon (an icon id from the UI's icon list; empty = the standard place icon).
+  await getPool().query(`ALTER TABLE rooms ADD COLUMN IF NOT EXISTS icon VARCHAR(40)`);
   await getPool().query(`
     ALTER TABLE devices
       ADD COLUMN IF NOT EXISTS is_enabled BOOLEAN NOT NULL DEFAULT TRUE

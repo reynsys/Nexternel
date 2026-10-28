@@ -84,6 +84,31 @@ function NavList({
             ) : (
               button
             )}
+            {/* The item's own pages, listed under it (a folded menu shows only the item). */}
+            {!collapsed && item.children?.length ? (
+              <List dense disablePadding sx={{ pl: 2, display: "flex", flexDirection: "column", gap: "var(--nx-list-gap)", mt: "var(--nx-list-gap)" }}>
+                {item.children.map((child) => {
+                  const on = pathname === child.to || pathname.startsWith(`${child.to}/`);
+                  return (
+                    <ListItem key={child.to} disablePadding sx={{ display: "block" }}>
+                      <ListItemButton
+                        component={RouterLink}
+                        to={child.to}
+                        selected={on}
+                        onClick={onNavigate}
+                        data-nx-nav=""
+                        sx={{ minHeight: 36, py: 0.5, px: 2, "&.Mui-selected": { color: "primary.contrastText" } }}
+                      >
+                        <ListItemText
+                          primary={child.label}
+                          primaryTypographyProps={{ variant: "body2", fontWeight: on ? "fontWeightBold" : undefined, color: on ? "primary.contrastText" : undefined }}
+                        />
+                      </ListItemButton>
+                    </ListItem>
+                  );
+                })}
+              </List>
+            ) : null}
           </ListItem>
         );
       })}

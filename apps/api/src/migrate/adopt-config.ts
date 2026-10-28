@@ -110,9 +110,10 @@ export async function upsertRooms(
         `UPDATE rooms SET
            description = $2,
            sort_order = $3,
+           icon = COALESCE($4, icon),
            updated_at = NOW()
          WHERE id = $1::uuid`,
-        [nameRow.id, room.description, room.sortOrder]
+        [nameRow.id, room.description, room.sortOrder, room.icon ?? null]
       );
       remap.set(room.id, nameRow.id);
       continue;
@@ -124,18 +125,19 @@ export async function upsertRooms(
            name = $2,
            description = $3,
            sort_order = $4,
+           icon = COALESCE($5, icon),
            updated_at = NOW()
          WHERE id = $1::uuid`,
-        [room.id, room.name, room.description, room.sortOrder]
+        [room.id, room.name, room.description, room.sortOrder, room.icon ?? null]
       );
       remap.set(room.id, room.id);
       continue;
     }
 
     await client.query(
-      `INSERT INTO rooms (id, name, description, sort_order)
-       VALUES ($1::uuid, $2, $3, $4)`,
-      [room.id, room.name, room.description, room.sortOrder]
+      `INSERT INTO rooms (id, name, description, sort_order, icon)
+       VALUES ($1::uuid, $2, $3, $4, $5)`,
+      [room.id, room.name, room.description, room.sortOrder, room.icon ?? null]
     );
     remap.set(room.id, room.id);
   }

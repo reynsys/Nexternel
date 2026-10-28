@@ -2,6 +2,14 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.143
+
+- **Settings** pages are listed under Settings in the side menu: My appearance, System, Extensions, Backup & Restore.
+- **Extensions:** plugins and add-ons together in one place, each marked Feature or Style and Free or Paid.
+- **System** is simpler: updates, addresses, one-line health check, and troubleshooting tools folded away.
+- **Areas** look like dashboard panels, with icons, their devices listed, and drag to reorder.
+- **Devices:** cameras are part of the device list; no more Cameras tab or Sync button.
+
 ## V5.2.142
 
 - HUD: the glowing-border status light is one glowing line along the panel's frame — no extra rectangle around the panel.

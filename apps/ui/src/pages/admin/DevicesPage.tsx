@@ -1,12 +1,11 @@
 import { CODE_TEXT } from "../../lib/appearance/type";
-import { DevicesTabs } from "../../components/DevicesTabs";
+import { CameraPane } from "./devices/CameraPane";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Alert, Box, Button, Card, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, FormControlLabel, InputLabel, Link, MenuItem, Paper, Select, Stack, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
-import SyncRoundedIcon from "@mui/icons-material/SyncRounded";
-import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
 import {
   api,
+  type CameraRecord,
   type DeviceRecord,
   type EsphomeCatalogEntry,
 } from "../../api";
@@ -108,6 +107,7 @@ export function DevicesPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [octopusNeedsAttention, setOctopusNeedsAttention] = useState(false);
+  const [cameras, setCameras] = useState<CameraRecord[]>([]);
 
   const selection = useMemo(
     () => parseSelectionFromSearchParams(searchParams),
@@ -140,8 +140,12 @@ export function DevicesPage() {
   }, [devices, selection, setSelection]);
 
   // Changes made on another screen show here straight away.
-  useLiveChanges(["devices", "capabilities", "rooms"], () => void load());
+  useLiveChanges(["devices", "capabilities", "rooms", "cameras"], () => void load());
   async function load() {
+    void api
+      .cameras()
+      .then((r) => setCameras(r.cameras))
+      .catch(() => setCameras([]));
     try {
       const [devRes, roomRes, me, catRes] = await Promise.all([
         api.devices(),
@@ -436,33 +440,6 @@ export function DevicesPage() {
     }
   }
 
-  async function syncCapabilities() {
-    setBusy(true);
-    setInfo(null);
-    try {
-      const res = await api.syncCapabilities();
-      const pruneParts: string[] = [];
-      if (res.reconcile?.removedRelays) {
-        pruneParts.push(`${res.reconcile.removedRelays} ghost relay(s)`);
-      }
-      if (res.reconcile?.removedSensors) {
-        pruneParts.push(`${res.reconcile.removedSensors} stale sensor(s)`);
-      }
-      if (res.prunedInternal) {
-        pruneParts.push(`${res.prunedInternal} internal output(s)`);
-      }
-      const pruneNote =
-        pruneParts.length > 0 ? ` — removed ${pruneParts.join(", ")}` : "";
-      setInfo(
-        `Synced capabilities from sensors/relays (${res.sensors} sensors, ${res.relays} relays)${pruneNote}`
-      );
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Sync failed");
-    } finally {
-      setBusy(false);
-    }
-  }
 
   async function syncEsphome(device: DeviceRecord) {
     setBusy(true);
@@ -559,7 +536,6 @@ export function DevicesPage() {
 
   return (
     <Stack spacing={2}>
-      <DevicesTabs />
       <Stack
         direction={{ xs: "column", sm: "row" }}
         justifyContent="space-between"
@@ -568,25 +544,8 @@ export function DevicesPage() {
       >
         <Typography variant="h4">Devices</Typography>
         <ButtonRow direction="row" flexWrap="wrap" useFlexGap>
-          <Button
-            variant="outlined"
-            href={esphomeUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            endIcon={<OpenInNewRoundedIcon />}
-          >
-            ESPHome dashboard
-          </Button>
           {isAdmin && (
             <>
-              <Button
-                variant="outlined"
-                disabled={busy}
-                startIcon={<SyncRoundedIcon />}
-                onClick={() => void syncCapabilities()}
-              >
-                Sync capabilities
-              </Button>
               <Button variant="contained" onClick={() => openAddDeviceChooser()}>
                 Add device
               </Button>
@@ -596,7 +555,8 @@ export function DevicesPage() {
       </Stack>
 
       <Typography color="text.secondary">
-        Register ESPHome boards and Shelly switches for dashboards and Live.
+        Everything Nexternel talks to: ESPHome boards, Shelly switches, cameras and online services. Pick one to see its readings,
+        switches and settings.
       </Typography>
 
       {error && (
@@ -614,12 +574,11 @@ export function DevicesPage() {
       {isAdmin && unregistered.length > 0 && (
         <Card sx={{ p: 2 }}>
           <Typography variant="subtitle1">
-            Server YAML not registered
+            ESPHome files not added yet
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-            YAML files on the server under esphome/ that are not registered in Nexternel yet. This
-            list is from the server folder — not the ESPHome dashboard. Leftover files (for example
-            in esphome/devices/) can appear here after a test or deleted device.
+            Board files found in the server's esphome folder that are not devices in Nexternel yet. Add one, or remove a file left over
+            from a test or a deleted device.
           </Typography>
           <Stack spacing={1}>
             {unregistered.map((entry) => (
@@ -704,11 +663,23 @@ export function DevicesPage() {
                 octopusNeedsAttention={octopusNeedsAttention}
                 showOctopus={isAdmin}
                 showConnectedServices={showConnectedServices}
+                cameras={cameras}
               />
             </Box>
           )}
           {showDetail && (
             <Box sx={{ flex: 1, minWidth: 0, minHeight: { xs: 360, md: 0 }, height: { md: "100%" } }}>
+              {selection?.kind === "camera" ? (
+                <Box sx={(t) => ({ height: "100%", overflow: "auto", borderRadius: "var(--nx-panel-radius, 20px)", border: t.nx.cardBorder, bgcolor: t.nxScheme.surface.panel })}>
+                  <CameraPane
+                    key={selection.cameraId}
+                    cameraId={selection.cameraId}
+                    onSaved={(id) => setSelection({ kind: "camera", cameraId: id })}
+                    onDeleted={() => setSelection(null)}
+                    onCancelNew={() => setSelection(null)}
+                  />
+                </Box>
+              ) : (
               <DeviceDetailPane
                 selection={selection}
                 device={selectedDevice}
@@ -720,6 +691,7 @@ export function DevicesPage() {
                 onBack={() => setSelection(null)}
                 actions={detailActions}
               />
+              )}
             </Box>
           )}
         </Box>
@@ -1052,7 +1024,7 @@ export function DevicesPage() {
         <DialogContent>
           <ButtonRow sx={{ mt: 0.5 }}>
             <Typography variant="body2" color="text.secondary">
-              Choose how this device connects to Nexternel.
+              What would you like to add?
             </Typography>
             <Button
               variant="outlined"
@@ -1061,9 +1033,9 @@ export function DevicesPage() {
               onClick={() => openAddDeviceWizard()}
             >
               <Stack alignItems="flex-start" spacing={0.25}>
-                <Typography fontWeight="fontWeightBold">ESPHome</Typography>
+                <Typography fontWeight="fontWeightBold">ESPHome board</Typography>
                 <Typography variant="caption" color="text.secondary">
-                  ESP32 / ESP8266 — wizard, YAML, compile, and OTA from Nexternel
+                  An ESP32 / ESP8266 board — Nexternel writes, builds and installs its firmware
                 </Typography>
               </Stack>
             </Button>
@@ -1074,12 +1046,32 @@ export function DevicesPage() {
               onClick={() => openShellyCreate()}
             >
               <Stack alignItems="flex-start" spacing={0.25}>
-                <Typography fontWeight="fontWeightBold">Shelly</Typography>
+                <Typography fontWeight="fontWeightBold">Shelly switch</Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Shelly switch or plug — find on MQTT or enter device ID manually
+                  A Shelly switch or plug — found on your network, or entered by hand
                 </Typography>
               </Stack>
             </Button>
+            <Button
+              variant="outlined"
+              fullWidth
+              sx={{ justifyContent: "flex-start", textAlign: "left", py: 1.5, px: 2 }}
+              onClick={() => {
+                setAddDeviceChooserOpen(false);
+                setSelection({ kind: "camera", cameraId: "new" });
+              }}
+            >
+              <Stack alignItems="flex-start" spacing={0.25}>
+                <Typography fontWeight="fontWeightBold">Camera</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  A network camera's live picture
+                </Typography>
+              </Stack>
+            </Button>
+            <Typography variant="caption" color="text.secondary">
+              Online services such as Octopus energy are set up in their own settings; more kinds of devices come as Extensions (Settings →
+              Extensions).
+            </Typography>
           </ButtonRow>
         </DialogContent>
         <DialogActions>

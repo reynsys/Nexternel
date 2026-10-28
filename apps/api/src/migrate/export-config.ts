@@ -21,12 +21,14 @@ async function loadRooms(): Promise<ExportedRoom[]> {
     name: string;
     description: string | null;
     sort_order: number;
-  }>(`SELECT id, name, description, sort_order FROM rooms ORDER BY sort_order, name`);
+    icon: string | null;
+  }>(`SELECT id, name, description, sort_order, icon FROM rooms ORDER BY sort_order, name`);
   return r.rows.map((row) => ({
     id: row.id,
     name: row.name,
     description: row.description,
     sortOrder: row.sort_order,
+    icon: row.icon,
   }));
 }
 

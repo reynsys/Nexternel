@@ -10,8 +10,16 @@ function mapRoom(r: RoomRow) {
     name: r.name,
     description: r.description,
     sortOrder: r.sort_order,
+    icon: r.icon,
     deviceCount: Number(r.device_count) || 0,
   };
+}
+
+const ICON_ID = /^[a-z0-9][a-z0-9-]{0,39}$/;
+/** An icon id from the request, null to clear, undefined when not given (or not valid). */
+function iconField(v: unknown): string | null | undefined {
+  if (v === null || v === "") return null;
+  return typeof v === "string" && ICON_ID.test(v) ? v : undefined;
 }
 
 export const roomsRoutes: FastifyPluginAsync = async (app) => {
@@ -19,7 +27,7 @@ export const roomsRoutes: FastifyPluginAsync = async (app) => {
     if (!requirePermission(request, reply, "viewAreas")) return;
 
     const result = await getPool().query<RoomRow>(
-      `SELECT r.id, r.name, r.description, r.sort_order,
+      `SELECT r.id, r.name, r.description, r.sort_order, r.icon,
               COUNT(d.id)::text AS device_count
        FROM rooms r
        LEFT JOIN devices d ON d.room_id = r.id
@@ -37,6 +45,7 @@ export const roomsRoutes: FastifyPluginAsync = async (app) => {
       name?: unknown;
       description?: unknown;
       sortOrder?: unknown;
+      icon?: unknown;
     };
     const name = typeof body.name === "string" ? body.name.trim() : "";
     if (!name) {
@@ -51,14 +60,14 @@ export const roomsRoutes: FastifyPluginAsync = async (app) => {
     const sortOrder =
       typeof body.sortOrder === "number" && Number.isFinite(body.sortOrder)
         ? Math.trunc(body.sortOrder)
-        : 0;
+        : (await getPool().query<{ n: number }>(`SELECT COALESCE(MAX(sort_order) + 1, 0)::int AS n FROM rooms`)).rows[0]!.n;
 
     try {
       const inserted = await getPool().query<DbRoom>(
-        `INSERT INTO rooms (name, description, sort_order)
-         VALUES ($1, $2, $3)
-         RETURNING id, name, description, sort_order`,
-        [name, description, sortOrder]
+        `INSERT INTO rooms (name, description, sort_order, icon)
+         VALUES ($1, $2, $3, $4)
+         RETURNING id, name, description, sort_order, icon`,
+        [name, description, sortOrder, iconField(body.icon) ?? null]
       );
       const row = inserted.rows[0]!;
       return reply.code(201).send({
@@ -67,6 +76,7 @@ export const roomsRoutes: FastifyPluginAsync = async (app) => {
           name: row.name,
           description: row.description,
           sortOrder: row.sort_order,
+          icon: row.icon,
           deviceCount: 0,
         },
       });
@@ -92,10 +102,11 @@ export const roomsRoutes: FastifyPluginAsync = async (app) => {
       name?: unknown;
       description?: unknown;
       sortOrder?: unknown;
+      icon?: unknown;
     };
 
     const existing = await getPool().query<DbRoom>(
-      `SELECT id, name, description, sort_order FROM rooms WHERE id = $1`,
+      `SELECT id, name, description, sort_order, icon FROM rooms WHERE id = $1`,
       [id]
     );
     if (existing.rowCount === 0) {
@@ -138,17 +149,21 @@ export const roomsRoutes: FastifyPluginAsync = async (app) => {
       sortOrder = Math.trunc(body.sortOrder);
     }
 
+    const iconIn = iconField(body.icon);
+    const icon = iconIn === undefined ? current.icon : iconIn;
+
     try {
       const updated = await getPool().query<RoomRow>(
         `UPDATE rooms
          SET name = $2,
              description = $3,
              sort_order = $4,
+             icon = $5,
              updated_at = NOW()
          WHERE id = $1
-         RETURNING id, name, description, sort_order,
+         RETURNING id, name, description, sort_order, icon,
            (SELECT COUNT(*)::text FROM devices WHERE room_id = $1) AS device_count`,
-        [id, name, description, sortOrder]
+        [id, name, description, sortOrder, icon]
       );
       return { room: mapRoom(updated.rows[0]!) };
     } catch (err: unknown) {
@@ -163,6 +178,30 @@ export const roomsRoutes: FastifyPluginAsync = async (app) => {
       }
       throw err;
     }
+  });
+
+  /** The order of the areas (first = top), as on the Areas page. */
+  app.post("/api/v1/rooms/reorder", async (request, reply) => {
+    if (!requirePermission(request, reply, "editAreas")) return;
+    const body = (request.body ?? {}) as { orderedIds?: unknown };
+    const ids = Array.isArray(body.orderedIds) ? body.orderedIds.filter((x): x is string => typeof x === "string") : [];
+    if (!ids.length) {
+      return reply.code(400).send({ error: { code: "validation_error", message: "orderedIds is required" } });
+    }
+    const client = await getPool().connect();
+    try {
+      await client.query("BEGIN");
+      for (const [i, id] of ids.entries()) {
+        await client.query(`UPDATE rooms SET sort_order = $2, updated_at = NOW() WHERE id = $1::uuid`, [id, i]);
+      }
+      await client.query("COMMIT");
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+    return { ok: true };
   });
 
   app.delete("/api/v1/rooms/:id", async (request, reply) => {

@@ -5,18 +5,16 @@ import { AppLayout } from "./layout/AppLayout";
 import { LoginPage } from "./pages/LoginPage";
 import { SetupPage } from "./pages/SetupPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { ExtensionsSettingsPage } from "./pages/admin/settings/ExtensionsSettingsPage";
 import { SettingsLayout } from "./pages/admin/settings/SettingsLayout";
 import { SettingsIndexRedirect } from "./pages/admin/settings/SettingsIndexRedirect";
 import { AppearanceSettingsPage } from "./pages/admin/settings/AppearanceSettingsPage";
 import { SystemStatusPage } from "./pages/admin/settings/SystemStatusPage";
-import { PluginsSettingsPage } from "./pages/admin/settings/PluginsSettingsPage";
-import { AddonsSettingsPage } from "./pages/admin/settings/AddonsSettingsPage";
 import { BackupSettingsPage } from "./pages/admin/settings/BackupSettingsPage";
 import { UsersPage } from "./pages/admin/UsersPage";
 import { RolesPage } from "./pages/admin/RolesPage";
 import { AreasPage } from "./pages/admin/AreasPage";
 import { DevicesPage } from "./pages/admin/DevicesPage";
-import { CamerasPage } from "./pages/admin/CamerasPage";
 import { api, getStoredAccessToken, lastKnownUser, type User } from "./api";
 import {
   hasPermission,
@@ -234,21 +232,16 @@ export function App() {
             }
           />
           <Route
-            path="plugins"
+            path="extensions"
             element={
               <RequirePermission permission="viewSystem">
-                <PluginsSettingsPage />
+                <ExtensionsSettingsPage />
               </RequirePermission>
             }
           />
-          <Route
-            path="addons"
-            element={
-              <RequirePermission permission="manageUsers">
-                <AddonsSettingsPage />
-              </RequirePermission>
-            }
-          />
+          {/* Plugins and Add-ons are one page now: Extensions. */}
+          <Route path="plugins" element={<Navigate to="/admin/settings/extensions" replace />} />
+          <Route path="addons" element={<Navigate to="/admin/settings/extensions" replace />} />
           <Route path="configuration" element={<Navigate to="/admin/settings/backup" replace />} />
           <Route
             path="backup"
@@ -306,16 +299,8 @@ export function App() {
             </RequireAuth>
           }
         />
-        <Route
-          path="admin/cameras"
-          element={
-            <RequireAuth>
-              <RequirePermission permission="viewDevices">
-                <CamerasPage />
-              </RequirePermission>
-            </RequireAuth>
-          }
-        />
+        {/* Cameras are listed with the other devices now. */}
+        <Route path="admin/cameras" element={<Navigate to="/admin/devices" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

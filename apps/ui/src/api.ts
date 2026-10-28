@@ -730,51 +730,23 @@ export const api = {
       body: JSON.stringify(body),
     }),
 
-  rooms: () =>
-    apiFetch<{
-      rooms: {
-        id: string;
-        name: string;
-        description: string | null;
-        sortOrder: number;
-        deviceCount: number;
-      }[];
-    }>("/api/v1/rooms"),
+  rooms: () => apiFetch<{ rooms: AreaRecord[] }>("/api/v1/rooms"),
 
-  createRoom: (body: {
-    name: string;
-    description?: string;
-    sortOrder?: number;
-  }) =>
-    apiFetch<{
-      room: {
-        id: string;
-        name: string;
-        description: string | null;
-        sortOrder: number;
-        deviceCount: number;
-      };
-    }>("/api/v1/rooms", {
+  createRoom: (body: { name: string; description?: string; sortOrder?: number; icon?: string | null }) =>
+    apiFetch<{ room: AreaRecord }>("/api/v1/rooms", {
       method: "POST",
       body: JSON.stringify(body),
     }),
 
-  updateRoom: (
-    id: string,
-    body: { name?: string; description?: string | null; sortOrder?: number }
-  ) =>
-    apiFetch<{
-      room: {
-        id: string;
-        name: string;
-        description: string | null;
-        sortOrder: number;
-        deviceCount: number;
-      };
-    }>(`/api/v1/rooms/${id}`, {
+  updateRoom: (id: string, body: { name?: string; description?: string | null; sortOrder?: number; icon?: string | null }) =>
+    apiFetch<{ room: AreaRecord }>(`/api/v1/rooms/${id}`, {
       method: "PATCH",
       body: JSON.stringify(body),
     }),
+
+  /** The order of the areas, first = top. */
+  reorderRooms: (orderedIds: string[]) =>
+    apiFetch<{ ok: boolean }>("/api/v1/rooms/reorder", { method: "POST", body: JSON.stringify({ orderedIds }) }),
 
   deleteRoom: (id: string) =>
     apiFetch<{ ok: boolean }>(`/api/v1/rooms/${id}`, { method: "DELETE" }),
@@ -1861,6 +1833,17 @@ export const api = {
     }
     return res.json() as Promise<{ job: BackupJob }>;
   },
+};
+
+/** An area (room or place) of the home. */
+export type AreaRecord = {
+  id: string;
+  name: string;
+  description: string | null;
+  sortOrder: number;
+  /** Icon id from the icon list; null = the standard place icon. */
+  icon: string | null;
+  deviceCount: number;
 };
 
 export type SystemInfo = {

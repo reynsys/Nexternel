@@ -8,10 +8,12 @@ export const OCTOPUS_DEVICE_SLUG = "octopus-home-mini";
 export type DeviceSelection =
   | { kind: "device"; deviceId: string }
   | { kind: "service"; serviceId: typeof OCTOPUS_SERVICE_ID }
+  /** A camera; cameraId "new" = adding one. */
+  | { kind: "camera"; cameraId: string }
   | null;
 
 export type StatusFilter = "all" | "online" | "offline" | "no_recent_data" | "needs_attention";
-export type TypeFilter = "all" | "esphome" | "shelly";
+export type TypeFilter = "all" | "esphome" | "shelly" | "camera" | "service";
 
 export const UNASSIGNED_AREA_KEY = "__unassigned__";
 export const COLLAPSED_AREAS_STORAGE_KEY = "nexternel-devices-nav-collapsed";
@@ -74,7 +76,8 @@ export function deviceMatchesTypeFilter(d: DeviceRecord, filter: TypeFilter): bo
   if (filter === "all") return true;
   if (filter === "esphome") return (d.firmwareType || "esphome") === "esphome";
   if (filter === "shelly") return d.firmwareType === "shelly";
-  return true;
+  // Cameras and online services are listed in their own groups.
+  return false;
 }
 
 export function filterPhysicalDevices(
@@ -158,12 +161,15 @@ export function parseSelectionFromSearchParams(
   }
   const deviceId = params.get("device");
   if (deviceId) return { kind: "device", deviceId };
+  const cameraId = params.get("camera");
+  if (cameraId) return { kind: "camera", cameraId };
   return null;
 }
 
 export function selectionToSearchParams(selection: DeviceSelection): Record<string, string> {
   if (!selection) return {};
   if (selection.kind === "service") return { service: selection.serviceId };
+  if (selection.kind === "camera") return { camera: selection.cameraId };
   return { device: selection.deviceId };
 }
 

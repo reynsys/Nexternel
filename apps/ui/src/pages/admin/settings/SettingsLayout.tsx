@@ -41,15 +41,21 @@ export function SettingsLayout() {
     to: settingsTabPath(tab.segment),
   }));
 
+  const current = tabs.find((t) => t.segment === active);
   return (
     <Box>
       <Typography variant="h4" gutterBottom>
-        Settings
+        {current?.label ?? "Settings"}
       </Typography>
-      <Typography color="text.secondary" sx={{ mb: 2 }}>
-        Appearance, server status, plugins and backups.
-      </Typography>
-      <SegmentButtonNav items={navItems} activeId={active} />
+      {current?.hint ? (
+        <Typography color="text.secondary" sx={{ mb: 2 }}>
+          {current.hint}
+        </Typography>
+      ) : null}
+      {/* Wide screens list these pages under Settings in the side menu; phones get the buttons here. */}
+      <Box sx={{ display: { xs: "block", md: "none" } }}>
+        <SegmentButtonNav items={navItems} activeId={active} />
+      </Box>
       <Outlet />
     </Box>
   );

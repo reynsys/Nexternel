@@ -3,8 +3,6 @@ import {
   Alert,
   Box,
   Button,
-  Card,
-  CardContent,
   Chip,
   Collapse,
   Stack,
@@ -21,7 +19,6 @@ import {
   type LivePipelineDiagnostics,
   type PipelineStageStatus,
 } from "../../../api";
-import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
 import { connectivityChipColor, connectivityLabel, deviceConnectivityState } from "../../../lib/device-utils";
 import { ButtonRow } from "../../../components/ButtonRow";
 
@@ -89,7 +86,6 @@ function DeviceRow({ device }: { device: DevicePipelineDiagnostic }) {
 }
 
 export function SystemDiagnosticsSection() {
-  const surfaceSx = useContentSurfaceSx();
   const [report, setReport] = useState<LivePipelineDiagnostics | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -124,21 +120,19 @@ export function SystemDiagnosticsSection() {
   }
 
   return (
-    <Card sx={surfaceSx}>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
-          Live data diagnostics
+    <Box>
+        <Typography variant="subtitle1" gutterBottom>
+          Check device messages
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Read-only inspection of MQTT subscriptions, observed broker traffic, and the
-          device → capability → telemetry pipeline. Does not modify devices or configuration.
+          Shows whether each device's messages reach Nexternel and turn into readings. Only looks — changes nothing.
         </Typography>
         <ButtonRow direction="row" flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
           <Button variant="contained" disabled={busy} onClick={() => void loadPipeline()}>
-            {busy ? "Loading…" : "Run diagnostics"}
+            {busy ? "Checking…" : "Run the check"}
           </Button>
           <Button variant="outlined" disabled={busy} onClick={() => void startSniff()}>
-            Sniff broker (30s)
+            Watch all messages for 30 s
           </Button>
         </ButtonRow>
         {sniffMsg && (
@@ -204,7 +198,6 @@ export function SystemDiagnosticsSection() {
             </Table>
           </Stack>
         )}
-      </CardContent>
-    </Card>
+    </Box>
   );
 }

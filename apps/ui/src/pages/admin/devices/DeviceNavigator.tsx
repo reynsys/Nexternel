@@ -21,7 +21,7 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
-import type { DeviceRecord } from "../../../api";
+import type { CameraRecord, DeviceRecord } from "../../../api";
 import {
   connectivityChipColor,
   connectivityLabel,
@@ -64,6 +64,8 @@ type Props = {
   octopusNeedsAttention: boolean;
   showOctopus: boolean;
   showConnectedServices: boolean;
+  /** Network cameras, listed in their own group. */
+  cameras: CameraRecord[];
 };
 
 function deviceRowSelected(selection: DeviceSelection, deviceId: string): boolean {
@@ -192,12 +194,14 @@ export function DeviceNavigator({
   octopusNeedsAttention,
   showOctopus,
   showConnectedServices,
+  cameras,
 }: Props) {
   const theme = useTheme();
   const contentSurface = useContentSurfaceSx();
   const [collapsedAreas, setCollapsedAreas] = useState<Set<string>>(() => readCollapsedAreaKeys());
   const [needsAttentionOpen, setNeedsAttentionOpen] = useState(true);
   const [servicesOpen, setServicesOpen] = useState(true);
+  const [camerasOpen, setCamerasOpen] = useState(true);
 
   useEffect(() => {
     writeCollapsedAreaKeys(collapsedAreas);
@@ -227,6 +231,21 @@ export function DeviceNavigator({
   );
 
   const physicalCount = devices.filter(isPhysicalDevice).length;
+  const q = search.trim().toLowerCase();
+  const shownCameras =
+    (typeFilter === "all" || typeFilter === "camera") && statusFilter !== "needs_attention"
+      ? cameras.filter((c) => !q || `${c.name} ${c.areaName ?? ""}`.toLowerCase().includes(q))
+      : [];
+  const showServices = showOctopus && showConnectedServices && (typeFilter === "all" || typeFilter === "service");
+  // Only the kinds of device this home has are offered in the Type choice.
+  const kinds: { value: TypeFilter; label: string }[] = [
+    { value: "all", label: "All" },
+    ...(devices.some((d) => isPhysicalDevice(d) && (d.firmwareType || "esphome") === "esphome") ? [{ value: "esphome" as const, label: "ESPHome boards" }] : []),
+    ...(devices.some((d) => d.firmwareType === "shelly") ? [{ value: "shelly" as const, label: "Shelly switches" }] : []),
+    ...(cameras.length ? [{ value: "camera" as const, label: "Cameras" }] : []),
+    ...(showOctopus && showConnectedServices ? [{ value: "service" as const, label: "Online services" }] : []),
+  ];
+  const total = physicalCount + cameras.length;
 
   function toggleArea(key: string) {
     setCollapsedAreas((prev) => {
@@ -249,7 +268,7 @@ export function DeviceNavigator({
           Device list
         </Typography>
         <Typography variant="caption" color="text.secondary">
-          {physicalCount} device{physicalCount === 1 ? "" : "s"}
+          {total} device{total === 1 ? "" : "s"}
         </Typography>
       </Box>
 
@@ -289,9 +308,11 @@ export function DeviceNavigator({
                 value={typeFilter}
                 onChange={(e) => onTypeFilterChange(e.target.value as TypeFilter)}
               >
-                <MenuItem value="all">All</MenuItem>
-                <MenuItem value="esphome">ESPHome</MenuItem>
-                <MenuItem value="shelly">Shelly</MenuItem>
+                {kinds.map((k) => (
+                  <MenuItem key={k.value} value={k.value}>
+                    {k.label}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
           </Stack>
@@ -322,10 +343,10 @@ export function DeviceNavigator({
           </Box>
         )}
 
-        {showOctopus && showConnectedServices && (
+        {showServices && (
           <Box>
             <SectionHeader
-              title="Connected services"
+              title="Online services"
               open={servicesOpen}
               onToggle={() => setServicesOpen((v) => !v)}
             />
@@ -354,7 +375,7 @@ export function DeviceNavigator({
                     }
                     secondary={
                       <Typography variant="caption" color="text.secondary">
-                        Kraken API polling · no LAN MQTT
+                        Online service · energy use from Octopus
                       </Typography>
                     }
                   />
@@ -389,7 +410,37 @@ export function DeviceNavigator({
           );
         })}
 
-        {filteredDevices.length === 0 && !showAttentionSection && (
+        {shownCameras.length > 0 && (
+          <Box>
+            <SectionHeader title={`Cameras (${shownCameras.length})`} open={camerasOpen} onToggle={() => setCamerasOpen((v) => !v)} />
+            <Collapse in={camerasOpen}>
+              <List disablePadding>
+                {shownCameras.map((c) => {
+                  const on = selection?.kind === "camera" && selection.cameraId === c.id;
+                  return (
+                    <ListItemButton key={c.id} selected={on} onClick={() => onSelect({ kind: "camera", cameraId: c.id })} sx={devicesNavItemSx(theme, on)}>
+                      <ListItemText
+                        primary={
+                          <Typography variant="body2" fontWeight="fontWeightBold">
+                            {c.name}
+                          </Typography>
+                        }
+                        secondary={
+                          <Typography variant="caption" color="text.secondary">
+                            Camera · {c.areaName ?? "no area"}
+                            {c.enabled ? "" : " · off"}
+                          </Typography>
+                        }
+                      />
+                    </ListItemButton>
+                  );
+                })}
+              </List>
+            </Collapse>
+          </Box>
+        )}
+
+        {filteredDevices.length === 0 && shownCameras.length === 0 && !showServices && !showAttentionSection && (
           <Typography variant="body2" color="text.secondary" sx={{ p: 2.5, textAlign: "center" }}>
             No devices match your filters.
           </Typography>
@@ -403,9 +454,9 @@ export function DeviceNavigator({
             </Typography>
           )}
 
-        {physicalCount === 0 && (
+        {total === 0 && (
           <Typography variant="body2" color="text.secondary" sx={{ p: 2.5, textAlign: "center" }}>
-            No physical devices registered yet.
+            No devices yet. Use Add device to add one.
           </Typography>
         )}
       </Box>

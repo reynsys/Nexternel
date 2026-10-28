@@ -399,7 +399,7 @@ apps/ui/src/lib/widget-bindings.ts
 apps/ui/src/lib/widget-title.ts
 apps/ui/src/main.tsx
 apps/ui/src/pages/admin/AreasPage.tsx
-apps/ui/src/pages/admin/CamerasPage.tsx
+apps/ui/src/pages/admin/devices/CameraPane.tsx
 apps/ui/src/pages/admin/devices/DeviceDetailPane.tsx
 apps/ui/src/pages/admin/devices/DeviceNavigator.tsx
 apps/ui/src/pages/admin/devices/device-nav-utils.ts
@@ -418,15 +418,16 @@ apps/ui/src/pages/admin/sections/BackupRestoreSection.tsx
 apps/ui/src/pages/admin/sections/BrandLogoSection.tsx
 apps/ui/src/pages/admin/sections/DeviceFilesPackCard.tsx
 apps/ui/src/pages/admin/sections/ProfileSection.tsx
-apps/ui/src/pages/admin/settings/AddonsSettingsPage.tsx
+apps/ui/src/pages/admin/settings/addon-status.ts
 apps/ui/src/pages/admin/settings/AppearanceSettingsPage.tsx
 apps/ui/src/pages/admin/settings/BackupSettingsPage.tsx
 apps/ui/src/pages/admin/settings/DiagnosticReportCard.tsx
+apps/ui/src/pages/admin/settings/ExtensionsSettingsPage.tsx
 apps/ui/src/pages/admin/settings/HttpsCard.tsx
 apps/ui/src/pages/admin/settings/plugins/PluginActivityView.tsx
 apps/ui/src/pages/admin/settings/plugins/PluginPermissionsForm.tsx
+apps/ui/src/pages/admin/settings/plugins/PluginRow.tsx
 apps/ui/src/pages/admin/settings/plugins/PluginSettingsForm.tsx
-apps/ui/src/pages/admin/settings/PluginsSettingsPage.tsx
 apps/ui/src/pages/admin/settings/SettingsIndexRedirect.tsx
 apps/ui/src/pages/admin/settings/SettingsLayout.tsx
 apps/ui/src/pages/admin/settings/settings-nav.ts

@@ -37,6 +37,7 @@ export type DbRoom = {
   name: string;
   description: string | null;
   sort_order: number;
+  icon: string | null;
 };
 
 export type DbDevice = {

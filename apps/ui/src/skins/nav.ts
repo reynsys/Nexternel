@@ -6,6 +6,7 @@ import DevicesRoundedIcon from "@mui/icons-material/DevicesRounded";
 import PeopleRoundedIcon from "@mui/icons-material/PeopleRounded";
 import type { PermissionKey, RolePermissions } from "../lib/permissions";
 import { hasPermission } from "../lib/permissions";
+import { SETTINGS_TABS, settingsTabPath } from "../pages/admin/settings/settings-nav";
 
 export type NavItem = {
   label: string;
@@ -17,6 +18,8 @@ export type NavItem = {
   permission?: PermissionKey;
   /** Other page paths that belong to this item (e.g. Cameras under Devices). */
   alsoActiveFor?: string[];
+  /** Pages inside this item, listed under it in the side menu (e.g. Settings → System). */
+  children?: NavItem[];
 };
 
 /** True when `pathname` is this item's page (or one of its sub-pages). */
@@ -50,7 +53,6 @@ export const MAIN_NAV: NavItem[] = [
     icon: DevicesRoundedIcon,
     auth: true,
     permission: "viewDevices",
-    alsoActiveFor: ["/admin/cameras"],
   },
   {
     label: "Users",
@@ -65,6 +67,13 @@ export const MAIN_NAV: NavItem[] = [
     icon: SettingsRoundedIcon,
     auth: true,
     permission: "viewSystem",
+    children: SETTINGS_TABS.map((t) => ({
+      label: t.label,
+      to: settingsTabPath(t.segment),
+      icon: SettingsRoundedIcon,
+      auth: true,
+      permission: t.permission,
+    })),
   },
 ];
 
@@ -80,12 +89,13 @@ export function filterNav(
     authLoading?: boolean;
   }
 ): NavItem[] {
-  return items.filter((item) => {
+  const allowed = (item: NavItem) => {
     if (item.auth && !opts.signedIn) return false;
     if (item.permission) {
       if (opts.authLoading) return true;
       return hasPermission(opts.permissions, item.permission, opts.isAdmin);
     }
     return true;
-  });
+  };
+  return items.filter(allowed).map((item) => (item.children ? { ...item, children: item.children.filter(allowed) } : item));
 }
