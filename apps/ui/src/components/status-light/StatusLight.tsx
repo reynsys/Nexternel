@@ -362,8 +362,9 @@ function UnsetLight({ look, placement, edge }: { look: StatusLook; placement: Pr
 }
 
 /**
- * The edge of a panel whose glowing border is lit takes the status colour: its own edge line (plain
- * Looks) and its accent colour (Looks that draw their own frame, e.g. HUD, so the frame lights up).
+ * The edge line of a plain panel whose glowing border is lit takes the status colour, so band and edge
+ * read as one. A Look that draws its own frame (e.g. HUD) keeps its frame as it is: the glowing line
+ * follows the frame's outline (GlowBorder), and nothing else of the frame changes colour.
  * Empty when there is nothing lit to show.
  */
 export function useGlowEdgeSx(
@@ -374,11 +375,11 @@ export function useGlowEdgeSx(
 ): Record<string, string> {
   const status = useCapabilityStatus(capabilityId ?? undefined);
   const value = useLiveValue(capabilityId ?? "");
-  if (!active || !capabilityId || look.style !== "glow") return {};
+  const ownFrame = Boolean(useLook().panelOutline);
+  if (!active || !capabilityId || look.style !== "glow" || ownFrame) return {};
   const shown = lightToShow(status, kind, value);
   if (!shown || shown === "unset") return {};
-  const c = statusColour(shown, look);
-  return { borderColor: c, "--nx-accent": c, "--nx-accent-soft": c };
+  return { borderColor: statusColour(shown, look) };
 }
 
 /** Which placement a light gets for a box, given the look. */

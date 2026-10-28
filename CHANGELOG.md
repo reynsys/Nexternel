@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.142
+
+- HUD: the glowing-border status light is one glowing line along the panel's frame — no extra rectangle around the panel.
+
 ## V5.2.141
 
 - Panels with several readings keep their readings side by side on every screen, switching to a compact one-line form when short (no more cut-off lists on wall displays).
