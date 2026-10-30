@@ -16,6 +16,7 @@ import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
 import { useConfirm } from "../../components/confirm";
 import { EsphomeAddDeviceWizard } from "./EsphomeAddDeviceWizard";
 import { EsphomeDevicePanelDialog } from "./EsphomeDevicePanelDialog";
+import { BoardUpdatesCard } from "./devices/BoardUpdatesCard";
 import { DeviceDetailPane } from "./devices/DeviceDetailPane";
 import { DeviceNavigator } from "./devices/DeviceNavigator";
 import { ReadingSettingsDialog, type ReadingToEdit } from "./devices/ReadingSettingsDialog";
@@ -103,6 +104,7 @@ export function DevicesPage() {
   const [deleteTarget, setDeleteTarget] = useState<DeviceRecord | null>(null);
   const [deleteYamlToo, setDeleteYamlToo] = useState(false);
   const [addDeviceChooserOpen, setAddDeviceChooserOpen] = useState(false);
+  const [esphomePanelMode, setEsphomePanelMode] = useState<"usb" | "file">("usb");
   const [esphomePanelDevice, setEsphomePanelDevice] = useState<DeviceRecord | null>(null);
   const [systems, setSystems] = useState<{ id: string; label: string }[]>([]);
   const [deviceSearch, setDeviceSearch] = useState("");
@@ -524,7 +526,10 @@ export function DevicesPage() {
     onRestoreYaml: restoreYaml,
     onEditBuilder: openEditBuilder,
     onAdoptToBuilder: adoptToBuilder,
-    onOpenEsphomePanel: setEsphomePanelDevice,
+    onOpenEsphomePanel: (d: DeviceRecord, mode: "usb" | "file" = "usb") => {
+      setEsphomePanelMode(mode);
+      setEsphomePanelDevice(d);
+    },
     onSyncEsphome: syncEsphome,
     onDownloadFirmware: downloadFirmware,
     onDelete: (d: DeviceRecord) => {
@@ -560,6 +565,8 @@ export function DevicesPage() {
         Everything Nexternel talks to: ESPHome boards, Shelly switches, cameras and online services. Pick one to see its readings,
         switches and settings.
       </Typography>
+
+      <BoardUpdatesCard canEdit={isAdmin} />
 
       {error && (
         <Alert severity="error" onClose={() => setError(null)}>
@@ -1084,8 +1091,8 @@ export function DevicesPage() {
       {isAdmin && (
         <EsphomeDevicePanelDialog
           open={Boolean(esphomePanelDevice)}
+          mode={esphomePanelMode}
           device={esphomePanelDevice}
-          hostname={hostname}
           busy={busy}
           onClose={() => setEsphomePanelDevice(null)}
           onBusy={setBusy}

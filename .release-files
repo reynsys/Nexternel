@@ -82,6 +82,8 @@ apps/api/src/devices/service.ts
 apps/api/src/devices/slug.ts
 apps/api/src/diagnostics/live-pipeline.test.ts
 apps/api/src/diagnostics/live-pipeline.ts
+apps/api/src/esphome/board-update-routes.ts
+apps/api/src/esphome/board-updates.ts
 apps/api/src/esphome/builder/builder.test.ts
 apps/api/src/esphome/builder/component-generators.ts
 apps/api/src/esphome/builder/firmware.ts
@@ -93,6 +95,7 @@ apps/api/src/esphome/builder/storage.ts
 apps/api/src/esphome/builder/validate.ts
 apps/api/src/esphome/cli-log.test.ts
 apps/api/src/esphome/cli-log.ts
+apps/api/src/esphome/file-identity.ts
 apps/api/src/esphome/gate.ts
 apps/api/src/esphome/lifecycle.ts
 apps/api/src/esphome/mqtt-object-id.test.ts
@@ -303,6 +306,7 @@ apps/ui/src/lib/appearance/type.ts
 apps/ui/src/lib/area-labels.ts
 apps/ui/src/lib/auto-scroll.test.ts
 apps/ui/src/lib/auto-scroll.ts
+apps/ui/src/lib/board-updates.ts
 apps/ui/src/lib/button-rows-guard.test.ts
 apps/ui/src/lib/capability-icons.ts
 apps/ui/src/lib/capability-kind-labels.ts
@@ -411,6 +415,7 @@ apps/ui/src/lib/widget-bindings.ts
 apps/ui/src/lib/widget-title.ts
 apps/ui/src/main.tsx
 apps/ui/src/pages/admin/AreasPage.tsx
+apps/ui/src/pages/admin/devices/BoardUpdatesCard.tsx
 apps/ui/src/pages/admin/devices/CameraPane.tsx
 apps/ui/src/pages/admin/devices/ConnectionHistory.tsx
 apps/ui/src/pages/admin/devices/DeviceDetailPane.tsx

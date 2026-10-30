@@ -17,6 +17,7 @@ import {
 } from "../cli-log.js";
 import { assertEsphomeBuildPrerequisites } from "../secrets.js";
 import { loadEsphomeYaml } from "../yaml.js";
+import { fileAddress, filesForAddress, forgetFileAddress } from "../file-identity.js";
 import { writeDeviceYamlFile } from "./storage.js";
 
 const execFileAsync = promisify(execFile);
@@ -35,12 +36,37 @@ type DeviceEsphomeMeta = {
 };
 
 async function getDeviceEsphomeMeta(deviceId: string): Promise<DeviceEsphomeMeta | null> {
-  const res = await getPool().query<DeviceEsphomeMeta>(
-    `SELECT id, esphome_name, slug, firmware_type, esphome_yaml_path, esphome_management_mode
+  const res = await getPool().query<DeviceEsphomeMeta & { mqtt_topic_prefix: string | null }>(
+    `SELECT id, esphome_name, slug, firmware_type, esphome_yaml_path, esphome_management_mode, mqtt_topic_prefix
      FROM devices WHERE id = $1`,
     [deviceId]
   );
-  return res.rows[0] ?? null;
+  const meta = res.rows[0] ?? null;
+  if (meta && meta.firmware_type === "esphome" && !meta.esphome_yaml_path?.trim()) await linkYamlFile(meta);
+  return meta;
+}
+
+/**
+ * A board without a linked settings file gets the one whose message address is exactly its own
+ * (ESPHome reads the files: esphome/file-identity.ts) — linked once. None or several: left unlinked,
+ * and the person links it (Devices → the board → Board software).
+ */
+async function linkYamlFile(meta: DeviceEsphomeMeta & { mqtt_topic_prefix: string | null }): Promise<void> {
+  if (!meta.mqtt_topic_prefix) return;
+  const files = await filesForAddress(meta.mqtt_topic_prefix);
+  if (files.length !== 1) return;
+  meta.esphome_yaml_path = files[0]!;
+  await getPool().query(`UPDATE devices SET esphome_yaml_path = $2 WHERE id = $1 AND COALESCE(esphome_yaml_path, '') = ''`, [meta.id, files[0]]);
+}
+
+/** Link a board to a settings file chosen by the person; only a file with the board's own address. */
+export async function linkDeviceYamlFile(deviceId: string, file: string): Promise<void> {
+  const meta = requireEsphomeMeta(await getDeviceEsphomeMeta(deviceId));
+  const address = await fileAddress(file);
+  const own = (meta as DeviceEsphomeMeta & { mqtt_topic_prefix?: string | null }).mqtt_topic_prefix ?? null;
+  if (!address) throw new Error(`ESPHome could not read ${file}, or it has no MQTT address.`);
+  if (address !== own) throw new Error(`${file} belongs to the board that reports on ${address}, but this device listens on ${own ?? "no address"}.`);
+  await getPool().query(`UPDATE devices SET esphome_yaml_path = $2 WHERE id = $1`, [deviceId, file]);
 }
 
 function yamlRelativePath(meta: DeviceEsphomeMeta): string {
@@ -110,6 +136,14 @@ function requireEsphomeMeta(meta: DeviceEsphomeMeta | null): DeviceEsphomeMeta {
 
 async function requireYamlOnDisk(meta: DeviceEsphomeMeta): Promise<string> {
   const yamlPath = yamlRelativePath(meta);
+  // Not linked: the usual file name is used only when that file's board is this device (same address).
+  const own = (meta as DeviceEsphomeMeta & { mqtt_topic_prefix?: string | null }).mqtt_topic_prefix ?? null;
+  if (!meta.esphome_yaml_path?.trim() && own) {
+    const address = await fileAddress(yamlPath);
+    if (address && address !== own) {
+      throw new Error(`${yamlPath} belongs to another board (${address}). Link this device's own settings file first (Devices → the board → Board software).`);
+    }
+  }
   const existing = await loadEsphomeYaml(yamlStem(meta));
   if (!existing) {
     throw new Error(`ESPHome configuration not found for this device (${yamlPath})`);
@@ -200,14 +234,24 @@ export async function compileEsphomeDevice(deviceId: string): Promise<FirmwareAc
   return { ok: false, lifecycleState: "error", log: result.log, yamlPath };
 }
 
-/** Run `esphome upload` (OTA) inside the ESPHome Docker container. */
-export async function uploadEsphomeDevice(deviceId: string): Promise<FirmwareActionResult> {
+/** The board's settings file as ESPHome names it (e.g. "garden-relays.yaml"). */
+export async function deviceYamlFile(deviceId: string): Promise<string | null> {
+  const meta = await getDeviceEsphomeMeta(deviceId);
+  return meta && meta.firmware_type === "esphome" ? meta.esphome_yaml_path?.trim() || null : null;
+}
+
+/**
+ * Run `esphome upload` (OTA) inside the ESPHome Docker container. `address` is the board's IP when
+ * known (ESPHome's own list): finding it by name (.local) often fails inside Docker.
+ */
+export async function uploadEsphomeDevice(deviceId: string, address?: string | null): Promise<FirmwareActionResult> {
   const meta = requireEsphomeMeta(await getDeviceEsphomeMeta(deviceId));
   const yamlPath = await requireYamlOnDisk(meta);
   const configPath = yamlConfigPath(meta);
 
   await setLifecycleState(deviceId, "connecting");
-  const result = await runEsphomeCli(["upload", configPath]);
+  // Always say where to send it: without --device, ESPHome asks on screen, which nobody can answer here.
+  const result = await runEsphomeCli(["upload", configPath, "--device", address || "OTA"]);
   if (result.ok) {
     await setLifecycleState(deviceId, "connecting");
     return { ok: true, lifecycleState: "connecting", log: result.log, yamlPath };
@@ -251,6 +295,7 @@ export async function saveDeviceEsphomeYaml(
   const previous = await loadEsphomeYaml(stem);
 
   await writeDeviceYamlFile(relativePath, yaml);
+  forgetFileAddress(relativePath);
 
   const validation = await runEsphomeCli(["config", "validate", configPath]);
   if (!validation.ok) {

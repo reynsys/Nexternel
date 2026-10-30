@@ -2,6 +2,10 @@ import { ICON_SIZE, CODE_TEXT } from "../../../lib/appearance/type";
 import { useEffect, useState, type ReactNode } from "react";
 import { openEsphome } from "../../../lib/esphome-open";
 import { ConnectionHistory } from "./ConnectionHistory";
+import { StepIcon } from "./BoardUpdatesCard";
+import { refreshBoards, updateBoards, useBoardUpdates } from "../../../lib/board-updates";
+import SystemUpdateAltRoundedIcon from "@mui/icons-material/SystemUpdateAltRounded";
+import UsbRoundedIcon from "@mui/icons-material/UsbRounded";
 import {
   Alert,
   Box,
@@ -10,6 +14,7 @@ import {
   FormControl,
   FormControlLabel,
   MenuItem,
+  TextField,
   Select,
   Stack,
   Switch,
@@ -25,14 +30,13 @@ import {
   useTheme,
 } from "@mui/material";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
-import BuildRoundedIcon from "@mui/icons-material/BuildRounded";
 import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
 import DevicesOtherRoundedIcon from "@mui/icons-material/DevicesOtherRounded";
 import DownloadRoundedIcon from "@mui/icons-material/DownloadRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
 import SyncRoundedIcon from "@mui/icons-material/SyncRounded";
-import type { DeviceRecord } from "../../../api";
+import { api, type DeviceRecord } from "../../../api";
 import { AREA } from "../../../lib/area-labels";
 import {
   connectivityChipColor,
@@ -66,7 +70,7 @@ export type DeviceDetailActions = {
   onRestoreYaml: (device: DeviceRecord) => void;
   onEditBuilder: (device: DeviceRecord) => void;
   onAdoptToBuilder: (device: DeviceRecord) => void;
-  onOpenEsphomePanel: (device: DeviceRecord) => void;
+  onOpenEsphomePanel: (device: DeviceRecord, mode?: "usb" | "file") => void;
   onSyncEsphome: (device: DeviceRecord) => void;
   onDownloadFirmware: (device: DeviceRecord) => void;
   onDelete: (device: DeviceRecord) => void;
@@ -206,13 +210,11 @@ function StatusChips({ device }: { device: DeviceRecord }) {
 function OverviewTab({
   device,
   isAdmin,
-  hostname,
   busy,
   actions,
 }: {
   device: DeviceRecord;
   isAdmin: boolean;
-  hostname: string;
   busy: boolean;
   actions: DeviceDetailActions;
 }) {
@@ -284,74 +286,7 @@ function OverviewTab({
         </Box>
       )}
 
-      {isAdmin && isEsphome && (
-        <Box sx={devicesActionGroupSx(theme)}>
-          <Typography variant="subtitle2" gutterBottom>
-            ESPHome
-          </Typography>
-          <ButtonRow direction="row" flexWrap="wrap" useFlexGap>
-            {device.esphomeLifecycleState === "configuration_missing" &&
-              device.esphomeManagementMode === "managed" && (
-                <Button
-                  {...devicesOutlinedButton}
-                  disabled={busy}
-                  onClick={() => void actions.onRestoreYaml(device)}
-                >
-                  Regenerate YAML
-                </Button>
-              )}
-            {device.esphomeManagementMode === "managed" ? (
-              <Button
-                {...devicesOutlinedButton}
-                startIcon={<EditRoundedIcon />}
-                disabled={busy}
-                onClick={() => actions.onEditBuilder(device)}
-              >
-                Edit configuration
-              </Button>
-            ) : (
-              <Button
-                {...devicesOutlinedButton}
-                disabled={busy}
-                onClick={() => void actions.onAdoptToBuilder(device)}
-              >
-                Adopt to builder
-              </Button>
-            )}
-            <Button
-              {...devicesOutlinedButton}
-              startIcon={<BuildRoundedIcon />}
-              disabled={busy}
-              onClick={() => actions.onOpenEsphomePanel(device)}
-            >
-              Install firmware
-            </Button>
-            <Button
-              {...devicesOutlinedButton}
-              startIcon={<SyncRoundedIcon />}
-              disabled={busy}
-              onClick={() => void actions.onSyncEsphome(device)}
-            >
-              Re-read its ESPHome file
-            </Button>
-            <Button
-              {...devicesOutlinedButton}
-              startIcon={<DownloadRoundedIcon />}
-              disabled={busy}
-              onClick={() => void actions.onDownloadFirmware(device)}
-            >
-              Download firmware (.bin)
-            </Button>
-            <Button
-              {...devicesOutlinedButton}
-              onClick={() => void openEsphome(esphomeDashboardUrl(hostname, device.esphomeName || device.slug))}
-              endIcon={<OpenInNewRoundedIcon />}
-            >
-              Open in ESPHome
-            </Button>
-          </ButtonRow>
-        </Box>
-      )}
+      {isEsphome && <BoardSoftware device={device} canEdit={isAdmin} busy={busy} onUsb={() => actions.onOpenEsphomePanel(device, "usb")} />}
     </ButtonRow>
   );
 }
@@ -589,22 +524,6 @@ function ConfigurationTab({
               Adopt to builder
             </Button>
           )}
-          <Button
-            {...devicesOutlinedButton}
-            startIcon={<BuildRoundedIcon />}
-            disabled={busy}
-            onClick={() => actions.onOpenEsphomePanel(device)}
-          >
-            ESPHome panel
-          </Button>
-          <Button
-            {...devicesOutlinedButton}
-            startIcon={<SyncRoundedIcon />}
-            disabled={busy}
-            onClick={() => void actions.onSyncEsphome(device)}
-          >
-            Re-read its ESPHome file
-          </Button>
         </ButtonRow>
       )}
     </Box>
@@ -614,9 +533,11 @@ function ConfigurationTab({
 function AdvancedTab({
   device,
   isAdmin,
+  hostname,
   busy,
   actions,
 }: {
+  hostname: string;
   device: DeviceRecord;
   isAdmin: boolean;
   busy: boolean;
@@ -629,10 +550,24 @@ function AdvancedTab({
     <ButtonRow>
       {isEsphome && isAdmin && (
         <Box sx={devicesActionGroupSx(theme)}>
-          <Typography variant="subtitle2" gutterBottom>
-            Maintenance
+          <Typography variant="subtitle2">ESPHome — for experienced users</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+            The board's ESPHome settings file and tools. Everyday updates are on the Overview tab (Update board).
           </Typography>
           <ButtonRow direction="row" flexWrap="wrap" useFlexGap>
+            <Button {...devicesOutlinedButton} startIcon={<EditRoundedIcon />} disabled={busy} onClick={() => actions.onOpenEsphomePanel(device, "file")}>
+              Settings file
+            </Button>
+            <Button {...devicesOutlinedButton} startIcon={<SyncRoundedIcon />} disabled={busy} onClick={() => void actions.onSyncEsphome(device)}>
+              Re-read its ESPHome file
+            </Button>
+            <Button
+              {...devicesOutlinedButton}
+              onClick={() => void openEsphome(esphomeDashboardUrl(hostname, device.esphomeName || device.slug))}
+              endIcon={<OpenInNewRoundedIcon />}
+            >
+              Open in ESPHome
+            </Button>
             {device.esphomeLifecycleState === "configuration_missing" &&
               device.esphomeManagementMode === "managed" && (
                 <Button
@@ -768,7 +703,6 @@ export function DeviceDetailPane({
           <OverviewTab
             device={device}
             isAdmin={isAdmin}
-            hostname={hostname}
             busy={busy}
             actions={actions}
           />
@@ -780,7 +714,7 @@ export function DeviceDetailPane({
           <ConfigurationTab device={device} isAdmin={isAdmin} busy={busy} actions={actions} />
         )}
         {tab === "advanced" && (
-          <AdvancedTab device={device} isAdmin={isAdmin} busy={busy} actions={actions} />
+          <AdvancedTab device={device} isAdmin={isAdmin} hostname={hostname} busy={busy} actions={actions} />
         )}
       </Box>
     </Box>
@@ -811,5 +745,99 @@ function ReadingName({
         )}
       </Box>
     </Stack>
+  );
+}
+
+/**
+ * Overview → Board software (ESPHome boards): is the board up to date, and the two everyday actions —
+ * Update board (over Wi-Fi, Nexternel does every step) and Install with a USB cable (new boards).
+ */
+function BoardSoftware({ device, canEdit, busy, onUsb }: { device: DeviceRecord; canEdit: boolean; busy: boolean; onUsb: () => void }) {
+  const theme = useTheme();
+  const { boards, run } = useBoardUpdates();
+  const [error, setError] = useState<string | null>(null);
+  const board = boards?.find((b) => b.deviceId === device.id);
+  const item = run?.items.find((i) => i.deviceId === device.id);
+  const showItem = item && (run?.running || (item.finishedAt && Date.now() - Date.parse(item.finishedAt) < 30 * 60_000));
+  const [choice, setChoice] = useState("");
+  const status = !boards
+    ? "Checking…"
+    : !board?.file
+      ? board?.linkProblem === "several"
+        ? "Several ESPHome settings files use this board's message address. Choose which one is this board's:"
+        : `No ESPHome settings file uses this board's message address (${device.mqttTopicPrefix}), so it cannot be updated from here.`
+      : !board.known
+        ? `ESPHome does not list ${board.file}.`
+      : board.needsUpdate
+        ? "An update is ready: its settings changed since it was last installed."
+        : `Up to date${board.deployedVersion ? ` (ESPHome ${board.deployedVersion})` : ""}.`;
+
+  return (
+    <Box sx={devicesActionGroupSx(theme)}>
+      <Typography variant="subtitle2" gutterBottom>
+        Board software
+      </Typography>
+      {showItem ? (
+        <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ mb: 1.5 }}>
+          <Box sx={{ pt: 0.25 }}>
+            <StepIcon step={item.step} />
+          </Box>
+          <Typography variant="body2" color={item.step === "failed" ? "error" : "text.secondary"}>
+            {item.message}
+          </Typography>
+        </Stack>
+      ) : (
+        <Typography variant="body2" color={board?.needsUpdate ? "warning.main" : "text.secondary"} sx={{ mb: 1.5 }}>
+          {status}
+        </Typography>
+      )}
+      {canEdit && board?.linkProblem === "several" ? (
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
+          <TextField select size="small" label="Settings file" value={choice} onChange={(e) => setChoice(e.target.value)} sx={{ minWidth: 240 }}>
+            {board.choices.map((f) => (
+              <MenuItem key={f} value={f}>
+                {f}
+              </MenuItem>
+            ))}
+          </TextField>
+          <Button
+            {...devicesContainedButton}
+            disabled={!choice}
+            onClick={() => {
+              setError(null);
+              api
+                .linkBoardFile(device.id, choice)
+                .then(() => refreshBoards())
+                .catch((err) => setError(err instanceof Error ? err.message : "Could not link"));
+            }}
+          >
+            Link
+          </Button>
+        </Stack>
+      ) : null}
+      {error ? <Alert severity="error" sx={{ mb: 1.5 }}>{error}</Alert> : null}
+      {canEdit ? (
+        <ButtonRow direction="row" flexWrap="wrap" useFlexGap>
+          <Button
+            {...(board?.needsUpdate ? devicesContainedButton : devicesOutlinedButton)}
+            startIcon={<SystemUpdateAltRoundedIcon />}
+            disabled={busy || !board?.known || Boolean(run?.running)}
+            onClick={() => {
+              setError(null);
+              updateBoards([device.id]).catch((err) => setError(err instanceof Error ? err.message : "Could not start the update"));
+            }}
+          >
+            Update board
+          </Button>
+          <Button {...devicesOutlinedButton} startIcon={<UsbRoundedIcon />} disabled={busy} onClick={onUsb}>
+            Install with a USB cable
+          </Button>
+        </ButtonRow>
+      ) : null}
+      <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+        Update board sends the latest software to the board over Wi‑Fi; it restarts once. A new board, or one not on your
+        Wi‑Fi, is installed with a USB cable. More tools for experienced users are under Advanced.
+      </Typography>
+    </Box>
   );
 }

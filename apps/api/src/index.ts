@@ -56,6 +56,7 @@ import { applyHttps } from "./system/https.js";
 import { ensureUpdateSchema, startUpdateChecks } from "./system/updates.js";
 import { startSelfCheck } from "./system/self-check.js";
 import { esphomeGateRoutes } from "./esphome/gate.js";
+import { boardUpdateRoutes } from "./esphome/board-update-routes.js";
 import { maintenanceGuard } from "./system/maintenance.js";
 import { v4Routes } from "./v4/routes.js";
 import { panelApiRoutes } from "./panels/api-routes.js";
@@ -123,6 +124,7 @@ await app.register(async (api) => {
   await api.register(pluginPanelRoutes);
   await api.register(notificationsRoutes);
   await api.register(esphomeGateRoutes);
+  await api.register(boardUpdateRoutes);
   await api.register(updateRoutes);
   await api.register(httpsRoutes);
   await api.register(migrateRoutes);

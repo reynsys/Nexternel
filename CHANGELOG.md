@@ -2,6 +2,12 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.149
+
+- **Update boards from Nexternel:** the Devices page shows which boards need an update, with **Update all boards**; each board also has **Update board**. Nexternel prepares the update, sends it over Wi‑Fi and waits until the board is back — no ESPHome needed.
+- **Installing a new board with a USB cable** is a short three-step guide.
+- ESPHome tools for experienced users are together under the device's **Advanced** tab.
+
 ## V5.2.148
 
 - **New dashboards** open ready to edit, with an **Add panel** button in their empty section, and you choose the icon when you add one.

@@ -26,10 +26,6 @@ const ESPHOME_DIRS = ["/esphome", join(process.cwd(), "..", "..", "esphome")];
 const SKIP_YAML = new Set(["secrets", "packages"]);
 
 /** ESPHome node name on device → YAML file stem in esphome/ (OTA name may differ from file name). */
-const YAML_NAME_ALIASES: Record<string, string> = {
-  "home-assistant-glow": "glow-energy",
-};
-
 /**
  * Identifier for generated YAML `id:` fields (C++ names: no hyphens) — lowercase,
  * spaces and hyphens → underscores. Not the MQTT topic name; see esphomeMqttObjectId.
@@ -590,19 +586,20 @@ export async function deleteEsphomeYamlByRelativePath(relativePath: string): Pro
 }
 
 export async function loadEsphomeYaml(esphomeName: string): Promise<string | null> {
-  const candidates = [
-    esphomeName,
-    YAML_NAME_ALIASES[esphomeName],
-    esphomeName.replace(/_/g, "-"),
-    esphomeName.replace(/-/g, "_"),
-  ].filter((c): c is string => Boolean(c));
+  return (await findEsphomeYaml(esphomeName))?.text ?? null;
+}
+
+/** The settings file for this name (also with - and _ swapped), as ESPHome names it ("devices/x.yaml" or "x.yaml"). */
+export async function findEsphomeYaml(esphomeName: string): Promise<{ path: string; text: string } | null> {
+  const candidates = [...new Set([esphomeName, esphomeName.replace(/_/g, "-"), esphomeName.replace(/-/g, "_")])].filter(Boolean);
 
   for (const base of candidates) {
     const fileName = `${base}.yaml`;
     for (const dir of ESPHOME_DIRS) {
       for (const sub of ["", "devices"]) {
         try {
-          return await readFile(join(dir, sub, fileName), "utf8");
+          const text = await readFile(join(dir, sub, fileName), "utf8");
+          return { path: sub ? `${sub}/${fileName}` : fileName, text };
         } catch {
           /* try next path */
         }

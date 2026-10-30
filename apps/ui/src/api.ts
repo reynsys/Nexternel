@@ -1250,6 +1250,15 @@ export const api = {
     fetchHistoryBatch(capabilityIds, range),
 
   system: () => apiFetch<SystemInfo>("/api/v1/system"),
+  /** Every ESPHome board: does it need an update, can it be reached; and the update in progress. */
+  esphomeBoards: () => apiFetch<{ boards: BoardStatus[]; run: BoardUpdateRun }>("/api/v1/esphome/boards"),
+  /** Update these boards over Wi-Fi, one after another (in the background). */
+  startBoardUpdates: (deviceIds: string[]) =>
+    apiFetch<{ run: BoardUpdateRun }>("/api/v1/esphome/updates", { method: "POST", body: JSON.stringify({ deviceIds }) }),
+  boardUpdates: () => apiFetch<{ run: BoardUpdateRun }>("/api/v1/esphome/updates"),
+  /** Link a board to its ESPHome settings file (only a file with the board's own message address). */
+  linkBoardFile: (deviceId: string, file: string) =>
+    apiFetch<{ ok: true }>("/api/v1/esphome/link", { method: "POST", body: JSON.stringify({ deviceId, file }) }),
   /** A pass for this browser to open the ESPHome page (Devices → Open in ESPHome). */
   esphomeAccess: () => apiFetch<{ ok: true }>("/api/v1/esphome/access", { method: "POST" }),
 
@@ -2550,4 +2559,24 @@ export type DeviceConnection = {
   wifiDbm: number | null;
   wifiQuality: string | null;
   restartedAt: string | null;
+};
+
+/** An ESPHome board as ESPHome sees it (Devices → board updates). */
+export type BoardStatus = {
+  deviceId: string;
+  name: string;
+  file: string | null;
+  known: boolean;
+  linkProblem: "none" | "several" | null;
+  choices: string[];
+  needsUpdate: boolean;
+  reachable: boolean;
+  deployedVersion: string | null;
+  currentVersion: string | null;
+};
+export type BoardUpdateStep = "waiting" | "preparing" | "sending" | "restarting" | "done" | "failed";
+export type BoardUpdateRun = {
+  running: boolean;
+  startedAt: string | null;
+  items: { deviceId: string; name: string; step: BoardUpdateStep; message: string; startedAt: string | null; finishedAt: string | null }[];
 };

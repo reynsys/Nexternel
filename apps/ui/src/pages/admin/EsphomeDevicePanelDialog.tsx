@@ -14,8 +14,6 @@ import {
   StepContent,
   StepLabel,
   Stepper,
-  Tab,
-  Tabs,
   TextField,
   Typography,
 } from "@mui/material";
@@ -23,13 +21,8 @@ import BuildRoundedIcon from "@mui/icons-material/BuildRounded";
 import DownloadRoundedIcon from "@mui/icons-material/DownloadRounded";
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
-import WifiRoundedIcon from "@mui/icons-material/WifiRounded";
 import { api, type DeviceRecord, type EsphomeBuildPrerequisites } from "../../api";
-import { esphomeDashboardUrl } from "../../lib/device-utils";
-import { openEsphome } from "../../lib/esphome-open";
 import {
-  ESPHOME_INSTALL_STEPS,
-  ESPHOME_INSTALL_WORKFLOW_TITLE,
   ESPHOME_USB_INSTALL_STEPS,
   ESPHOME_WEB_INSTALLER_URL,
   ESPHOME_WRONG_FLASH_RECOVERY,
@@ -41,8 +34,9 @@ import { ButtonRow } from "../../components/ButtonRow";
 
 type Props = {
   open: boolean;
+  /** "usb": install a new board with a USB cable. "file": its ESPHome settings file (experienced users). */
+  mode?: "usb" | "file";
   device: DeviceRecord | null;
-  hostname: string;
   busy: boolean;
   onClose: () => void;
   onBusy: (busy: boolean) => void;
@@ -55,8 +49,8 @@ type ActionKind = "compile" | "upload" | null;
 
 export function EsphomeDevicePanelDialog({
   open,
+  mode = "usb",
   device,
-  hostname,
   busy,
   onClose,
   onBusy,
@@ -64,12 +58,11 @@ export function EsphomeDevicePanelDialog({
   onSuccess,
   onUpdated,
 }: Props) {
-  const [tab, setTab] = useState(0);
+  const tab = mode === "file" ? 1 : 0;
+  const [troubleOpen, setTroubleOpen] = useState(false);
   const [rawLog, setRawLog] = useState("");
   const [lastAction, setLastAction] = useState<ActionKind>(null);
   const [showTechnicalLog, setShowTechnicalLog] = useState(false);
-  const [showOtaSection, setShowOtaSection] = useState(false);
-  const [usbGuideOpen, setUsbGuideOpen] = useState(false);
   const [yaml, setYaml] = useState("");
   const [yamlPath, setYamlPath] = useState("");
   const [managementMode, setManagementMode] = useState<string | null>(null);
@@ -78,9 +71,6 @@ export function EsphomeDevicePanelDialog({
     useState<EsphomeBuildPrerequisites | null>(null);
 
   const lifecycle = device?.esphomeLifecycleState ?? null;
-  const dashboardUrl = device
-    ? esphomeDashboardUrl(hostname, device.esphomeName || device.slug)
-    : esphomeDashboardUrl(hostname);
 
   const logSummary = useMemo(() => {
     if (!rawLog) return null;
@@ -114,12 +104,10 @@ export function EsphomeDevicePanelDialog({
 
   useEffect(() => {
     if (!open || !device) return;
-    setTab(0);
+    setTroubleOpen(false);
     setRawLog("");
     setLastAction(null);
     setShowTechnicalLog(false);
-    setShowOtaSection(false);
-    setUsbGuideOpen(false);
     setYaml("");
     setYamlPath("");
     setLastCompileOk(null);
@@ -166,30 +154,7 @@ export function EsphomeDevicePanelDialog({
     }
   }
 
-  async function runUpload() {
-    if (!device) return;
-    onBusy(true);
-    onError(null);
-    setLastAction("upload");
-    setRawLog("Sending update to the device over Wi‑Fi…");
-    setShowTechnicalLog(false);
-    try {
-      const res = await api.esphomeUpload(device.id);
-      setRawLog(res.log || (res.ok ? "Update finished." : "Update failed."));
-      if (res.ok) {
-        onSuccess(`${device.name}: update sent. Wait for the device to come back online.`);
-      } else {
-        onError(`${device.name}: over-the-air update failed.`);
-      }
-      await onUpdated();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Update failed";
-      setRawLog(message);
-      onError(message);
-    } finally {
-      onBusy(false);
-    }
-  }
+
 
   async function runValidate() {
     if (!device) return;
@@ -219,8 +184,7 @@ export function EsphomeDevicePanelDialog({
       a.download = filename;
       a.click();
       URL.revokeObjectURL(url);
-      setUsbGuideOpen(true);
-      onSuccess(`Downloaded ${filename}. Follow Step 2 below to flash the ESP32.`);
+      onSuccess(`Downloaded ${filename}. Now install it with ESPHome Web (step 2).`);
     } catch (err) {
       onError(err instanceof Error ? err.message : "Firmware download failed");
     } finally {
@@ -252,31 +216,22 @@ export function EsphomeDevicePanelDialog({
 
   return (
     <Dialog open={open} onClose={() => !busy && onClose()} fullWidth maxWidth="md">
-      <DialogTitle>Install firmware — {device?.name ?? ""}</DialogTitle>
+      <DialogTitle>
+        {mode === "file" ? "Settings file" : "Install with a USB cable"} — {device?.name ?? ""}
+      </DialogTitle>
       <DialogContent>
-        <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
-          <Tab label="Install" />
-          <Tab label="Advanced" />
-        </Tabs>
 
         {tab === 0 && (
           <Stack spacing={2}>
-            <Alert severity="info">
-              Build firmware on this server, download the <strong>.bin</strong> file, then flash it
-              on your computer with ESPHome Web Installer and a USB cable. The YAML configuration
-              stays on the server — ESPHome Web does not import YAML for USB install.
-            </Alert>
+            <Typography variant="body2" color="text.secondary">
+              For a new board, or one that is not on your Wi‑Fi. A board that is already online is updated with{" "}
+              <strong>Update board</strong> on its page — no cable needed.
+            </Typography>
 
             {buildPrerequisites && !buildPrerequisites.ready && (
               <Alert severity="warning">
                 <Typography variant="subtitle2" gutterBottom>
-                  Wi‑Fi credentials required before build
-                </Typography>
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                  Device Builder firmware uses Wi‑Fi and MQTT settings from{" "}
-                  <strong>esphome/secrets.yaml</strong> on this server. The ESPHome dashboard may show
-                  Wi‑Fi as unset even when secrets are configured — that view does not show secret
-                  values.
+                  Wi‑Fi details needed first
                 </Typography>
                 <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
                   {buildPrerequisites.missing.map((item) => (
@@ -288,193 +243,129 @@ export function EsphomeDevicePanelDialog({
               </Alert>
             )}
 
-            <Alert severity="warning">
-              <Typography variant="subtitle2" gutterBottom>
-                Device still offline after USB flash?
-              </Typography>
-              <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
-                {ESPHOME_WRONG_FLASH_RECOVERY.map((line) => (
-                  <li key={line}>
-                    <Typography variant="body2">{line}</Typography>
-                  </li>
-                ))}
-              </Box>
-            </Alert>
-
-            <Typography variant="subtitle2">{ESPHOME_INSTALL_WORKFLOW_TITLE}</Typography>
-            <Stepper activeStep={activeStep} orientation="vertical" nonLinear>
-              {ESPHOME_INSTALL_STEPS.map((step, index) => (
-                <Step key={step.id} completed={index < activeStep} expanded>
-                  <StepLabel>{step.title}</StepLabel>
-                  <StepContent>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                      {step.detail}
-                    </Typography>
-
-                    {step.id === "build" && (
-                      <Stack spacing={1.5}>
-                        <Button
-                          variant="contained"
-                          disabled={busy || buildPrerequisites?.ready === false}
-                          startIcon={<BuildRoundedIcon />}
-                          onClick={() => void runCompile()}
-                        >
-                          {busy && lastAction === "compile" ? "Building…" : "Build firmware"}
-                        </Button>
-                        {logSummary && lastAction === "compile" && (
-                          <Alert
-                            severity={
-                              (lastCompileOk ?? logSummary.ok)
-                                ? "success"
-                                : busy
-                                  ? "info"
-                                  : "error"
-                            }
-                          >
-                            <Typography variant="subtitle2">{logSummary.headline}</Typography>
-                            <Typography variant="body2">{logSummary.detail}</Typography>
-                          </Alert>
-                        )}
-                      </Stack>
+            <Stepper activeStep={Math.max(0, activeStep - 1)} orientation="vertical" nonLinear>
+              <Step completed={activeStep > 1} expanded>
+                <StepLabel>Prepare the firmware</StepLabel>
+                <StepContent>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                    Nexternel prepares it on this server. The first time can take several minutes.
+                  </Typography>
+                  <Stack spacing={1.5} alignItems="flex-start">
+                    <Button
+                      variant="contained"
+                      disabled={busy || buildPrerequisites?.ready === false}
+                      startIcon={<BuildRoundedIcon />}
+                      onClick={() => void runCompile()}
+                    >
+                      {busy && lastAction === "compile" ? "Preparing…" : "Prepare firmware"}
+                    </Button>
+                    {logSummary && lastAction === "compile" && (
+                      <Alert severity={(lastCompileOk ?? logSummary.ok) ? "success" : busy ? "info" : "error"} sx={{ alignSelf: "stretch" }}>
+                        <Typography variant="subtitle2">{logSummary.headline}</Typography>
+                        <Typography variant="body2">{logSummary.detail}</Typography>
+                      </Alert>
                     )}
-
-                    {step.id === "usb" && (
-                      <ButtonRow>
-                        <Button
-                          variant="contained"
-                          disabled={busy || !canDownloadFirmware}
-                          startIcon={<DownloadRoundedIcon />}
-                          onClick={() => void runDownloadFirmware()}
-                        >
-                          Download firmware (.bin)
-                        </Button>
-                        {!canDownloadFirmware && (
-                          <Typography variant="caption" color="text.secondary">
-                            Complete Step 1 first — the .bin file is created when the server build
-                            finishes.
-                          </Typography>
-                        )}
-                        <Button
-                          variant="outlined"
-                          href={ESPHOME_WEB_INSTALLER_URL}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          endIcon={<OpenInNewRoundedIcon />}
-                        >
-                          Open ESPHome Web Installer
-                        </Button>
-                        <Alert severity="warning" sx={{ mt: 0.5 }}>
-                          In ESPHome Web: use <strong>Connect</strong> → <strong>Install</strong> →
-                          pick your downloaded <strong>.bin</strong> file. Do not create a new
-                          device there — names like &quot;ESPHome Web …&quot; are not your Nexternel
-                          device.
-                        </Alert>
-                        <Collapse in={usbGuideOpen}>
-                          <Alert severity="success" sx={{ mt: 1 }}>
-                            <Typography variant="subtitle2" gutterBottom>
-                              What to do with the file you downloaded
-                            </Typography>
-                            <Box component="ol" sx={{ m: 0, pl: 2.5 }}>
-                              {ESPHOME_USB_INSTALL_STEPS.map((line) => (
-                                <li key={line}>
-                                  <Typography variant="body2">{line}</Typography>
-                                </li>
-                              ))}
-                            </Box>
-                          </Alert>
-                        </Collapse>
-                        <Button
-                          size="small"
-                          color="inherit"
-                          onClick={() => setShowOtaSection((v) => !v)}
-                          endIcon={
-                            <ExpandMoreRoundedIcon
-                              sx={{
-                                transform: showOtaSection ? "rotate(180deg)" : "none",
-                                transition: "transform 0.2s",
-                              }}
-                            />
-                          }
-                          sx={{ alignSelf: "flex-start" }}
-                        >
-                          Device already on Wi‑Fi?
-                        </Button>
-                        <Collapse in={showOtaSection}>
-                          <Stack spacing={1} sx={{ pl: 0.5 }}>
-                            <Typography variant="body2" color="text.secondary">
-                              Only use this if the ESP32 already runs Nexternel firmware and is on
-                              your network. New boards need USB install above.
-                            </Typography>
-                            <Button
-                              variant="outlined"
-                              disabled={busy || !(compileSucceeded || serverFirmwareReady)}
-                              startIcon={<WifiRoundedIcon />}
-                              onClick={() => void runUpload()}
-                            >
-                              {busy && lastAction === "upload"
-                                ? "Sending update…"
-                                : "Update over Wi‑Fi"}
-                            </Button>
-                            {logSummary && lastAction === "upload" && (
-                              <Alert severity={logSummary.ok ? "success" : "warning"}>
-                                <Typography variant="subtitle2">{logSummary.headline}</Typography>
-                                <Typography variant="body2">{logSummary.detail}</Typography>
-                              </Alert>
-                            )}
-                          </Stack>
-                        </Collapse>
-                      </ButtonRow>
-                    )}
-
-                    {step.id === "online" && (
-                      <Typography variant="body2" color="text.secondary">
-                        No action needed — check the Devices page. If it stays offline for more
-                        than a few minutes, confirm Wi‑Fi credentials in the install file match your
-                        network.
-                      </Typography>
-                    )}
-                  </StepContent>
-                </Step>
-              ))}
+                  </Stack>
+                </StepContent>
+              </Step>
+              <Step completed={activeStep > 2} expanded>
+                <StepLabel>Install it with the cable</StepLabel>
+                <StepContent>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                    Download the file. Plug the board into this computer with a USB cable, open ESPHome Web in Chrome or Edge, then
+                    choose <strong>Connect</strong> → <strong>Install</strong> → the file you downloaded.
+                  </Typography>
+                  <ButtonRow direction="row" flexWrap="wrap" useFlexGap>
+                    <Button
+                      variant="contained"
+                      disabled={busy || !canDownloadFirmware}
+                      startIcon={<DownloadRoundedIcon />}
+                      onClick={() => void runDownloadFirmware()}
+                    >
+                      Download the file
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      href={ESPHOME_WEB_INSTALLER_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      endIcon={<OpenInNewRoundedIcon />}
+                    >
+                      Open ESPHome Web
+                    </Button>
+                  </ButtonRow>
+                </StepContent>
+              </Step>
+              <Step completed={false} expanded>
+                <StepLabel>The board joins your home</StepLabel>
+                <StepContent>
+                  <Typography variant="body2" color="text.secondary">
+                    Unplug it and power it as usual. It shows <strong>Online</strong> on the Devices page within a few minutes.
+                  </Typography>
+                </StepContent>
+              </Step>
             </Stepper>
 
-            {rawLog && (
-              <Box>
-                <Button
-                  size="small"
-                  color="inherit"
-                  onClick={() => setShowTechnicalLog((v) => !v)}
-                  endIcon={
-                    <ExpandMoreRoundedIcon
-                      sx={{
-                        transform: showTechnicalLog ? "rotate(180deg)" : "none",
-                        transition: "transform 0.2s",
-                      }}
-                    />
-                  }
-                >
-                  {showTechnicalLog ? "Hide technical log" : "Show technical log"}
-                </Button>
-                <Collapse in={showTechnicalLog}>
-                  <TextField
-                    value={logSummary?.technicalLog || rawLog}
-                    multiline
-                    minRows={8}
-                    fullWidth
-                    InputProps={{ readOnly: true }}
-                    sx={{ mt: 1, "& textarea, & input": CODE_TEXT }}
-                  />
-                </Collapse>
-              </Box>
-            )}
-
-            <Typography variant="caption" color="text.secondary">
-              The ESPHome page on this server is for logs and over-the-air updates after the device is online — not for
-              first-time USB flash from your laptop.
-            </Typography>
-            <Button variant="outlined" size="small" onClick={() => void openEsphome(dashboardUrl)} sx={{ alignSelf: "flex-start" }}>
-              Open in ESPHome
-            </Button>
+            <Box>
+              <Button
+                variant="outlined"
+                size="small"
+                aria-expanded={troubleOpen}
+                onClick={() => setTroubleOpen((v) => !v)}
+                endIcon={<ExpandMoreRoundedIcon sx={{ transform: troubleOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />}
+              >
+                Having trouble?
+              </Button>
+              <Collapse in={troubleOpen}>
+                <Stack spacing={1.5} sx={{ mt: 1.5 }}>
+                  <Box>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Step by step in ESPHome Web
+                    </Typography>
+                    <Box component="ol" sx={{ m: 0, pl: 2.5 }}>
+                      {ESPHOME_USB_INSTALL_STEPS.map((line) => (
+                        <li key={line}>
+                          <Typography variant="body2">{line}</Typography>
+                        </li>
+                      ))}
+                    </Box>
+                  </Box>
+                  <Box>
+                    <Typography variant="subtitle2" gutterBottom>
+                      The board stays offline after installing
+                    </Typography>
+                    <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
+                      {ESPHOME_WRONG_FLASH_RECOVERY.map((line) => (
+                        <li key={line}>
+                          <Typography variant="body2">{line}</Typography>
+                        </li>
+                      ))}
+                    </Box>
+                  </Box>
+                  {rawLog ? (
+                    <Box>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => setShowTechnicalLog((v) => !v)}
+                      >
+                        {showTechnicalLog ? "Hide technical log" : "Show technical log"}
+                      </Button>
+                      <Collapse in={showTechnicalLog}>
+                        <TextField
+                          value={logSummary?.technicalLog || rawLog}
+                          multiline
+                          minRows={8}
+                          fullWidth
+                          InputProps={{ readOnly: true }}
+                          sx={{ mt: 1, "& textarea, & input": CODE_TEXT }}
+                        />
+                      </Collapse>
+                    </Box>
+                  ) : null}
+                </Stack>
+              </Collapse>
+            </Box>
           </Stack>
         )}
 
