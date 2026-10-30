@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.150
+
+- **Fixed:** updating ESP32 boards from Nexternel stopped with "does not match the source … used to generate cache". Nexternel now builds with exactly the same setup as the ESPHome page, and clears a board's old build files by itself when they no longer match.
+
 ## V5.2.149
 
 - **Update boards from Nexternel:** the Devices page shows which boards need an update, with **Update all boards**; each board also has **Update board**. Nexternel prepares the update, sends it over Wi‑Fi and waits until the board is back — no ESPHome needed.

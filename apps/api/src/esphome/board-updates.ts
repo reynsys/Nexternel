@@ -2,6 +2,7 @@ import { getPool } from "../db.js";
 import { publishChange } from "../live/changes.js";
 import { compileEsphomeDevice, deviceYamlFile, uploadEsphomeDevice } from "./builder/firmware.js";
 import { esphomeGet, filesForAddress } from "./file-identity.js";
+import { buildCacheMismatch } from "./cli-log.js";
 
 /**
  * Updating boards from Nexternel: for each board, prepare its firmware on this server (ESPHome
@@ -101,6 +102,7 @@ export function failureReason(log: string): string {
     return "The board could not be reached over Wi-Fi. Check that it is powered and online, then try again.";
   }
   if (/secrets?\.yaml|!secret/i.test(log)) return "A Wi-Fi or message password is missing in the ESPHome settings (secrets).";
+  if (buildCacheMismatch(log)) return "The board's earlier build files could not be reused or cleared. Try Update board again; if it repeats, tell support.";
   const line = log
     .split("\n")
     .reverse()

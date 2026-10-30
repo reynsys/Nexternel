@@ -1,6 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
+  buildCacheMismatch,
   esphomeCompileLogFailed,
   esphomeCompileLogSucceeded,
   esphomeCompileSucceeded,
@@ -35,5 +36,23 @@ ${SUCCESS_TAIL}`;
     assert.equal(esphomeCompileLogSucceeded(log), true);
     assert.equal(esphomeCompileLogFailed(log), false);
     assert.equal(esphomeCompileSucceeded(log, false), true);
+  });
+});
+
+describe("buildCacheMismatch", () => {
+  it("recognises build files made with the build tools in another place", () => {
+    assert.equal(
+      buildCacheMismatch(
+        'CMake Error: The source "/root/.cache/esphome/idf/frameworks/5.5.5/components/bootloader/subproject/CMakeLists.txt" does not match the source "/config/.esphome/idf/frameworks/5.5.5/components/bootloader/subproject/CMakeLists.txt" used to generate cache.'
+      ),
+      true
+    );
+    assert.equal(
+      buildCacheMismatch(
+        "'/root/.cache/esphome/idf/penvs/5.5.5/bin/python' is currently active in the environment while the project was configured with '/config/.esphome/idf/penvs/5.5.5/bin/python'. Run 'idf.py fullclean' to start again."
+      ),
+      true
+    );
+    assert.equal(buildCacheMismatch("INFO Successfully compiled program."), false);
   });
 });

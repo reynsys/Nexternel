@@ -12,6 +12,7 @@ import {
 } from "../../devices/service.js";
 import { refreshTelemetrySubscriptions } from "../../telemetry/mqtt.js";
 import {
+  buildCacheMismatch,
   esphomeCompileLogFailed,
   esphomeCompileSucceeded,
 } from "../cli-log.js";
@@ -107,9 +108,13 @@ async function runEsphomeCli(
   opts?: { treatAsCompile?: boolean }
 ): Promise<{ ok: true; log: string } | { ok: false; log: string }> {
   try {
+    // Through ESPHome's own start-up script, never `esphome` directly: the script sets where ESPHome
+    // keeps its build tools (ESP-IDF, PlatformIO) in the kept /config folder — the same setup the
+    // ESPHome page uses. Run directly, ESPHome used a temporary folder instead, so builds made by one
+    // did not match the other ("does not match the source … used to generate cache").
     const { stdout, stderr } = await execFileAsync(
       "docker",
-      ["exec", ESPHOME_CONTAINER, "esphome", ...args],
+      ["exec", ESPHOME_CONTAINER, "/entrypoint.sh", ...args],
       { timeout: CLI_TIMEOUT_MS, maxBuffer: 12 * 1024 * 1024 }
     );
     const log = [stdout, stderr].filter(Boolean).join("\n").trim();
@@ -216,7 +221,12 @@ export async function compileEsphomeDevice(deviceId: string): Promise<FirmwareAc
   await setLifecycleState(deviceId, "building");
   const compileStartedMs = Date.now();
   const stem = yamlStem(meta);
-  const result = await runEsphomeCli(["compile", configPath], { treatAsCompile: true });
+  let result = await runEsphomeCli(["compile", configPath], { treatAsCompile: true });
+  // A board's build files made with another setup of the build tools: clear them and build once more.
+  if (!result.ok && buildCacheMismatch(result.log)) {
+    await runEsphomeCli(["clean", configPath]);
+    result = await runEsphomeCli(["compile", configPath], { treatAsCompile: true });
+  }
   const firmwarePath = compiledFirmwarePath(stem);
   const firmwareFresh =
     firmwarePath !== null &&
