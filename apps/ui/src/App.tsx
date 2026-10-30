@@ -92,8 +92,8 @@ function RequirePermission({
         <Alert severity="warning" sx={{ maxWidth: 480 }}>
           Your account does not have permission to open this page.
         </Alert>
-        <Button component={RouterLink} to="/admin/users" variant="contained">
-          Open Users
+        <Button component={RouterLink} to="/" variant="contained">
+          Open Dashboards
         </Button>
       </Stack>
     );
@@ -251,33 +251,32 @@ export function App() {
               </RequirePermission>
             }
           />
+          <Route
+            path="users"
+            element={
+              <RequirePermission permission="manageUsers">
+                <UsersPage />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="users/roles"
+            element={
+              <RequirePermission permission="manageRoles">
+                <RolesPage />
+              </RequirePermission>
+            }
+          />
           <Route path="advanced" element={<Navigate to="/admin/settings/backup" replace />} />
           <Route path="automations" element={<Navigate to="/admin/settings/backup" replace />} />
         </Route>
 
         <Route path="admin/system" element={<Navigate to="/admin/settings/system" replace />} />
-        <Route path="admin/profile" element={<Navigate to="/admin/users" replace />} />
+        <Route path="admin/profile" element={<Navigate to="/admin/settings/users" replace />} />
 
-        <Route
-          path="admin/users"
-          element={
-            <RequireAuth>
-              <RequirePermission permission="manageUsers">
-                <UsersPage />
-              </RequirePermission>
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="admin/roles"
-          element={
-            <RequireAuth>
-              <RequirePermission permission="manageRoles">
-                <RolesPage />
-              </RequirePermission>
-            </RequireAuth>
-          }
-        />
+        {/* Users and Roles are in Settings now. */}
+        <Route path="admin/users" element={<Navigate to="/admin/settings/users" replace />} />
+        <Route path="admin/roles" element={<Navigate to="/admin/settings/users/roles" replace />} />
         <Route
           path="admin/areas"
           element={

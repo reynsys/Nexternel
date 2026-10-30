@@ -3,7 +3,6 @@ import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import PlaceRoundedIcon from "@mui/icons-material/PlaceRounded";
 import DevicesRoundedIcon from "@mui/icons-material/DevicesRounded";
-import PeopleRoundedIcon from "@mui/icons-material/PeopleRounded";
 import type { PermissionKey, RolePermissions } from "../lib/permissions";
 import { hasPermission } from "../lib/permissions";
 import { SETTINGS_TABS, settingsTabPath } from "../pages/admin/settings/settings-nav";
@@ -54,19 +53,12 @@ export const MAIN_NAV: NavItem[] = [
     auth: true,
     permission: "viewDevices",
   },
-  {
-    label: "Users",
-    to: "/admin/users",
-    icon: PeopleRoundedIcon,
-    auth: true,
-    permission: "manageUsers",
-  },
+
   {
     label: "Settings",
     to: "/admin/settings",
     icon: SettingsRoundedIcon,
     auth: true,
-    permission: "viewSystem",
     children: SETTINGS_TABS.map((t) => ({
       label: t.label,
       to: settingsTabPath(t.segment),
@@ -97,5 +89,10 @@ export function filterNav(
     }
     return true;
   };
-  return items.filter(allowed).map((item) => (item.children ? { ...item, children: item.children.filter(allowed) } : item));
+  // A group shows when the person may open at least one of its pages.
+  return items.flatMap((item) => {
+    if (!item.children) return allowed(item) ? [item] : [];
+    const children = item.children.filter(allowed);
+    return children.length && (!item.auth || opts.signedIn) ? [{ ...item, children }] : [];
+  });
 }

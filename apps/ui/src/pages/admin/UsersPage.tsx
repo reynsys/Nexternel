@@ -40,6 +40,7 @@ import { ThemeOptionsFields } from "../../skins/ThemeOptionsFields";
 import {
   DEFAULT_THEME_PREFS,
   normalizeThemePrefs,
+  toAccountThemePrefs,
   type ThemePrefs,
 } from "../../skins/themePrefs";
 import { useShellAuth } from "../../skins/useShellAuth";
@@ -117,27 +118,9 @@ export function UsersPage() {
     setSkinId(p.skinId);
   }
 
+  /** Every Appearance choice of the person being edited (the same set My appearance saves). */
   function themePayload(): UserThemePrefs {
-    return {
-      mode: theme.mode,
-      primary: theme.primary,
-      skinId,
-      lookId: theme.lookId,
-      motion: theme.motion,
-      lookFont: theme.lookFont,
-      lookButtons: theme.lookButtons,
-      textSize: theme.textSize,
-      roomNav: theme.roomNav,
-      gradientId: theme.gradientId,
-      solidContentPanels: theme.solidContentPanels,
-      effectId: theme.effectId,
-      effectAmount: theme.effectAmount,
-      effectSpeed: theme.effectSpeed,
-      effectColour: theme.effectColour,
-      statusLight: theme.statusLight,
-      bell: theme.bell,
-      wall: theme.wall,
-    };
+    return toAccountThemePrefs(theme, skinId);
   }
 
   function maybeRefreshShell(userId: string) {
@@ -215,24 +198,17 @@ export function UsersPage() {
 
   return (
     <Stack spacing={2}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" useFlexGap spacing={1}>
-        <Typography variant="h4">Users</Typography>
+      {/* The page title and its one-line hint come from Settings. */}
+      <Stack direction="row" justifyContent="flex-end" alignItems="center" flexWrap="wrap" useFlexGap spacing={1}>
         <ButtonRow direction="row">
-          <Button component={RouterLink} to="/admin/roles" variant="outlined">
-            Edit roles
+          <Button component={RouterLink} to="/admin/settings/users/roles" variant="outlined">
+            Roles
           </Button>
           <Button variant="contained" onClick={openAdd}>
             Add user
           </Button>
         </ButtonRow>
       </Stack>
-      <Typography variant="body2" color="text.secondary">
-        Manage accounts and assign roles. Manage what each role can do under{" "}
-        <Button component={RouterLink} to="/admin/roles" size="small" sx={{ px: 0.5 }}>
-          Roles
-        </Button>
-        .
-      </Typography>
       {error && <Alert severity="error">{error}</Alert>}
       <ProfileSection />
       <Card sx={surfaceSx}>

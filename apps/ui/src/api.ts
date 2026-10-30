@@ -271,35 +271,8 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-export type UserThemePrefs = {
-  mode: "light" | "dark";
-  primary: string;
-  skinId: string;
-  /** The dashboard's Look (Standard, Glass or an installed Look pack) */
-  lookId?: string;
-  /** The Look's animations on or off */
-  motion?: boolean;
-  /** The chosen font of a Look that offers several */
-  lookFont?: string;
-  /** The chosen button style of a Look that offers several */
-  lookButtons?: string;
-  /** Where the room menu sits */
-  roomNav?: import("./lib/room-nav").RoomNav;
-  /** Size of all text in per cent */
-  textSize?: number;
-  /** Page gradient id, or `"none"` for solid background */
-  gradientId?: string;
-  /** Solid panels (true) or frosted over the background; follows the Look */
-  solidContentPanels?: boolean;
-  /** Animated background effect (Settings → Appearance) */
-  effectId?: string;
-  effectAmount?: number;
-  effectSpeed?: number;
-  effectColour?: "white" | "accent" | "scene";
-  statusLight?: import("./skins/themePrefs").StatusLightPrefs;
-  bell?: import("./skins/themePrefs").BellPrefs;
-  wall?: import("./lib/display-mode").WallPrefs;
-};
+/** A person's Appearance choices as stored on their account (built by `toAccountThemePrefs`). */
+export type UserThemePrefs = ReturnType<typeof import("./skins/themePrefs").toAccountThemePrefs>;
 
 export type User = {
   id: string;
@@ -2535,7 +2508,7 @@ export type DashboardDetail = DashboardSummary & {
   createdAt: string;
 };
 
-/** A paid add-on installed on this server (Settings → Add-ons). */
+/** A paid add-on installed on this server (Settings → Extensions). */
 export type AddonInfo = {
   id: string;
   name: string;

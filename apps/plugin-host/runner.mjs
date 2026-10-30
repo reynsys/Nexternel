@@ -175,7 +175,7 @@ const nx = Object.freeze({
 
   /** Add a message to Nexternel's notifications: level "info" | "warning" | "alert". */
   notify: ({ title, body = "", level = "info" }) => call("POST", "/notify", { title, body, level }),
-  /** Short status line on the Plugins page: state "ok" | "warning" | "error". */
+  /** Short status line under Settings → Extensions: state "ok" | "warning" | "error". */
   status: (state, message) => call("POST", "/status", { state, message }),
 });
 

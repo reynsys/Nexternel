@@ -19,7 +19,7 @@ export function normalizeLevel(raw: unknown): NotificationLevel {
   return raw === "warning" || raw === "alert" ? raw : "info";
 }
 
-/** Which of a plugin's messages reach the bell (Settings → Plugins). */
+/** Which of a plugin's messages reach the bell (Settings → Extensions). */
 export type PluginBell = "all" | "important" | "none";
 
 export function normalizePluginBell(raw: unknown): PluginBell {

@@ -115,7 +115,7 @@ export const pluginPanelRoutes: FastifyPluginAsync = async (app) => {
     }
     if (!found.enabled || found.status !== "running") {
       const name = found.manifest.name ?? found.manifest.id;
-      return reply.code(409).send({ error: { code: "not_running", message: `${name} is not running. Check Settings → Plugins.` } });
+      return reply.code(409).send({ error: { code: "not_running", message: `${name} is not running. Check Settings → Extensions.` } });
     }
     const text = typeof request.body?.text === "string" ? request.body.text.trim().slice(0, 2000) : "";
     if (!text) return reply.code(400).send({ error: { code: "bad_request", message: "Type a question first." } });

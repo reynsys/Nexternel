@@ -19,7 +19,7 @@ function fail(reply: FastifyReply, err: unknown) {
   throw err;
 }
 
-/** Settings → Add-ons (admins), and the packs every signed-in browser loads. */
+/** Settings → Extensions (admins), and the packs every signed-in browser loads. */
 export const addonsRoutes: FastifyPluginAsync = async (app) => {
   app.get("/api/v1/addons", async (request, reply) => {
     if (!requirePermission(request, reply, "manageUsers")) return;

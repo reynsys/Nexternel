@@ -204,6 +204,8 @@ export function startBackupScheduler(log: { info: (o: object, m: string) => void
       if (!automaticBackupDue(schedule)) return;
       const result = await runStoredBackup("auto");
       (result.ok ? log.info : log.warn)(result, "automatic backup");
+      const { reportAutomaticBackup } = await import("../system/self-check.js");
+      await reportAutomaticBackup(result.ok, result.message);
     } catch (err) {
       log.warn({ err: err instanceof Error ? err.message : String(err) }, "automatic backup check failed");
     }

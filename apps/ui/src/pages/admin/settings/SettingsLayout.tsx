@@ -31,7 +31,8 @@ export function SettingsLayout() {
   }
 
   const active =
-    tabs.find((tab) => pathname === settingsTabPath(tab.segment))?.segment ??
+    // A page inside a tab (Users → Roles) keeps its tab.
+    tabs.find((tab) => pathname === settingsTabPath(tab.segment) || pathname.startsWith(`${settingsTabPath(tab.segment)}/`))?.segment ??
     tabs[0]?.segment ??
     "appearance";
 

@@ -54,6 +54,7 @@ import { updateRoutes } from "./system/update-routes.js";
 import { httpsRoutes } from "./system/https-routes.js";
 import { applyHttps } from "./system/https.js";
 import { ensureUpdateSchema, startUpdateChecks } from "./system/updates.js";
+import { startSelfCheck } from "./system/self-check.js";
 import { maintenanceGuard } from "./system/maintenance.js";
 import { v4Routes } from "./v4/routes.js";
 import { panelApiRoutes } from "./panels/api-routes.js";
@@ -310,6 +311,7 @@ try {
   startUpdateChecks();
   startAddonChecks();
   startBackupScheduler(app.log);
+  startSelfCheck(app.log);
   app.log.info("octopus poller started");
 
   await app.listen({ port: config.port, host: config.host });

@@ -177,7 +177,7 @@ export function SideMenu({
                   src={user?.avatarData ?? undefined}
                   sx={{ width: 36, height: 36, cursor: "pointer" }}
                   component={RouterLink}
-                  to="/admin/users"
+                  to="/admin/settings/users"
                 >
                   {initial}
                 </Avatar>

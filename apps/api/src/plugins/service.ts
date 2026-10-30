@@ -436,7 +436,7 @@ export async function setRunState(id: string, state: PluginRunState, message: st
   if (state === "crashed" || state === "stopped") await setPluginDevicesOnline(id, false);
 }
 
-// Recent output lines per plugin, kept in memory for the Plugins page.
+// Recent output lines per plugin, kept in memory for Settings → Extensions.
 const LOG_LINES = 300;
 const logs = new Map<string, { t: string; stream: string; line: string }[]>();
 

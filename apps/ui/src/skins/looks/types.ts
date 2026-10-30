@@ -203,8 +203,11 @@ export type UiLook = {
   PanelFrame?: ComponentType;
   /** Decorations for the other places (see DecorSlot). Animations inside them follow the Animations setting. */
   decor?: Partial<Record<DecorSlot, ComponentType<DecorProps>>>;
-  /** The page background this Look brings, used while Appearance → Background is Plain. */
-  background?: (mode: "light" | "dark") => {
+  /**
+   * The page background this Look brings, used while Appearance → Background is Plain. `roles` are the
+   * person's colour roles (Appearance engine), so the background can follow their colours.
+   */
+  background?: (mode: "light" | "dark", roles: import("../../lib/appearance/scheme").Roles) => {
     colour: string;
     /** CSS background-image layers. */
     image?: string;

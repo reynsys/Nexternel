@@ -18,7 +18,7 @@ export type LicencePayload = {
   serverId: string;
   /** Pack ids it unlocks; "*" = every pack (the owner's licence). */
   packs: string[];
-  /** Who it was sold to (shown in Settings → Add-ons). */
+  /** Who it was sold to (shown in Settings → Extensions). */
   holder?: string;
   /** Issued at / valid until (seconds since 1970). Nexternel re-checks long before it ends. */
   iat: number;

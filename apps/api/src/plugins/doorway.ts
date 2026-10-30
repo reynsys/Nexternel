@@ -222,7 +222,7 @@ export const pluginDoorwayRoutes: FastifyPluginAsync = async (app) => {
     const p = request.plugin!;
     const state = request.body?.state === "error" || request.body?.state === "warning" ? request.body.state : "ok";
     const message = typeof request.body?.message === "string" ? request.body.message.slice(0, 300) : "";
-    // Shown under the plugin on the Plugins page; the container reports whether it is running.
+    // Shown under the plugin under Settings → Extensions; the container reports whether it is running.
     await getPool().query(
       `UPDATE installed_plugins SET status_message = $2, status_at = NOW() WHERE id = $1`,
       [p.id, message ? (state === "ok" ? message : `${state === "error" ? "Problem" : "Warning"}: ${message}`) : null]

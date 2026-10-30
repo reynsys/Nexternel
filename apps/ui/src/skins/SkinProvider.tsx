@@ -206,7 +206,7 @@ export function SkinProvider({ children }: { children: ReactNode }) {
   // With a plain background, a Look may bring its own (e.g. the HUD's grid).
   // A background made from the person's own colours, else a ready-made one, else the Look's own.
   const mine = isMineBackground(shownPrefs.gradientId) ? mineBackground(scheme, shownPrefs.gradientId!) : null;
-  const lookBackground = !mine && !gradientCss(shownPrefs.gradientId) && look.background ? look.background(shownPrefs.mode) : null;
+  const lookBackground = !mine && !gradientCss(shownPrefs.gradientId) && look.background ? look.background(shownPrefs.mode, scheme.roles) : null;
   const pageGradient = mine?.css ?? gradientCss(shownPrefs.gradientId, shownPrefs.mode) ?? lookBackground?.image ?? null;
   // The page's own colour (under everything): the background's edge, the Look's, or the scheme's page colour.
   const pageBaseColour =

@@ -25,6 +25,7 @@ import {
   Typography,
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import { api, type RoleDef } from "../../api";
 import { useConfirm } from "../../components/confirm";
 import {
@@ -223,17 +224,18 @@ export function RolesPage() {
   return (
     <Stack spacing={2}>
       <Stack direction="row" justifyContent="space-between" alignItems="center">
-        <Typography variant="h4">Roles</Typography>
+        <Stack direction="row" alignItems="center" spacing={1.5}>
+          <Button component={RouterLink} to="/admin/settings/users" variant="outlined" startIcon={<ArrowBackRoundedIcon />}>
+            Users
+          </Button>
+          <Typography variant="h5">Roles</Typography>
+        </Stack>
         <Button variant="contained" onClick={openAdd}>
           Add role
         </Button>
       </Stack>
       <Typography variant="body2" color="text.secondary">
-        Set what each role can view or change. Assign roles to people under{" "}
-        <Button component={RouterLink} to="/admin/users" size="small" sx={{ px: 0.5 }}>
-          Users
-        </Button>
-        .
+        Set what each role can view or change. A person's role is chosen on the Users page.
       </Typography>
       {error && <Alert severity="error">{error}</Alert>}
       <Card>

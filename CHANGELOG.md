@@ -2,6 +2,13 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.145
+
+- **Users** is now inside Settings, with Roles opened from the Users page.
+- Fixed: saving a person in Users → Edit no longer resets their Auto light/dark and second and third colours.
+- **The bell now tells you when Nexternel needs you:** a device went offline (and is back), device messages stopped working, the disk is getting full, or an automatic backup failed.
+- "New version available" messages disappear once that version is installed.
+
 ## V5.2.144
 
 - **Settings menu:** Settings is now a proper fold-out group with an arrow. Its pages have their own icons and sit indented under it, and only the page you are on lights up.
