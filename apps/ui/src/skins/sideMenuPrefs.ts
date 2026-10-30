@@ -18,5 +18,5 @@ export function setSideMenuCollapsed(collapsed: boolean): void {
   }
 }
 
-export const SIDE_MENU_WIDTH_EXPANDED = 240;
+export const SIDE_MENU_WIDTH_EXPANDED = 256;
 export const SIDE_MENU_WIDTH_COLLAPSED = 72;

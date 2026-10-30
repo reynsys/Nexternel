@@ -2,6 +2,12 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.144
+
+- **Settings menu:** Settings is now a proper fold-out group with an arrow. Its pages have their own icons and sit indented under it, and only the page you are on lights up.
+- With the menu folded to icons, pointing at Settings shows its pages in a small pop-out list.
+- The side menu is slightly wider, so page names fit on one line in every style.
+
 ## V5.2.143
 
 - **Settings** pages are listed under Settings in the side menu: My appearance, System, Extensions, Backup & Restore.

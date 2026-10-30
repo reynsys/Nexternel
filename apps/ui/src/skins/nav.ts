@@ -70,7 +70,7 @@ export const MAIN_NAV: NavItem[] = [
     children: SETTINGS_TABS.map((t) => ({
       label: t.label,
       to: settingsTabPath(t.segment),
-      icon: SettingsRoundedIcon,
+      icon: t.icon,
       auth: true,
       permission: t.permission,
     })),

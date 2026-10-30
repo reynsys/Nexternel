@@ -111,6 +111,18 @@ export function lookThemeOptions(
       MuiDialog: { defaultProps: { PaperProps: role("popup") }, styleOverrides: { paper: popup } },
       MuiPopover: { defaultProps: { slotProps: { paper: role("popup") } }, styleOverrides: { paper: popup } },
       MuiMenu: { styleOverrides: { paper: popup } },
+      // A folded side menu's group pops its pages out beside it, drawn as a pop-up.
+      MuiTooltip: {
+        styleOverrides: {
+          tooltip: { "&.nx-nav-popout": { backgroundColor: base.palette.background.paper, ...popup, backgroundImage: "none", color: base.palette.text.primary, padding: 8, maxWidth: "none" } },
+        },
+      },
+      // The pages of a side-menu group: indented under it, joined by a line down the left.
+      MuiList: {
+        styleOverrides: {
+          root: { "&[data-nx-nav-group]": { marginLeft: 14, paddingLeft: 2, borderLeft: `2px solid ${base.palette.divider}` } },
+        },
+      },
       MuiDrawer: {
         defaultProps: { PaperProps: role("chrome") },
         styleOverrides: {
@@ -183,6 +195,14 @@ export function lookThemeOptions(
               ...set("backgroundColor", t.secondaryFill),
             },
             "&[data-nx-nav].Mui-selected": { borderColor: "transparent" },
+            // A page inside a group (Settings → System): a smaller button.
+            "&[data-nx-nav-child]": { minHeight: 36, paddingTop: 2, paddingBottom: 2 },
+            // The entry of a group whose page is open: marked by its text and icon, not filled.
+            "&[data-nx-nav-within]": {
+              borderColor: primary.main,
+              "& .MuiListItemIcon-root": { color: primary.main },
+              "& .MuiListItemText-primary": { fontWeight: 600 },
+            },
             // The chosen menu item, as the Look draws it.
             "&.Mui-selected": {
               backgroundColor: t.selectedFill,
