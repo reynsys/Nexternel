@@ -68,6 +68,9 @@ apps/api/src/dashboards/routes.ts
 apps/api/src/dashboards/starter.ts
 apps/api/src/dashboards/store.ts
 apps/api/src/db.ts
+apps/api/src/devices/board-health.ts
+apps/api/src/devices/connection-history.test.ts
+apps/api/src/devices/connection-history.ts
 apps/api/src/devices/connectivity.test.ts
 apps/api/src/devices/connectivity.ts
 apps/api/src/devices/display-name.test.ts
@@ -90,6 +93,7 @@ apps/api/src/esphome/builder/storage.ts
 apps/api/src/esphome/builder/validate.ts
 apps/api/src/esphome/cli-log.test.ts
 apps/api/src/esphome/cli-log.ts
+apps/api/src/esphome/gate.ts
 apps/api/src/esphome/lifecycle.ts
 apps/api/src/esphome/mqtt-object-id.test.ts
 apps/api/src/esphome/orphan-prune.ts
@@ -332,6 +336,7 @@ apps/ui/src/lib/display-mode.ts
 apps/ui/src/lib/edge-scroll.test.ts
 apps/ui/src/lib/edge-scroll.ts
 apps/ui/src/lib/esphome-install-guide.ts
+apps/ui/src/lib/esphome-open.ts
 apps/ui/src/lib/group-by-area.ts
 apps/ui/src/lib/home-dashboard.ts
 apps/ui/src/lib/icons/catalog.ts
@@ -407,6 +412,7 @@ apps/ui/src/lib/widget-title.ts
 apps/ui/src/main.tsx
 apps/ui/src/pages/admin/AreasPage.tsx
 apps/ui/src/pages/admin/devices/CameraPane.tsx
+apps/ui/src/pages/admin/devices/ConnectionHistory.tsx
 apps/ui/src/pages/admin/devices/DeviceDetailPane.tsx
 apps/ui/src/pages/admin/devices/DeviceNavigator.tsx
 apps/ui/src/pages/admin/devices/device-nav-utils.ts

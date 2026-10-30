@@ -2,7 +2,7 @@ import type { FastifyPluginAsync } from "fastify";
 import { requireUser } from "../auth/plugin.js";
 import { requirePermission } from "../auth/rbac.js";
 import { clearNotifications, listNotifications, markAllNotificationsRead } from "./service.js";
-import { getBellTopics, setBellTopics } from "./topics.js";
+import { getBellTopics, getOfflineMinutes, setBellTopics, setOfflineMinutes } from "./topics.js";
 
 export const notificationsRoutes: FastifyPluginAsync = async (app) => {
   app.get<{ Querystring: { limit?: string } }>("/api/v1/notifications", async (request, reply) => {
@@ -25,11 +25,13 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
   /** Which of Nexternel's own kinds of message reach the bell (Settings → Notifications). */
   app.get("/api/v1/notifications/topics", async (request, reply) => {
     if (!requireUser(request, reply)) return;
-    return { topics: await getBellTopics() };
+    return { topics: await getBellTopics(), offlineMinutes: await getOfflineMinutes() };
   });
 
-  app.put<{ Body: { topics?: Record<string, unknown> } }>("/api/v1/notifications/topics", async (request, reply) => {
+  app.put<{ Body: { topics?: Record<string, unknown>; offlineMinutes?: unknown } }>("/api/v1/notifications/topics", async (request, reply) => {
     if (!requirePermission(request, reply, "manageUsers")) return;
-    return { topics: await setBellTopics(request.body?.topics ?? {}) };
+    const topics = await setBellTopics(request.body?.topics ?? {});
+    const offlineMinutes = request.body?.offlineMinutes !== undefined ? await setOfflineMinutes(request.body.offlineMinutes) : await getOfflineMinutes();
+    return { topics, offlineMinutes };
   });
 };

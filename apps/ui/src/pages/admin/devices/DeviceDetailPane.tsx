@@ -1,5 +1,7 @@
 import { ICON_SIZE, CODE_TEXT } from "../../../lib/appearance/type";
 import { useEffect, useState, type ReactNode } from "react";
+import { openEsphome } from "../../../lib/esphome-open";
+import { ConnectionHistory } from "./ConnectionHistory";
 import {
   Alert,
   Box,
@@ -244,6 +246,7 @@ function OverviewTab({
             ? " · waiting for device on MQTT"
             : ""}
         </Typography>
+        <ConnectionHistory deviceId={device.id} refresh={connectivity} />
       </Box>
 
       {isAdmin && (
@@ -341,9 +344,7 @@ function OverviewTab({
             </Button>
             <Button
               {...devicesOutlinedButton}
-              href={esphomeDashboardUrl(hostname, device.esphomeName || device.slug)}
-              target="_blank"
-              rel="noopener noreferrer"
+              onClick={() => void openEsphome(esphomeDashboardUrl(hostname, device.esphomeName || device.slug))}
               endIcon={<OpenInNewRoundedIcon />}
             >
               Open in ESPHome

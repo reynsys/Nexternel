@@ -19,6 +19,28 @@ export async function ensureDevicesSchema(): Promise<void> {
      WHERE mqtt_availability = 'unknown'
        AND is_online = TRUE
   `);
+  // Connection history: every change of a device's online / offline, recorded by the database itself
+  // (whatever part of Nexternel changed it), kept 30 days.
+  await getPool().query(`
+    CREATE TABLE IF NOT EXISTS device_connection_events (
+      id         BIGSERIAL PRIMARY KEY,
+      device_id  UUID NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+      state      VARCHAR(16) NOT NULL,
+      at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_device_connection_events ON device_connection_events (device_id, at DESC);
+    CREATE OR REPLACE FUNCTION nx_record_device_connection() RETURNS trigger AS $$
+    BEGIN
+      IF NEW.mqtt_availability IN ('online', 'offline') AND NEW.mqtt_availability IS DISTINCT FROM OLD.mqtt_availability THEN
+        INSERT INTO device_connection_events (device_id, state) VALUES (NEW.id, NEW.mqtt_availability);
+      END IF;
+      RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+    DROP TRIGGER IF EXISTS nx_device_connection ON devices;
+    CREATE TRIGGER nx_device_connection AFTER UPDATE OF mqtt_availability ON devices
+      FOR EACH ROW EXECUTE FUNCTION nx_record_device_connection();
+  `);
 }
 
 /**

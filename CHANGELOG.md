@@ -2,6 +2,14 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.147
+
+- **Safer ESPHome page:** it now opens only from Nexternel (Devices → Open in ESPHome) for people allowed to change devices. Before, anyone on the home network could open it.
+- **Boards that are quiet are shown as Online** (for example relay boards), not "No recent data".
+- **Connection history** for each device: when it dropped out, for how long, its Wi-Fi signal and last restart (Devices → the device).
+- **The bell reports a device only when it stays offline** for the time you choose in Settings → Notifications (5 minutes unless changed), and says how long it was gone when it is back.
+- **Board settings:** Wi-Fi power saving off and two health readings. Boards take them when they are next installed.
+
 ## V5.2.146
 
 - **Dashboards:** the Dashboard Menu (tabs, dock or rail) stays visible while editing, with a **+** button to add a dashboard. Leaving a dashboard with unsaved changes asks whether to save them.

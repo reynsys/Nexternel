@@ -62,6 +62,8 @@ CREATE TABLE IF NOT EXISTS notification_topics (
     topic           VARCHAR(40) PRIMARY KEY,
     enabled         BOOLEAN NOT NULL DEFAULT TRUE
 );
+-- A waiting time for the kind (devices: report only after this many minutes offline).
+ALTER TABLE notification_topics ADD COLUMN IF NOT EXISTS minutes INTEGER;
 
 CREATE TABLE IF NOT EXISTS notification_reads (
     user_id         UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,

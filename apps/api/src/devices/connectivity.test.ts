@@ -79,10 +79,25 @@ test("never seen → no_recent_data", () => {
   assert.equal(deriveDeviceConnectivityState({ ...base, lastSeenAt: null }), "no_recent_data");
 });
 
-test("availability online but quiet 2h → no_recent_data", () => {
+test("a quiet ESPHome or Shelly board that says it is online → online", () => {
+  for (const firmwareType of ["esphome", "shelly"]) {
+    assert.equal(
+      deriveDeviceConnectivityState({
+        ...base,
+        firmwareType,
+        mqttAvailability: "online",
+        lastSeenAt: new Date(Date.now() - 2 * 60 * 60_000).toISOString(),
+      }),
+      "online"
+    );
+  }
+});
+
+test("other devices online but quiet 2h → no_recent_data (they do not announce dropping out)", () => {
   assert.equal(
     deriveDeviceConnectivityState({
       ...base,
+      firmwareType: "plugin",
       mqttAvailability: "online",
       lastSeenAt: new Date(Date.now() - 2 * 60 * 60_000).toISOString(),
     }),

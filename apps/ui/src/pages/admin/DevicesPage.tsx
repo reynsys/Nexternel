@@ -2,7 +2,7 @@ import { CODE_TEXT } from "../../lib/appearance/type";
 import { CameraPane } from "./devices/CameraPane";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Alert, Box, Button, Card, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, FormControlLabel, InputLabel, Link, MenuItem, Paper, Select, Stack, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { Alert, Box, Button, Card, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, FormControlLabel, InputLabel, MenuItem, Paper, Select, Stack, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
 import {
   api,
   type CameraRecord,
@@ -11,6 +11,8 @@ import {
 } from "../../api";
 import { AREA } from "../../lib/area-labels";
 import { esphomeDashboardUrl } from "../../lib/device-utils";
+import { openEsphome } from "../../lib/esphome-open";
+import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
 import { useConfirm } from "../../components/confirm";
 import { EsphomeAddDeviceWizard } from "./EsphomeAddDeviceWizard";
 import { EsphomeDevicePanelDialog } from "./EsphomeDevicePanelDialog";
@@ -800,9 +802,9 @@ export function DevicesPage() {
                 </Typography>
               )}
               {editing?.firmwareType !== "shelly" && (
-                <Link href={esphomeUrl} target="_blank" rel="noopener noreferrer" variant="body2">
-                  Open ESPHome Builder
-                </Link>
+                <Button variant="outlined" size="small" endIcon={<OpenInNewRoundedIcon />} onClick={() => void openEsphome(esphomeUrl)} sx={{ alignSelf: "flex-start" }}>
+                  Open ESPHome
+                </Button>
               )}
             </Stack>
           </DialogContent>

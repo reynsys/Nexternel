@@ -1,5 +1,5 @@
 import { normalizePluginBell } from "../notifications/service.js";
-import { forgetBellTopics, normalizeBellTopics } from "../notifications/topics.js";
+import { forgetBellTopics, normalizeBellTopics, normalizeOfflineMinutes } from "../notifications/topics.js";
 import { encryptSecret } from "../plugins/secrets.js";
 import type { PoolClient } from "pg";
 import { getPool } from "../db.js";
@@ -458,6 +458,13 @@ export async function restoreDomain(
           [topic, enabled]
         );
       }
+      forgetBellTopics();
+    }
+    if (clean.bellOfflineMinutes !== undefined) {
+      await client.query(
+        `INSERT INTO notification_topics (topic, enabled, minutes) VALUES ('devices', TRUE, $1) ON CONFLICT (topic) DO UPDATE SET minutes = EXCLUDED.minutes`,
+        [normalizeOfflineMinutes(clean.bellOfflineMinutes)]
+      );
       forgetBellTopics();
     }
     await client.query("COMMIT");

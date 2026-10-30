@@ -10,6 +10,7 @@ import {
 import { getLiveState, parseMqttPayload, setLiveState, getAllLiveStates } from "./state-cache.js";
 import { LIVE_CAPABILITY_PRESENCE_MS } from "../devices/presence.js";
 import { getPool } from "../db.js";
+import { applyBoardHealthTopic } from "../devices/board-health.js";
 import { looksLikeShellyCommandTopic, isShellyGen1MqttPrefix } from "../shelly/topics.js";
 import { parseShellyMqttSwitchUpdates } from "../shelly/notify.js";
 import {
@@ -633,6 +634,13 @@ async function handleMessage(
     applyDeviceRootStatusTopic(topic, payload, retained) ||
     applyDeviceShellyOnlineTopic(topic, payload, retained);
   if (presenceHandled) {
+    observationKind = "device_presence";
+    finishObservation();
+    return;
+  }
+  // The board's own health (Wi-Fi signal, time since restart): proof it is there, but not a reading.
+  if (applyBoardHealthTopic(topic, payload, retained, longestPrefixForTopic)) {
+    touchDeviceOnlineFromTopic(topic, retained);
     observationKind = "device_presence";
     finishObservation();
     return;

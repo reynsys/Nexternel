@@ -14,3 +14,11 @@
 http://:80, http://:8080 {
 	reverse_proxy ui:80
 }
+
+# ESPHome: opened from Nexternel only (Devices → Open in ESPHome).
+http://:6052 {
+	forward_auth api:4000 {
+		uri /api/v1/esphome/gate
+	}
+	reverse_proxy unix//run/esphome/dashboard.sock
+}

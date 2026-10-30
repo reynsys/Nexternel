@@ -64,6 +64,9 @@ function hasFreshLiveCapability(
   return false;
 }
 
+/** Boards that announce online and offline themselves (birth and last-will messages). */
+const ANNOUNCES_OWN_STATUS = new Set(["esphome", "shelly"]);
+
 export function deriveDeviceConnectivityState(
   input: ConnectivityInput
 ): DeviceConnectivityState {
@@ -78,6 +81,13 @@ export function deriveDeviceConnectivityState(
 
   if (input.mqttAvailability === "offline") {
     return "offline";
+  }
+
+  // ESPHome and Shelly boards say "online" when they connect, and the message service says "offline"
+  // for them the moment they drop out (their last will). Their own "online" is proof, however quiet
+  // the board is (a relay board only reports when switched).
+  if (input.mqttAvailability === "online" && ANNOUNCES_OWN_STATUS.has(input.firmwareType.toLowerCase())) {
+    return "online";
   }
 
   if (hasFreshLiveCapability(input, windowMs, nowMs)) {

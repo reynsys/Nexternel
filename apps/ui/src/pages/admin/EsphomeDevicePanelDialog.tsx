@@ -9,7 +9,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Link,
   Stack,
   Step,
   StepContent,
@@ -27,6 +26,7 @@ import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
 import WifiRoundedIcon from "@mui/icons-material/WifiRounded";
 import { api, type DeviceRecord, type EsphomeBuildPrerequisites } from "../../api";
 import { esphomeDashboardUrl } from "../../lib/device-utils";
+import { openEsphome } from "../../lib/esphome-open";
 import {
   ESPHOME_INSTALL_STEPS,
   ESPHOME_INSTALL_WORKFLOW_TITLE,
@@ -469,13 +469,12 @@ export function EsphomeDevicePanelDialog({
             )}
 
             <Typography variant="caption" color="text.secondary">
-              The{" "}
-              <Link href={dashboardUrl} target="_blank" rel="noopener noreferrer">
-                ESPHome dashboard
-              </Link>{" "}
-              on this server is for logs and over-the-air updates after the device is online — not
-              for first-time USB flash from your laptop.
+              The ESPHome page on this server is for logs and over-the-air updates after the device is online — not for
+              first-time USB flash from your laptop.
             </Typography>
+            <Button variant="outlined" size="small" onClick={() => void openEsphome(dashboardUrl)} sx={{ alignSelf: "flex-start" }}>
+              Open in ESPHome
+            </Button>
           </Stack>
         )}
 

@@ -1,4 +1,5 @@
 import type { FastifyPluginAsync } from "fastify";
+import { deviceConnection } from "../devices/connection-history.js";
 import { requirePermission } from "../auth/rbac.js";
 import { syncCapabilitiesFromLegacy } from "../capabilities/sync.js";
 import { refreshTelemetrySubscriptions } from "../telemetry/mqtt.js";
@@ -46,6 +47,14 @@ export const devicesRoutes: FastifyPluginAsync = async (app) => {
     if (!requirePermission(request, reply, "viewDevices")) return;
     const devices = await listDevicesDetailed();
     return { devices };
+  });
+
+  /** When the device was online and offline in the last 24 hours. */
+  app.get<{ Params: { id: string } }>("/api/v1/devices/:id/connection", async (request, reply) => {
+    if (!requirePermission(request, reply, "viewDevices")) return;
+    const summary = await deviceConnection(request.params.id).catch(() => null);
+    if (!summary) return reply.code(404).send({ error: { code: "not_found", message: "Device not found" } });
+    return { connection: summary };
   });
 
   app.get("/api/v1/devices/esphome-catalog", async (request, reply) => {

@@ -4,3 +4,24 @@
 # An idle API must not restart the board.
 api:
   reboot_timeout: 0s
+
+# Boards are plugged in: Wi-Fi power saving (ESPHome's standard on ESP32) only makes the radio doze,
+# which drops the connection now and then. A board's own file can still choose otherwise.
+wifi:
+  power_save_mode: none
+
+# Two readings about the board itself, so Nexternel can tell a weak Wi-Fi signal from a restart.
+sensor:
+  - platform: wifi_signal
+    # Nexternel reads it as <prefix>/sensor/wifi_signal/state: keep this name.
+    name: "WiFi signal"
+    id: nexternel_wifi_signal
+    update_interval: 60s
+    entity_category: diagnostic
+  - platform: uptime
+    # Nexternel reads it as <prefix>/sensor/uptime/state: keep this name.
+    name: "Uptime"
+    id: nexternel_uptime
+    type: seconds
+    update_interval: 60s
+    entity_category: diagnostic

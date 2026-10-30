@@ -23,6 +23,21 @@ function secretKey() {
   return new TextEncoder().encode(config.jwtSecret());
 }
 
+/** A short-lived pass for one purpose (e.g. "esphome": opening the ESPHome page through Caddy). */
+export async function signPassToken(userId: string, scope: string, ttl: string): Promise<string> {
+  return new SignJWT({ tokenType: "pass", scope }).setProtectedHeader({ alg: "HS256" }).setSubject(userId).setIssuedAt().setExpirationTime(ttl).sign(secretKey());
+}
+
+/** The user id of a valid pass for `scope`, else null. */
+export async function verifyPassToken(token: string, scope: string): Promise<string | null> {
+  try {
+    const { payload } = await jwtVerify(token, secretKey());
+    return payload.tokenType === "pass" && payload.scope === scope && typeof payload.sub === "string" ? payload.sub : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function verifyPassword(password: string, hash: string) {
   return bcrypt.compare(password, hash);
 }

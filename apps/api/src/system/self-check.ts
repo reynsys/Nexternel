@@ -1,7 +1,8 @@
 import fs from "fs";
 import { getPool } from "../db.js";
 import { addNotification, type NotificationLevel } from "../notifications/service.js";
-import { bellTopicOn, type BellTopic } from "../notifications/topics.js";
+import { bellTopicOn, getOfflineMinutes, type BellTopic } from "../notifications/topics.js";
+import { pruneConnectionHistory } from "../devices/connection-history.js";
 import { listDevicesDetailed } from "../devices/service.js";
 import { getMqttStatus } from "../telemetry/mqtt.js";
 import { storedBackupsDir } from "../backup/scheduled.js";
@@ -14,7 +15,6 @@ import { APP_VERSION } from "../version.js";
  * that failed. Each problem is posted once when it starts, and once more when it is over.
  */
 
-const TICK_MS = 5 * 60_000;
 /** Device messages may drop for a moment (restarts); only a longer break is reported. */
 const MQTT_DOWN_MS = 5 * 60_000;
 /** Free space under this share of the disk (or this many GB) is reported. */
@@ -66,31 +66,61 @@ async function postOnce(topic: BellTopic, level: NotificationLevel, title: strin
   if (!seen.rowCount) await post(topic, level, title, body);
 }
 
-/** Devices that said they are offline (null until the first look, which posts nothing). */
-let offlineDevices: Set<string> | null = null;
 let mqttDownSince: number | null = null;
 let mqttReported = false;
 let disk: "ok" | "low" | "very-low" | null = null;
 
+const clock = (d: Date) => d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+const minutesText = (m: number) => (m < 1 ? "less than a minute" : `${m} minute${m === 1 ? "" : "s"}`);
+
+/** Whether the bell already has this message (from `since` on): what was reported survives restarts. */
+async function alreadyPosted(title: string, since: Date): Promise<boolean> {
+  const r = await getPool().query(`SELECT 1 FROM notifications WHERE source = 'system' AND title = $1 AND created_at >= $2 LIMIT 1`, [title, since]);
+  return Boolean(r.rowCount);
+}
+
+/**
+ * Devices from their connection history (device_connection_events): one that has been offline for the
+ * chosen time (Settings → Notifications, 5 minutes unless changed) is reported, and its return with how
+ * long it was gone. Shorter drops are only in the device's history (Devices → the device).
+ */
 async function checkDevices(): Promise<void> {
+  const wait = await getOfflineMinutes();
   const devices = (await listDevicesDetailed()).filter((d) => d.isEnabled);
-  const now = new Set(devices.filter((d) => d.connectivityState === "offline").map((d) => d.id));
-  // The first look only learns how things are: problems already there at start-up were shown before.
-  if (offlineDevices === null) {
-    offlineDevices = now;
-    return;
-  }
   // "Hallway Monitor", "Garden: Relays" — the area only when the name does not already say it.
   const where = (d: (typeof devices)[number]) =>
     d.roomName && !d.name.toLowerCase().includes(d.roomName.toLowerCase()) ? `${d.roomName}: ${d.name}` : d.name;
+  const now = Date.now();
   for (const d of devices) {
-    if (now.has(d.id) && !offlineDevices.has(d.id)) {
-      await post("devices", "warning", `${where(d)} went offline`, "The device says it is offline: check its power and Wi-Fi. Its readings and switches will not update until it is back.");
-    } else if (!now.has(d.id) && offlineDevices.has(d.id)) {
-      await post("devices", "info", `${where(d)} is back online`, "");
+    const r = await getPool().query<{ off_at: Date; on_at: Date | null }>(
+      `SELECT off.at AS off_at,
+              (SELECT MIN(e.at) FROM device_connection_events e WHERE e.device_id = off.device_id AND e.state = 'online' AND e.at > off.at) AS on_at
+         FROM device_connection_events off
+        WHERE off.device_id = $1 AND off.state = 'offline' AND off.at > NOW() - INTERVAL '1 day'
+        ORDER BY off.at DESC LIMIT 1`,
+      [d.id]
+    );
+    const outage = r.rows[0];
+    if (!outage) continue;
+    const wentTitle = `${where(d)} went offline`;
+    if (!outage.on_at) {
+      const gone = Math.floor((now - outage.off_at.getTime()) / 60_000);
+      if (d.connectivityState === "offline" && gone >= wait && !(await alreadyPosted(wentTitle, outage.off_at))) {
+        await post(
+          "devices",
+          "warning",
+          wentTitle,
+          `Offline since ${clock(outage.off_at)} (${minutesText(gone)}). The device lost its connection: check its power and Wi-Fi. Its readings and switches will not update until it is back.`
+        );
+      }
+    } else if (await alreadyPosted(wentTitle, outage.off_at)) {
+      const backTitle = `${where(d)} is back online`;
+      if (!(await alreadyPosted(backTitle, outage.off_at))) {
+        const gone = Math.round((outage.on_at.getTime() - outage.off_at.getTime()) / 60_000);
+        await post("devices", "info", backTitle, `It was offline for ${minutesText(gone)} (${clock(outage.off_at)}–${clock(outage.on_at)}).`);
+      }
     }
   }
-  offlineDevices = now;
 }
 
 async function checkMqtt(): Promise<void> {
@@ -149,13 +179,13 @@ export async function reportAutomaticBackup(ok: boolean, message: string): Promi
   }
 }
 
-let timer: ReturnType<typeof setInterval> | null = null;
+let timer: ReturnType<typeof setInterval> | ReturnType<typeof setTimeout> | null = null;
 
 export function startSelfCheck(log: { warn: (o: object, m: string) => void }): void {
   if (timer) return;
   void clearInstalledUpdateNotices().catch((err) => log.warn({ err: String(err) }, "clearing old update messages failed"));
-  const tick = async () => {
-    for (const check of [checkMqtt, checkDevices, checkDisk]) {
+  const run = async (checks: (() => Promise<void>)[]) => {
+    for (const check of checks) {
       try {
         await check();
       } catch (err) {
@@ -163,8 +193,21 @@ export function startSelfCheck(log: { warn: (o: object, m: string) => void }): v
       }
     }
   };
+  // Devices every minute (from their recorded history, so nothing is missed between looks);
+  // the rest every 5 minutes; old history once every 6 hours.
+  let ticks = 0;
+  const tick = () => {
+    ticks++;
+    const checks = [checkDevices];
+    if (ticks % 5 === 1) checks.push(checkMqtt, checkDisk);
+    if (ticks % 360 === 1) checks.push(pruneConnectionHistory);
+    void run(checks);
+  };
   // The first look waits until devices have had time to report after a start.
-  setTimeout(() => void tick(), 2 * 60_000).unref?.();
-  timer = setInterval(() => void tick(), TICK_MS);
+  timer = setTimeout(() => {
+    tick();
+    timer = setInterval(tick, 60_000);
+    timer.unref?.();
+  }, 2 * 60_000);
   timer.unref?.();
 }

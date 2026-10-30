@@ -444,7 +444,8 @@ function parseSensorBlocks(yaml: string): EsphomeImportSuggestion["sensors"] {
       continue;
     }
 
-    if (platform === "wifi_signal") {
+    // The board's own health (Wi-Fi signal, time since restart): shown with the device, not a reading.
+    if (platform === "wifi_signal" || platform === "uptime") {
       continue;
     }
 

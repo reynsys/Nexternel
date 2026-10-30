@@ -62,8 +62,17 @@ services:
     container_name: nexternel-esphome
     restart: unless-stopped
     network_mode: host
+    # The ESPHome page is not open on the network: it answers only Caddy, through a socket, and Caddy
+    # lets in people who opened it from Nexternel (Devices → Open in ESPHome) — same address, port 6052.
+    command: ["dashboard", "--socket", "/run/esphome/dashboard.sock", "/config"]
+    # Its own health check, through the socket (port 6052 is Caddy's now).
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --unix-socket /run/esphome/dashboard.sock http://localhost/version || exit 1"]
+      interval: 30s
+      timeout: 30s
     volumes:
       - ./esphome:/config
+      - esphome_socket:/run/esphome
     environment:
       TZ: ${TZ}
       # Use ping instead of mDNS for online/offline (mDNS often fails in Docker)
@@ -183,12 +192,16 @@ services:
       - ./caddy:/etc/caddy:ro
       - caddy_data:/data
       - caddy_config:/config
+      - esphome_socket:/run/esphome
     ports:
       - "${HTTP_PORT:-80}:80"
       - "${HTTPS_PORT:-443}:443"
       - "${UI_PORT:-8080}:8080"
+      - "6052:6052"
+    # ESPHome first: it must have let go of port 6052 before Caddy takes it.
     depends_on:
       - ui
+      - esphome
 
   # RTSP → browser-friendly live streams (HLS / MSE / WebRTC)
   go2rtc:
@@ -234,3 +247,4 @@ volumes:
   backup_jobs:
   caddy_data:
   caddy_config:
+  esphome_socket:

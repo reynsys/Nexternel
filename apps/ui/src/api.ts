@@ -1250,6 +1250,8 @@ export const api = {
     fetchHistoryBatch(capabilityIds, range),
 
   system: () => apiFetch<SystemInfo>("/api/v1/system"),
+  /** A pass for this browser to open the ESPHome page (Devices → Open in ESPHome). */
+  esphomeAccess: () => apiFetch<{ ok: true }>("/api/v1/esphome/access", { method: "POST" }),
 
   setupStatus: () =>
     apiFetch<SetupStatusResponse>("/api/v1/setup/status"),
@@ -1395,9 +1397,14 @@ export const api = {
 
   clearNotifications: () => apiFetch<{ ok: true }>("/api/v1/notifications", { method: "DELETE" }),
   /** Which of Nexternel's own kinds of message reach the bell. */
-  bellTopics: () => apiFetch<{ topics: BellTopics }>("/api/v1/notifications/topics"),
-  setBellTopics: (topics: Partial<BellTopics>) =>
-    apiFetch<{ topics: BellTopics }>("/api/v1/notifications/topics", { method: "PUT", body: JSON.stringify({ topics }) }),
+  bellTopics: () => apiFetch<{ topics: BellTopics; offlineMinutes: number }>("/api/v1/notifications/topics"),
+  setBellTopics: (topics: Partial<BellTopics>, offlineMinutes?: number) =>
+    apiFetch<{ topics: BellTopics; offlineMinutes: number }>("/api/v1/notifications/topics", {
+      method: "PUT",
+      body: JSON.stringify({ topics, offlineMinutes }),
+    }),
+  /** When a device was online and offline in the last 24 hours. */
+  deviceConnection: (id: string) => apiFetch<{ connection: DeviceConnection }>(`/api/v1/devices/${encodeURIComponent(id)}/connection`),
 
   configStatus: () =>
     apiFetch<ConfigStatusResponse>("/api/v1/system/config/status"),
@@ -2532,3 +2539,15 @@ export type AddonsResponse = { available: boolean; serverId: string; addons: Add
 
 /** Nexternel's own kinds of message, each on or off for the bell (Settings → Notifications). */
 export type BellTopics = { readings: boolean; devices: boolean; mqtt: boolean; disk: boolean; backup: boolean; updates: boolean };
+
+/** A device's connection in the last 24 hours (Devices → the device). */
+export type DeviceConnection = {
+  state: "online" | "offline" | "unknown";
+  since: string | null;
+  outages: { from: string; to: string | null; minutes: number }[];
+  longestMinutes: number;
+  restarts: number;
+  wifiDbm: number | null;
+  wifiQuality: string | null;
+  restartedAt: string | null;
+};

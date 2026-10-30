@@ -69,6 +69,21 @@ export function homeNames(settings: HttpsSettings, serverIp: string | null): str
   return [...new Set(names.map((n) => n.toLowerCase()))];
 }
 
+/**
+ * The ESPHome page: only through Caddy, and only with the pass Nexternel's "Open in ESPHome" gives
+ * (esphome/gate.ts). ESPHome itself listens on a socket only Caddy can reach.
+ */
+export const ESPHOME_SITE = [
+  "# ESPHome: opened from Nexternel only (Devices → Open in ESPHome).",
+  "http://:6052 {",
+  "\tforward_auth api:4000 {",
+  "\t\turi /api/v1/esphome/gate",
+  "\t}",
+  "\treverse_proxy unix//run/esphome/dashboard.sock",
+  "}",
+  "",
+];
+
 /** Caddy's configuration (a "Caddyfile") for these settings. */
 export function buildCaddyfile(settings: HttpsSettings, serverIp: string | null, hasDomainCert: boolean): string {
   const httpsPort = ports().https;
@@ -103,7 +118,7 @@ export function buildCaddyfile(settings: HttpsSettings, serverIp: string | null,
     "\t}",
   ];
   if (!settings.enabled) {
-    lines.push("http://:80, http://:8080 {", ...certHandle, "\thandle {", "\t\treverse_proxy ui:80", "\t}", "}", "");
+    lines.push("http://:80, http://:8080 {", ...certHandle, "\thandle {", "\t\treverse_proxy ui:80", "\t}", "}", "", ...ESPHOME_SITE);
     return lines.join("\n");
   }
   const names = homeNames(settings, serverIp);
@@ -129,7 +144,8 @@ export function buildCaddyfile(settings: HttpsSettings, serverIp: string | null,
     trusted ? `\t\tredir https://${trusted}${portSuffix}{uri} permanent` : "\t\treverse_proxy ui:80",
     "\t}",
     "}",
-    ""
+    "",
+    ...ESPHOME_SITE
   );
   return lines.join("\n");
 }

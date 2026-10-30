@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Alert, Card, CardContent, FormControl, FormControlLabel, InputLabel, MenuItem, Select, Stack, Switch, Typography } from "@mui/material";
 import { api, type BellTopics, type PluginInfo } from "../../../api";
 import { BellFields } from "../../../components/BellFields";
@@ -10,7 +10,7 @@ import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
 /** Nexternel's own kinds of message, in the order shown. */
 const TOPICS: { key: keyof BellTopics; label: string; text: string }[] = [
   { key: "readings", label: "Readings at act now", text: "A reading's status light stayed red (and when it is back to normal)." },
-  { key: "devices", label: "Devices going offline", text: "A device says it went offline, and when it is back." },
+  { key: "devices", label: "Devices going offline", text: "A device stays offline for the time chosen below, and when it is back (with how long it was gone)." },
   { key: "mqtt", label: "Device messages stopped", text: "Readings and switches stopped updating for 5 minutes." },
   { key: "disk", label: "Disk getting full", text: "Less than 10 % (or 2 GB) free on the server." },
   { key: "backup", label: "Automatic backup failed", text: "The nightly backup could not be made." },
@@ -27,12 +27,19 @@ export function NotificationsSettingsPage() {
   const { isAdmin, permissions } = useShellAuth();
   const canManage = hasPermission(permissions, "manageUsers", Boolean(isAdmin));
   const [topics, setTopics] = useState<BellTopics | null>(null);
+  const [offlineMinutes, setOfflineMinutes] = useState(5);
   const [plugins, setPlugins] = useState<PluginInfo[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!canManage) return;
-    void api.bellTopics().then((r) => setTopics(r.topics)).catch((err) => setError(err instanceof Error ? err.message : "Could not load"));
+    void api
+      .bellTopics()
+      .then((r) => {
+        setTopics(r.topics);
+        setOfflineMinutes(r.offlineMinutes);
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : "Could not load"));
     void api.plugins().then((r) => setPlugins(r.plugins.filter((p) => p.permissions.notify))).catch(() => {});
   }, [canManage]);
 
@@ -40,6 +47,15 @@ export function NotificationsSettingsPage() {
     setError(null);
     try {
       setTopics((await api.setBellTopics({ [key]: on })).topics);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not save");
+    }
+  }
+
+  async function saveOfflineMinutes(minutes: number) {
+    setError(null);
+    try {
+      setOfflineMinutes((await api.setBellTopics({}, minutes)).offlineMinutes);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save");
     }
@@ -81,8 +97,8 @@ export function NotificationsSettingsPage() {
             </Typography>
             <Stack spacing={0.5} sx={{ mb: 2 }}>
               {TOPICS.map((t) => (
+                <Fragment key={t.key}>
                 <FormControlLabel
-                  key={t.key}
                   control={<Switch checked={topics?.[t.key] ?? true} disabled={!topics} onChange={(e) => void setTopic(t.key, e.target.checked)} />}
                   label={
                     <span>
@@ -95,6 +111,24 @@ export function NotificationsSettingsPage() {
                     </span>
                   }
                 />
+                {t.key === "devices" ? (
+                  <FormControl size="small" sx={{ ml: 7, maxWidth: 320 }} disabled={!topics?.devices}>
+                    <InputLabel id="bell-offline-minutes">Report a device after</InputLabel>
+                    <Select
+                      labelId="bell-offline-minutes"
+                      label="Report a device after"
+                      value={offlineMinutes}
+                      onChange={(e) => void saveOfflineMinutes(Number(e.target.value))}
+                    >
+                      {[1, 5, 15, 30, 60].map((m) => (
+                        <MenuItem key={m} value={m}>
+                          {m === 60 ? "1 hour" : `${m} minute${m === 1 ? "" : "s"}`} offline
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                ) : null}
+                </Fragment>
               ))}
             </Stack>
             <Typography variant="subtitle2" sx={{ mb: 1 }}>
