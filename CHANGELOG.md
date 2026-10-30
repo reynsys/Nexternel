@@ -2,6 +2,12 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.148
+
+- **New dashboards** open ready to edit, with an **Add panel** button in their empty section, and you choose the icon when you add one.
+- The **+** (add dashboard) shows only while editing.
+- **Change the order of dashboards** by dragging them in the tabs, dock or rail while editing.
+
 ## V5.2.147
 
 - **Safer ESPHome page:** it now opens only from Nexternel (Devices → Open in ESPHome) for people allowed to change devices. Before, anyone on the home network could open it.

@@ -10,6 +10,7 @@ import {
   useTheme,
 } from "@mui/material";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import AddIcon from "@mui/icons-material/Add";
 import type { CameraRecord, Capability, PanelInstance } from "../api";
 import type { RuntimePanelInstance } from "../lib/panel-compatibility/types";
 import { runtimeConfigToPanelRecord } from "../lib/panel-compatibility/panel-config";
@@ -64,6 +65,10 @@ type Props = {
   /** Every camera, so camera panels can name their title strip like other panels. */
   cameras?: CameraRecord[];
   editMode: boolean;
+  /** Add a panel to this section (while editing). */
+  onAddPanel?: () => void;
+  /** Start editing with a panel being added here (people who may edit, outside editing). */
+  onStartAdding?: () => void;
   activity?: PanelActivity;
   onLayoutChange: (sectionId: string, next: Layout[]) => void;
   onRemovePanel: (sectionId: string, panelId: string) => void;
@@ -120,6 +125,8 @@ export function SectionGrid({
   capabilities,
   cameras = [],
   editMode,
+  onAddPanel,
+  onStartAdding,
   activity = "visible",
   onLayoutChange,
   onRemovePanel,
@@ -380,9 +387,17 @@ export function SectionGrid({
         </GridLayout>
       )}
       {panels.length === 0 && (
-        <Typography sx={{ p: 2, textAlign: "center", color: mutedLabel }}>
-          {editMode ? "No panels yet — use Add panel." : "Empty section."}
-        </Typography>
+        <Stack alignItems="center" spacing={1.5} sx={{ p: 2 }}>
+          <Typography sx={{ textAlign: "center", color: mutedLabel }}>
+            {editMode || onStartAdding ? "No panels here yet." : "Empty section."}
+          </Typography>
+          {/* While editing: add a panel here. Otherwise (for people who may edit): start editing with it. */}
+          {(editMode ? onAddPanel : onStartAdding) ? (
+            <Button variant={editMode ? "contained" : "outlined"} startIcon={<AddIcon />} onClick={editMode ? onAddPanel : onStartAdding}>
+              {editMode ? "Add panel" : "Add panels"}
+            </Button>
+          ) : null}
+        </Stack>
       )}
 
       <PanelPlaceContext.Provider value={editingPlace}>

@@ -1,5 +1,5 @@
 import { dashboardPath } from "../lib/dashboard-path";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type DragEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Button, Stack, Tooltip, Typography } from "@mui/material";
 import { LookDecor } from "../skins/looks/LookDecor";
@@ -89,7 +89,35 @@ export function DashboardTabBar({
     leaveThen(() => navigate(display.active ? displayPath(path) + window.location.search : path));
   };
   const [adding, setAdding] = useState(false);
-  const canAdd = canEdit && !display.active;
+  // Adding and reordering are part of editing (or the only way forward when there is no dashboard yet).
+  const canAdd = canEdit && !display.active && (editMode || (!loading && dashboards.length === 0));
+
+  // While editing: drag a room onto another to put it in that place; the order is saved at once.
+  const [dragId, setDragId] = useState<string | null>(null);
+  async function dropOn(targetId: string) {
+    if (!dragId || dragId === targetId) return;
+    const order = dashboards.map((x) => x.id).filter((id) => id !== dragId);
+    order.splice(order.indexOf(targetId), 0, dragId);
+    setDashboards(order.map((id) => dashboards.find((x) => x.id === id)!));
+    setDragId(null);
+    try {
+      setDashboards((await api.reorderDashboards(order)).dashboards);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not save the order");
+    }
+  }
+  const dragProps = (d: DashboardSummary) =>
+    editMode && canEdit && !display.active
+      ? {
+          draggable: true,
+          onDragStart: () => setDragId(d.id),
+          onDragEnd: () => setDragId(null),
+          onDragOver: (e: DragEvent) => dragId && e.preventDefault(),
+          onDrop: () => void dropOn(d.id),
+          title: `${d.name} — drag to change the order`,
+          style: { cursor: "grab", opacity: dragId === d.id ? 0.5 : 1 },
+        }
+      : {};
   const addButton = (size: number) => (
     <Tooltip title="Add dashboard">
       <Button
@@ -110,7 +138,7 @@ export function DashboardTabBar({
       onCreated={(id) => {
         setAdding(false);
         setLiveKey((k) => k + 1);
-        leaveThen(() => navigate(`/dashboards/${id}`));
+        leaveThen(() => navigate(`/dashboards/${id}`, { state: { startEditing: true } }));
       }}
     />
   );
@@ -147,6 +175,7 @@ export function DashboardTabBar({
           error={error}
           onGo={go}
           tools={tools}
+          dragProps={dragProps}
         />
         {addDialog}
       </>
@@ -216,6 +245,7 @@ export function DashboardTabBar({
                 variant={active ? "contained" : "outlined"}
                 color={active ? "primary" : "inherit"}
                 onClick={() => go(d)}
+                {...dragProps(d)}
                 startIcon={<Icon fontSize="small" />}
                 sx={{
                   flexShrink: 0,

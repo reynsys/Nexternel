@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { setLeaveGuard } from "../lib/leave-guard";
-import { useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { type Layout } from "react-grid-layout";
 import {
   Accordion,
@@ -377,7 +377,7 @@ function DashboardPageContent() {
         if (!targetId) {
           if (!cancelled) {
             setDashboardId(null);
-            setBootError("No dashboards yet — open Manage dashboards to create one.");
+            setBootError("No dashboards yet. Use + Add dashboard in the Dashboard Menu to create one.");
           }
           return;
         }
@@ -404,6 +404,18 @@ function DashboardPageContent() {
       cancelled = true;
     };
   }, [routeIdParam, routeSlug]);
+
+  // A dashboard just created opens ready to edit (Add panel at hand), not as an empty page.
+  const location = useLocation();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (pageLoading || !dashboardId || editMode) return;
+    if ((location.state as { startEditing?: boolean } | null)?.startEditing) {
+      if (canEditDashboards) enterEditMode();
+      navigate(location.pathname + location.search, { replace: true, state: null });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageLoading, dashboardId, location.state]);
 
   // A dashboard, device, camera or area changed on another screen: show it here (not while editing).
   useLiveChanges(
@@ -1247,6 +1259,15 @@ function DashboardPageContent() {
                   capabilities={capabilities}
                   cameras={cameras}
                   editMode={editMode}
+                  onAddPanel={() => openAddPanel(section.id)}
+                  onStartAdding={
+                    canEditDashboards && !display.active
+                      ? () => {
+                          enterEditMode();
+                          openAddPanel(section.id);
+                        }
+                      : undefined
+                  }
                   activity={section.collapsed ? "collapsed" : "visible"}
                   onLayoutChange={onLayoutChange}
                   onRemovePanel={removePanel}

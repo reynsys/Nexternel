@@ -15,6 +15,8 @@ type Props = {
   error: string | null;
   onGo: (d: DashboardSummary) => void;
   tools: (dir: "row" | "column", size?: number) => ReactNode;
+  /** While editing: what makes a room draggable to a new place. */
+  dragProps?: (d: DashboardSummary) => object;
 };
 
 /** Room width the rail takes when open / folded (the page keeps this much free on the right). */
@@ -31,7 +33,7 @@ export function RoomMenu(props: Props) {
   return <Rail {...props} />;
 }
 
-function RoomTile({ d, active, onGo, size, label }: { d: DashboardSummary; active: boolean; onGo: () => void; size: number; label: "beside" | "none" }) {
+function RoomTile({ d, active, onGo, size, label, drag }: { d: DashboardSummary; active: boolean; onGo: () => void; size: number; label: "beside" | "none"; drag?: object }) {
   const Icon = getDashboardIcon(d.tabIcon);
   // A real button, so every Look draws rooms like its other buttons (the open room filled).
   const tile = (
@@ -43,6 +45,7 @@ function RoomTile({ d, active, onGo, size, label }: { d: DashboardSummary; activ
       data-nx-active-tab={active ? "" : undefined}
       variant={active ? "contained" : "outlined"}
       startIcon={label === "beside" ? <Icon fontSize="small" /> : undefined}
+      {...drag}
       sx={{
         minWidth: size,
         height: size,
@@ -71,7 +74,7 @@ const TILE = 46;
 const GROW = 0.22; // the most a room grows; the dock keeps this much room above its rooms
 /** Space between the dock and the bottom of the screen (wide screens). */
 const DOCK_GAP = 14;
-function Dock({ dashboards, activeId, onGo, tools, loading, error }: Props) {
+function Dock({ dashboards, activeId, onGo, tools, loading, error, dragProps }: Props) {
   const dock = useRef<HTMLDivElement>(null);
   const [centre, setCentre] = useState<number | null>(null);
   // Centre under the dashboard (the dock's own parent), without taking any room in the page.
@@ -158,7 +161,7 @@ function Dock({ dashboards, activeId, onGo, tools, loading, error }: Props) {
         {loading ? <Typography variant="caption">Loading rooms…</Typography> : null}
         {error ? <Typography variant="caption" color="error">{error}</Typography> : null}
         {dashboards.map((d) => (
-          <RoomTile key={d.id} d={d} active={d.id === activeId} onGo={() => onGo(d)} size={TILE} label="none" />
+          <RoomTile key={d.id} d={d} active={d.id === activeId} onGo={() => onGo(d)} size={TILE} label="none" drag={dragProps?.(d)} />
         ))}
         <Box sx={{ width: "1px", alignSelf: "stretch", bgcolor: "divider", mx: 0.5, flexShrink: 0 }} />
         {tools("row", TILE)}
@@ -175,7 +178,7 @@ const RAIL_EDGE = 14;
  * A floating island on the right, centred top to bottom; it grows with the rooms (and scrolls when
  * they no longer fit). Fold button on top, rooms in the middle, the bell and Dashboard Options at the bottom.
  */
-function Rail({ dashboards, activeId, onGo, tools }: Props) {
+function Rail({ dashboards, activeId, onGo, tools, dragProps }: Props) {
   const [open, setOpen] = useState(() => {
     try {
       return localStorage.getItem(RAIL_KEY) !== "0";
@@ -233,7 +236,7 @@ function Rail({ dashboards, activeId, onGo, tools }: Props) {
       </Tooltip>
       <Box sx={{ display: "flex", flexDirection: "column", gap: "var(--nx-list-gap)", minHeight: 0, overflowY: "auto", scrollbarWidth: "none" }}>
         {dashboards.map((d) => (
-          <RoomTile key={d.id} d={d} active={d.id === activeId} onGo={() => onGo(d)} size={SIZE} label={open ? "beside" : "none"} />
+          <RoomTile key={d.id} d={d} active={d.id === activeId} onGo={() => onGo(d)} size={SIZE} label={open ? "beside" : "none"} drag={dragProps?.(d)} />
         ))}
       </Box>
       <Box sx={{ height: "1px", bgcolor: "divider", my: 0.5, flexShrink: 0 }} />

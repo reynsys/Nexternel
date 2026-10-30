@@ -81,7 +81,7 @@ export function ManageDashboardsPanel({ compact, currentDashboardId, onDashboard
       const res = await api.createDashboard(name.trim() || "New dashboard");
       setName("");
       onDashboardsChanged?.();
-      navigate(`/dashboards/${res.dashboard.id}`);
+      navigate(`/dashboards/${res.dashboard.id}`, { state: { startEditing: true } });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not create the dashboard");
     } finally {
