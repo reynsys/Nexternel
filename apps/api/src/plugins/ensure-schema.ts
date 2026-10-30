@@ -57,6 +57,12 @@ CREATE TABLE IF NOT EXISTS notifications (
 );
 CREATE INDEX IF NOT EXISTS idx_notifications_created ON notifications(created_at DESC);
 
+-- Which of Nexternel's own kinds of message reach the bell (Settings → Notifications); missing = on.
+CREATE TABLE IF NOT EXISTS notification_topics (
+    topic           VARCHAR(40) PRIMARY KEY,
+    enabled         BOOLEAN NOT NULL DEFAULT TRUE
+);
+
 CREATE TABLE IF NOT EXISTS notification_reads (
     user_id         UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     last_read_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()

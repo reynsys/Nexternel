@@ -21,7 +21,7 @@ import LightModeIcon from "@mui/icons-material/LightMode";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import BrightnessAutoIcon from "@mui/icons-material/BrightnessAuto";
 import { GLOW_PALETTES, GRADIENT_NONE_ID, GRADIENT_PALETTES, gradientCss, isGlowId } from "./gradientPalettes";
-import { PRIMARY_SWATCHES, TEXT_SIZES, normalizeAccentHex, normalizeBellPrefs, type BellPrefs, type ThemePrefs, withLook } from "./themePrefs";
+import { PRIMARY_SWATCHES, TEXT_SIZES, normalizeAccentHex, type ThemePrefs, withLook } from "./themePrefs";
 import { listLooks, resolveLook } from "./looks/registry";
 import { chosenLookButtons } from "../lib/look-font";
 import { BACKGROUND_EFFECTS, EFFECT_AMOUNTS, EFFECT_COLOURS, EFFECT_SPEEDS, type EffectColour } from "./effects/catalog";
@@ -30,6 +30,7 @@ import type { UiSkin } from "./types";
 import { choiceSx, insetSx } from "./surfaceStyles";
 import { ButtonRow } from "../components/ButtonRow";
 import { ROOM_NAVS } from "../lib/room-nav";
+import { Segmented } from "../components/Segmented";
 import { AppearancePreview } from "../components/appearance/AppearancePreview";
 import { HARMONIES } from "../lib/appearance/scale";
 import { CORE_FONTS, FONT_GROUPS, DEFAULT_FONT_ID } from "../lib/appearance/fonts";
@@ -97,30 +98,6 @@ function Row({ label, hint, children }: { label: string; hint?: string; children
   );
 }
 
-function Segmented<T extends string | number>({
-  value,
-  options,
-  onChange,
-  disabled,
-  label,
-}: {
-  value: T;
-  options: readonly { value: T; label: string }[];
-  onChange: (value: T) => void;
-  disabled?: boolean;
-  label: string;
-}) {
-  return (
-    <ToggleButtonGroup exclusive size="small" value={value} disabled={disabled} aria-label={label} onChange={(_, v: T | null) => v !== null && onChange(v)} sx={{ flexWrap: "wrap" }}>
-      {options.map((o) => (
-        <ToggleButton key={String(o.value)} value={o.value} sx={{ px: 1.5 }}>
-          {o.label}
-        </ToggleButton>
-      ))}
-    </ToggleButtonGroup>
-  );
-}
-
 /** A choice tile: a name and a line about it (Looks, effects, menus…). */
 function ChoiceTile({ selected, onClick, title, text, children, sx }: { selected: boolean; onClick: () => void; title: ReactNode; text?: ReactNode; children?: ReactNode; sx?: object }) {
   return (
@@ -182,7 +159,6 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
   const look = resolveLook(themePrefs.lookId);
   const effectId = themePrefs.effectId ?? "off";
   const set = (patch: Partial<ThemePrefs>) => onThemeChange({ ...themePrefs, ...patch });
-  const bell = normalizeBellPrefs(themePrefs.bell);
   const mode = look.forceMode ?? (themePrefs.autoMode ? (deviceDark ? "dark" : "light") : themePrefs.mode);
   const scheme = useMemo(() => schemeForPrefs({ ...themePrefs, mode }, mode, Boolean(look.frosted)), [themePrefs, mode, look]);
 
@@ -497,48 +473,6 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
             </Typography>
           }
         />
-      </Section>
-
-      <Section
-        title="Notification bell"
-        hint="Messages from Nexternel and plugins. Its number has the colour of the most important new message: your main colour for information, amber for keep an eye on it, red for act now."
-      >
-        <Stack spacing={1.25}>
-          <Stack direction="row" spacing={1.5} alignItems="center">
-            <Typography variant="body2" color="text.secondary" sx={{ width: 64, flexShrink: 0 }}>
-              Show
-            </Typography>
-            <Segmented<BellPrefs["show"]>
-              label="When the bell shows"
-              value={bell.show}
-              options={[
-                { value: "always", label: "Always" },
-                { value: "new", label: "Only with new messages" },
-                { value: "never", label: "Never" },
-              ]}
-              onChange={(v) => set({ bell: { ...bell, show: v } })}
-            />
-          </Stack>
-          <Stack direction="row" spacing={1.5} alignItems="center">
-            <Typography variant="body2" color="text.secondary" sx={{ width: 64, flexShrink: 0 }}>
-              Where
-            </Typography>
-            <Segmented<BellPrefs["position"]>
-              label="Where the bell sits"
-              value={bell.position}
-              disabled={bell.show === "never"}
-              options={[
-                { value: "menu", label: "Top of the side menu" },
-                { value: "top", label: "Next to the dashboard options" },
-              ]}
-              onChange={(v) => set({ bell: { ...bell, position: v } })}
-            />
-          </Stack>
-          <Typography variant="caption" color="text.secondary">
-            "Next to the dashboard options" puts it beside the cog above your dashboards; on other pages it stays at the top of the side menu. On phones and
-            with the top menu layout it sits in the top bar. Which plugin messages reach the bell is set for each plugin in Settings → Extensions.
-          </Typography>
-        </Stack>
       </Section>
 
       <Section title="Layout">

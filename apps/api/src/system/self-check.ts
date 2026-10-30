@@ -1,6 +1,7 @@
 import fs from "fs";
 import { getPool } from "../db.js";
 import { addNotification, type NotificationLevel } from "../notifications/service.js";
+import { bellTopicOn, type BellTopic } from "../notifications/topics.js";
 import { listDevicesDetailed } from "../devices/service.js";
 import { getMqttStatus } from "../telemetry/mqtt.js";
 import { storedBackupsDir } from "../backup/scheduled.js";
@@ -51,17 +52,18 @@ export function diskLevel(freeBytes: number, totalBytes: number): "ok" | "low" |
   return "ok";
 }
 
-function post(level: NotificationLevel, title: string, body: string) {
-  return addNotification({ source: "system", sourceName: "Nexternel", level, title, body }).catch(() => undefined);
+async function post(topic: BellTopic, level: NotificationLevel, title: string, body: string) {
+  if (!(await bellTopicOn(topic))) return;
+  await addNotification({ source: "system", sourceName: "Nexternel", level, title, body }).catch(() => undefined);
 }
 
 /** Like post, unless the same message is already in the bell from the last day (e.g. before a restart). */
-async function postOnce(level: NotificationLevel, title: string, body: string) {
+async function postOnce(topic: BellTopic, level: NotificationLevel, title: string, body: string) {
   const seen = await getPool().query(
     `SELECT 1 FROM notifications WHERE source = 'system' AND title = $1 AND created_at > NOW() - INTERVAL '1 day' LIMIT 1`,
     [title]
   );
-  if (!seen.rowCount) await post(level, title, body);
+  if (!seen.rowCount) await post(topic, level, title, body);
 }
 
 /** Devices that said they are offline (null until the first look, which posts nothing). */
@@ -83,9 +85,9 @@ async function checkDevices(): Promise<void> {
     d.roomName && !d.name.toLowerCase().includes(d.roomName.toLowerCase()) ? `${d.roomName}: ${d.name}` : d.name;
   for (const d of devices) {
     if (now.has(d.id) && !offlineDevices.has(d.id)) {
-      await post("warning", `${where(d)} went offline`, "The device says it is offline: check its power and Wi-Fi. Its readings and switches will not update until it is back.");
+      await post("devices", "warning", `${where(d)} went offline`, "The device says it is offline: check its power and Wi-Fi. Its readings and switches will not update until it is back.");
     } else if (!now.has(d.id) && offlineDevices.has(d.id)) {
-      await post("info", `${where(d)} is back online`, "");
+      await post("devices", "info", `${where(d)} is back online`, "");
     }
   }
   offlineDevices = now;
@@ -94,7 +96,7 @@ async function checkDevices(): Promise<void> {
 async function checkMqtt(): Promise<void> {
   const connected = getMqttStatus().status === "connected";
   if (connected) {
-    if (mqttReported) await post("info", "Device messages are working again", "Readings and switches update again.");
+    if (mqttReported) await post("mqtt", "info", "Device messages are working again", "Readings and switches update again.");
     mqttDownSince = null;
     mqttReported = false;
     return;
@@ -103,6 +105,7 @@ async function checkMqtt(): Promise<void> {
   if (!mqttReported && Date.now() - mqttDownSince >= MQTT_DOWN_MS) {
     mqttReported = true;
     await post(
+      "mqtt",
       "alert",
       "Device messages are not working",
       "Nexternel cannot reach the service that carries device messages (MQTT), so readings and switches do not update. Try Restart under Settings → System → Help & troubleshooting."
@@ -126,11 +129,11 @@ async function checkDisk(): Promise<void> {
   if (was === level) return;
   const free = `${freeGb.toFixed(1)} GB free.`;
   if (level === "very-low") {
-    await postOnce("alert", "The disk is almost full", `${free} Nexternel may stop saving readings and backups. Delete old backups (Settings → Backup & Restore) or free space on the server.`);
+    await postOnce("disk", "alert", "The disk is almost full", `${free} Nexternel may stop saving readings and backups. Delete old backups (Settings → Backup & Restore) or free space on the server.`);
   } else if (level === "low" && was !== "very-low") {
-    await postOnce("warning", "The disk is getting full", `${free} Delete old backups (Settings → Backup & Restore) or free space on the server.`);
+    await postOnce("disk", "warning", "The disk is getting full", `${free} Delete old backups (Settings → Backup & Restore) or free space on the server.`);
   } else if (level === "ok" && was !== null) {
-    await post("info", "There is enough disk space again", free);
+    await post("disk", "info", "There is enough disk space again", free);
   }
 }
 
@@ -139,10 +142,10 @@ let backupFailed = false;
 export async function reportAutomaticBackup(ok: boolean, message: string): Promise<void> {
   if (!ok) {
     backupFailed = true;
-    await post("alert", "The automatic backup failed", `${message}\nTry Back up now under Settings → Backup & Restore.`);
+    await post("backup", "alert", "The automatic backup failed", `${message}\nTry Back up now under Settings → Backup & Restore.`);
   } else if (backupFailed) {
     backupFailed = false;
-    await post("info", "Automatic backups work again", message);
+    await post("backup", "info", "Automatic backups work again", message);
   }
 }
 

@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type MouseEvent } from "react";
+import { guardLinkClick, leaveThen } from "../../../lib/leave-guard";
 import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Collapse from "@mui/material/Collapse";
@@ -56,11 +57,19 @@ function NavButton({
   group?: { open: boolean; listId: string; onClick: () => void };
 }) {
   const Icon = item.icon;
+  const navigate = useNavigate();
   const link = group ? {} : { component: RouterLink, to: item.to };
   return (
     <ListItemButton
       {...link}
-      onClick={group ? group.onClick : onNavigate}
+      onClick={
+        group
+          ? group.onClick
+          : (e: MouseEvent) => {
+              // A page with unsaved changes (a dashboard being edited) asks before the link is followed.
+              if (!guardLinkClick(e, () => (navigate(item.to), onNavigate?.()))) onNavigate?.();
+            }
+      }
       selected={selected}
       aria-current={selected ? "page" : undefined}
       aria-expanded={group ? group.open : undefined}
@@ -167,10 +176,11 @@ function NavList({
                 listId,
                 onClick: () => {
                   if (active) setToggled((t) => ({ ...t, [item.to]: !open }));
-                  else {
-                    navigate(item.to);
-                    onNavigate?.();
-                  }
+                  else
+                    leaveThen(() => {
+                      navigate(item.to);
+                      onNavigate?.();
+                    });
                 },
               }}
             />

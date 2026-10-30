@@ -172,6 +172,7 @@ export function SideMenu({
         {signedIn ? (
           collapsed ? (
             <>
+              <NotificationBell place="menu-bottom" canClear={hasPermission(permissions ?? null, "manageUsers", isAdmin)} />
               <Tooltip title={`${userName} · ${roleName}`} placement="right">
                 <Avatar
                   src={user?.avatarData ?? undefined}
@@ -212,6 +213,7 @@ export function SideMenu({
                     {APP_VERSION}
                   </Typography>
                 </Box>
+                <NotificationBell place="menu-bottom" canClear={hasPermission(permissions ?? null, "manageUsers", isAdmin)} />
               </Stack>
               <ButtonRow direction="row">
                 <Button variant="outlined" size="small" startIcon={<LogoutIcon fontSize="small" />} onClick={onLogout} sx={{ flex: 1 }}>

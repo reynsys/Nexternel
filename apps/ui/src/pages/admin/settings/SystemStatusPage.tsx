@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Alert, Box, Button, Card, CardContent, Collapse, Divider, Stack, Typography } from "@mui/material";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import ErrorRoundedIcon from "@mui/icons-material/ErrorRounded";
+import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import { api, type SystemInfo } from "../../../api";
 import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
 import { SystemDiagnosticsSection } from "./SystemDiagnosticsSection";
@@ -130,17 +131,19 @@ export function SystemStatusPage() {
 
       <Card sx={surfaceSx}>
         <CardContent>
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="h6">Help &amp; troubleshooting</Typography>
-              <Typography variant="body2" color="text.secondary">
-                Tools for when something is not working, or when someone is helping you.
-              </Typography>
-            </Box>
-            <Button variant={helpOpen ? "contained" : "outlined"} aria-expanded={helpOpen} onClick={() => setHelpOpen((o) => !o)}>
-              {helpOpen ? "Hide" : "Show"}
-            </Button>
-          </Stack>
+          <Typography variant="h6">Help &amp; troubleshooting</Typography>
+          <Typography variant="body2" color="text.secondary">
+            Tools for when something is not working, or when someone is helping you.
+          </Typography>
+          <Button
+            variant={helpOpen ? "contained" : "outlined"}
+            aria-expanded={helpOpen}
+            endIcon={<ExpandMoreRoundedIcon sx={{ transition: "transform 150ms", transform: helpOpen ? "rotate(180deg)" : "none" }} />}
+            onClick={() => setHelpOpen((o) => !o)}
+            sx={{ mt: 1.5 }}
+          >
+            {helpOpen ? "Hide troubleshooting tools" : "Show troubleshooting tools"}
+          </Button>
           <Collapse in={helpOpen} unmountOnExit>
             <Stack spacing={3} divider={<Divider flexItem />} sx={{ pt: 3 }}>
               <DiagnosticReportCard />

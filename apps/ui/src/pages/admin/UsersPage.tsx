@@ -49,6 +49,7 @@ import { ProfileSection } from "./sections/ProfileSection";
 import { ButtonRow } from "../../components/ButtonRow";
 import { useLiveChanges } from "../../lib/live-changes";
 import { WallDisplayFields } from "../../components/WallDisplayFields";
+import { BellFields } from "../../components/BellFields";
 
 function prefsFromUser(u: AdminUser | null): { theme: ThemePrefs; skinId: string } {
   const n = normalizeThemePrefs(u?.themePrefs ?? DEFAULT_THEME_PREFS);
@@ -118,7 +119,7 @@ export function UsersPage() {
     setSkinId(p.skinId);
   }
 
-  /** Every Appearance choice of the person being edited (the same set My appearance saves). */
+  /** Every Appearance choice of the person being edited (the same set Appearance saves). */
   function themePayload(): UserThemePrefs {
     return toAccountThemePrefs(theme, skinId);
   }
@@ -336,6 +337,8 @@ export function UsersPage() {
               <Divider />
               <Typography variant="subtitle1">Wall display</Typography>
               <WallDisplayFields value={theme.wall} onChange={(wall) => setTheme((t) => ({ ...t, wall }))} />
+              <Typography variant="subtitle1">Notification bell</Typography>
+              <BellFields value={theme.bell} onChange={(bell) => setTheme((t) => ({ ...t, bell }))} />
             </Stack>
           </DialogContent>
           <DialogActions>
@@ -419,6 +422,8 @@ export function UsersPage() {
               <Divider />
               <Typography variant="subtitle1">Wall display</Typography>
               <WallDisplayFields value={theme.wall} onChange={(wall) => setTheme((t) => ({ ...t, wall }))} />
+              <Typography variant="subtitle1">Notification bell</Typography>
+              <BellFields value={theme.bell} onChange={(bell) => setTheme((t) => ({ ...t, bell }))} />
             </Stack>
           </DialogContent>
           <DialogActions>

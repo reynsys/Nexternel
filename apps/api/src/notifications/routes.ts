@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from "fastify";
 import { requireUser } from "../auth/plugin.js";
 import { requirePermission } from "../auth/rbac.js";
 import { clearNotifications, listNotifications, markAllNotificationsRead } from "./service.js";
+import { getBellTopics, setBellTopics } from "./topics.js";
 
 export const notificationsRoutes: FastifyPluginAsync = async (app) => {
   app.get<{ Querystring: { limit?: string } }>("/api/v1/notifications", async (request, reply) => {
@@ -19,5 +20,16 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
     if (!requirePermission(request, reply, "manageUsers")) return;
     await clearNotifications();
     return { ok: true };
+  });
+
+  /** Which of Nexternel's own kinds of message reach the bell (Settings → Notifications). */
+  app.get("/api/v1/notifications/topics", async (request, reply) => {
+    if (!requireUser(request, reply)) return;
+    return { topics: await getBellTopics() };
+  });
+
+  app.put<{ Body: { topics?: Record<string, unknown> } }>("/api/v1/notifications/topics", async (request, reply) => {
+    if (!requirePermission(request, reply, "manageUsers")) return;
+    return { topics: await setBellTopics(request.body?.topics ?? {}) };
   });
 };

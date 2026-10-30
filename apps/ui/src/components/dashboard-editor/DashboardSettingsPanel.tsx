@@ -102,7 +102,6 @@ export function DashboardSettingsPanel(p: Props) {
           currentDashboardId={p.dashboardId}
           onDashboardsChanged={p.onDashboardsChanged}
           onCurrentTabMeta={p.onCurrentMeta}
-          editing
         />
       )}
     </SidePanel>

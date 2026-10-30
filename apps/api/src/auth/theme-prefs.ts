@@ -36,8 +36,8 @@ export type ThemePrefsDto = {
   wall?: WallPrefs;
 };
 
-/** The notification bell for this person: when it shows and where (Settings → Appearance). */
-export type BellPrefs = { show: "always" | "new" | "never"; position: "menu" | "top" };
+/** The notification bell for this person: when it shows and where (Settings → Notifications). */
+export type BellPrefs = { show: "always" | "new" | "never"; position: "menu" | "menu-bottom" | "top" };
 
 export type WallPrefs = { textSize: number; tabs: boolean; rotate: number; light: boolean; autoscroll: boolean; start: string | null };
 const WALL_TEXT = new Set([90, 100, 110, 125]);
@@ -58,7 +58,7 @@ function bellField(raw: unknown): BellPrefs {
   const o = (raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {}) as Record<string, unknown>;
   return {
     show: o.show === "new" || o.show === "never" ? o.show : "always",
-    position: o.position === "top" ? "top" : "menu",
+    position: o.position === "top" || o.position === "menu-bottom" ? o.position : "menu",
   };
 }
 

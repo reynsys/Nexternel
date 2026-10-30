@@ -43,12 +43,13 @@ const LEVEL_COLOR: Record<NotificationItem["level"], string> = {
 /**
  * Bell with the latest messages from Nexternel and plugins. Its counter takes the status-light
  * colour of the most important unread message: accent for information, amber, red only for
- * "act now". Each person chooses in Settings → Appearance whether it shows (always, only with new
- * messages, never) and where: `place` says where this copy sits. "dashboard" = beside the
- * Dashboard Options cog; pages without that row keep the bell in the side menu ("menu"). "bar"
- * (phone top bar, top-menu layout) shows whenever the bell is on.
+ * "act now". Each person chooses in Settings → Notifications whether it shows (always, only with
+ * new messages, never) and where: `place` says where this copy sits. "menu" = top of the side menu,
+ * "menu-bottom" = bottom of the side menu beside the person's name, "dashboard" = with the
+ * dashboard tools (beside the Dashboard Options cog; other pages keep it at the top of the side
+ * menu). "bar" (phone top bar, top-menu layout) shows whenever the bell is on.
  */
-export function NotificationBell({ canClear, place = "bar" }: { canClear?: boolean; place?: "menu" | "dashboard" | "bar" }) {
+export function NotificationBell({ canClear, place = "bar" }: { canClear?: boolean; place?: "menu" | "menu-bottom" | "dashboard" | "bar" }) {
   const skin = useOptionalSkin();
   const prefs = normalizeBellPrefs(skin?.themePrefs.bell);
   const lights = useStatusLightPrefs();
@@ -58,7 +59,8 @@ export function NotificationBell({ canClear, place = "bar" }: { canClear?: boole
     prefs.show !== "never" &&
     (place === "bar" ||
       (place === "dashboard" && prefs.position === "top") ||
-      (place === "menu" && (prefs.position === "menu" || !onDashboard)));
+      (place === "menu" && (prefs.position === "menu" || (prefs.position === "top" && !onDashboard))) ||
+      (place === "menu-bottom" && prefs.position === "menu-bottom"));
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [unread, setUnread] = useState(0);

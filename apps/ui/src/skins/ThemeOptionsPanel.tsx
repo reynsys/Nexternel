@@ -5,7 +5,7 @@ import { useContentSurfaceSx } from "./useSurfaceStyles";
 
 /**
  * Theme / appearance controls (light-dark, accent, skin).
- * Used on Settings → My appearance — not as a floating FAB.
+ * Used on Settings → Appearance — not as a floating FAB.
  * When signed in, prefs are saved to the user account.
  */
 export function ThemeOptionsPanel() {

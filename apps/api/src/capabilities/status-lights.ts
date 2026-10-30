@@ -365,6 +365,8 @@ export class StatusEngine {
 }
 
 export const statusEngine = new StatusEngine(async (n) => {
+  const { bellTopicOn } = await import("../notifications/topics.js");
+  if (!(await bellTopicOn("readings"))) return;
   const { addNotification } = await import("../notifications/service.js");
-  return addNotification({ source: "system", sourceName: "Status lights", ...n });
+  await addNotification({ source: "system", sourceName: "Status lights", ...n });
 });

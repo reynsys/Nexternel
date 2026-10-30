@@ -2,6 +2,14 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.146
+
+- **Dashboards:** the Dashboard Menu (tabs, dock or rail) stays visible while editing, with a **+** button to add a dashboard. Leaving a dashboard with unsaved changes asks whether to save them.
+- **Settings → Notifications:** your notification bell (when it shows and where: top or bottom of the side menu, or with the dashboard tools) and which messages reach it.
+- **My appearance** is now called **Appearance**.
+- **Extensions:** Check for updates now covers everything installed.
+- **System:** the troubleshooting tools open with a clear button under the title.
+
 ## V5.2.145
 
 - **Users** is now inside Settings, with Roles opened from the Users page.

@@ -2,6 +2,7 @@ import type { StatusLightSettings } from "@nexternel/domain";
 import type { PluginManifest } from "@nexternel/plugin-sdk";
 import { loadCustomStatusSettings } from "../capabilities/status-lights.js";
 import { decryptSecret, isEncryptedSecret } from "../plugins/secrets.js";
+import { getBellTopics } from "../notifications/topics.js";
 import { getPool } from "../db.js";
 import { buildConfigPayload } from "../migrate/export-config.js";
 import type { ExportedDashboard } from "../migrate/types.js";
@@ -89,6 +90,8 @@ export type DomainExport = {
   groups: ExportedGroup[];
   users: ExportedUser[];
   roles: ExportedRole[];
+  /** Which of Nexternel's own kinds of message reach the bell (V5.2.146+). */
+  bellTopics?: Record<string, boolean>;
   integrations: {
     octopus: ExportedOctopus | null;
     /** Installed plugins (V5.2.86+). Secret settings are stored readable here — the backup itself is encrypted. */
@@ -290,7 +293,7 @@ async function loadOctopus(): Promise<ExportedOctopus | null> {
 
 export async function exportDomain(): Promise<DomainExport> {
   const base = await buildConfigPayload();
-  const [capabilities, capabilityBindings, groups, users, roles, octopus, plugins] =
+  const [capabilities, capabilityBindings, groups, users, roles, octopus, plugins, bellTopics] =
     await Promise.all([
       loadCapabilities(),
       loadCapabilityBindings(),
@@ -299,6 +302,7 @@ export async function exportDomain(): Promise<DomainExport> {
       loadRoles(),
       loadOctopus(),
       loadPlugins(),
+      getBellTopics(),
     ]);
   return sanitizeDomainExport({
     exportVersion: DOMAIN_EXPORT_VERSION,
@@ -312,5 +316,6 @@ export async function exportDomain(): Promise<DomainExport> {
     users,
     roles,
     integrations: { octopus, plugins },
+    bellTopics,
   });
 }

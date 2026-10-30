@@ -1,6 +1,7 @@
 import { TYPE_SCALE } from "../../../lib/appearance/type";
-import { useState } from "react";
-import { Link as RouterLink, useLocation } from "react-router-dom";
+import { useState, type MouseEvent } from "react";
+import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
+import { guardLinkClick } from "../../../lib/leave-guard";
 import BottomNavigation from "@mui/material/BottomNavigation";
 import BottomNavigationAction from "@mui/material/BottomNavigationAction";
 import Drawer from "@mui/material/Drawer";
@@ -28,6 +29,7 @@ type Props = {
 export function BottomNav({ signedIn, isAdmin, permissions, authLoading = false }: Props) {
   const { pathname } = useLocation();
   const [moreOpen, setMoreOpen] = useState(false);
+  const navigate = useNavigate();
   const gradientActive = useGradientActive();
   if (!signedIn) return null;
 
@@ -77,6 +79,7 @@ export function BottomNav({ signedIn, isAdmin, permissions, authLoading = false 
                 icon={<Icon />}
                 component={RouterLink}
                 to={item.to}
+                onClick={(e: MouseEvent) => void guardLinkClick(e, () => navigate(item.to))}
               />
             );
           })}

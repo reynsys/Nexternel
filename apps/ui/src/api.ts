@@ -1394,6 +1394,10 @@ export const api = {
   markNotificationsRead: () => apiFetch<{ ok: true }>("/api/v1/notifications/read", { method: "POST" }),
 
   clearNotifications: () => apiFetch<{ ok: true }>("/api/v1/notifications", { method: "DELETE" }),
+  /** Which of Nexternel's own kinds of message reach the bell. */
+  bellTopics: () => apiFetch<{ topics: BellTopics }>("/api/v1/notifications/topics"),
+  setBellTopics: (topics: Partial<BellTopics>) =>
+    apiFetch<{ topics: BellTopics }>("/api/v1/notifications/topics", { method: "PUT", body: JSON.stringify({ topics }) }),
 
   configStatus: () =>
     apiFetch<ConfigStatusResponse>("/api/v1/system/config/status"),
@@ -2525,3 +2529,6 @@ export type AddonInfo = {
 };
 
 export type AddonsResponse = { available: boolean; serverId: string; addons: AddonInfo[] };
+
+/** Nexternel's own kinds of message, each on or off for the bell (Settings → Notifications). */
+export type BellTopics = { readings: boolean; devices: boolean; mqtt: boolean; disk: boolean; backup: boolean; updates: boolean };

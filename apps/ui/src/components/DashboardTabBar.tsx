@@ -4,6 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { Box, Button, Stack, Tooltip, Typography } from "@mui/material";
 import { LookDecor } from "../skins/looks/LookDecor";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
+import AddIcon from "@mui/icons-material/Add";
+import { leaveThen } from "../lib/leave-guard";
+import { NewDashboardDialog } from "./NewDashboardDialog";
 import { api, type DashboardSummary } from "../api";
 import { getDashboardIcon } from "../lib/dashboard-icons";
 import { NotificationBell } from "./NotificationBell";
@@ -80,14 +83,42 @@ export function DashboardTabBar({
     };
   }, [refreshKey, liveKey]);
 
+  // Moving to another dashboard asks first when the open one has unsaved changes.
   const go = (d: DashboardSummary) => {
     const path = dashboardPath(d, dashboards);
-    navigate(display.active ? displayPath(path) + window.location.search : path);
+    leaveThen(() => navigate(display.active ? displayPath(path) + window.location.search : path));
   };
+  const [adding, setAdding] = useState(false);
+  const canAdd = canEdit && !display.active;
+  const addButton = (size: number) => (
+    <Tooltip title="Add dashboard">
+      <Button
+        variant="outlined"
+        aria-label="Add dashboard"
+        onClick={() => setAdding(true)}
+        data-nx-room=""
+        sx={{ minWidth: size, width: size, height: size, p: 0, flexShrink: 0 }}
+      >
+        <AddIcon fontSize="small" />
+      </Button>
+    </Tooltip>
+  );
+  const addDialog = (
+    <NewDashboardDialog
+      open={adding}
+      onClose={() => setAdding(false)}
+      onCreated={(id) => {
+        setAdding(false);
+        setLiveKey((k) => k + 1);
+        leaveThen(() => navigate(`/dashboards/${id}`));
+      }}
+    />
+  );
   // The bell and the Dashboard Options cog travel with the room menu.
   // In the dock, rail and rooms-panel corner the cog is a button like the rooms beside it.
   const tools = (dir: "row" | "column", size = 44) => (
     <Stack direction={dir} alignItems="center" sx={{ flexShrink: 0, gap: "var(--nx-control-gap)" }}>
+      {canAdd ? addButton(size) : null}
       {skin.id === "mui-dashboard" && !display.active ? <NotificationBell place="dashboard" canClear={canClearNotifications} /> : null}
       {canEdit && (
         <Tooltip title="Dashboard Options">
@@ -107,15 +138,18 @@ export function DashboardTabBar({
   );
   if (variant !== "tabs") {
     return (
-      <RoomMenu
-        variant={variant}
-        dashboards={dashboards}
-        activeId={activeId}
-        loading={loading}
-        error={error}
-        onGo={go}
-        tools={tools}
-      />
+      <>
+        <RoomMenu
+          variant={variant}
+          dashboards={dashboards}
+          activeId={activeId}
+          loading={loading}
+          error={error}
+          onGo={go}
+          tools={tools}
+        />
+        {addDialog}
+      </>
     );
   }
 
@@ -166,7 +200,7 @@ export function DashboardTabBar({
         )}
         {!loading && !error && dashboards.length === 0 && (
           <Typography variant="caption" color="text.secondary">
-            No dashboards — open Dashboard options to create one.
+            No dashboards yet — use + to add one.
           </Typography>
         )}
         {!loading &&
@@ -181,10 +215,7 @@ export function DashboardTabBar({
                 data-nx-active-tab={active ? "" : undefined}
                 variant={active ? "contained" : "outlined"}
                 color={active ? "primary" : "inherit"}
-                onClick={() => {
-                  const path = dashboardPath(d, dashboards);
-                  navigate(display.active ? displayPath(path) + window.location.search : path);
-                }}
+                onClick={() => go(d)}
                 startIcon={<Icon fontSize="small" />}
                 sx={{
                   flexShrink: 0,
@@ -219,7 +250,9 @@ export function DashboardTabBar({
               </Tooltip>
             );
           })}
+        {!loading && canAdd ? addButton(34) : null}
       </Box>
+      {addDialog}
       {skin.id === "mui-dashboard" && !display.active ? (
         <Box sx={{ display: { xs: "none", md: "flex" }, alignItems: "center" }}>
           <NotificationBell place="dashboard" canClear={canClearNotifications} />

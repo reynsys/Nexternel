@@ -1,4 +1,5 @@
 import { normalizePluginBell } from "../notifications/service.js";
+import { forgetBellTopics, normalizeBellTopics } from "../notifications/topics.js";
 import { encryptSecret } from "../plugins/secrets.js";
 import type { PoolClient } from "pg";
 import { getPool } from "../db.js";
@@ -448,6 +449,17 @@ export async function restoreDomain(
     await upsertUsers(client, clean, opts);
     await upsertOctopus(client, clean);
     await upsertPlugins(client, clean, roomRemap);
+    // Older backups have no bell choices: the server keeps its own.
+    if (clean.bellTopics) {
+      const topics = normalizeBellTopics(clean.bellTopics);
+      for (const [topic, enabled] of Object.entries(topics)) {
+        await client.query(
+          `INSERT INTO notification_topics (topic, enabled) VALUES ($1, $2) ON CONFLICT (topic) DO UPDATE SET enabled = EXCLUDED.enabled`,
+          [topic, enabled]
+        );
+      }
+      forgetBellTopics();
+    }
     await client.query("COMMIT");
   } catch (err) {
     await client.query("ROLLBACK");

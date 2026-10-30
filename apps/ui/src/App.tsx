@@ -10,6 +10,7 @@ import { SettingsLayout } from "./pages/admin/settings/SettingsLayout";
 import { SettingsIndexRedirect } from "./pages/admin/settings/SettingsIndexRedirect";
 import { AppearanceSettingsPage } from "./pages/admin/settings/AppearanceSettingsPage";
 import { SystemStatusPage } from "./pages/admin/settings/SystemStatusPage";
+import { NotificationsSettingsPage } from "./pages/admin/settings/NotificationsSettingsPage";
 import { BackupSettingsPage } from "./pages/admin/settings/BackupSettingsPage";
 import { UsersPage } from "./pages/admin/UsersPage";
 import { RolesPage } from "./pages/admin/RolesPage";
@@ -220,6 +221,14 @@ export function App() {
             element={
               <RequirePermission permission="viewSystem">
                 <AppearanceSettingsPage />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="notifications"
+            element={
+              <RequirePermission permission="viewSystem">
+                <NotificationsSettingsPage />
               </RequirePermission>
             }
           />

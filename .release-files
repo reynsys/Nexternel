@@ -131,6 +131,7 @@ apps/api/src/mqtt-login.ts
 apps/api/src/notifications/routes.ts
 apps/api/src/notifications/service.test.ts
 apps/api/src/notifications/service.ts
+apps/api/src/notifications/topics.ts
 apps/api/src/octopus/client.ts
 apps/api/src/octopus/ensure-schema.ts
 apps/api/src/octopus/poll-backoff.test.ts
@@ -228,6 +229,7 @@ apps/ui/src/components/AdaptiveReading.tsx
 apps/ui/src/components/AddPanelTypePicker.tsx
 apps/ui/src/components/appearance/AppearancePreview.tsx
 apps/ui/src/components/AppErrorBoundary.tsx
+apps/ui/src/components/BellFields.tsx
 apps/ui/src/components/BrandMark.tsx
 apps/ui/src/components/ButtonRow.tsx
 apps/ui/src/components/CapabilityPicker.tsx
@@ -244,6 +246,7 @@ apps/ui/src/components/IconPicker.tsx
 apps/ui/src/components/ItemOverrideFields.tsx
 apps/ui/src/components/MaintenanceBanner.tsx
 apps/ui/src/components/ManageDashboardsPanel.tsx
+apps/ui/src/components/NewDashboardDialog.tsx
 apps/ui/src/components/NotificationBell.tsx
 apps/ui/src/components/PageBar.tsx
 apps/ui/src/components/PanelCameraContentFields.tsx
@@ -263,6 +266,7 @@ apps/ui/src/components/PanelTitleFields.tsx
 apps/ui/src/components/RoomMenu.tsx
 apps/ui/src/components/SectionGrid.tsx
 apps/ui/src/components/SegmentButtonNav.tsx
+apps/ui/src/components/Segmented.tsx
 apps/ui/src/components/side-panel/SidePanel.tsx
 apps/ui/src/components/SlotBindingFields.tsx
 apps/ui/src/components/status-light/StatusLightFields.tsx
@@ -332,6 +336,7 @@ apps/ui/src/lib/group-by-area.ts
 apps/ui/src/lib/home-dashboard.ts
 apps/ui/src/lib/icons/catalog.ts
 apps/ui/src/lib/icons/ItemIcon.tsx
+apps/ui/src/lib/leave-guard.ts
 apps/ui/src/lib/live-changes.ts
 apps/ui/src/lib/look-choice.test.ts
 apps/ui/src/lib/look-choice.ts
@@ -426,6 +431,7 @@ apps/ui/src/pages/admin/settings/BackupSettingsPage.tsx
 apps/ui/src/pages/admin/settings/DiagnosticReportCard.tsx
 apps/ui/src/pages/admin/settings/ExtensionsSettingsPage.tsx
 apps/ui/src/pages/admin/settings/HttpsCard.tsx
+apps/ui/src/pages/admin/settings/NotificationsSettingsPage.tsx
 apps/ui/src/pages/admin/settings/plugins/PluginActivityView.tsx
 apps/ui/src/pages/admin/settings/plugins/PluginPermissionsForm.tsx
 apps/ui/src/pages/admin/settings/plugins/PluginRow.tsx

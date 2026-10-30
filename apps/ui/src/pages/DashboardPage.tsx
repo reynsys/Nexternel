@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { setLeaveGuard } from "../lib/leave-guard";
 import { useParams } from "react-router-dom";
 import { type Layout } from "react-grid-layout";
 import {
@@ -10,6 +11,10 @@ import {
   Checkbox,
   Chip,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControl,
   FormControlLabel,
   InputLabel,
@@ -188,6 +193,37 @@ function DashboardPageContent() {
     gridCols: 12 | 10 | 8;
     sections: RuntimeDashboardSection[];
   } | null>(null);
+
+  /** Changes made since editing started (compared with the copy taken then). */
+  const unsaved = useMemo(
+    () =>
+      editMode &&
+      editBaseline !== null &&
+      JSON.stringify({ name, tabIcon, showTabLabel, showSectionNav, gridCols, sections }) !== JSON.stringify(editBaseline),
+    [editMode, editBaseline, name, tabIcon, showTabLabel, showSectionNav, gridCols, sections]
+  );
+  /** Leaving with unsaved changes: where the person wanted to go, while they choose. */
+  const [leaveAsk, setLeaveAsk] = useState<{ go: () => void } | null>(null);
+  const leaveRef = useRef<(go: () => void) => void>(() => undefined);
+  leaveRef.current = (go) => {
+    if (!unsaved) {
+      cancelEdit();
+      go();
+    } else setLeaveAsk({ go });
+  };
+  // Closing the browser tab or typing another address: the browser's own "Leave site?" question.
+  useEffect(() => {
+    if (!unsaved) return undefined;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [unsaved]);
+  // While editing, every way out of this dashboard (rooms, side menu, All dashboards) asks first.
+  useEffect(() => {
+    if (!editMode) return undefined;
+    setLeaveGuard((go) => leaveRef.current(go));
+    return () => setLeaveGuard(null);
+  }, [editMode]);
 
   const addPanelIsCore = isCorePanelCatalogType(addPanelType);
   // The readings the new panel will show: picked ones (or all in scope when automatic), or a plugin/gauge's chosen readings.
@@ -858,8 +894,8 @@ function DashboardPageContent() {
     setError(null);
   }
 
-  async function save() {
-    if (!dashboardId) return;
+  async function save(): Promise<boolean> {
+    if (!dashboardId) return false;
     setSaving(true);
     setError(null);
     try {
@@ -881,8 +917,10 @@ function DashboardPageContent() {
       setSettingsPanel(null);
       setAddPanelOpen(false);
       setTabRefreshKey((k) => k + 1);
+      return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed");
+      return false;
     } finally {
       setSaving(false);
     }
@@ -894,7 +932,7 @@ function DashboardPageContent() {
       spacing={2}
       sx={{
         // Room on the right for the rail. A side panel opens over the right edge; the dashboard stays put.
-        pr: roomNav === "rail" && !editMode ? "var(--nx-rail-width, 0px)" : 0,
+        pr: roomNav === "rail" ? "var(--nx-rail-width, 0px)" : 0,
       }}
     >
       {pageLoading && (
@@ -910,7 +948,7 @@ function DashboardPageContent() {
       )}
       {!pageLoading && !bootError && (
       <>
-      {(display.active && !display.tabs) || roomNav !== "tabs" || editMode ? null : (
+      {(display.active && !display.tabs) || roomNav !== "tabs" ? null : (
       <DashboardTabBar
         variant={roomNav}
         activeId={dashboardId ?? undefined}
@@ -979,6 +1017,42 @@ function DashboardPageContent() {
           </ButtonRow>
         </PageBar>
       )}
+
+      <Dialog open={Boolean(leaveAsk)} onClose={() => setLeaveAsk(null)} maxWidth="xs" fullWidth>
+        <DialogTitle>Save the changes to “{name}”?</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            You changed this dashboard. Save the changes before going on, or leave them out.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" onClick={() => setLeaveAsk(null)}>
+            Stay here
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={() => {
+              const go = leaveAsk?.go;
+              setLeaveAsk(null);
+              cancelEdit();
+              go?.();
+            }}
+          >
+            Don't save
+          </Button>
+          <Button
+            variant="contained"
+            disabled={saving}
+            onClick={async () => {
+              const go = leaveAsk?.go;
+              setLeaveAsk(null);
+              if (await save()) go?.();
+            }}
+          >
+            Save and continue
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <DashboardSettingsPanel
         open={editMode && settingsPanel?.type === "dashboard"}
@@ -1189,10 +1263,9 @@ function DashboardPageContent() {
         })}
       </Box>
 
-      {/* Dock and rail are fixed on screen; drawn last so they take no room above the dashboard. */}
-      {/* While editing, the edit bar's Save and Cancel are the way out (moving to another dashboard
-          would drop unsaved changes), so the Dashboard Menu is hidden. */}
-      {roomNav !== "tabs" && !editMode && !(display.active && !display.tabs) ? (
+      {/* Dock and rail are fixed on screen; drawn last so they take no room above the dashboard.
+          They stay while editing: moving to another dashboard asks first when there are unsaved changes. */}
+      {roomNav !== "tabs" && !(display.active && !display.tabs) ? (
         <DashboardTabBar
           variant={roomNav}
           activeId={dashboardId ?? undefined}

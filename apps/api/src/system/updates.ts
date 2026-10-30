@@ -4,6 +4,7 @@ import path from "path";
 import { promisify } from "util";
 import { getPool } from "../db.js";
 import { addNotification } from "../notifications/service.js";
+import { bellTopicOn } from "../notifications/topics.js";
 import { nexternelVersionAtLeast } from "../plugins/validate.js";
 import { APP_VERSION } from "../version.js";
 
@@ -135,7 +136,7 @@ export async function checkForUpdate(): Promise<UpdateStatus> {
     };
     const row = await getRow();
     await setRow({ last_check_at: new Date(), last_error: null, latest });
-    if (isNewer(version) && row.notified_version !== version) {
+    if (isNewer(version) && row.notified_version !== version && (await bellTopicOn("updates"))) {
       await addNotification({
         source: "system",
         sourceName: "Nexternel",

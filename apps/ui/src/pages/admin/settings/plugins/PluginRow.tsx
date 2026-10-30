@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Alert, Box, Button, Checkbox, Chip, Collapse, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, FormControlLabel, FormHelperText, InputLabel, MenuItem, Paper, Select, Stack, Switch, Tab, Tabs, Typography } from "@mui/material";
+import { Alert, Box, Button, Checkbox, Chip, Collapse, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, Paper, Stack, Switch, Tab, Tabs, Typography } from "@mui/material";
 import type { PluginCatalogEntry, PluginGrants, PluginInfo, PluginManifestInfo } from "../../../../api";
 import { PluginPermissionsForm, defaultGrants } from "./PluginPermissionsForm";
 import { PluginSettingsForm } from "./PluginSettingsForm";
@@ -26,7 +26,6 @@ export function InstalledPlugin({
   onToggle,
   onUpdate,
   onGrants,
-  onBell,
   onSettings,
   onRemove,
   badges,
@@ -40,7 +39,6 @@ export function InstalledPlugin({
   onToggle: (on: boolean) => void;
   onUpdate: () => void;
   onGrants: (g: PluginGrants) => void;
-  onBell: (bell: "all" | "important" | "none") => void;
   onSettings: (values: Record<string, unknown>) => Promise<void>;
   onRemove: () => void;
 }) {
@@ -112,24 +110,9 @@ export function InstalledPlugin({
                 </Button>
               </ButtonRow>
               {p.permissions.notify ? (
-                <FormControl size="small" fullWidth>
-                  <InputLabel id={`bell-${p.id}`}>Messages in the bell</InputLabel>
-                  <Select
-                    labelId={`bell-${p.id}`}
-                    label="Messages in the bell"
-                    value={p.bell ?? "important"}
-                    disabled={busy !== null}
-                    onChange={(e) => onBell(e.target.value as "all" | "important" | "none")}
-                  >
-                    <MenuItem value="important">Only important ones (keep an eye on it)</MenuItem>
-                    <MenuItem value="all">All, including information such as summaries</MenuItem>
-                    <MenuItem value="none">None</MenuItem>
-                  </Select>
-                  <FormHelperText>
-                    Saved straight away. A plugin's messages are never red: red is kept for Nexternel itself, such as a
-                    reading at act now. A plugin's own panels show its information either way.
-                  </FormHelperText>
-                </FormControl>
+                <Typography variant="caption" color="text.secondary">
+                  Which of its messages reach the bell is chosen in Settings → Notifications.
+                </Typography>
               ) : null}
             </Stack>
           ) : null}

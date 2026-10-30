@@ -7,7 +7,7 @@ import { useShellAuth } from "../../../skins/useShellAuth";
 import { hasPermission } from "../../../lib/permissions";
 import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
 import { loadAddons } from "../../../skins/looks/addon-loader";
-import { describeAddonCheck } from "../../../lib/addon-check";
+import { describeExtensionCheck } from "../../../lib/addon-check";
 import { ButtonRow } from "../../../components/ButtonRow";
 import { useLiveChanges } from "../../../lib/live-changes";
 import { InstallDialog, InstalledPlugin, type InstallTarget } from "./plugins/PluginRow";
@@ -89,6 +89,23 @@ export function ExtensionsSettingsPage() {
     }
   }
 
+  /** One check for everything installed: paid styles (they update themselves) and features (Update button). */
+  function checkForUpdates() {
+    const before = styles;
+    return run("check", async () => {
+      const [after, fresh] = await Promise.all([
+        styles.length ? api.checkAddons().then((r) => r.addons) : Promise.resolve([]),
+        api.pluginCatalog(true).then((r) => r.plugins).catch(() => null),
+      ]);
+      if (styles.length) await loadAddons();
+      if (fresh) setCatalog(fresh);
+      const ready = (fresh ?? []).filter((e) => e.updateAvailable).map((e) => ({ name: e.name, version: e.version }));
+      const result = describeExtensionCheck(before, after, ready, fresh !== null);
+      if (!result.ok) throw new Error(result.text);
+      return result.text;
+    });
+  }
+
   async function chooseFile(file: File | undefined) {
     if (!file) return;
     await run("inspect", async () => {
@@ -135,7 +152,7 @@ export function ExtensionsSettingsPage() {
       </Stack>
       {a.description ? (
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          {a.description} Choose it in Settings → My appearance → Style.
+          {a.description} Choose it in Settings → Appearance → Style.
         </Typography>
       ) : null}
       <Typography variant="caption" color="text.secondary" component="div" sx={{ mt: 0.75 }}>
@@ -180,7 +197,7 @@ export function ExtensionsSettingsPage() {
                     await loadAddons();
                     setKey("");
                     setKeyOpen(false);
-                    return `Unlocked: ${r.addons.map((x) => x.name).join(", ")}. Choose it in Settings → My appearance.`;
+                    return `Unlocked: ${r.addons.map((x) => x.name).join(", ")}. Choose it in Settings → Appearance.`;
                   });
                 }}
               >
@@ -224,19 +241,8 @@ export function ExtensionsSettingsPage() {
               <Typography variant="h6" sx={{ flex: 1 }}>
                 Installed
               </Typography>
-              {canManage && show("style") && styles.length ? (
-                <Button
-                  size="small"
-                  disabled={busy !== null}
-                  onClick={() => {
-                    const before = styles;
-                    void run("check", async () => {
-                      const after = (await api.checkAddons()).addons;
-                      await loadAddons();
-                      return describeAddonCheck(before, after).text;
-                    });
-                  }}
-                >
+              {canManage ? (
+                <Button size="small" disabled={busy !== null} onClick={() => void checkForUpdates()}>
                   {busy === "check" ? <CircularProgress size={18} /> : "Check for updates"}
                 </Button>
               ) : null}
@@ -261,7 +267,6 @@ export function ExtensionsSettingsPage() {
                       })
                     }
                     onGrants={(g) => void run(`grants-${p.id}`, async () => void (await api.setPluginGrants(p.id, g)))}
-                    onBell={(b) => void run(`bell-${p.id}`, async () => void (await api.setPluginBell(p.id, b)))}
                     onSettings={async (values) => {
                       await api.savePluginSettings(p.id, values);
                       await loadPlugins();

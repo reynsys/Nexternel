@@ -76,7 +76,7 @@ export type ThemePrefs = {
   wall?: WallPrefs;
 };
 
-export type BellPrefs = { show: "always" | "new" | "never"; position: "menu" | "top" };
+export type BellPrefs = { show: "always" | "new" | "never"; position: "menu" | "menu-bottom" | "top" };
 
 export const DEFAULT_BELL_PREFS: BellPrefs = { show: "always", position: "menu" };
 
@@ -84,7 +84,7 @@ export function normalizeBellPrefs(raw: unknown): BellPrefs {
   const o = (raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {}) as Record<string, unknown>;
   return {
     show: o.show === "new" || o.show === "never" ? o.show : "always",
-    position: o.position === "top" ? "top" : "menu",
+    position: o.position === "top" || o.position === "menu-bottom" ? o.position : "menu",
   };
 }
 

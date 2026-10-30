@@ -47,7 +47,7 @@ export function HttpsCard() {
                   <Link href={`${status.localAddresses[0] ?? ""}/display`}>{status.localAddresses[0] ?? ""}/display</Link>
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                  The dashboard alone, full screen, with larger text and lighter effects. Each wall display's own settings are in Users → Edit →
+                  The dashboard alone, full screen, with larger text and lighter effects. Each wall display's own settings are in Settings → Users → Edit →
                   Wall display.
                 </Typography>
               </Box>
