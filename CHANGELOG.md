@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.153
+
+- **New resize corner** for panels while editing: two triangles and a dot on a small square, drawn in your Appearance (its colour, corners and button style), replacing the round arrow button.
+
 ## V5.2.152
 
 - **Arrange your dashboards while editing:** every dashboard has a grip to drag it to a new place (also with a finger on a touch screen), and the open one has arrow buttons. Works the same in the tabs, the Dock and the Rail.

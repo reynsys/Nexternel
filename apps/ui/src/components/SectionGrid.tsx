@@ -54,7 +54,8 @@ import "react-resizable/css/styles.css";
 import { createEdgeScroller } from "../lib/edge-scroll";
 
 /** Diagonal two-way arrow (Material "open in full"), drawn in the handle with a mask. */
-const RESIZE_ARROW = `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 11V3h-8l3.29 3.29-10 10L3 13v8h8l-3.29-3.29 10-10z"/></svg>')}")`;
+/** The resize corner's picture: two solid triangles pointing apart and a dot between them (soft corners). */
+const RESIZE_MARK = `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g stroke="#000" stroke-width="1.2" stroke-linejoin="round"><path d="M5.5 5.5l5.6 1.2-4.4 4.4z"/><path d="M18.5 18.5l-5.6-1.2 4.4-4.4z"/></g><circle cx="12" cy="12" r="1.5"/></svg>')}")`;
 
 type Props = {
   /** Columns the dashboard's panels are arranged on (12, 10 or 8). */
@@ -302,36 +303,40 @@ export function SectionGrid({
       sx={{
         width: "100%",
         minHeight: panels.length ? 160 : 72,
-        // Resize corner: a clear round handle with a diagonal arrow, above everything in the panel
-        // (its content layer is raised above the Look's panel frame), so it is easy to find and grab.
+        // Resize corner: two triangles and a dot on a filled button of the current Look (Appearance) —
+        // its fill, ink, edge, shadow, corners and shape (e.g. HUD cut corners) — above everything in the
+        // panel (its content layer is raised above the Look's panel frame), so it is easy to find and grab.
         "& .react-grid-item > .react-resizable-handle.react-resizable-handle-se": (t) => ({
           zIndex: 20,
-          width: 30,
-          height: 30,
-          right: 4,
-          bottom: 4,
+          width: 28,
+          height: 28,
+          right: 5,
+          bottom: 5,
           padding: 0,
+          boxSizing: "border-box",
           backgroundImage: "none",
-          borderRadius: "50%",
-          backgroundColor: t.palette.primary.main,
-          boxShadow: `0 0 0 2px ${t.palette.background.paper}, 0 2px 8px rgba(0,0,0,.45)`,
-          transition: "transform .15s ease",
-          "&:hover": { transform: "scale(1.15)" },
+          borderRadius: t.nx.radiusControl,
+          ...(t.nx.buttonShape && t.nx.buttonShape !== "none" ? { clipPath: t.nx.buttonShape } : {}),
+          backgroundColor: t.nx.primaryFill || t.palette.primary.main,
+          ...(t.nx.primaryBorder ? { border: t.nx.primaryBorder } : {}),
+          boxShadow: t.nx.primaryShadow || "0 2px 8px rgba(0,0,0,.45)",
+          transition: "transform .15s ease, filter .15s ease",
+          "&:hover": { transform: "scale(1.12)", filter: "brightness(1.15)" },
           "&::after": {
             content: '""',
             position: "absolute",
-            inset: 6,
+            inset: 0,
             width: "auto",
             height: "auto",
             border: 0,
-            backgroundColor: t.palette.primary.contrastText,
-            WebkitMaskImage: RESIZE_ARROW,
-            maskImage: RESIZE_ARROW,
+            // The picture takes the Look's button ink (its text colour on a filled button).
+            backgroundColor: t.nx.primaryInk || t.palette.primary.contrastText,
+            WebkitMaskImage: RESIZE_MARK,
+            maskImage: RESIZE_MARK,
             maskSize: "contain",
             WebkitMaskSize: "contain",
             maskRepeat: "no-repeat",
             WebkitMaskRepeat: "no-repeat",
-            transform: "rotate(90deg)",
           },
         }),
         // The size preview while resizing or moving: accent stripes and a dashed outline, visible on any background.
