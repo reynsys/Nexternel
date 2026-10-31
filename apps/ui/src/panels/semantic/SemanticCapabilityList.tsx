@@ -87,9 +87,14 @@ function ReadingRow({ item }: { item: SemanticCapabilityView }) {
 
 function ControlRow({ item }: { item: SemanticCapabilityView }) {
   const cap = item.source;
-  const { on, busy, toggle } = useSwitchControl(asSwitchCapability(cap), false);
+  const { on, busy, error, toggle } = useSwitchControl(asSwitchCapability(cap), false);
   return (
     <RowShell item={item}>
+      {busy || error ? (
+        <Typography variant="caption" color={error ? "error" : "text.secondary"} noWrap title={error ?? undefined} sx={{ minWidth: 0 }}>
+          {error ? "No answer" : "Switching…"}
+        </Typography>
+      ) : null}
       <Switch
         size="small"
         checked={on}

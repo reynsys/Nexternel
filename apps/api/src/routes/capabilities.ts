@@ -13,9 +13,9 @@ import {
 import { getLiveState, getAllLiveStates } from "../telemetry/state-cache.js";
 import {
   publishSwitchCommand,
+  SwitchNotConfirmedError,
   refreshTelemetrySubscriptions,
 } from "../telemetry/mqtt.js";
-import { noteSwitchCommand } from "../activity/activity.js";
 
 export const capabilitiesRoutes: FastifyPluginAsync = async (app) => {
   app.get("/api/v1/capabilities", async (request, reply) => {
@@ -154,17 +154,13 @@ export const capabilitiesRoutes: FastifyPluginAsync = async (app) => {
       });
     }
     try {
-      const result = await publishSwitchCommand(
-        request.params.id,
-        action as "on" | "off" | "toggle"
-      );
-      // The board's answer then says who switched it (Activity log).
-      if (typeof result.value === "boolean") noteSwitchCommand(request.params.id, result.value, request.user!.username);
+      // Answers once the board reports the new position; who pressed it goes into the Activity log.
+      const result = await publishSwitchCommand(request.params.id, action as "on" | "off" | "toggle", request.user!.username);
       return { ok: true, value: result.value };
     } catch (err) {
-      return reply.code(400).send({
+      return reply.code(err instanceof SwitchNotConfirmedError ? 504 : 400).send({
         error: {
-          code: "command_failed",
+          code: err instanceof SwitchNotConfirmedError ? "no_answer" : "command_failed",
           message: err instanceof Error ? err.message : "Command failed",
         },
       });

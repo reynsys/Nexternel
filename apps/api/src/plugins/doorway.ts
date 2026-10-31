@@ -165,7 +165,7 @@ export const pluginDoorwayRoutes: FastifyPluginAsync = async (app) => {
     }
     const { publishSwitchCommand } = await import("../telemetry/mqtt.js");
     try {
-      const result = await publishSwitchCommand(id, action);
+      const result = await publishSwitchCommand(id, action, `Plugin ${p.id}`);
       await logPluginAction(p.id, "control", { capabilityId: id, action, value: result.value });
       return { ok: true, value: result.value };
     } catch (err) {

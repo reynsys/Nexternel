@@ -42,7 +42,7 @@ import {
   getBrokerSniffSamples,
   type MqttObservationKind,
 } from "./mqtt-observer.js";
-import { logActivity, logSwitchChange } from "../activity/activity.js";
+import { logActivity, logSwitchChange, noteSwitchCommand } from "../activity/activity.js";
 
 let client: MqttClient | null = null;
 let status: "disconnected" | "connecting" | "connected" | "error" = "disconnected";
@@ -316,6 +316,42 @@ function touchDeviceOnlineFromTopic(topic: string, retained: boolean) {
   markDeviceOnline(prefix);
 }
 
+/**
+ * Switch commands waiting for the board to report the new position (publishSwitchCommand). A command
+ * is only done when the board says so: one sent while the board is cut off is otherwise lost unseen.
+ */
+const switchWaiters = new Map<string, { value: boolean; done: () => void }[]>();
+const SWITCH_ANSWER_MS = 6_000;
+
+function confirmSwitch(capabilityId: string, value: boolean) {
+  const waiting = switchWaiters.get(capabilityId);
+  if (!waiting) return;
+  const left = waiting.filter((w) => {
+    if (w.value !== value) return true;
+    w.done();
+    return false;
+  });
+  if (left.length) switchWaiters.set(capabilityId, left);
+  else switchWaiters.delete(capabilityId);
+}
+
+function waitForSwitch(capabilityId: string, value: boolean, ms: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const entry = { value, done: () => {} };
+    const timer = setTimeout(() => {
+      const left = (switchWaiters.get(capabilityId) ?? []).filter((w) => w !== entry);
+      if (left.length) switchWaiters.set(capabilityId, left);
+      else switchWaiters.delete(capabilityId);
+      resolve(false);
+    }, ms);
+    entry.done = () => {
+      clearTimeout(timer);
+      resolve(true);
+    };
+    switchWaiters.set(capabilityId, [...(switchWaiters.get(capabilityId) ?? []), entry]);
+  });
+}
+
 function applyLiveCapability(
   capabilityId: string,
   value: unknown,
@@ -332,6 +368,7 @@ function applyLiveCapability(
     retained,
   });
   if (kind === "switch" && typeof value === "boolean") {
+    confirmSwitch(capabilityId, value);
     // A real change from the board (not the kept value replayed on connecting): into the Activity log.
     const before = previous?.value;
     if (!retained && typeof before === "boolean" && before !== value) void logSwitchChange(capabilityId, value);
@@ -903,9 +940,16 @@ export function requestHealthReport(prefix: string): boolean {
   return true;
 }
 
+export class SwitchNotConfirmedError extends Error {}
+
+/**
+ * Sends a switch command and waits for the board to report the new position. `who` goes into the
+ * Activity log with the change. Throws SwitchNotConfirmedError when the board does not answer in time.
+ */
 export async function publishSwitchCommand(
   capabilityId: string,
-  action: "on" | "off" | "toggle"
+  action: "on" | "off" | "toggle",
+  who?: string
 ): Promise<{ value: boolean }> {
   const cap = await getCapabilityById(capabilityId);
   if (!cap) throw new Error("Capability not found");
@@ -919,6 +963,9 @@ export async function publishSwitchCommand(
   } else {
     next = action === "on";
   }
+
+  // Noted before sending: the board's answer can arrive before the send has finished.
+  if (who) noteSwitchCommand(capabilityId, next, who);
 
   if (cap.firmware_type === "plugin") {
     const { sendPluginSwitchCommand } = await import("../plugins/devices.js");
@@ -943,6 +990,10 @@ export async function publishSwitchCommand(
     throw new Error("MQTT not connected");
   }
 
+  // Already in that position: nothing to wait for (a board need not repeat an unchanged state).
+  const alreadyThere = getLiveState(capabilityId)?.value === next;
+  const answer = alreadyThere ? Promise.resolve(true) : waitForSwitch(capabilityId, next, SWITCH_ANSWER_MS);
+
   await new Promise<void>((resolve, reject) => {
     mqttClient.publish(cap.command_topic!, payload, { qos: 1 }, (err) => {
       if (err) reject(err);
@@ -950,20 +1001,10 @@ export async function publishSwitchCommand(
     });
   });
 
-  // Optimistic update; state topic / events/rpc will confirm
-  applyLiveCapability(capabilityId, next, false, "switch");
-  void getPool()
-    .query(
-      `UPDATE devices
-       SET mqtt_availability = 'online',
-           last_seen_at = NOW()
-       WHERE id = $1`,
-      [cap.device_id]
-    )
-    .catch(() => {
-      /* ignore */
-    });
-
+  // Only the board's own report counts (state topic / events/rpc): no assumed position.
+  if (!(await answer)) {
+    throw new SwitchNotConfirmedError(`No answer from ${cap.device_name ?? "the board"}: it may not have switched.`);
+  }
   return { value: next };
 }
 

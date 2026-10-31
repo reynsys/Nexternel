@@ -86,8 +86,8 @@ export function SemanticCapabilityTile({ item, showSecondary }: Props) {
             >
               {/* The item's icon lives in its heading (or the title tile); the tile shows the state like any reading. */}
               <AdaptiveReading
-                value={on ? "On" : "Off"}
-                valueColor={on ? accent : muted}
+                value={busy ? "Switching…" : on ? "On" : "Off"}
+                valueColor={busy ? muted : on ? accent : muted}
                 sx={{
                   "& > div": { fontSize: PANEL_TEXT.value },
                   ...(on && !classic ? { textShadow: "var(--nx-text-glow, none)" } : {}),

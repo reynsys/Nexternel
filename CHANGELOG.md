@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.163
+
+- **Fixed: switches that did not turn on or off.** A switch now waits for the board to confirm and shows "Switching…" meanwhile. If the board does not answer within a few seconds, it shows "No answer from …" and goes back to the real position — the dashboard no longer shows a switch as on when the relay is off.
+- The Activity log shows who pressed each switch.
+
 ## V5.2.162
 
 - **New Appearance page:** five tabs (Theme, Style & colours, Background, Text, Dashboards) instead of one long page, with the preview staying in view. Each background effect shows a small moving picture, Text size comes first, and the fonts are shown in their own letters.
