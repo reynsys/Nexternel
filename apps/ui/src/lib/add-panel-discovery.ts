@@ -163,52 +163,24 @@ export function filterAddPanelDiscovery(
 
 
 
+/** The groups of the Add panel tiles, in order: what the panels are for, in plain words. */
+export const ADD_PANEL_GROUPS: { id: string; label: string; sections: PanelCategoryId[] }[] = [
+  { id: "readings", label: "Readings", sections: ["sensors", "status", "history"] },
+  { id: "switches", label: "Switches and cameras", sections: ["controls", "media"] },
+  { id: "information", label: "Information", sections: ["system"] },
+  { id: "extensions", label: "From your extensions", sections: ["plugins"] },
+];
+
 export function groupAddPanelDiscovery(
-
   catalog: AddPanelDiscoveryItem[]
-
-): { section: PanelCategoryId; label: string; items: AddPanelDiscoveryItem[] }[] {
-
-  const groups = new Map<PanelCategoryId, AddPanelDiscoveryItem[]>();
-
-  for (const item of catalog) {
-
-    const list = groups.get(item.section) ?? [];
-
-    list.push(item);
-
-    groups.set(item.section, list);
-
-  }
-
-  return ADD_PANEL_DISCOVERY_SECTIONS
-
-    .filter((s) => (groups.get(s.id)?.length ?? 0) > 0)
-
-    .map((s) => ({
-
-      section: s.id,
-
-      label: s.label,
-
-      items: groups.get(s.id) ?? [],
-
-    }));
-
+): { section: string; label: string; items: AddPanelDiscoveryItem[] }[] {
+  const order = (item: AddPanelDiscoveryItem, group: (typeof ADD_PANEL_GROUPS)[number]) => group.sections.indexOf(item.section);
+  return ADD_PANEL_GROUPS.map((group) => ({
+    section: group.id,
+    label: group.label,
+    // Within a group: by category in the group's order, then the catalogue's own order.
+    items: catalog
+      .filter((item) => group.sections.includes(item.section))
+      .sort((a, b) => order(a, group) - order(b, group) || a.sortOrder - b.sortOrder || a.label.localeCompare(b.label)),
+  })).filter((g) => g.items.length > 0);
 }
-
-
-
-export function findAddPanelDiscoveryItem(
-
-  catalog: AddPanelDiscoveryItem[],
-
-  typeId: string
-
-): AddPanelDiscoveryItem | undefined {
-
-  return catalog.find((item) => item.id === typeId);
-
-}
-
-

@@ -4,6 +4,7 @@ import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { SidePanel } from "../side-panel/SidePanel";
+import { SidePanelButtons } from "../side-panel/SidePanelButtons";
 import { DashboardIconPicker } from "../DashboardIconPicker";
 import { ButtonRow } from "../ButtonRow";
 import { SettingBlock } from "./DashboardSettingsPanel";
@@ -23,7 +24,10 @@ export type SectionSettingsValue = {
 
 type Props = {
   section: SectionSettingsValue | null;
-  onClose: () => void;
+  /** Puts the section back as it was when the menu opened, and closes it (also Escape). */
+  onCancel: () => void;
+  /** Keeps the changes and closes the menu. */
+  onApply: () => void;
   onChange: (patch: { title?: string; icon?: string; showTitle?: boolean; colSpan?: SectionColSpan }) => void;
   onMove: (dir: -1 | 1) => void;
   onDelete: () => void;
@@ -33,14 +37,21 @@ const WIDTHS: SectionColSpan[] = [12, 6, 4, 3];
 
 /**
  * Section settings (side panel): name, icon, name bar, width, position and delete for one section.
- * The section being changed is outlined on the dashboard. Deleting asks first, here.
+ * The section being changed is outlined on the dashboard. Deleting asks first, here. Changes show
+ * straight away; Apply keeps them, Cancel puts the section back.
  */
-export function SectionSettingsPanel({ section, onClose, onChange, onMove, onDelete }: Props) {
+export function SectionSettingsPanel({ section, onCancel, onApply, onChange, onMove, onDelete }: Props) {
   const [askDelete, setAskDelete] = useState(false);
   useEffect(() => setAskDelete(false), [section?.id]);
   const s = section;
   return (
-    <SidePanel open={Boolean(s)} onClose={onClose} title="Section settings" subtitle={s?.title || "Untitled section"}>
+    <SidePanel
+      open={Boolean(s)}
+      onClose={onCancel}
+      title="Section settings"
+      subtitle={s?.title || "Untitled section"}
+      footer={<SidePanelButtons onCancel={onCancel} onApply={onApply} />}
+    >
       {s ? (
         <Stack spacing={3}>
           <TextField label="Name" size="small" fullWidth value={s.title} onChange={(e) => onChange({ title: e.target.value })} />

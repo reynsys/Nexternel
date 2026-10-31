@@ -1,9 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { Box, Button, Stack, Tab, Tabs, Typography } from "@mui/material";
+import { Box, Stack, Tab, Tabs, Typography } from "@mui/material";
 import type { CameraRecord, Capability } from "../../api";
 import type { RuntimePanelInstance } from "../../lib/panel-compatibility/types";
 import { PanelCard } from "../PanelCard";
-import { ButtonRow } from "../ButtonRow";
+import { SidePanelButtons } from "../side-panel/SidePanelButtons";
 import { SidePanel } from "../side-panel/SidePanel";
 import { PanelPlaceActions } from "./PanelPlaceActions";
 
@@ -88,14 +88,9 @@ export function PanelEditorShell({
       footer={
         <>
           {footerNote}
-          <ButtonRow direction="row" sx={{ mt: footerNote ? 1 : 0 }}>
-            <Button variant="outlined" onClick={onCancel} fullWidth>
-              Cancel
-            </Button>
-            <Button variant="contained" onClick={onApply} fullWidth disabled={applyDisabled}>
-              Apply
-            </Button>
-          </ButtonRow>
+          <Box sx={{ mt: footerNote ? 1 : 0 }}>
+            <SidePanelButtons onCancel={onCancel} onApply={onApply} applyDisabled={applyDisabled} />
+          </Box>
         </>
       }
     >

@@ -1,5 +1,5 @@
 import { dashboardPath } from "../lib/dashboard-path";
-import { useEffect, useRef, useState, type DragEvent } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Button, Stack, Tooltip, Typography } from "@mui/material";
 import { LookDecor } from "../skins/looks/LookDecor";
@@ -15,6 +15,8 @@ import { useLiveChanges } from "../lib/live-changes";
 import { displayPath, useDisplayMode } from "../lib/display-mode";
 import type { RoomNav } from "../lib/room-nav";
 import { RoomMenu } from "./RoomMenu";
+import { ArrangeArrows, ArrangeGrip } from "./ArrangeControls";
+import { ARRANGE_ATTR, useArrangeDashboards } from "../lib/use-arrange-dashboards";
 
 type Props = {
   activeId?: string;
@@ -92,32 +94,13 @@ export function DashboardTabBar({
   // Adding and reordering are part of editing (or the only way forward when there is no dashboard yet).
   const canAdd = canEdit && !display.active && (editMode || (!loading && dashboards.length === 0));
 
-  // While editing: drag a room onto another to put it in that place; the order is saved at once.
-  const [dragId, setDragId] = useState<string | null>(null);
-  async function dropOn(targetId: string) {
-    if (!dragId || dragId === targetId) return;
-    const order = dashboards.map((x) => x.id).filter((id) => id !== dragId);
-    order.splice(order.indexOf(targetId), 0, dragId);
-    setDashboards(order.map((id) => dashboards.find((x) => x.id === id)!));
-    setDragId(null);
-    try {
-      setDashboards((await api.reorderDashboards(order)).dashboards);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not save the order");
-    }
-  }
-  const dragProps = (d: DashboardSummary) =>
-    editMode && canEdit && !display.active
-      ? {
-          draggable: true,
-          onDragStart: () => setDragId(d.id),
-          onDragEnd: () => setDragId(null),
-          onDragOver: (e: DragEvent) => dragId && e.preventDefault(),
-          onDrop: () => void dropOn(d.id),
-          title: `${d.name} — drag to change the order`,
-          style: { cursor: "grab", opacity: dragId === d.id ? 0.5 : 1 },
-        }
-      : {};
+  // While editing: a grip on every dashboard and arrows on the open one (lib/use-arrange-dashboards.ts).
+  const arrange = useArrangeDashboards({
+    dashboards,
+    setDashboards,
+    enabled: editMode && canEdit && !display.active,
+    onError: setError,
+  });
   const addButton = (size: number) => (
     <Tooltip title="Add dashboard">
       <Button
@@ -175,7 +158,7 @@ export function DashboardTabBar({
           error={error}
           onGo={go}
           tools={tools}
-          dragProps={dragProps}
+          arrange={arrange}
         />
         {addDialog}
       </>
@@ -233,10 +216,11 @@ export function DashboardTabBar({
           </Typography>
         )}
         {!loading &&
-          dashboards.map((d) => {
+          dashboards.map((d, index) => {
             const Icon = getDashboardIcon(d.tabIcon);
             const active = d.id === activeId;
             const showLabel = d.showTabLabel !== false;
+            const dragging = arrange.draggingId === d.id;
             const tab = (
               <Button
                 key={d.id}
@@ -245,9 +229,14 @@ export function DashboardTabBar({
                 variant={active ? "contained" : "outlined"}
                 color={active ? "primary" : "inherit"}
                 onClick={() => go(d)}
-                {...dragProps(d)}
-                startIcon={<Icon fontSize="small" />}
+                startIcon={
+                  <>
+                    <ArrangeGrip d={d} arrange={arrange} />
+                    <Icon fontSize="small" />
+                  </>
+                }
                 sx={{
+                  ...(dragging ? { opacity: 0.6, outline: "2px dashed", outlineColor: "primary.main", outlineOffset: 2 } : {}),
                   flexShrink: 0,
                   textTransform: "none",
                   minWidth: showLabel ? undefined : 40,
@@ -272,12 +261,20 @@ export function DashboardTabBar({
                 ) : null}
               </Button>
             );
-            return showLabel ? (
+            const shown = showLabel ? (
               tab
             ) : (
               <Tooltip key={d.id} title={d.name}>
                 <span>{tab}</span>
               </Tooltip>
+            );
+            if (!arrange.enabled) return <Fragment key={d.id}>{shown}</Fragment>;
+            // While arranging: the grip finds this place by its mark; the open one has its arrows beside it.
+            return (
+              <Box key={d.id} {...{ [ARRANGE_ATTR]: d.id }} sx={{ display: "flex", alignItems: "center", gap: "var(--nx-control-gap)", flexShrink: 0 }}>
+                {shown}
+                {active ? <ArrangeArrows d={d} index={index} count={dashboards.length} arrange={arrange} axis="row" size={30} /> : null}
+              </Box>
             );
           })}
         {!loading && canAdd ? addButton(34) : null}

@@ -235,9 +235,11 @@ apps/ui/scripts/stage2-test-resolver.mjs
 apps/ui/src/api.ts
 apps/ui/src/App.tsx
 apps/ui/src/components/AdaptiveReading.tsx
+apps/ui/src/components/AddPanelSteps.tsx
 apps/ui/src/components/AddPanelTypePicker.tsx
 apps/ui/src/components/appearance/AppearancePreview.tsx
 apps/ui/src/components/AppErrorBoundary.tsx
+apps/ui/src/components/ArrangeControls.tsx
 apps/ui/src/components/BellFields.tsx
 apps/ui/src/components/BrandMark.tsx
 apps/ui/src/components/ButtonRow.tsx
@@ -258,6 +260,7 @@ apps/ui/src/components/ManageDashboardsPanel.tsx
 apps/ui/src/components/NewDashboardDialog.tsx
 apps/ui/src/components/NotificationBell.tsx
 apps/ui/src/components/PageBar.tsx
+apps/ui/src/components/PanelAreaLineFields.tsx
 apps/ui/src/components/PanelCameraContentFields.tsx
 apps/ui/src/components/PanelCameraOrderList.tsx
 apps/ui/src/components/PanelCapabilityOrderList.tsx
@@ -272,10 +275,12 @@ apps/ui/src/components/PanelMotionField.tsx
 apps/ui/src/components/PanelNotice.tsx
 apps/ui/src/components/PanelTile.tsx
 apps/ui/src/components/PanelTitleFields.tsx
+apps/ui/src/components/ReadingList.tsx
 apps/ui/src/components/RoomMenu.tsx
 apps/ui/src/components/SectionGrid.tsx
 apps/ui/src/components/SegmentButtonNav.tsx
 apps/ui/src/components/Segmented.tsx
+apps/ui/src/components/side-panel/SidePanelButtons.tsx
 apps/ui/src/components/side-panel/SidePanel.tsx
 apps/ui/src/components/SlotBindingFields.tsx
 apps/ui/src/components/status-light/StatusLightFields.tsx
@@ -407,6 +412,7 @@ apps/ui/src/lib/status-light-show.ts
 apps/ui/src/lib/switch-labels-guard.test.ts
 apps/ui/src/lib/switch-styles.test.ts
 apps/ui/src/lib/switch-styles.ts
+apps/ui/src/lib/use-arrange-dashboards.ts
 apps/ui/src/lib/usePanelPoll.ts
 apps/ui/src/lib/user-display.ts
 apps/ui/src/lib/user-events.ts
@@ -679,6 +685,8 @@ packages/domain/src/esphome-builder-types.ts
 packages/domain/src/group.ts
 packages/domain/src/history.ts
 packages/domain/src/index.ts
+packages/domain/src/panel-area-line.test.ts
+packages/domain/src/panel-area-line.ts
 packages/domain/src/panel-registry.ts
 packages/domain/src/panel-scope.test.ts
 packages/domain/src/panel-scope.ts

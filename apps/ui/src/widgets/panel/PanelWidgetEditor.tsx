@@ -7,12 +7,10 @@ import { StatusLightEditorSection, statusLightConfig } from "../../components/st
 import {
 
 
-  Checkbox,
 
 
   FormControl,
 
-  FormControlLabel,
 
   InputLabel,
 
@@ -36,7 +34,6 @@ import { PanelContentFields } from "../../components/PanelContentFields";
 
 import { PanelChartPresetFields } from "../../components/PanelChartPresetFields";
 
-import { AREA } from "../../lib/area-labels";
 
 import { loadSystemsInScope } from "../../lib/panel-catalog";
 import { useDashboardDataRuntime } from "../../lib/dashboard-data-runtime";
@@ -73,7 +70,7 @@ import {
 
 } from "../../lib/panel-scope";
 
-import { panelUsesAreaScope, panelUsesCapabilityScope } from "@nexternel/domain";
+import { panelUsesCapabilityScope } from "@nexternel/domain";
 
 import { readPanelScope } from "./registry";
 import {
@@ -138,8 +135,6 @@ export function PanelWidgetEditor({
 
   sectionRoomId,
 
-  sectionTitle,
-
   onClose,
 
   onSave,
@@ -164,7 +159,6 @@ export function PanelWidgetEditor({
   const existing = editorScope(widget);
   const groupIdsKey = (existing.groupIds ?? []).join("|");
 
-  const supportsAreaScope = panelUsesAreaScope(widget.type);
 
   const showSystemFilter = panelUsesCapabilityScope(widget.type);
 
@@ -192,7 +186,6 @@ export function PanelWidgetEditor({
    * and no Area filter applies (an Area here used to hide picked items with no way back).
    */
   const pickFromAll = contentMode === "manual";
-  const showAreaScope = supportsAreaScope && !pickFromAll;
   const filterAreaId = pickFromAll ? "" : areaId;
   const filterInherit = pickFromAll ? false : inheritSection;
   const filterSystemIds = pickFromAll ? [] : systemIds;
@@ -226,7 +219,6 @@ export function PanelWidgetEditor({
 
   const [chartMaxStr, setChartMaxStr] = useState("");
 
-  const [areas, setAreas] = useState<{ id: string; name: string }[]>([]);
 
   const [scopeCapabilities, setScopeCapabilities] = useState<ResolvedPanelCapability[]>([]);
 
@@ -332,11 +324,7 @@ export function PanelWidgetEditor({
 
     setChartMaxStr(chartBounds.max !== undefined ? String(chartBounds.max) : "");
 
-    void api.rooms().then((r) => {
 
-      setAreas(r.rooms.map((room) => ({ id: room.id, name: room.name })));
-
-    });
 
   }, [open, widget, sectionRoomId]);
 
@@ -580,64 +568,6 @@ export function PanelWidgetEditor({
           label: "Content",
           content: (
             <>
-          {showAreaScope && sectionRoomId && (
-
-            <FormControlLabel
-
-              control={
-
-                <Checkbox
-
-                  checked={inheritSection}
-
-                  onChange={(e) => setInheritSection(e.target.checked)}
-
-                />
-
-              }
-
-              label={`Use this section${sectionTitle ? ` (${sectionTitle})` : ""}`}
-
-            />
-
-          )}
-
-          {showAreaScope && !inheritSection && (
-
-            <FormControl fullWidth>
-
-              <InputLabel id="panel-edit-area">{AREA.singular}</InputLabel>
-
-              <Select
-
-                labelId="panel-edit-area"
-
-                label={AREA.singular}
-
-                value={areaId}
-
-                onChange={(e) => setAreaId(e.target.value)}
-
-              >
-
-                <MenuItem value="">All {AREA.plural.toLowerCase()}</MenuItem>
-
-                {areas.map((a) => (
-
-                  <MenuItem key={a.id} value={a.id}>
-
-                    {a.name}
-
-                  </MenuItem>
-
-                ))}
-
-              </Select>
-
-            </FormControl>
-
-          )}
-
           {showSystemFilter && (
 
             <PanelContentFields

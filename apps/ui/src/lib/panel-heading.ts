@@ -7,7 +7,7 @@ import { capabilityWidgetTitle, tidyDeviceName } from "./capability-labels";
 import { dashboardTileTitle } from "./dashboard-tile";
 import { normalizePanelKind } from "./panel-kind";
 import { effectivePanelScope } from "./panel-scope";
-import { panelItemContextLine } from "../panels/panel-item-context";
+import { areaLineFromAreas, readPanelAreaLine } from "@nexternel/domain";
 import { readPanelWeatherConfig } from "./panel-integration";
 import { allCapabilityIds } from "./widget-bindings";
 
@@ -225,7 +225,7 @@ function cameraPanelHeading(
   if (shown.length === 1) {
     const cam = shown[0]!;
     const title = custom || cam.name.trim() || fallback;
-    const area = custom ? cam.name.trim() : cam.areaName?.trim() || null;
+    const area = cam.areaName?.trim() || null;
     return {
       title,
       area: area && area.toLowerCase() !== title.toLowerCase() ? area : null,
@@ -235,9 +235,10 @@ function cameraPanelHeading(
   }
   const room = shown.length > 1 ? sharedValue(shown.map((c) => c.areaName)) : null;
   const title = custom || room || fallback;
+  const area = areaLineFromAreas(shown.map((c) => c.areaName));
   return {
     title,
-    area: room && room.toLowerCase() !== title.toLowerCase() ? room : null,
+    area: area && area.toLowerCase() !== title.toLowerCase() ? area : null,
     ownsItemName: false,
     itemPrefix: null,
   };
@@ -258,12 +259,31 @@ function headingItems(
 }
 
 /**
- * Title tile for every panel.
- * One item: its name and area live here.
- * Several items: the operator title, else what the items share — device, then area —
- * else the panel type. Each item keeps only the part of its name that differs.
+ * Title tile for every panel: the title, and under it always an area — never a device name.
+ * The area line is the panel's own choice (Edit → Look: a chosen area, or none), else worked out the
+ * same way for every panel from what it shows: one area → its name, two or three → their names,
+ * more → "4 areas", nothing with an area (a clock) → no line. A weather panel shows its place.
+ * Title — one item: its name. Several: the operator title, else what the items share — device,
+ * then area — else the panel type. Each item keeps only the part of its name that differs.
  */
 export function panelHeading(
+  panel: PanelHeadingSource,
+  capabilities: Capability[],
+  sectionRoomId?: string | null,
+  cameras: readonly CameraRecord[] = []
+): PanelHeading {
+  const heading = automaticPanelHeading(panel, capabilities, sectionRoomId, cameras);
+  const choice = readPanelAreaLine(panelDataConfig(panel));
+  if (choice.mode === "none") return { ...heading, area: null };
+  if (choice.mode === "area") {
+    // The area's current name (renamed since?), else the name kept with the choice.
+    const name = capabilities.find((c) => c.roomId === choice.areaId && c.roomName?.trim())?.roomName?.trim() || choice.name.trim();
+    return { ...heading, area: name || null };
+  }
+  return heading;
+}
+
+export function automaticPanelHeading(
   panel: PanelHeadingSource,
   capabilities: Capability[],
   sectionRoomId?: string | null,
@@ -286,7 +306,8 @@ export function panelHeading(
     const deviceTitle = device ? tidyDeviceName(device, room) : null;
     const title =
       custom || deviceTitle || room || MULTI_ITEM_KIND_TITLE[kind] || null;
-    let area = room && title?.toLowerCase() !== room.toLowerCase() ? room : null;
+    const areas = areaLineFromAreas(items.map((c) => c.roomName));
+    let area = areas && title?.toLowerCase() !== areas.toLowerCase() ? areas : null;
     if (!area && kind === "panel.charts" && !room) {
       area = sectionScopeAreaLabel(panel, capabilities, sectionRoomId);
     }
@@ -302,13 +323,7 @@ export function panelHeading(
   const named = single ? capabilityWidgetTitle(single).trim() : "";
   const purpose = !named && !custom ? singlePurposeTitle(panel) : null;
   const title = custom || named || purpose?.title || null;
-  let area = single ? panelItemContextLine(single).trim() : "";
-  if (!area && custom) {
-    const fallbackPurpose = singlePurposeTitle(panel);
-    if (fallbackPurpose?.title && fallbackPurpose.title !== custom) {
-      area = fallbackPurpose.title;
-    }
-  }
+  let area = single?.roomName?.trim() ?? "";
   if (!area && purpose?.area) area = purpose.area;
   if (!area) {
     const integrationArea = integrationTitleArea(panel);

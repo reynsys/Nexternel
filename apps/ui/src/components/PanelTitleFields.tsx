@@ -3,6 +3,7 @@ import { Box, Button, Stack, TextField, Tooltip, Typography } from "@mui/materia
 import BlockIcon from "@mui/icons-material/Block";
 import { ItemIcon } from "../lib/icons/ItemIcon";
 import { IconPicker } from "./IconPicker";
+import { PanelAreaLineFields } from "./PanelAreaLineFields";
 
 export type AutomaticTitle = {
   /** The title the panel shows when none is typed. */
@@ -77,6 +78,7 @@ export function PanelTitleFields({ title, onTitleChange, icon, onIconChange, aut
           onClose={() => setPickerOpen(false)}
         />
       </Box>
+      <PanelAreaLineFields />
     </Stack>
   );
 }

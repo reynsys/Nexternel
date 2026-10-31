@@ -53,9 +53,9 @@ test("several cameras in one area share it in the title strip", () => {
   assert.equal(heading.ownsItemName, false);
 });
 
-test("several cameras in different areas fall back to the title or Cameras", () => {
+test("several cameras in different areas: the title or Cameras, their areas under it", () => {
   const panel = cameraPanel({ panelScope: { contentMode: "manual", cameraIds: ["drive", "front", "back"] } }, "Cameras");
   const heading = panelHeading(panel, [], null, all);
   assert.equal(heading.title, "Cameras");
-  assert.equal(heading.area, null);
+  assert.equal(heading.area, "Driveway · Garden");
 });

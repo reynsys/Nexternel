@@ -63,10 +63,17 @@ test("a calendar title is the month, in the same place as any other panel", () =
   assert.equal(heading.ownsItemName, true);
 });
 
-test("a custom calendar title keeps the month as the area", () => {
+test("the line under the title is only ever an area (a custom calendar title has none)", () => {
   const heading = panelHeading(runtimePanel({ type: "panel.calendar", title: "Home" }), []);
   assert.equal(heading.title, "Home");
-  assert.equal(heading.area, new Date().toLocaleDateString(undefined, { month: "long", year: "numeric" }));
+  assert.equal(heading.area, null);
+});
+
+test("the panel's own area choice wins: a chosen area, or none", () => {
+  const chosen = panelHeading(runtimePanel({ type: "panel.clock", config: { areaLine: { mode: "area", areaId: "up", name: "Upstairs" } } }), []);
+  assert.equal(chosen.area, "Upstairs");
+  const none = panelHeading(runtimePanel({ type: "panel.calendar", config: { areaLine: { mode: "none" } } }), []);
+  assert.equal(none.area, null);
 });
 
 test("weather is named Weather, and system uses one shared name", () => {

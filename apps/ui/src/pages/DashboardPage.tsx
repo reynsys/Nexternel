@@ -8,7 +8,6 @@ import {
   Alert,
   Box,
   Button,
-  Checkbox,
   Chip,
   CircularProgress,
   Dialog,
@@ -16,7 +15,6 @@ import {
   DialogContent,
   DialogTitle,
   FormControl,
-  FormControlLabel,
   InputLabel,
   MenuItem,
   Select,
@@ -47,7 +45,6 @@ import {
 import { AddPanelTypePicker } from "../components/AddPanelTypePicker";
 import {
   isCorePanelCatalogType,
-  panelUsesAreaScope,
   panelUsesCapabilityScope,
   readPanelStatusLight,
   type PanelContentMode,
@@ -61,21 +58,22 @@ import {
   normalizeSectionColSpan,
   sortSections,
 } from "../lib/dashboard-document";
-import { SlotBindingFields } from "../components/SlotBindingFields";
+import { ReadingList } from "../components/ReadingList";
+import { AddPanelSteps } from "../components/AddPanelSteps";
+import { capabilitiesForSlot } from "../lib/slot-bindings";
+import { asSwitchCapability } from "../panels/panel-capabilities";
 import { PanelCameraContentFields } from "../components/PanelCameraContentFields";
-import { PanelContentFields } from "../components/PanelContentFields";
 import { StatusLightEditorSection, statusLightConfig } from "../components/status-light/StatusLightFields";
 import { validateAddPanelReady } from "../lib/add-panel-validation";
 import { bindingsFromSlots } from "../lib/widget-bindings";
 import { suggestSlotBindings } from "../lib/slot-bindings";
 import { SectionGrid } from "../components/SectionGrid";
-import { AREA } from "../lib/area-labels";
 import { fetchSelectablePanelOptions } from "../widgets/panel";
 import {
   buildPanelScopeConfig,
   previewPanelScopeForItemOptions,
 } from "../lib/panel-scope";
-import { PLUGIN_ITEM_PICKER_HEADING } from "../lib/panel-content-copy";
+import { PLUGIN_ITEM_PICKER_HEADING, panelItemPickerHeading } from "../lib/panel-content-copy";
 import {
   decodePanelInstance,
   mergeRuntimePanelPatch,
@@ -162,11 +160,12 @@ function DashboardPageContent() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [addPanelOpen, setAddPanelOpen] = useState(false);
+  /** Add panel: 1 what kind, 2 what it shows, 3 where and how it looks. */
+  const [addPanelStep, setAddPanelStep] = useState<1 | 2 | 3>(1);
   const [addPanelSectionId, setAddPanelSectionId] = useState("");
   const [addPanelType, setAddPanelType] = useState("panel.controls");
   const [addPanelInheritSection, setAddPanelInheritSection] = useState(true);
   const [addPanelAreaId, setAddPanelAreaId] = useState("");
-  const [addPanelAreas, setAddPanelAreas] = useState<{ id: string; name: string }[]>([]);
   const [addPanelSystemIds, setAddPanelSystemIds] = useState<string[]>([]);
   const [addPanelCapabilityIds, setAddPanelCapabilityIds] = useState<string[]>([]);
   const [addPanelCameraIds, setAddPanelCameraIds] = useState<string[]>([]);
@@ -185,6 +184,36 @@ function DashboardPageContent() {
   const [settingsPanel, setSettingsPanel] = useState<
     { type: "dashboard"; page: DashboardSettingsPage } | { type: "section"; id: string } | null
   >(null);
+  /**
+   * How things were when the open side menu (Section or Dashboard settings) opened: its Cancel puts
+   * them back. Taken once per menu (switching its page keeps it).
+   */
+  const [menuBefore, setMenuBefore] = useState<{
+    name: string;
+    tabIcon: string;
+    showTabLabel: boolean;
+    showSectionNav: boolean;
+    gridCols: 12 | 10 | 8;
+    sections: RuntimeDashboardSection[];
+  } | null>(null);
+  const menuKey = settingsPanel ? (settingsPanel.type === "section" ? `section:${settingsPanel.id}` : "dashboard") : null;
+  useEffect(() => {
+    setMenuBefore(menuKey ? { name, tabIcon, showTabLabel, showSectionNav, gridCols, sections } : null);
+    // Only when another menu opens: the copy is of the moment it opened.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [menuKey]);
+  /** Cancel in Section / Dashboard settings: back to how it was when the menu opened, then close. */
+  function cancelMenu() {
+    if (menuBefore) {
+      setName(menuBefore.name);
+      setTabIcon(menuBefore.tabIcon);
+      setShowTabLabel(menuBefore.showTabLabel);
+      setShowSectionNav(menuBefore.showSectionNav);
+      setGridCols(menuBefore.gridCols);
+      setSections(menuBefore.sections);
+    }
+    setSettingsPanel(null);
+  }
   const [editBaseline, setEditBaseline] = useState<{
     name: string;
     tabIcon: string;
@@ -225,7 +254,8 @@ function DashboardPageContent() {
     return () => setLeaveGuard(null);
   }, [editMode]);
 
-  const addPanelIsCore = isCorePanelCatalogType(addPanelType);
+  // Nothing chosen yet (Add panel step 1): no kind, so nothing to look up.
+  const addPanelIsCore = Boolean(addPanelType) && isCorePanelCatalogType(addPanelType);
   // The readings the new panel will show: picked ones (or all in scope when automatic), or a plugin/gauge's chosen readings.
   const addPanelReadings = useMemo(() => {
     const picked = addPanelIsCore
@@ -239,7 +269,6 @@ function DashboardPageContent() {
           .filter((c): c is Capability => Boolean(c));
     return picked.map((c) => ({ id: c.id, name: c.name, unit: c.unit, kind: c.kind }));
   }, [addPanelIsCore, addPanelType, addPanelContentMode, addPanelScopeCapabilities, addPanelCapabilityIds, addPanelSlotValues, capabilities]);
-  const addPanelShowsAreaScope = addPanelIsCore && panelUsesAreaScope(addPanelType);
   const addPanelShowsSystemFilter = addPanelIsCore && panelUsesCapabilityScope(addPanelType);
   const addPanelShowsCameraContent = addPanelIsCore && addPanelType === "panel.camera";
   const addPanelValidation = useMemo(
@@ -266,6 +295,8 @@ function DashboardPageContent() {
   const selectedContribution = addPanelIsCore ? undefined : getPanelContribution(addPanelType);
   const bindingSlots = selectedContribution?.bindingSlots ?? [];
   const hasBindingSlots = bindingSlots.length > 0;
+  /** The chosen kind needs step 2 (choosing what it shows); a clock or the weather does not. */
+  const addPanelNeedsContent = addPanelShowsSystemFilter || addPanelShowsCameraContent || (!addPanelIsCore && hasBindingSlots);
 
 
 
@@ -572,10 +603,11 @@ function DashboardPageContent() {
   function openAddPanel(sectionId?: string) {
     const sid = sectionId || addSectionId || sections[0]?.id || "";
     if (sectionId) setAddSectionId(sectionId);
-    const section = sections.find((s) => s.id === sid);
     setAddPanelSectionId(sid);
-    setAddPanelType("panel.controls");
-    setAddPanelInheritSection(Boolean(section?.roomId));
+    setAddPanelType("");
+    setAddPanelStep(1);
+    // Readings are picked from every area (step 2 groups them by area), never pre-filtered.
+    setAddPanelInheritSection(false);
     setAddPanelAreaId("");
     setAddPanelSystemIds([]);
     setAddPanelCapabilityIds([]);
@@ -586,14 +618,9 @@ function DashboardPageContent() {
     setAddPanelTitle("");
     setAddPanelStatusLight(readPanelStatusLight(null));
     setAddPanelOpen(true);
-    void api.rooms().then((r) => {
-      setAddPanelAreas(r.rooms.map((room) => ({ id: room.id, name: room.name })));
-    });
     void fetchSelectablePanelOptions().then(() => {
       const catalog = loadAddPanelDiscoveryCatalog();
       setAddPanelCatalog(catalog);
-      const controls = catalog.find((item) => item.id === "panel.controls");
-      setAddPanelType(controls?.id ?? catalog[0]?.id ?? "panel.controls");
     });
   }
 
@@ -1070,7 +1097,8 @@ function DashboardPageContent() {
         open={editMode && settingsPanel?.type === "dashboard"}
         page={settingsPanel?.type === "dashboard" ? settingsPanel.page : "this"}
         onPage={(page) => setSettingsPanel({ type: "dashboard", page })}
-        onClose={() => setSettingsPanel(null)}
+        onCancel={cancelMenu}
+        onApply={() => setSettingsPanel(null)}
         dashboardId={dashboardId ?? undefined}
         name={name}
         onName={setName}
@@ -1084,6 +1112,8 @@ function DashboardPageContent() {
         onSectionShortcuts={setShowSectionNav}
         onDashboardsChanged={() => setTabRefreshKey((k) => k + 1)}
         onCurrentMeta={(meta) => {
+          // Renamed under All dashboards: already kept, so Cancel must not put the old name back.
+          setMenuBefore((b) => (b ? { ...b, name: meta.name, tabIcon: meta.tabIcon, showTabLabel: meta.showTabLabel } : b));
           setName(meta.name);
           setTabIcon(meta.tabIcon);
           setShowTabLabel(meta.showTabLabel);
@@ -1111,7 +1141,8 @@ function DashboardPageContent() {
                   }
                 : null
             }
-            onClose={() => setSettingsPanel(null)}
+            onCancel={cancelMenu}
+            onApply={() => setSettingsPanel(null)}
             onChange={(patch) => sec && updateSection(sec.id, patch)}
             onMove={(dir) => sec && moveSection(sec.id, dir)}
             onDelete={() => sec && removeSection(sec.id)}
@@ -1304,154 +1335,134 @@ function DashboardPageContent() {
       <SidePanel
         open={editMode && addPanelOpen}
         onClose={() => setAddPanelOpen(false)}
-        title="Add panel"
+        title={addPanelStep === 1 ? "Add a panel" : `Add a panel · ${addPanelCatalog.find((i) => i.id === addPanelType)?.label ?? ""}`}
+        top={<AddPanelSteps step={addPanelStep} typeLabel={addPanelCatalog.find((i) => i.id === addPanelType)?.label ?? null} hasContent={addPanelNeedsContent} />}
         footer={
-          <ButtonRow direction="row">
-            <Button variant="outlined" fullWidth onClick={() => setAddPanelOpen(false)}>
-              Cancel
-            </Button>
+          <ButtonRow direction="row" flexWrap="nowrap">
             <Button
-              variant="contained"
+              variant="outlined"
               fullWidth
-              disabled={!addPanelValidation.ok}
-              onClick={() => {
-                try {
-                  addPanel();
-                } catch (err) {
-                  setError(err instanceof Error ? err.message : "Could not add panel");
-                }
-              }}
+              onClick={() => (addPanelStep === 1 ? setAddPanelOpen(false) : setAddPanelStep(addPanelStep === 3 && !addPanelNeedsContent ? 1 : ((addPanelStep - 1) as 1 | 2)))}
             >
-              Add panel
+              {addPanelStep === 1 ? "Cancel" : "Back"}
             </Button>
+            {addPanelStep < 3 ? (
+              <Button
+                variant="contained"
+                fullWidth
+                disabled={addPanelStep === 1 ? !addPanelType : !addPanelValidation.ok}
+                onClick={() => setAddPanelStep(addPanelStep === 1 && addPanelNeedsContent ? 2 : 3)}
+              >
+                Next
+              </Button>
+            ) : (
+              <Button
+                variant="contained"
+                fullWidth
+                disabled={!addPanelValidation.ok}
+                onClick={() => {
+                  try {
+                    addPanel();
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : "Could not add panel");
+                  }
+                }}
+              >
+                Add panel
+              </Button>
+            )}
           </ButtonRow>
         }
       >
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            <FormControl fullWidth>
-              <InputLabel id="panel-section-target">Section</InputLabel>
-              <Select
-                labelId="panel-section-target"
-                label="Section"
-                value={addPanelSectionId || ordered[0]?.id || ""}
-                onChange={(e) => {
-                  const sid = e.target.value;
-                  setAddPanelSectionId(sid);
-                  const sec = sections.find((s) => s.id === sid);
-                  setAddPanelInheritSection(Boolean(sec?.roomId));
-                }}
-              >
-                {ordered.map((s) => (
-                  <MenuItem key={s.id} value={s.id}>
-                    {s.title}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
+        <Stack spacing={2} sx={{ pt: 1 }}>
+          {/* Step 1: what kind of panel. */}
+          {addPanelStep === 1 ? (
             <AddPanelTypePicker
               catalog={addPanelCatalog}
               value={addPanelType}
               onChange={(id) => {
                 setAddPanelType(id);
+                setAddPanelCapabilityIds([]);
+                setAddPanelCameraIds([]);
+                setAddPanelSlotValues({});
                 if (isCorePanelCatalogType(id)) {
                   setAddPanelSystemIds([]);
                 }
               }}
             />
+          ) : null}
 
-            <TextField
-              label="Title (optional)"
-              size="small"
-              fullWidth
-              value={addPanelTitle}
-              onChange={(e) => setAddPanelTitle(e.target.value)}
-              helperText="Shown above the panel on the dashboard when set"
-            />
-
-            {addPanelIsCore && (
-              <>
-                {addPanelShowsAreaScope &&
-                  sections.find((s) => s.id === addPanelSectionId)?.roomId && (
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={addPanelInheritSection}
-                        onChange={(e) => setAddPanelInheritSection(e.target.checked)}
-                      />
-                    }
-                    label={`Use this section's ${AREA.singular.toLowerCase()}`}
-                  />
-                )}
-
-                {addPanelShowsAreaScope &&
-                  (!sections.find((s) => s.id === addPanelSectionId)?.roomId ||
-                    !addPanelInheritSection) && (
-                  <FormControl fullWidth>
-                    <InputLabel id="panel-area-target">{AREA.singular}</InputLabel>
-                    <Select
-                      labelId="panel-area-target"
-                      label={AREA.singular}
-                      value={addPanelAreaId}
-                      onChange={(e) => setAddPanelAreaId(e.target.value)}
-                    >
-                      <MenuItem value="">All {AREA.plural.toLowerCase()}</MenuItem>
-                      {addPanelAreas.map((a) => (
-                        <MenuItem key={a.id} value={a.id}>
-                          {a.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                )}
-
-                {addPanelShowsSystemFilter && (
-                  <PanelContentFields
-                    panelKind={addPanelType}
-                    capabilityIds={addPanelCapabilityIds}
-                    onCapabilityIdsChange={setAddPanelCapabilityIds}
-                    options={addPanelScopeCapabilities}
-                  />
-                )}
-
-                {addPanelShowsCameraContent && (
-                  <PanelCameraContentFields
-                    cameraIds={addPanelCameraIds}
-                    onCameraIdsChange={setAddPanelCameraIds}
-                    options={addPanelCameras}
-                  />
-                )}
-
-                {!addPanelValidation.ok && (
-                  <Typography variant="caption" color="error" role="alert">
-                    {addPanelValidation.message}
-                  </Typography>
-                )}
-
-              </>
-            )}
-
-            {!addPanelIsCore && hasBindingSlots && (
-              <Stack spacing={1}>
-                <Typography variant="subtitle2">{PLUGIN_ITEM_PICKER_HEADING}</Typography>
-                <SlotBindingFields
-                  slots={bindingSlots}
-                  capabilities={capabilities}
-                  values={addPanelSlotValues}
-                  onChange={(key, id) =>
-                    setAddPanelSlotValues((prev) => ({ ...prev, [key]: id }))
-                  }
+          {/* Step 2: exactly what it shows (every reading in sight, by area, with its live value). */}
+          {addPanelStep === 2 ? (
+            <>
+              {addPanelShowsSystemFilter ? (
+                <ReadingList
+                  mode="multiple"
+                  heading={panelItemPickerHeading(addPanelType)}
+                  options={addPanelScopeCapabilities.map(asSwitchCapability)}
+                  value={addPanelCapabilityIds}
+                  onChange={setAddPanelCapabilityIds}
                 />
-              </Stack>
-            )}
+              ) : null}
 
-            {/* Every panel that shows readings gets a status light; readings without limits can be given them here. */}
-            <StatusLightEditorSection
-              value={addPanelStatusLight}
-              onChange={setAddPanelStatusLight}
-              readings={addPanelReadings}
-            />
-          </Stack>
+              {addPanelShowsCameraContent ? (
+                <PanelCameraContentFields cameraIds={addPanelCameraIds} onCameraIdsChange={setAddPanelCameraIds} options={addPanelCameras} />
+              ) : null}
+
+              {!addPanelIsCore && hasBindingSlots
+                ? bindingSlots.map((slot) => (
+                    <ReadingList
+                      key={slot.key}
+                      mode="single"
+                      heading={bindingSlots.length > 1 ? slot.label : PLUGIN_ITEM_PICKER_HEADING}
+                      options={capabilitiesForSlot(capabilities, slot)}
+                      value={addPanelSlotValues[slot.key] ? [addPanelSlotValues[slot.key]!] : []}
+                      onChange={(ids) => setAddPanelSlotValues((prev) => ({ ...prev, [slot.key]: ids[0] ?? "" }))}
+                    />
+                  ))
+                : null}
+
+              {!addPanelValidation.ok ? (
+                <Typography variant="caption" color="text.secondary" role="status">
+                  {addPanelValidation.message}
+                </Typography>
+              ) : null}
+            </>
+          ) : null}
+
+          {/* Step 3: where it goes and how it looks. */}
+          {addPanelStep === 3 ? (
+            <>
+              <FormControl fullWidth>
+                <InputLabel id="panel-section-target">Section</InputLabel>
+                <Select
+                  labelId="panel-section-target"
+                  label="Section"
+                  value={addPanelSectionId || ordered[0]?.id || ""}
+                  onChange={(e) => setAddPanelSectionId(e.target.value)}
+                >
+                  {ordered.map((s) => (
+                    <MenuItem key={s.id} value={s.id}>
+                      {s.title}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <TextField
+                label="Title (optional)"
+                size="small"
+                fullWidth
+                value={addPanelTitle}
+                onChange={(e) => setAddPanelTitle(e.target.value)}
+                helperText="Leave empty to use the name of what it shows"
+              />
+
+              {/* Every panel that shows readings gets a status light; readings without limits can be given them here. */}
+              <StatusLightEditorSection value={addPanelStatusLight} onChange={setAddPanelStatusLight} readings={addPanelReadings} />
+            </>
+          ) : null}
+        </Stack>
       </SidePanel>
       </>
       )}

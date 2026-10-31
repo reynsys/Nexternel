@@ -103,6 +103,15 @@ export function onLiveChanges(topics: ChangeTopic[], fn: (topic: string) => void
   };
 }
 
+/**
+ * Tell the other parts of THIS screen that something changed here (other screens hear it from the
+ * server; the server's notice is skipped on the screen that made the change). E.g. arranging the
+ * dashboards in the tabs also reorders a Rooms panel on the same page.
+ */
+export function announceLocalChange(topic: ChangeTopic): void {
+  queue(topic);
+}
+
 /** Run `reload` when another screen changes one of these areas (or after a lost connection). */
 export function useLiveChanges(topics: ChangeTopic[], reload: (topic: string) => void, enabled = true): void {
   const ref = useRef(reload);

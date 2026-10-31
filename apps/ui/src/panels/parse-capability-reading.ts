@@ -7,7 +7,7 @@ export type ParsedCapabilityReading = {
 
 /** Split live capability state into a display value and unit for panel tiles. */
 export function parseCapabilityReading(
-  cap: ResolvedPanelCapability | undefined
+  cap: Pick<ResolvedPanelCapability, "state" | "unit"> | undefined
 ): ParsedCapabilityReading {
   if (!cap?.state) return { value: "—", unit: "" };
   if (cap.state.quality === "stale" || cap.state.quality === "unknown") {

@@ -2,6 +2,13 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.152
+
+- **Arrange your dashboards while editing:** every dashboard has a grip to drag it to a new place (also with a finger on a touch screen), and the open one has arrow buttons. Works the same in the tabs, the Dock and the Rail.
+- **The same Cancel and Apply buttons at the bottom of every side menu** while editing a dashboard. Cancel puts back how it was when you opened the menu.
+- **A new Add panel menu in three steps:** pick the kind of panel from picture tiles, then exactly what it shows from a clear list grouped by area with live values, then where it goes and how it looks.
+- **The line under a panel's title is always the area**, worked out the same way for every panel, and you can choose it yourself (or hide it) in the panel's menu.
+
 ## V5.2.151
 
 - **Fixed:** after updating boards, Devices kept saying every board needed an update. Nexternel now has ESPHome itself do the update, so ESPHome always knows what each board runs, and a board that already runs the newest software is not sent it again.

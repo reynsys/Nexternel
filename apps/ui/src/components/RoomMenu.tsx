@@ -6,6 +6,8 @@ import type { DashboardSummary } from "../api";
 import { getDashboardIcon } from "../lib/dashboard-icons";
 import type { RoomNav } from "../lib/room-nav";
 import { BOTTOM_NAV_HEIGHT_PX } from "../skins/builtin/mui-dashboard/BottomNav";
+import { ARRANGE_ATTR, type ArrangeDashboards } from "../lib/use-arrange-dashboards";
+import { ArrangeArrows, ArrangeGrip } from "./ArrangeControls";
 
 type Props = {
   variant: Exclude<RoomNav, "tabs">;
@@ -15,8 +17,8 @@ type Props = {
   error: string | null;
   onGo: (d: DashboardSummary) => void;
   tools: (dir: "row" | "column", size?: number) => ReactNode;
-  /** While editing: what makes a room draggable to a new place. */
-  dragProps?: (d: DashboardSummary) => object;
+  /** Arranging the dashboards while editing (grip on each, arrows on the open one). */
+  arrange: ArrangeDashboards;
 };
 
 /** Room width the rail takes when open / folded (the page keeps this much free on the right). */
@@ -33,8 +35,30 @@ export function RoomMenu(props: Props) {
   return <Rail {...props} />;
 }
 
-function RoomTile({ d, active, onGo, size, label, drag }: { d: DashboardSummary; active: boolean; onGo: () => void; size: number; label: "beside" | "none"; drag?: object }) {
+function RoomTile({
+  d,
+  active,
+  onGo,
+  size,
+  label,
+  arrange,
+  index,
+  count,
+  axis,
+}: {
+  d: DashboardSummary;
+  active: boolean;
+  onGo: () => void;
+  size: number;
+  label: "beside" | "none";
+  arrange: ArrangeDashboards;
+  index: number;
+  count: number;
+  /** Which way the rooms run: the open room's arrows move it along this way. */
+  axis: "row" | "column";
+}) {
   const Icon = getDashboardIcon(d.tabIcon);
+  const dragging = arrange.draggingId === d.id;
   // A real button, so every Look draws rooms like its other buttons (the open room filled).
   const tile = (
     <Button
@@ -44,8 +68,14 @@ function RoomTile({ d, active, onGo, size, label, drag }: { d: DashboardSummary;
       data-nx-room=""
       data-nx-active-tab={active ? "" : undefined}
       variant={active ? "contained" : "outlined"}
-      startIcon={label === "beside" ? <Icon fontSize="small" /> : undefined}
-      {...drag}
+      startIcon={
+        label === "beside" ? (
+          <>
+            <ArrangeGrip d={d} arrange={arrange} />
+            <Icon fontSize="small" />
+          </>
+        ) : undefined
+      }
       sx={{
         minWidth: size,
         height: size,
@@ -55,6 +85,8 @@ function RoomTile({ d, active, onGo, size, label, drag }: { d: DashboardSummary;
         textTransform: "none",
         transition: "transform .12s ease",
         transformOrigin: "bottom center",
+        overflow: "visible",
+        ...(dragging ? { opacity: 0.6, outline: "2px dashed", outlineColor: "primary.main", outlineOffset: 2 } : {}),
       }}
     >
       {label === "beside" ? (
@@ -62,11 +94,36 @@ function RoomTile({ d, active, onGo, size, label, drag }: { d: DashboardSummary;
           {d.name}
         </Box>
       ) : (
-        <Icon fontSize="small" />
+        <>
+          <ArrangeGrip d={d} arrange={arrange} corner />
+          <Icon fontSize="small" />
+        </>
       )}
     </Button>
   );
-  return label === "beside" ? tile : <Tooltip title={d.name}>{tile}</Tooltip>;
+  const shown = label === "beside" ? tile : <Tooltip title={d.name}>{tile}</Tooltip>;
+  if (!arrange.enabled) return shown;
+  // While arranging: the grip finds this place by its mark; the open room has its arrows under it,
+  // so its name keeps its room (at the end of the Rail's row; centred under an icon-only room).
+  return (
+    <Box
+      {...{ [ARRANGE_ATTR]: d.id }}
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: label === "beside" ? "stretch" : "center",
+        gap: "var(--nx-control-gap)",
+        flexShrink: 0,
+      }}
+    >
+      {shown}
+      {active ? (
+        <Box sx={{ alignSelf: label === "beside" ? "flex-end" : "center" }}>
+          <ArrangeArrows d={d} index={index} count={count} arrange={arrange} axis={axis} layout="row" size={label === "beside" ? 26 : 20} />
+        </Box>
+      ) : null}
+    </Box>
+  );
 }
 
 /** A floating island centred under the dashboard; the room under the pointer grows (like a Mac dock). */
@@ -74,7 +131,7 @@ const TILE = 46;
 const GROW = 0.22; // the most a room grows; the dock keeps this much room above its rooms
 /** Space between the dock and the bottom of the screen (wide screens). */
 const DOCK_GAP = 14;
-function Dock({ dashboards, activeId, onGo, tools, loading, error, dragProps }: Props) {
+function Dock({ dashboards, activeId, onGo, tools, loading, error, arrange }: Props) {
   const dock = useRef<HTMLDivElement>(null);
   const [centre, setCentre] = useState<number | null>(null);
   // Centre under the dashboard (the dock's own parent), without taking any room in the page.
@@ -160,8 +217,8 @@ function Dock({ dashboards, activeId, onGo, tools, loading, error, dragProps }: 
       >
         {loading ? <Typography variant="caption">Loading rooms…</Typography> : null}
         {error ? <Typography variant="caption" color="error">{error}</Typography> : null}
-        {dashboards.map((d) => (
-          <RoomTile key={d.id} d={d} active={d.id === activeId} onGo={() => onGo(d)} size={TILE} label="none" drag={dragProps?.(d)} />
+        {dashboards.map((d, i) => (
+          <RoomTile key={d.id} d={d} active={d.id === activeId} onGo={() => onGo(d)} size={TILE} label="none" arrange={arrange} index={i} count={dashboards.length} axis="row" />
         ))}
         <Box sx={{ width: "1px", alignSelf: "stretch", bgcolor: "divider", mx: 0.5, flexShrink: 0 }} />
         {tools("row", TILE)}
@@ -178,7 +235,7 @@ const RAIL_EDGE = 14;
  * A floating island on the right, centred top to bottom; it grows with the rooms (and scrolls when
  * they no longer fit). Fold button on top, rooms in the middle, the bell and Dashboard Options at the bottom.
  */
-function Rail({ dashboards, activeId, onGo, tools, dragProps }: Props) {
+function Rail({ dashboards, activeId, onGo, tools, arrange }: Props) {
   const [open, setOpen] = useState(() => {
     try {
       return localStorage.getItem(RAIL_KEY) !== "0";
@@ -235,8 +292,8 @@ function Rail({ dashboards, activeId, onGo, tools, dragProps }: Props) {
         </Button>
       </Tooltip>
       <Box sx={{ display: "flex", flexDirection: "column", gap: "var(--nx-list-gap)", minHeight: 0, overflowY: "auto", scrollbarWidth: "none" }}>
-        {dashboards.map((d) => (
-          <RoomTile key={d.id} d={d} active={d.id === activeId} onGo={() => onGo(d)} size={SIZE} label={open ? "beside" : "none"} drag={dragProps?.(d)} />
+        {dashboards.map((d, i) => (
+          <RoomTile key={d.id} d={d} active={d.id === activeId} onGo={() => onGo(d)} size={SIZE} label={open ? "beside" : "none"} arrange={arrange} index={i} count={dashboards.length} axis="column" />
         ))}
       </Box>
       <Box sx={{ height: "1px", bgcolor: "divider", my: 0.5, flexShrink: 0 }} />

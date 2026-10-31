@@ -14,13 +14,15 @@ import AddIcon from "@mui/icons-material/Add";
 import type { CameraRecord, Capability, PanelInstance } from "../api";
 import type { RuntimePanelInstance } from "../lib/panel-compatibility/types";
 import { runtimeConfigToPanelRecord } from "../lib/panel-compatibility/panel-config";
-import { toRenderPanel } from "../lib/panel-compatibility/render-adapter";
+import { runtimePanelToPanelInstance, toRenderPanel } from "../lib/panel-compatibility/render-adapter";
 import { PANEL_DRAG_HANDLE, PANEL_NO_DRAG, PanelCard } from "./PanelCard";
 import { PanelPlaceActions, PanelPlaceContext, type PanelPlace } from "./panel-editor/PanelPlaceActions";
 import { SidePanel } from "./side-panel/SidePanel";
 import { PanelPreview } from "./panel-editor/PanelEditorShell";
 import { PluginPanelEditor } from "./panel-editor/PluginPanelEditor";
 import { mergeRuntimePanelPatch } from "../lib/panel-compatibility/normalize-panel";
+import { PanelAreaLineContext, type PanelAreaLineChoice } from "./PanelAreaLineFields";
+import { api } from "../api";
 import { flowCommit, flowGridForWidth, flowLayout } from "../panels/flow-layout";
 import { PanelWidgetEditor, isPanelWidgetType, panelLabel } from "../widgets/panel";
 import { GAUGE_WIDGET_TYPE } from "../widgets/gauge";
@@ -29,13 +31,13 @@ import { isEchartsWidgetType } from "../widgets/echarts/config";
 import { getPanelContribution } from "../plugins/registry";
 import { panelTitleIcon } from "../lib/panel-title-icon";
 import type { AutomaticTitle } from "./PanelTitleFields";
-import { minPanelRowPx, panelHeading } from "../lib/panel-heading";
+import { automaticPanelHeading, minPanelRowPx, panelHeading } from "../lib/panel-heading";
 import {
   panelAsGeneralWidget,
   resolveDashboardEditorKind,
 } from "../lib/panel-editor-route";
 import { GeneralWidgetEditor } from "../widgets/GeneralWidgetEditor";
-import { migrateContributionPanelType, isPluginPanelType } from "@nexternel/domain";
+import { migrateContributionPanelType, isPluginPanelType, readPanelAreaLine, withPanelAreaLine, type PanelAreaLine } from "@nexternel/domain";
 import {
   DASHBOARD_GRID_MARGIN_X,
   DASHBOARD_GRID_MARGIN_Y,
@@ -251,10 +253,36 @@ export function SectionGrid({
         },
       }
     : null;
+  // "Area shown under the title" of the panel being edited: its editor's title block shows the choice
+  // (PanelAreaLineFields); it goes into whatever that editor saves, and into its preview.
+  const [areaLine, setAreaLine] = useState<PanelAreaLine>({ mode: "auto" });
+  const [areaList, setAreaList] = useState<{ id: string; name: string }[]>([]);
+  useEffect(() => {
+    if (!editing) return;
+    setAreaLine(readPanelAreaLine(runtimeConfigToPanelRecord(editing.config)));
+    void api
+      .rooms()
+      .then((r) => setAreaList(r.rooms.map((room) => ({ id: room.id, name: room.name }))))
+      .catch(() => undefined);
+    // Each time another panel's menu opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editPanelId]);
+  const withAreaLine = (patch: Partial<PanelInstance>): Partial<PanelInstance> =>
+    editing
+      ? { ...patch, config: withPanelAreaLine((patch.config ?? runtimePanelToPanelInstance(editing).config) as Record<string, unknown>, areaLine) }
+      : patch;
+  const areaLineChoice: PanelAreaLineChoice | null = editing
+    ? {
+        value: areaLine,
+        onChange: setAreaLine,
+        automatic: automaticPanelHeading(editing, capabilities, sectionRoomId, cameras).area,
+        areas: areaList,
+      }
+    : null;
   const renderPreview = (patch: Partial<PanelInstance>) =>
     editing ? (
       <PanelPreview
-        panel={mergeRuntimePanelPatch(editing, patch)}
+        panel={mergeRuntimePanelPatch(editing, withAreaLine(patch))}
         size={editingSize}
         capabilities={capabilities}
         cameras={cameras}
@@ -400,6 +428,7 @@ export function SectionGrid({
         </Stack>
       )}
 
+      <PanelAreaLineContext.Provider value={areaLineChoice}>
       <PanelPlaceContext.Provider value={editingPlace}>
       {editorKind === "scoped-panel" && editing && editingSaved && (
         <PanelWidgetEditor
@@ -411,7 +440,7 @@ export function SectionGrid({
           renderPreview={renderPreview}
           onClose={() => setEditPanelId(null)}
           onSave={(patch) => {
-            onUpdatePanel(sectionId, editing.id, patch);
+            onUpdatePanel(sectionId, editing.id, withAreaLine(patch));
           }}
         />
       )}
@@ -424,10 +453,10 @@ export function SectionGrid({
           renderPreview={(patch) => renderPreview({ ...patch, type: editing.type })}
           onClose={() => setEditPanelId(null)}
           onSave={(patch) => {
-            onUpdatePanel(sectionId, editing.id, {
+            onUpdatePanel(sectionId, editing.id, withAreaLine({
               ...patch,
               type: editing.type,
-            });
+            }));
           }}
         />
       )}
@@ -441,7 +470,7 @@ export function SectionGrid({
           renderPreview={renderPreview}
           onClose={() => setEditPanelId(null)}
           onSave={(patch) => {
-            onUpdatePanel(sectionId, editing.id, patch);
+            onUpdatePanel(sectionId, editing.id, withAreaLine(patch));
           }}
         />
       )}
@@ -454,13 +483,23 @@ export function SectionGrid({
           renderPreview={renderPreview}
           onClose={() => setEditPanelId(null)}
           onSave={(patch) => {
-            onUpdatePanel(sectionId, editing.id, patch);
+            onUpdatePanel(sectionId, editing.id, withAreaLine(patch));
           }}
         />
       )}
       {editing && editorKind === null && (
         // A panel type without settings of its own: its Edit menu has only where it sits.
-        <SidePanel open onClose={() => setEditPanelId(null)} title={`Edit ${editingPlace?.name ?? "panel"}`}>
+        <SidePanel
+          open
+          onClose={() => setEditPanelId(null)}
+          title={`Edit ${editingPlace?.name ?? "panel"}`}
+          footer={
+            // Nothing here waits to be applied (moving or removing the panel happens at once).
+            <Button variant="contained" fullWidth onClick={() => setEditPanelId(null)}>
+              Done
+            </Button>
+          }
+        >
           <Stack spacing={2}>
             <Typography variant="body2" color="text.secondary">
               This panel has no settings of its own.
@@ -470,6 +509,7 @@ export function SectionGrid({
         </SidePanel>
       )}
       </PanelPlaceContext.Provider>
+      </PanelAreaLineContext.Provider>
     </Box>
   );
 }

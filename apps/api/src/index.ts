@@ -65,6 +65,14 @@ import { changeTopicFor, publishChange } from "./live/changes.js";
 import { APP_VERSION } from "./version.js";
 
 const app = Fastify({ logger: true });
+// An id in the address that is not even a valid id (the database refuses it: "invalid input syntax")
+// means there is no such thing: "not found", never a server error. Everything else as before.
+app.setErrorHandler((err, _request, reply) => {
+  if ((err as { code?: string }).code === "22P02") {
+    return reply.code(404).send({ error: { code: "not_found", message: "Not found" } });
+  }
+  return reply.send(err);
+});
 
 await app.register(cors, {
   origin: true,

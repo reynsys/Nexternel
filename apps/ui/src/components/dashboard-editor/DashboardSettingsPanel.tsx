@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
-import { Box, FormControlLabel, Stack, Switch, Tab, Tabs, TextField, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
+import { Box, Button, FormControlLabel, Stack, Switch, Tab, Tabs, TextField, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import { SidePanel } from "../side-panel/SidePanel";
+import { SidePanelButtons } from "../side-panel/SidePanelButtons";
 import { DashboardIconPicker } from "../DashboardIconPicker";
 import { ManageDashboardsPanel } from "../ManageDashboardsPanel";
 
@@ -10,7 +11,10 @@ type Props = {
   open: boolean;
   page: DashboardSettingsPage;
   onPage: (page: DashboardSettingsPage) => void;
-  onClose: () => void;
+  /** Puts this dashboard's settings back as they were when the menu opened, and closes it (also Escape). */
+  onCancel: () => void;
+  /** Keeps the changes and closes the menu. */
+  onApply: () => void;
   dashboardId?: string;
   name: string;
   onName: (v: string) => void;
@@ -46,14 +50,25 @@ export function SettingBlock({ label, help, children }: { label: string; help?: 
 
 /**
  * Dashboard settings (side panel): this dashboard's name, icon and layout choices, and every
- * dashboard on the system. Changes show on the dashboard straight away; Save keeps them.
+ * dashboard on the system. Changes to this dashboard show straight away; Apply keeps them, Cancel puts
+ * them back. Changes under All dashboards are kept at once (Done closes).
  */
 export function DashboardSettingsPanel(p: Props) {
   return (
     <SidePanel
       open={p.open}
-      onClose={p.onClose}
+      onClose={p.onCancel}
       title="Dashboard settings"
+      footer={
+        p.page === "this" ? (
+          <SidePanelButtons onCancel={p.onCancel} onApply={p.onApply} />
+        ) : (
+          // All dashboards: each change there is kept at once, so there is nothing to cancel.
+          <Button variant="contained" fullWidth onClick={p.onApply}>
+            Done
+          </Button>
+        )
+      }
       top={
         <Tabs value={p.page} onChange={(_e, v: DashboardSettingsPage) => p.onPage(v)} variant="fullWidth">
           <Tab value="this" label="This dashboard" />
@@ -92,9 +107,6 @@ export function DashboardSettingsPanel(p: Props) {
               label="Show section shortcuts"
             />
           </SettingBlock>
-          <Typography variant="caption" color="text.secondary">
-            Changes show on the dashboard straight away; Save keeps them.
-          </Typography>
         </Stack>
       ) : (
         <ManageDashboardsPanel
