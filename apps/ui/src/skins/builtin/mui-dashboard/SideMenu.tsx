@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Avatar from "@mui/material/Avatar";
 import MuiDrawer, { drawerClasses } from "@mui/material/Drawer";
 import Box from "@mui/material/Box";
@@ -18,7 +18,6 @@ import { NotificationBell } from "../../../components/NotificationBell";
 import { hasPermission } from "../../../lib/permissions";
 import type { User } from "../../../api";
 import type { RolePermissions } from "../../../lib/permissions";
-import { getBrandLogo } from "../../brandLogo";
 import { BrandMark } from "../../../components/BrandMark";
 import { LookDecor, RoleDivider, useHasDecor } from "../../looks/LookDecor";
 import {
@@ -52,19 +51,10 @@ export function SideMenu({
   collapsed,
   onCollapsedChange,
 }: Props) {
-  const [logo, setLogo] = useState<string | null>(() => getBrandLogo());
   const width = collapsed ? SIDE_MENU_WIDTH_COLLAPSED : SIDE_MENU_WIDTH_EXPANDED;
   const gradientActive = useGradientActive();
   const decoratedDividers = useHasDecor("menuDivider");
   const decoratedEdge = useHasDecor("menuEdge");
-
-  useEffect(() => {
-    function refresh() {
-      setLogo(getBrandLogo());
-    }
-    window.addEventListener("nexternel:brand-logo-updated", refresh);
-    return () => window.removeEventListener("nexternel:brand-logo-updated", refresh);
-  }, []);
 
   // Both footer buttons are ordinary buttons, so they take the chosen Look's button style.
   const collapseToggle = (
@@ -123,7 +113,7 @@ export function SideMenu({
           minHeight: 64,
         }}
       >
-        <BrandMark logo={logo} size={collapsed ? 32 : 28} />
+        <BrandMark size={collapsed ? 32 : 28} />
         {!collapsed && (
           <Typography
             variant="subtitle1"

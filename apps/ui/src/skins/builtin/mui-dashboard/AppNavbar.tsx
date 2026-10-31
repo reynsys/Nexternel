@@ -20,7 +20,6 @@ import { Link as RouterLink } from "react-router-dom";
 import { barSurfaceSx } from "../../surfaceStyles";
 import { useGradientActive } from "../../useSurfaceStyles";
 import { BrandMark } from "../../../components/BrandMark";
-import { getBrandLogo } from "../../brandLogo";
 
 const Toolbar = styled(MuiToolbar)({
   width: "100%",
@@ -75,7 +74,7 @@ export function AppNavbar({
           }}
         >
           <Stack direction="row" spacing={1} sx={{ mr: "auto", alignItems: "center" }}>
-            <BrandMark logo={getBrandLogo()} size={24} />
+            <BrandMark size={24} />
             <Typography variant="h6" component="h1" sx={{ color: "text.primary" }}>
               Nexternel
             </Typography>

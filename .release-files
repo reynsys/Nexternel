@@ -458,7 +458,6 @@ apps/ui/src/pages/admin/OctopusSettingsCard.tsx
 apps/ui/src/pages/admin/RolesPage.tsx
 apps/ui/src/pages/admin/sections/AutomaticBackupsSection.tsx
 apps/ui/src/pages/admin/sections/BackupRestoreSection.tsx
-apps/ui/src/pages/admin/sections/BrandLogoSection.tsx
 apps/ui/src/pages/admin/sections/DeviceFilesPackCard.tsx
 apps/ui/src/pages/admin/sections/ProfileSection.tsx
 apps/ui/src/pages/admin/settings/ActivityPage.tsx
@@ -556,7 +555,7 @@ apps/ui/src/plugins/registry.ts
 apps/ui/src/skins/activeSkin.ts
 apps/ui/src/skins/AppearanceCssVars.tsx
 apps/ui/src/skins/appearance-scheme.ts
-apps/ui/src/skins/brandLogo.ts
+apps/ui/src/skins/AppearanceTrialBar.tsx
 apps/ui/src/skins/builtin/classic/Layout.tsx
 apps/ui/src/skins/builtin/classic/skin.ts
 apps/ui/src/skins/builtin/classic/theme.ts

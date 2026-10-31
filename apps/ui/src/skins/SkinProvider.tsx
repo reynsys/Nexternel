@@ -25,6 +25,7 @@ import {
   DEFAULT_THEME_PREFS,
 } from "./themePrefs";
 import { AppearanceCssVars } from "./AppearanceCssVars";
+import { AppearanceTrialBar } from "./AppearanceTrialBar";
 import { MOTION_CSS } from "../lib/motion";
 import { BackgroundEffects } from "./effects/BackgroundEffects";
 import { looksVersion, resolveLook, subscribeLooks } from "./looks/registry";
@@ -60,6 +61,16 @@ type SkinContextValue = {
   setSkinId: (id: string) => void;
   themePrefs: ThemePrefs;
   setThemePrefs: (prefs: ThemePrefs | ((prev: ThemePrefs) => ThemePrefs)) => void;
+  /**
+   * Try Appearance changes without keeping them (Settings → Appearance): they show straight away;
+   * applyTrial keeps them, cancelTrial puts back how it was when the first change was tried.
+   */
+  tryThemePrefs: (prefs: ThemePrefs) => void;
+  trySkinId: (id: string) => void;
+  /** True while there are tried changes that are not applied yet. */
+  trying: boolean;
+  applyTrial: () => void;
+  cancelTrial: () => void;
   /** Apply prefs from the signed-in user account (login / me). */
   applyAccountPrefs: (prefs: UserThemePrefs | null | undefined) => void;
   /** Changes when an add-on adds a Look, so pickers and panels re-draw. */
@@ -116,6 +127,10 @@ export function SkinProvider({ children }: { children: ReactNode }) {
     document.documentElement.setAttribute("data-nx-motion", themePrefs.motion !== false && !reduce ? "on" : "off");
   }, [themePrefs.motion]);
   const persistServerRef = useRef(true);
+  // How Appearance was before the first tried change (null when nothing is being tried).
+  const [trial, setTrial] = useState<{ prefs: ThemePrefs; skinId: string } | null>(null);
+  const trialRef = useRef(trial);
+  trialRef.current = trial;
   const hydratedRef = useRef(false);
 
   const pushAccountPrefs = useCallback(
@@ -164,7 +179,8 @@ export function SkinProvider({ children }: { children: ReactNode }) {
       void loadAddons();
       return;
     }
-    if (!getStoredAccessToken()) return;
+    // Changes being tried stay on screen; the account's are shown after Apply or Cancel.
+    if (!getStoredAccessToken() || trialRef.current) return;
     void api
       .me()
       .then((r) => applyAccountPrefs(r.user.themePrefs))
@@ -203,6 +219,50 @@ export function SkinProvider({ children }: { children: ReactNode }) {
     [pushAccountPrefs, skinId]
   );
 
+  const startTrial = useCallback(() => {
+    setTrial((prev) => prev ?? { prefs: themePrefs, skinId });
+  }, [themePrefs, skinId]);
+
+  const tryThemePrefs = useCallback(
+    (prefs: ThemePrefs) => {
+      startTrial();
+      setThemePrefsState(prefs);
+    },
+    [startTrial]
+  );
+
+  const trySkinId = useCallback(
+    (id: string) => {
+      startTrial();
+      setSkinIdState(id);
+      setThemePrefsState((prev) => ({ ...prev, skinId: id }));
+    },
+    [startTrial]
+  );
+
+  const applyTrial = useCallback(() => {
+    setActiveSkinId(skinId);
+    persistThemePrefsLocal(themePrefs);
+    if (persistServerRef.current) pushAccountPrefs(themePrefs, skinId);
+    setTrial(null);
+  }, [themePrefs, skinId, pushAccountPrefs]);
+
+  const cancelTrial = useCallback(() => {
+    const before = trialRef.current;
+    if (!before) return;
+    setThemePrefsState(before.prefs);
+    setSkinIdState(before.skinId);
+    setTrial(null);
+  }, []);
+
+  // Closing or reloading the page with changes not applied: the browser asks first.
+  useEffect(() => {
+    if (!trial) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [trial]);
+
   // With a plain background, a Look may bring its own (e.g. the HUD's grid).
   // A background made from the person's own colours, else a ready-made one, else the Look's own.
   const mine = isMineBackground(shownPrefs.gradientId) ? mineBackground(scheme, shownPrefs.gradientId!) : null;
@@ -222,12 +282,17 @@ export function SkinProvider({ children }: { children: ReactNode }) {
       setSkinId,
       themePrefs,
       setThemePrefs,
+      tryThemePrefs,
+      trySkinId,
+      trying: trial !== null,
+      applyTrial,
+      cancelTrial,
       applyAccountPrefs,
       looksVersion: lookVer,
       textScale,
       scheme,
     }),
-    [skin, skins, setSkinId, themePrefs, setThemePrefs, applyAccountPrefs, lookVer, textScale, scheme]
+    [skin, skins, setSkinId, themePrefs, setThemePrefs, tryThemePrefs, trySkinId, trial, applyTrial, cancelTrial, applyAccountPrefs, lookVer, textScale, scheme]
   );
 
   return (
@@ -283,6 +348,7 @@ export function SkinProvider({ children }: { children: ReactNode }) {
         ) : null}
         <BackgroundEffects prefs={display.light ? { ...themePrefs, effectId: "off" } : themePrefs} />
         {children}
+        {trial ? <AppearanceTrialBar onCancel={cancelTrial} onApply={applyTrial} /> : null}
       </ThemeProvider>
     </SkinContext.Provider>
   );

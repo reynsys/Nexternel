@@ -2,17 +2,14 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Alert,
   Box,
-  Button,
   ButtonBase,
   Divider,
   FormControlLabel,
-  Radio,
-  RadioGroup,
   Stack,
   Switch,
+  Tab,
+  Tabs,
   TextField,
-  ToggleButton,
-  ToggleButtonGroup,
   Tooltip,
   Typography,
   useMediaQuery,
@@ -25,7 +22,7 @@ import { PRIMARY_SWATCHES, TEXT_SIZES, normalizeAccentHex, type ThemePrefs, with
 import { listLooks, resolveLook } from "./looks/registry";
 import { chosenLookButtons } from "../lib/look-font";
 import { BACKGROUND_EFFECTS, EFFECT_AMOUNTS, EFFECT_COLOURS, EFFECT_SPEEDS, type EffectColour } from "./effects/catalog";
-import { useReducedMotion } from "./effects/BackgroundEffects";
+import { EffectPicture, useEffectOptions, useReducedMotion } from "./effects/BackgroundEffects";
 import type { UiSkin } from "./types";
 import { choiceSx, insetSx } from "./surfaceStyles";
 import { ButtonRow } from "../components/ButtonRow";
@@ -47,6 +44,31 @@ type Props = {
   /** Optional footnote under the controls */
   footnote?: string;
 };
+
+const TABS = [
+  { id: "theme", label: "Theme" },
+  { id: "style", label: "Style & colours" },
+  { id: "background", label: "Background" },
+  { id: "text", label: "Text" },
+  { id: "dashboards", label: "Dashboards" },
+] as const;
+
+// The tab last open, so coming back to the page opens it again (this browser only).
+const TAB_KEY = "nexternel.appearance.tab";
+function readStored(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+function writeStored(key: string, value: string) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    /* only a convenience */
+  }
+}
 
 type BackgroundKind = "plain" | "mine" | "glow" | "gradient";
 
@@ -99,14 +121,16 @@ function Row({ label, hint, children }: { label: string; hint?: string; children
 }
 
 /** A choice tile: a name and a line about it (Looks, effects, menus…). */
-function ChoiceTile({ selected, onClick, title, text, children, sx }: { selected: boolean; onClick: () => void; title: ReactNode; text?: ReactNode; children?: ReactNode; sx?: object }) {
+function ChoiceTile({ selected, onClick, title, text, children, sx, disabled }: { selected: boolean; onClick: () => void; title: ReactNode; text?: ReactNode; children?: ReactNode; sx?: object; disabled?: boolean }) {
   return (
     <ButtonBase
       onClick={onClick}
+      disabled={disabled}
       aria-pressed={selected}
       sx={[
         { width: "100%", height: "100%", display: "grid", gridTemplateColumns: "minmax(0, 1fr)", justifyItems: "start", alignContent: "start", textAlign: "left", gap: 0.25, px: 1.25, py: 1 },
         choiceSx(selected),
+        disabled ? { opacity: 0.5 } : {},
         sx ?? {},
       ]}
     >
@@ -154,6 +178,13 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
   const [customHex, setCustomHex] = useState(themePrefs.primary);
   const [kind, setKind] = useState<BackgroundKind>(() => kindOf(themePrefs.gradientId));
   const reducedMotion = useReducedMotion();
+  const tabIds: string[] = TABS.map((t) => t.id);
+  const [tab, setTab] = useState(() => {
+    const stored = readStored(TAB_KEY);
+    return stored && tabIds.includes(stored) ? stored : "theme";
+  });
+  const [fontGroup, setFontGroup] = useState("all");
+  const effectOptions = useEffectOptions(themePrefs);
   const deviceDark = useMediaQuery("(prefers-color-scheme: dark)");
   const wide = useMediaQuery("(min-width: 1200px)");
   const look = resolveLook(themePrefs.lookId);
@@ -202,8 +233,180 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
   };
   const swatches = kind === "glow" ? GLOW_PALETTES : kind === "gradient" ? GRADIENT_PALETTES : [];
 
-  const settings = (
+  const modeTiles = (
+    <Section
+      title="Mode"
+      hint={look.forceMode ? `${look.label} is always ${look.forceMode}. Your choice comes back with other styles.` : "Light, dark, or follow this device's own setting (light by day, dark by night if it does that)."}
+    >
+      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 1 }}>
+        {([
+          ["light", "Light", <LightModeIcon key="l" fontSize="small" />],
+          ["dark", "Dark", <DarkModeIcon key="d" fontSize="small" />],
+          ["auto", "Automatic", <BrightnessAutoIcon key="a" fontSize="small" />],
+        ] as const).map(([value, label, icon]) => {
+          const on = value === "auto" ? Boolean(themePrefs.autoMode) : !themePrefs.autoMode && themePrefs.mode === value;
+          return (
+            <ChoiceTile
+              key={value}
+              selected={on}
+              disabled={Boolean(look.forceMode)}
+              onClick={() => set(value === "auto" ? { autoMode: true } : { mode: value, autoMode: false })}
+              title={
+                <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
+                  {icon}
+                  {label}
+                </Box>
+              }
+            />
+          );
+        })}
+      </Box>
+    </Section>
+  );
+
+  // Fonts as small rows, each written in its own letters; the buttons above show one group.
+  const fontGroups = [
+    ...FONT_GROUPS.map((g) => ({ id: g.id as string, label: g.label, fonts: CORE_FONTS.filter((f) => f.group === g.id).map((f) => ({ id: f.id, label: f.label, family: f.family, text: f.description })) })),
+    ...(lookOwnFonts.length ? [{ id: "look", label: `${look.label} fonts`, fonts: lookOwnFonts.map((f) => ({ id: f.id, label: f.label, family: f.family, text: `Made for ${look.label}.` })) }] : []),
+  ];
+  const shownFonts = fontGroups.filter((g) => fontGroup === "all" || g.id === fontGroup).flatMap((g) => g.fonts);
+
+  const textTab = (
     <Stack spacing={3.5} divider={<Divider flexItem />}>
+      <Section title="Text size" hint="All text in Nexternel, on this account.">
+        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 1 }}>
+          {TEXT_SIZES.map((t) => (
+            <ChoiceTile
+              key={t.value}
+              selected={(themePrefs.textSize ?? 100) === t.value}
+              onClick={() => set({ textSize: t.value })}
+              title={t.label}
+              sx={{ justifyItems: "center", textAlign: "center", py: 1.25 }}
+            >
+              <Typography aria-hidden sx={{ fontSize: `${(1.15 * t.value) / 100}rem`, fontWeight: "fontWeightBold", lineHeight: 1.2 }}>
+                Aa
+              </Typography>
+            </ChoiceTile>
+          ))}
+        </Box>
+      </Section>
+
+      <Section title="Font" hint="One font for all text, in every style. Built into Nexternel, so it works without the internet.">
+        <Segmented
+          label="Font group"
+          value={fontGroup}
+          onChange={setFontGroup}
+          options={[{ value: "all", label: "All" }, ...fontGroups.map((g) => ({ value: g.id, label: g.label }))]}
+        />
+        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 1, mt: 1.5 }}>
+          {shownFonts.map((f) => (
+            <ButtonBase
+              key={f.id}
+              onClick={() => set({ lookFont: f.id })}
+              aria-pressed={fontId === f.id}
+              sx={[{ width: "100%", display: "flex", alignItems: "center", gap: 1.5, px: 1.5, py: 1, textAlign: "left" }, choiceSx(fontId === f.id)]}
+            >
+              <Typography aria-hidden variant="h6" sx={{ fontFamily: f.family, lineHeight: 1.1, color: "secondary.main", width: 72, flexShrink: 0 }}>
+                21.4°
+              </Typography>
+              <Box sx={{ minWidth: 0, flex: 1 }}>
+                <Typography noWrap variant="body1" sx={{ fontFamily: f.family, fontWeight: "fontWeightBold" }}>
+                  {f.label}
+                </Typography>
+                <Typography noWrap variant="caption" color="text.secondary" component="div">
+                  {f.text}
+                </Typography>
+              </Box>
+            </ButtonBase>
+          ))}
+        </Box>
+      </Section>
+    </Stack>
+  );
+
+  const effectTiles = (
+    <Section title="Background effect" hint="A gentle animation behind your dashboards. Each tile shows how it moves.">
+      {reducedMotion && (
+        <Alert severity="info" sx={{ mb: 1.5 }}>
+          This device asks apps to reduce motion, so effects stay still here.
+        </Alert>
+      )}
+      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 1 }}>
+        {BACKGROUND_EFFECTS.map((e) => (
+          <ChoiceTile key={e.id} selected={effectId === e.id} onClick={() => set({ effectId: e.id })} title={e.label} text={e.description}>
+            <Box aria-hidden sx={[insetSx(), { width: "100%", height: 64, mb: 0.5, overflow: "hidden", bgcolor: scheme.roles.surfaceSolid.background, position: "relative" }]}>
+              {e.id === "off" ? (
+                <Typography sx={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "text.secondary" }}>—</Typography>
+              ) : (
+                <EffectPicture options={{ ...effectOptions, id: e.id }} />
+              )}
+            </Box>
+          </ChoiceTile>
+        ))}
+      </Box>
+      {effectId !== "off" ? (
+        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 2, mt: 2 }}>
+          {(
+            [
+              ["Amount", "effectAmount", EFFECT_AMOUNTS],
+              ["Speed", "effectSpeed", EFFECT_SPEEDS],
+            ] as const
+          ).map(([label, key, options]) => (
+            <Box key={key}>
+              <Typography variant="body2" fontWeight="fontWeightBold" sx={{ mb: 1 }}>
+                {label}
+              </Typography>
+              <Segmented label={label} value={themePrefs[key] ?? 1} options={options} onChange={(v) => set({ [key]: v })} />
+            </Box>
+          ))}
+          <Box>
+            <Typography variant="body2" fontWeight="fontWeightBold" sx={{ mb: 1 }}>
+              Colour
+            </Typography>
+            <Segmented<EffectColour> label="Effect colour" value={themePrefs.effectColour ?? "white"} options={EFFECT_COLOURS} onChange={(v) => set({ effectColour: v })} />
+          </Box>
+        </Box>
+      ) : null}
+    </Section>
+  );
+
+  const dashboardsTab = (
+    <Stack spacing={3.5} divider={<Divider flexItem />}>
+      <Section title="Dashboards" hint="How you move between dashboards, and moving decorations.">
+        <Row label="Dashboard menu" hint="where your dashboards are listed; phones always use the dock">
+          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 1 }}>
+            {ROOM_NAVS.map((n) => (
+              <ChoiceTile key={n.value} selected={(themePrefs.roomNav ?? "dock") === n.value} onClick={() => set({ roomNav: n.value })} title={n.label} text={n.description} />
+            ))}
+          </Box>
+        </Row>
+        <FormControlLabel
+          sx={{ mt: 1.5 }}
+          control={<Switch checked={themePrefs.motion !== false} onChange={(e) => set({ motion: e.target.checked })} />}
+          label={
+            <Typography variant="body2">
+              Animations{" "}
+              <Typography component="span" variant="caption" color="text.secondary">
+                — moving frames, rings and lights in styles that have them. Each panel can choose its own in Edit → Look.
+              </Typography>
+            </Typography>
+          }
+        />
+      </Section>
+
+      <Section title="Layout" hint="How the whole app is laid out around your dashboards.">
+        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 1 }}>
+          {skins.map((sk) => (
+            <ChoiceTile key={sk.id} selected={skinId === sk.id} onClick={() => onSkinChange(sk.id)} title={sk.label} text={sk.description} />
+          ))}
+        </Box>
+      </Section>
+    </Stack>
+  );
+
+  const tabContent: Record<string, ReactNode> = {
+    theme: (
+      <Stack spacing={3.5} divider={<Divider flexItem />}>
       <Section title="Ready-made themes" hint="A starting point: style, mode, colours, background and font together. Change anything afterwards.">
         <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 1 }}>
           {THEME_PRESETS.filter((p) => resolveLook(p.lookId).id === p.lookId).map((p) => {
@@ -231,7 +434,7 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
                   {[s.roles.main.solid, s.roles.second.solid, s.roles.third.solid].map((c) => (
                     <Box key={c} sx={{ width: 16, height: 16, borderRadius: "50%", bgcolor: c, border: `1px solid ${s.roles.line.edge}` }} />
                   ))}
-                  <Typography sx={{ ml: "auto", fontFamily: CORE_FONTS.find((f) => f.id === p.font)?.family, color: s.roles.text.main, typography: "subtitle2" }}>Aa</Typography>
+                  <Typography variant="subtitle2" sx={{ ml: "auto", fontFamily: CORE_FONTS.find((f) => f.id === p.font)?.family, color: s.roles.text.main }}>Aa</Typography>
                 </Box>
               </ChoiceTile>
             );
@@ -239,6 +442,11 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
         </Box>
       </Section>
 
+        {modeTiles}
+      </Stack>
+    ),
+    style: (
+      <Stack spacing={3.5} divider={<Divider flexItem />}>
       <Section title="Style" hint="How panels, frames, buttons and switches are drawn. Standard is solid; Glass is see-through over the background.">
         <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 1 }}>
           {listLooks().map((l) => (
@@ -254,33 +462,6 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
             </Box>
           </Row>
         ) : null}
-      </Section>
-
-      <Section
-        title="Mode"
-        hint={look.forceMode ? `${look.label} is always ${look.forceMode}. Your choice comes back with other styles.` : "Light, dark, or follow this device's own setting (light by day, dark by night if it does that)."}
-      >
-        <ButtonRow direction="row">
-          {([
-            ["light", "Light", <LightModeIcon key="l" />],
-            ["dark", "Dark", <DarkModeIcon key="d" />],
-            ["auto", "Automatic", <BrightnessAutoIcon key="a" />],
-          ] as const).map(([value, label, icon]) => {
-            const on = value === "auto" ? Boolean(themePrefs.autoMode) : !themePrefs.autoMode && themePrefs.mode === value;
-            return (
-              <Button
-                key={value}
-                variant={on ? "contained" : "outlined"}
-                startIcon={icon}
-                disabled={Boolean(look.forceMode)}
-                onClick={() => set(value === "auto" ? { autoMode: true } : { mode: value, autoMode: false })}
-                sx={{ minWidth: 110 }}
-              >
-                {label}
-              </Button>
-            );
-          })}
-        </ButtonRow>
       </Section>
 
       <Section title="Colours" hint="Three colours that work together. Nexternel keeps every text readable: a colour is made a little lighter or darker where needed, never changed.">
@@ -346,6 +527,10 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
         </Row>
       </Section>
 
+      </Stack>
+    ),
+    background: (
+      <Stack spacing={3.5} divider={<Divider flexItem />}>
       <Section title="Background" hint={BACKGROUND_HINT[kind]}>
         <Segmented
           label="Background type"
@@ -393,121 +578,42 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
         )}
       </Section>
 
-      <Section title="Font and text size" hint="One font for all text, in every style. Built into Nexternel, so it works without the internet.">
-        {[...FONT_GROUPS.map((g) => ({ label: g.label, fonts: CORE_FONTS.filter((f) => f.group === g.id).map((f) => ({ id: f.id, label: f.label, family: f.family, text: f.description })) })),
-          ...(lookOwnFonts.length ? [{ label: `${look.label} fonts`, fonts: lookOwnFonts.map((f) => ({ id: f.id, label: f.label, family: f.family, text: `Made for ${look.label}.` })) }] : [])].map((group) => (
-          <Row key={group.label} label={group.label}>
-            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))", gap: 1 }}>
-              {group.fonts.map((f) => (
-                <ChoiceTile key={f.id} selected={fontId === f.id} onClick={() => set({ lookFont: f.id })} title={<Box component="span" sx={{ fontFamily: f.family, typography: "subtitle1" }}>{f.label}</Box>} text={f.text}>
-                  <Typography aria-hidden variant="h5" sx={{ fontFamily: f.family, lineHeight: 1.1, color: "secondary.main" }}>
-                    21.4°
-                  </Typography>
-                </ChoiceTile>
-              ))}
-            </Box>
-          </Row>
+        {effectTiles}
+      </Stack>
+    ),
+    text: textTab,
+    dashboards: dashboardsTab,
+  };
+
+  const settings = (
+    <Box sx={{ minWidth: 0 }}>
+      <Tabs
+        value={tab}
+        onChange={(_, v: string) => {
+          setTab(v);
+          writeStored(TAB_KEY, v);
+        }}
+        variant="scrollable"
+        allowScrollButtonsMobile
+        aria-label="Appearance"
+        sx={{ mb: 3 }}
+      >
+        {TABS.map((t) => (
+          <Tab key={t.id} value={t.id} label={t.label} sx={{ minWidth: 0, px: 1.75 }} />
         ))}
-        <Row label="Text size" hint="all text in Nexternel, on this account">
-          <ToggleButtonGroup exclusive size="small" value={themePrefs.textSize ?? 100} onChange={(_, v: number | null) => v && set({ textSize: v })} aria-label="Text size">
-            {TEXT_SIZES.map((s) => (
-              <ToggleButton key={s.value} value={s.value}>
-                {s.label}
-              </ToggleButton>
-            ))}
-          </ToggleButtonGroup>
-        </Row>
-      </Section>
-
-      <Section title="Background effect" hint="A gentle animation behind your dashboards.">
-        {reducedMotion && (
-          <Alert severity="info" sx={{ mb: 1.5 }}>
-            This device asks apps to reduce motion, so effects stay still here.
-          </Alert>
-        )}
-        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 1 }}>
-          {BACKGROUND_EFFECTS.map((e) => (
-            <ChoiceTile key={e.id} selected={effectId === e.id} onClick={() => set({ effectId: e.id })} title={e.label} text={e.description} />
-          ))}
-        </Box>
-        <Stack spacing={1.25} sx={{ mt: 1.5, opacity: effectId === "off" ? 0.5 : 1 }}>
-          {(
-            [
-              ["Amount", "effectAmount", EFFECT_AMOUNTS],
-              ["Speed", "effectSpeed", EFFECT_SPEEDS],
-            ] as const
-          ).map(([label, key, options]) => (
-            <Stack key={key} direction="row" spacing={1.5} alignItems="center">
-              <Typography variant="body2" color="text.secondary" sx={{ width: 64, flexShrink: 0 }}>
-                {label}
-              </Typography>
-              <Segmented label={label} value={themePrefs[key] ?? 1} options={options} disabled={effectId === "off"} onChange={(v) => set({ [key]: v })} />
-            </Stack>
-          ))}
-          <Stack direction="row" spacing={1.5} alignItems="center">
-            <Typography variant="body2" color="text.secondary" sx={{ width: 64, flexShrink: 0 }}>
-              Colour
-            </Typography>
-            <Segmented<EffectColour> label="Effect colour" value={themePrefs.effectColour ?? "white"} options={EFFECT_COLOURS} disabled={effectId === "off"} onChange={(v) => set({ effectColour: v })} />
-          </Stack>
-        </Stack>
-      </Section>
-
-      <Section title="Dashboards" hint="How you move between dashboards, and moving decorations.">
-        <Row label="Dashboard Menu" hint="where your dashboards are listed; phones always use the dock">
-          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 1 }}>
-            {ROOM_NAVS.map((n) => (
-              <ChoiceTile key={n.value} selected={(themePrefs.roomNav ?? "dock") === n.value} onClick={() => set({ roomNav: n.value })} title={n.label} text={n.description} />
-            ))}
-          </Box>
-        </Row>
-        <FormControlLabel
-          sx={{ mt: 1.5 }}
-          control={<Switch checked={themePrefs.motion !== false} onChange={(e) => set({ motion: e.target.checked })} />}
-          label={
-            <Typography variant="body2">
-              Animations{" "}
-              <Typography component="span" variant="caption" color="text.secondary">
-                — moving frames, rings and lights in styles that have them. Each panel can choose its own in Edit → Look.
-              </Typography>
-            </Typography>
-          }
-        />
-      </Section>
-
-      <Section title="Layout">
-        <RadioGroup value={skinId} onChange={(e) => onSkinChange(e.target.value)}>
-          {skins.map((s) => (
-            <FormControlLabel
-              key={s.id}
-              value={s.id}
-              control={<Radio size="small" />}
-              label={
-                <Box>
-                  <Typography variant="body2">{s.label}</Typography>
-                  {s.description && (
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      {s.description}
-                    </Typography>
-                  )}
-                </Box>
-              }
-            />
-          ))}
-        </RadioGroup>
-      </Section>
-
+      </Tabs>
+      {tabContent[tab] ?? tabContent.theme}
       {footnote ? (
-        <Typography variant="caption" color="text.secondary">
+        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 3 }}>
           {footnote}
         </Typography>
       ) : null}
-    </Stack>
+    </Box>
   );
 
   // Wide screens: settings on the left, the preview beside them staying in view; else preview first.
   return wide ? (
-    <Box sx={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(380px, 0.9fr)", gap: 3, alignItems: "start" }}>
+    <Box sx={{ display: "grid", gridTemplateColumns: "minmax(0, 1.3fr) minmax(360px, 0.8fr)", gap: 3, alignItems: "start" }}>
       {settings}
       <Box sx={{ position: "sticky", top: 16 }}>
         <Typography variant="subtitle1" sx={{ mb: 1 }}>

@@ -9,7 +9,7 @@ import { isMineBackground, mineBackground, schemeForPrefs } from "../../skins/ap
 /**
  * A small dashboard drawn with the settings being chosen (not necessarily the ones in use, e.g. when an
  * admin sets another person's look): side menu, top bar, a section with panels, big values, a switch,
- * a chart, the dock and a side panel — and whether everything is readable.
+ * a chart, the dock and a side panel (no pretend buttons: nothing in it can be pressed) — and whether everything is readable.
  */
 export function AppearancePreview({ prefs, deviceDark = true }: { prefs: ThemePrefs; deviceDark?: boolean }) {
   const look = resolveLook(prefs.lookId);
@@ -74,8 +74,6 @@ export function AppearancePreview({ prefs, deviceDark = true }: { prefs: ThemePr
         <Box sx={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
           <Box sx={{ ...frame, border: 0, borderBottom: edge, display: "flex", alignItems: "center", gap: 0.75, px: 1.25, py: 0.75 }}>
             <Typography sx={{ fontFamily: font, fontSize: "0.85rem", fontWeight: 600, color: r.text.main, flex: 1 }}>Living Room</Typography>
-            <Box sx={{ ...btn, ...out, fontFamily: font }}>Settings</Box>
-            <Box sx={{ ...btn, ...solid, fontFamily: font }}>Save</Box>
           </Box>
           <Box sx={{ p: 1.25, flex: 1 }}>
             <Box sx={{ ...frame, borderRadius: 2, p: 1 }}>
@@ -118,7 +116,6 @@ export function AppearancePreview({ prefs, deviceDark = true }: { prefs: ThemePr
               </Box>
             ))}
           </Box>
-          <Box sx={{ ...btn, border: `1px solid ${r.status.alert.solid}`, color: r.status.alert.text, mt: "auto", textAlign: "center", fontFamily: font }}>Delete</Box>
         </Box>
       </Box>
       <Typography variant="caption" sx={{ display: "block", mt: 0.75, color: allReadable ? "success.main" : "warning.main" }}>

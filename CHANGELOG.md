@@ -2,6 +2,12 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.162
+
+- **New Appearance page:** five tabs (Theme, Style & colours, Background, Text, Dashboards) instead of one long page, with the preview staying in view. Each background effect shows a small moving picture, Text size comes first, and the fonts are shown in their own letters.
+- **Apply and Cancel:** Appearance changes show straight away but are only kept when you press **Apply**; **Cancel** puts everything back. The bar stays visible on every page until you choose.
+- The brand logo upload is removed; Nexternel will use its own logo.
+
 ## V5.2.161
 
 - **Tabs now look like tabs** everywhere (an underline under the chosen one, no box), so they are never mistaken for buttons.
