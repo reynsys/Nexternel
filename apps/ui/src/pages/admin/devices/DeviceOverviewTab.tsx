@@ -68,6 +68,7 @@ export function DeviceOverviewTab({ device, isAdmin, busy, connection, values, o
           {connection?.restartedAt ? (
             <Typography variant="body2" color="text.secondary">
               Last restart: {shortWhen(connection.restartedAt)}
+              {connection.health?.resetReason ? ` (${connection.health.resetReason})` : ""}
             </Typography>
           ) : null}
         </InfoCard>

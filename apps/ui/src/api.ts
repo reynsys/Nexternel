@@ -1421,6 +1421,8 @@ export const api = {
     for (const [k, v] of Object.entries(q)) if (v !== undefined && v !== "") p.set(k, String(v));
     return apiFetch<{ entries: ActivityEntry[] }>(`/api/v1/activity${p.size ? `?${p}` : ""}`);
   },
+  checkDeviceHealth: (id: string) =>
+    apiFetch<{ ok: boolean; report: BoardHealthReport | null }>(`/api/v1/devices/${encodeURIComponent(id)}/health-check`, { method: "POST" }),
   deviceConnection: (id: string) => apiFetch<{ connection: DeviceConnection }>(`/api/v1/devices/${encodeURIComponent(id)}/connection`),
 
   configStatus: () =>
@@ -2562,6 +2564,19 @@ export type BellTopics = { readings: boolean; devices: boolean; mqtt: boolean; d
 export type ActivityKind = "device" | "switch" | "update" | "dashboard" | "system";
 export type ActivityEntry = { at: string; kind: ActivityKind; deviceId: string | null; device: string | null; text: string; who: string | null };
 
+/** A board's health report (every minute, and on Check now). */
+export type BoardHealthReport = {
+  at: string;
+  uptimeS: number;
+  rssi: number | null;
+  wifiDrops: number | null;
+  mqttDrops: number | null;
+  heap: number | null;
+  heapMin: number | null;
+  resetReason: string | null;
+  version: string | null;
+};
+
 export type DeviceConnection = {
   state: "online" | "offline" | "unknown";
   since: string | null;
@@ -2571,6 +2586,7 @@ export type DeviceConnection = {
   wifiDbm: number | null;
   wifiQuality: string | null;
   restartedAt: string | null;
+  health?: BoardHealthReport | null;
 };
 
 /** An ESPHome board as ESPHome sees it (Devices → board updates). */

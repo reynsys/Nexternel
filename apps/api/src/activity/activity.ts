@@ -83,9 +83,11 @@ export async function listActivity(opts: { kind?: ActivityKind; deviceId?: strin
          FROM activity_log a LEFT JOIN devices d ON d.id = a.device_id
        UNION ALL
        SELECT e.at, 'device', e.device_id, d.name,
-              d.name || CASE e.state WHEN 'online' THEN ' is back online' WHEN 'offline' THEN ' went offline' ELSE ' restarted' END,
+              d.name || CASE e.state WHEN 'online' THEN ' is back online' ELSE ' went offline' END,
               NULL
          FROM device_connection_events e JOIN devices d ON d.id = e.device_id
+        -- Restarts are written to activity_log with their reason (board-health.ts).
+        WHERE e.state IN ('online', 'offline')
        UNION ALL
        SELECT u.finished_at, 'update', u.device_id, d.name, d.name || ': ' || u.message, NULL
          FROM board_update_log u JOIN devices d ON d.id = u.device_id

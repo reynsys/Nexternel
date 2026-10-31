@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.159
+
+- **New: board health report.** Every board sends one small report a minute — how long it has been running and why it last restarted (for example a power dip or a crash), its Wi‑Fi strength, how often it lost Wi‑Fi or the message service, and its free memory. See it on the device's **Troubleshooting** tab, with **Check now** to ask the board straight away. Restarts and their reasons appear in the Activity log. Each board needs one update to start sending it.
+
 ## V5.2.158
 
 - **New: Activity log** (Settings → Activity, and on each device's Troubleshooting tab) — what happened in Nexternel, newest first: devices going offline and back, restarts, switches turned on or off and by whom, board updates, dashboards changed, and Nexternel's own events. Kept 30 days.

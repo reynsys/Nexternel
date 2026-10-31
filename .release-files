@@ -430,6 +430,7 @@ apps/ui/src/lib/widget-bindings.ts
 apps/ui/src/lib/widget-title.ts
 apps/ui/src/main.tsx
 apps/ui/src/pages/admin/AreasPage.tsx
+apps/ui/src/pages/admin/devices/BoardHealthCard.tsx
 apps/ui/src/pages/admin/devices/BoardSoftware.tsx
 apps/ui/src/pages/admin/devices/BoardUpdateDetails.tsx
 apps/ui/src/pages/admin/devices/BoardUpdatesCard.tsx

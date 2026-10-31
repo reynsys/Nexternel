@@ -896,6 +896,13 @@ export async function refreshTelemetrySubscriptions(): Promise<void> {
   requestShellyStatusUpdates();
 }
 
+/** Ask a board for a health report now (presses its Health check button over MQTT); false = not connected. */
+export function requestHealthReport(prefix: string): boolean {
+  if (!client?.connected) return false;
+  client.publish(`${prefix}/button/health_check/command`, "PRESS", { qos: 0 });
+  return true;
+}
+
 export async function publishSwitchCommand(
   capabilityId: string,
   action: "on" | "off" | "toggle"

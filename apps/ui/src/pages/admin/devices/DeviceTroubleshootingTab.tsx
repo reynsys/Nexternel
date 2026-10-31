@@ -6,6 +6,7 @@ import { CODE_TEXT } from "../../../lib/appearance/type";
 import { InfoCard, durationWords, shortWhen } from "./DeviceBits";
 import { LastBoardUpdates } from "./BoardSoftware";
 import { ActivityList } from "../../../components/ActivityList";
+import { BoardHealthCard } from "./BoardHealthCard";
 import { devicesOutlinedButton } from "./devices-panel-styles";
 
 const DAY_MS = 24 * 60 * 60_000;
@@ -124,6 +125,8 @@ export function DeviceTroubleshootingTab({ device, connection, board }: { device
           </Typography>
         )}
       </InfoCard>
+
+      {isBoard ? <BoardHealthCard device={device} report={connection?.health ?? null} /> : null}
 
       {isBoard ? (
         <InfoCard title="Updates from Nexternel">

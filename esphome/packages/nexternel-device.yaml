@@ -9,22 +9,9 @@ api:
 # which drops the connection now and then. A board's own file can still choose otherwise.
 wifi:
   power_save_mode: none
-
-# Two readings about the board itself, so Nexternel can tell a weak Wi-Fi signal from a restart.
-sensor:
-  - platform: wifi_signal
-    # Nexternel reads it as <prefix>/sensor/wifi_signal/state: keep this name.
-    name: "WiFi signal"
-    id: nexternel_wifi_signal
-    update_interval: 60s
-    entity_category: diagnostic
-  - platform: uptime
-    # Nexternel reads it as <prefix>/sensor/uptime/state: keep this name.
-    name: "Uptime"
-    id: nexternel_uptime
-    type: seconds
-    update_interval: 60s
-    entity_category: diagnostic
+  # Counted for the health report (below).
+  on_disconnect:
+    - lambda: id(nexternel_wifi_drops) += 1;
 
 # Which software the board runs: ESPHome's fingerprint of its settings (the same one ESPHome gives each
 # build). Nexternel compares it with the newest build to tell whether the board needs an update —
@@ -40,3 +27,57 @@ text_sensor:
       char buf[9];
       snprintf(buf, sizeof(buf), "%08x", (unsigned) App.get_config_hash());
       return std::string(buf);
+
+# The board's health report: one small message every minute to <prefix>/health (about 200 bytes) —
+# that it is alive, how long since it restarted and why, its Wi-Fi strength, how often Wi-Fi and the
+# message service dropped since the restart, its free memory and its software. Nexternel can also ask
+# for one at any time ("Check now": it presses the Health check button below).
+globals:
+  - id: nexternel_wifi_drops
+    type: uint32_t
+    initial_value: "0"
+  - id: nexternel_mqtt_drops
+    type: uint32_t
+    initial_value: "0"
+
+mqtt:
+  on_disconnect:
+    - lambda: id(nexternel_mqtt_drops) += 1;
+
+script:
+  - id: nexternel_health_report
+    then:
+      - mqtt.publish_json:
+          topic: !lambda 'return mqtt::global_mqtt_client->get_topic_prefix() + "/health";'
+          payload: |-
+            root["up"] = millis() / 1000;
+            root["rssi"] = wifi::global_wifi_component->wifi_rssi();
+            root["wifi_drops"] = id(nexternel_wifi_drops);
+            root["mqtt_drops"] = id(nexternel_mqtt_drops);
+            #ifdef USE_ESP32
+            root["heap"] = esp_get_free_heap_size();
+            root["heap_min"] = esp_get_minimum_free_heap_size();
+            root["reset"] = (int) esp_reset_reason();
+            #endif
+            #ifdef USE_ESP8266
+            root["heap"] = ESP.getFreeHeap();
+            root["reset_text"] = ESP.getResetReason();
+            #endif
+            char fp[9];
+            snprintf(fp, sizeof(fp), "%08x", (unsigned) App.get_config_hash());
+            root["fp"] = fp;
+            root["ver"] = ESPHOME_VERSION;
+
+interval:
+  - interval: 60s
+    then:
+      - script.execute: nexternel_health_report
+
+button:
+  - platform: template
+    # Nexternel presses it (<prefix>/button/health_check/command) for a report straight away.
+    name: "Health check"
+    id: nexternel_health_check
+    entity_category: diagnostic
+    on_press:
+      - script.execute: nexternel_health_report

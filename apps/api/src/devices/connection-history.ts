@@ -1,5 +1,5 @@
 import { getPool } from "../db.js";
-import { boardHealth, signalWord } from "./board-health.js";
+import { boardHealth, signalWord, type HealthReport } from "./board-health.js";
 
 /** One time a device was offline: from when to when (null = still offline). */
 export type Outage = { from: string; to: string | null; minutes: number };
@@ -17,6 +17,8 @@ export type ConnectionSummary = {
   wifiDbm: number | null;
   wifiQuality: string | null;
   restartedAt: string | null;
+  /** The board's last health report (boards with the current shared settings). */
+  health?: HealthReport | null;
 };
 
 type Event = { state: string; at: Date };
@@ -81,6 +83,7 @@ export async function deviceConnection(deviceId: string): Promise<ConnectionSumm
     wifiDbm: h.wifiDbm,
     wifiQuality: h.wifiDbm !== null ? signalWord(h.wifiDbm) : null,
     restartedAt: h.restartedAt,
+    health: h.report,
   };
 }
 

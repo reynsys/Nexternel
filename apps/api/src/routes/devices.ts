@@ -25,6 +25,9 @@ import {
   syncDeviceFromEsphomeSuggestion,
   updateDevice,
 } from "../devices/service.js";
+import { nextHealthReport } from "../devices/board-health.js";
+import { requestHealthReport } from "../telemetry/mqtt.js";
+import { logActivity } from "../activity/activity.js";
 
 function pgErrorCode(err: unknown): string {
   if (err && typeof err === "object" && "code" in err) {
@@ -55,6 +58,24 @@ export const devicesRoutes: FastifyPluginAsync = async (app) => {
     const summary = await deviceConnection(request.params.id).catch(() => null);
     if (!summary) return reply.code(404).send({ error: { code: "not_found", message: "Device not found" } });
     return { connection: summary };
+  });
+
+  /** Check now: ask the board for its health report and wait (up to 10 s) for the answer. */
+  app.post<{ Params: { id: string } }>("/api/v1/devices/:id/health-check", async (request, reply) => {
+    if (!requirePermission(request, reply, "viewDevices")) return;
+    const r = await getPool().query<{ prefix: string | null; name: string }>(`SELECT mqtt_topic_prefix AS prefix, name FROM devices WHERE id = $1`, [request.params.id]);
+    const dev = r.rows[0];
+    if (!dev?.prefix) return reply.code(404).send({ error: { code: "not_found", message: "Device not found" } });
+    const answer = nextHealthReport(dev.prefix, 10_000);
+    if (!requestHealthReport(dev.prefix)) return reply.code(503).send({ error: { code: "no_mqtt", message: "Nexternel is not connected to the message service right now." } });
+    const report = await answer;
+    void logActivity({
+      kind: "device",
+      deviceId: request.params.id,
+      text: report ? `${dev.name} answered a health check` : `${dev.name} did not answer a health check within 10 seconds`,
+      who: request.user!.username,
+    });
+    return { ok: Boolean(report), report };
   });
 
   app.get("/api/v1/devices/esphome-catalog", async (request, reply) => {
