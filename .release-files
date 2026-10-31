@@ -83,6 +83,7 @@ apps/api/src/devices/slug.ts
 apps/api/src/diagnostics/live-pipeline.test.ts
 apps/api/src/diagnostics/live-pipeline.ts
 apps/api/src/esphome/board-update-routes.ts
+apps/api/src/esphome/board-update-state.test.ts
 apps/api/src/esphome/board-updates.ts
 apps/api/src/esphome/builder/builder.test.ts
 apps/api/src/esphome/builder/component-generators.ts

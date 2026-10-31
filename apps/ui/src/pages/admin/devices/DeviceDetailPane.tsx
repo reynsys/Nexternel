@@ -799,9 +799,11 @@ function BoardSoftware({ device, canEdit, busy, onUsb }: { device: DeviceRecord;
         : `No ESPHome settings file uses this board's message address (${device.mqttTopicPrefix}), so it cannot be updated from here.`
       : !board.known
         ? `ESPHome does not list ${board.file}.`
-      : board.needsUpdate
-        ? "An update is ready: its settings changed since it was last installed."
-        : `Up to date${board.deployedVersion ? ` (ESPHome ${board.deployedVersion})` : ""}.`;
+      : board.updateState === "update"
+        ? "An update is ready: the board runs older software than the newest build of its settings."
+        : board.updateState === "unknown"
+          ? "Not known yet: this board does not report which software it runs. One update from Nexternel starts it."
+          : `Up to date — it runs the newest build${board.deployedVersion ? ` (ESPHome ${board.deployedVersion})` : ""}.`;
 
   return (
     // A full row of its own (long messages wrap or shorten instead of widening the page).

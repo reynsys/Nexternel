@@ -2573,6 +2573,8 @@ export type BoardStatus = {
   linkProblem: "none" | "several" | null;
   choices: string[];
   needsUpdate: boolean;
+  /** current: runs the newest build; update: needs one; unknown: the board does not report which software it runs yet. */
+  updateState: "current" | "update" | "unknown";
   reachable: boolean;
   deployedVersion: string | null;
   currentVersion: string | null;

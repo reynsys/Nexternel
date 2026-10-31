@@ -1,9 +1,10 @@
 import { getPool } from "../db.js";
 
 /**
- * A board's own health, from two readings every Nexternel board sends (esphome/packages/
- * nexternel-device.yaml): its Wi-Fi signal and its time since restart. Not dashboard readings —
- * they show in the device's Connection part. A restart is added to the device's connection history.
+ * A board's own health, from readings every Nexternel board sends (esphome/packages/
+ * nexternel-device.yaml): its Wi-Fi signal, its time since restart, and which software it runs
+ * (its software fingerprint). Not dashboard readings — they show in the device's Connection and
+ * Board software parts. A restart is added to the device's connection history.
  */
 export type BoardHealth = { wifiDbm: number | null; wifiAt: string | null; restartedAt: string | null };
 
@@ -11,6 +12,15 @@ const health = new Map<string, { wifiDbm?: number; wifiAt?: string; uptimeS?: nu
 
 /** The topics, from the readings' names in the shared board file ("WiFi signal" → wifi_signal). */
 const HEALTH_TOPIC = /^(.+)\/sensor\/(wifi_signal|uptime)\/state$/;
+
+/** "<prefix>/text_sensor/software_fingerprint/state": ESPHome's fingerprint of the running software. */
+const FINGERPRINT_TOPIC = /^(.+)\/text_sensor\/software_fingerprint\/state$/;
+const fingerprints = new Map<string, string>();
+
+/** Which software a board says it runs (8 hex characters), or null when it does not say (older software). */
+export function boardFingerprint(prefix: string | null): string | null {
+  return (prefix && fingerprints.get(prefix)) || null;
+}
 
 /** How good a Wi-Fi signal is, in words. */
 export function signalWord(dbm: number): "good" | "fair" | "weak" | "very weak" {
@@ -22,6 +32,15 @@ export function signalWord(dbm: number): "good" | "fair" | "weak" | "very weak" 
 
 /** True when the message was a board-health reading (handled here, not a dashboard reading). */
 export function applyBoardHealthTopic(topic: string, payload: string, retained: boolean, prefixOf: (topic: string) => string | null): boolean {
+  const f = FINGERPRINT_TOPIC.exec(topic);
+  if (f) {
+    const prefix = prefixOf(topic);
+    if (!prefix || prefix !== f[1]) return false;
+    // Kept (retained) is fine here: it is what the board said last, and only changes with new software.
+    const value = payload.trim().toLowerCase();
+    if (/^[0-9a-f]{8}$/.test(value)) fingerprints.set(prefix, value);
+    return true;
+  }
   const m = HEALTH_TOPIC.exec(topic);
   if (!m) return false;
   const prefix = prefixOf(topic);

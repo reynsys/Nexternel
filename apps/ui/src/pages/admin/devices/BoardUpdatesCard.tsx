@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Alert, Box, Button, Card, CardContent, CircularProgress, Stack, Typography } from "@mui/material";
+import { ButtonRow } from "../../../components/ButtonRow";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import ErrorRoundedIcon from "@mui/icons-material/ErrorRounded";
 import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded";
@@ -18,19 +19,26 @@ export function StepIcon({ step }: { step: BoardUpdateStep }) {
 }
 
 /**
- * Devices page: the ESPHome boards that need an update (their settings changed since they were last
- * installed, or a newer ESPHome), with one button to update them all over Wi-Fi, one after another.
- * Shows each board's step while that runs. Hidden when every board is up to date and nothing ran.
+ * Devices page: the ESPHome boards that need an update (the software they report differs from the
+ * newest build of their settings, or a newer ESPHome), with one button to update them all over Wi-Fi,
+ * one after another; and the boards that do not report which software they run yet ("not known"),
+ * which one update starts. Shows each board's step while that runs. Hidden when every board is known
+ * to be up to date and nothing ran.
  */
 export function BoardUpdatesCard({ canEdit }: { canEdit: boolean }) {
   const surfaceSx = useContentSurfaceSx();
   const { boards, run } = useBoardUpdates();
   const [error, setError] = useState<string | null>(null);
   if (!boards) return null;
-  const behind = boards.filter((b) => b.needsUpdate);
-  const unsteady = behind.filter((b) => b.recentDrops >= UNSTEADY_DROPS);
+  const behind = boards.filter((b) => b.updateState === "update");
+  const unknown = boards.filter((b) => b.known && b.updateState === "unknown");
+  const unsteady = [...behind, ...unknown].filter((b) => b.recentDrops >= UNSTEADY_DROPS);
   const showRun = run && run.items.length > 0 && (run.running || run.items.some((i) => i.finishedAt && Date.now() - Date.parse(i.finishedAt) < 30 * 60_000));
-  if (!behind.length && !showRun) return null;
+  if (!behind.length && !unknown.length && !showRun) return null;
+  const start = (ids: string[]) => {
+    setError(null);
+    updateBoards(ids).catch((err) => setError(err instanceof Error ? err.message : "Could not start"));
+  };
 
   return (
     <Card sx={surfaceSx}>
@@ -43,26 +51,48 @@ export function BoardUpdatesCard({ canEdit }: { canEdit: boolean }) {
                 ? "Updating boards…"
                 : behind.length
                   ? `${behind.length} board${behind.length === 1 ? " needs" : "s need"} an update`
-                  : "Board updates finished"}
+                  : unknown.length
+                    ? "Board software not known yet"
+                    : "Board updates finished"}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {run?.running
-                ? "One after another, over Wi‑Fi. Each board restarts once; you can keep using Nexternel."
-                : behind.length
-                  ? `Their settings changed since they were last installed: ${behind.map((b) => b.name).join(", ")}.`
-                  : "Every board is up to date."}
-            </Typography>
+            {run?.running ? (
+              <Typography variant="body2" color="text.secondary">
+                One after another, over Wi‑Fi. Each board restarts once; you can keep using Nexternel.
+              </Typography>
+            ) : (
+              <>
+                {behind.length ? (
+                  <Typography variant="body2" color="text.secondary">
+                    They run older software than the newest build of their settings: {behind.map((b) => b.name).join(", ")}.
+                  </Typography>
+                ) : null}
+                {unknown.length ? (
+                  <Typography variant="body2" color="text.secondary">
+                    Not known yet: {unknown.map((b) => b.name).join(", ")}. {unknown.length === 1 ? "It does" : "They do"} not report which
+                    software {unknown.length === 1 ? "it runs" : "they run"} yet; one update from Nexternel starts it.
+                  </Typography>
+                ) : null}
+                {!behind.length && !unknown.length ? (
+                  <Typography variant="body2" color="text.secondary">
+                    Every board is up to date.
+                  </Typography>
+                ) : null}
+              </>
+            )}
           </Box>
-          {canEdit && behind.length && !run?.running ? (
-            <Button
-              variant="contained"
-              onClick={() => {
-                setError(null);
-                updateBoards(behind.map((b) => b.deviceId)).catch((err) => setError(err instanceof Error ? err.message : "Could not start"));
-              }}
-            >
-              Update all boards
-            </Button>
+          {canEdit && !run?.running && (behind.length || unknown.length) ? (
+            <ButtonRow>
+              {behind.length ? (
+                <Button variant="contained" onClick={() => start(behind.map((b) => b.deviceId))}>
+                  Update all boards
+                </Button>
+              ) : null}
+              {unknown.length ? (
+                <Button variant={behind.length ? "outlined" : "contained"} onClick={() => start(unknown.map((b) => b.deviceId))}>
+                  Update {unknown.length === 1 ? "it" : "them"} once
+                </Button>
+              ) : null}
+            </ButtonRow>
           ) : null}
         </Stack>
         {error ? <Alert severity="error" sx={{ mt: 1.5 }}>{error}</Alert> : null}

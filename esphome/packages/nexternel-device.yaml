@@ -25,3 +25,18 @@ sensor:
     type: seconds
     update_interval: 60s
     entity_category: diagnostic
+
+# Which software the board runs: ESPHome's fingerprint of its settings (the same one ESPHome gives each
+# build). Nexternel compares it with the newest build to tell whether the board needs an update —
+# without depending on network announcements, which do not reach the server on every home network.
+text_sensor:
+  - platform: template
+    # Nexternel reads it as <prefix>/text_sensor/software_fingerprint/state: keep this name.
+    name: "Software fingerprint"
+    id: nexternel_software_fingerprint
+    entity_category: diagnostic
+    update_interval: 15min
+    lambda: |-
+      char buf[9];
+      snprintf(buf, sizeof(buf), "%08x", (unsigned) App.get_config_hash());
+      return std::string(buf);

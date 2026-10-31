@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.154
+
+- **Fixed:** Devices kept saying every board needed an update. Each board now reports which software it runs, and Nexternel only says "needs an update" when that differs from the newest build. Boards that don't report it yet show "Not known yet" — one update starts it.
+- Notifications is now at the bottom of the Settings menu.
+
 ## V5.2.153
 
 - **New resize corner** for panels while editing: two triangles and a dot on a small square, drawn in your Appearance (its colour, corners and button style), replacing the round arrow button.

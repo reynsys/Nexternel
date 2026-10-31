@@ -3,13 +3,18 @@ import { publishChange } from "../live/changes.js";
 import { compileEsphomeDevice, deviceYamlFile, uploadEsphomeDevice } from "./builder/firmware.js";
 import { esphomeGet, filesForAddress } from "./file-identity.js";
 import { buildCacheMismatch } from "./cli-log.js";
+import { boardFingerprint } from "../devices/board-health.js";
 
 /**
  * Updating boards from Nexternel: for each board, prepare its firmware on this server (ESPHome
  * compile), send it over Wi-Fi (ESPHome upload to the board's address), then wait until the board is
  * back online. Runs in the background, one board after another; the Devices page shows each step.
- * Which boards need an update comes from ESPHome itself (its settings changed since the board was
- * last installed, or a newer ESPHome version). Building and sending go through ESPHome's own job list
+ * Which boards need an update: the software fingerprint the board itself reports over MQTT
+ * (devices/board-health.ts) compared with ESPHome's fingerprint of the newest build of its settings,
+ * or a newer ESPHome than the board runs. ESPHome's own "pending" flag is not used: it relies on
+ * network announcements that do not reach the server on every home network, and then keeps old
+ * fingerprints. A board that does not report its fingerprint yet is "not known" (one update from
+ * Nexternel gives it the reading). Building and sending go through ESPHome's own job list
  * (esphome-jobs.ts), so ESPHome's record is right straight after; everything ESPHome writes is kept
  * per board (board_update_log) for the update's details.
  */
@@ -49,6 +54,11 @@ export type BoardStatus = {
   choices: string[];
   /** The board runs older software or settings than its file (it needs an update). */
   needsUpdate: boolean;
+  /**
+   * "current": runs exactly the newest build; "update": needs an update; "unknown": the board does
+   * not report which software it runs yet (or nothing is built yet), so Nexternel cannot tell.
+   */
+  updateState: "current" | "update" | "unknown";
   /** The board can be reached over Wi-Fi now. */
   reachable: boolean;
   deployedVersion: string | null;
@@ -81,6 +91,7 @@ export async function listBoardStatus(): Promise<BoardStatus[]> {
     const file = await deviceYamlFile(d.id);
     const b = file ? boards.get(file) : undefined;
     const choices = !file && d.mqtt_topic_prefix ? await filesForAddress(d.mqtt_topic_prefix) : [];
+    const updateState = boardUpdateState(b, boardFingerprint(d.mqtt_topic_prefix));
     out.push({
       deviceId: d.id,
       name: d.name,
@@ -88,7 +99,8 @@ export async function listBoardStatus(): Promise<BoardStatus[]> {
       linkProblem: file ? null : choices.length > 1 ? "several" : "none",
       choices,
       known: Boolean(b),
-      needsUpdate: Boolean(b && (b.has_pending_changes || b.update_available)),
+      needsUpdate: updateState === "update",
+      updateState,
       reachable: Boolean(b && (b.state === "online" || b.ip)),
       deployedVersion: b?.deployed_version ?? null,
       currentVersion: b?.current_version ?? null,
@@ -96,6 +108,18 @@ export async function listBoardStatus(): Promise<BoardStatus[]> {
     });
   }
   return out;
+}
+
+/**
+ * Does the board need an update? A newer ESPHome than it runs (ESPHome hears the version over MQTT),
+ * or the fingerprint it reports differs from ESPHome's fingerprint of the newest build of its file.
+ */
+export function boardUpdateState(board: EsphomeBoard | undefined, running: string | null): BoardStatus["updateState"] {
+  if (!board) return "unknown";
+  if (board.update_available) return "update";
+  const newest = board.expected_config_hash?.toLowerCase() || null;
+  if (!running || !newest) return "unknown";
+  return running === newest ? "current" : "update";
 }
 
 export type UpdateStep = "waiting" | "preparing" | "sending" | "restarting" | "done" | "failed";
@@ -162,9 +186,25 @@ async function boardAfterBuild(file: string, before: string | undefined): Promis
   return board;
 }
 
-/** The board already runs exactly this build (ESPHome's fingerprints of both match). */
-function alreadyRunsIt(board: EsphomeBoard | undefined): boolean {
-  return Boolean(board?.expected_config_hash && board.expected_config_hash === board.deployed_config_hash && !board.update_available);
+/** The board already runs exactly this build (the fingerprint it reports is the build's). */
+function alreadyRunsIt(board: EsphomeBoard | undefined, prefix: string | null): boolean {
+  return boardUpdateState(board, boardFingerprint(prefix)) === "current";
+}
+
+async function devicePrefix(deviceId: string): Promise<string | null> {
+  const r = await getPool().query<{ p: string | null }>(`SELECT mqtt_topic_prefix AS p FROM devices WHERE id = $1`, [deviceId]);
+  return r.rows[0]?.p ?? null;
+}
+
+/** After the restart: wait (briefly) until the board reports the new build's fingerprint. */
+async function confirmsNewSoftware(prefix: string | null, expected: string | undefined): Promise<boolean> {
+  if (!prefix || !expected) return false;
+  const end = Date.now() + 60_000;
+  while (Date.now() < end) {
+    if (boardFingerprint(prefix) === expected.toLowerCase()) return true;
+    await new Promise((res) => setTimeout(res, 3_000));
+  }
+  return false;
 }
 
 async function keepLog(item: UpdateItem, log: string[]): Promise<void> {
@@ -206,7 +246,8 @@ async function updateOne(item: UpdateItem): Promise<void> {
   if (!built.ok) return finish("failed", `Could not prepare the update: ${failureReason(built.log)}`);
 
   const board = file ? await boardAfterBuild(file, before?.expected_config_hash) : undefined;
-  if (alreadyRunsIt(board)) return finish("done", "Already up to date — the board runs exactly this software.");
+  const prefix = await devicePrefix(item.deviceId);
+  if (alreadyRunsIt(board, prefix)) return finish("done", "Already up to date — the board runs exactly this software.");
   const address = board?.ip || board?.ip_addresses?.[0] || null;
   set(item, "sending", "Sending it to the board over Wi-Fi…");
   const sentAt = new Date();
@@ -217,7 +258,12 @@ async function updateOne(item: UpdateItem): Promise<void> {
   set(item, "restarting", "The board is restarting with the update…");
   const back = await waitBackOnline(item.deviceId, sentAt);
   log.push(back ? "== The board came back online ==" : "== The board did not come back online within 4 minutes ==");
-  await finish(back ? "done" : "failed", back ? "Updated — the board is back online." : "Updated, but the board has not come back online after 4 minutes. Check its power and Wi-Fi.");
+  if (!back) return finish("failed", "Updated, but the board has not come back online after 4 minutes. Check its power and Wi-Fi.");
+  // The board says which software it runs: proof the new one is in (boards updated before this
+  // reading existed start reporting it with this update).
+  const confirmed = await confirmsNewSoftware(prefix, board?.expected_config_hash);
+  log.push(confirmed ? `== The board reports the new software (${board?.expected_config_hash}) ==` : "== The board did not report its software fingerprint (yet) ==");
+  await finish("done", confirmed ? "Updated — the board is back online and runs the new software." : "Updated — the board is back online.");
 }
 
 /** One kept update record (what ESPHome wrote, the outcome). */
