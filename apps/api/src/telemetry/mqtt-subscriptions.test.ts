@@ -5,17 +5,14 @@ import {
   deviceSlugFromMqttPrefix,
 } from "./mqtt-subscriptions.js";
 
-test("collectMqttSubscriptionTopics includes installation root wildcard", () => {
+test("collectMqttSubscriptionTopics listens once: the installation root covers its devices", () => {
   const topics = collectMqttSubscriptionTopics({
     installationRoot: "nexternel",
     devicePrefixes: ["nexternel/garden-relays"],
     bindingStateTopics: ["nexternel/utility-room/sensor/utility_room_temperature/state"],
   });
-  assert.ok(topics.includes("nexternel/#"));
-  assert.ok(topics.includes("nexternel/garden-relays/#"));
-  assert.ok(
-    topics.includes("nexternel/utility-room/sensor/utility_room_temperature/state")
-  );
+  // Covered by nexternel/# — subscribing again would deliver every message twice.
+  assert.deepEqual(topics, ["nexternel/#"]);
 });
 
 test("collectMqttSubscriptionTopics keeps Shelly prefixes separate", () => {
@@ -26,6 +23,7 @@ test("collectMqttSubscriptionTopics keeps Shelly prefixes separate", () => {
   });
   assert.ok(topics.includes("shellies/shelly1-ABCDEF/#"));
   assert.ok(topics.includes("shelly1minig3-cc8da25b0074/#"));
+  assert.ok(!topics.includes("shellies/shelly1-ABCDEF/relay/0"));
   assert.ok(!topics.some((t) => t.startsWith("nexternel/shellies")));
 });
 

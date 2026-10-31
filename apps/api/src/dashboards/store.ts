@@ -28,7 +28,7 @@ export async function listDashboards(ownerUserId?: string): Promise<DashboardRow
     const result = await getPool().query<DashboardRow>(
       `SELECT id, owner_user_id, name, document, is_default, tab_order, created_at, updated_at
        FROM v3_dashboards
-       WHERE owner_user_id IS NULL OR owner_user_id = $1
+       WHERE visible_to_all OR owner_user_id IS NULL OR owner_user_id = $1
        ORDER BY tab_order ASC, created_at ASC`,
       [ownerUserId]
     );

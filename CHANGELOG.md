@@ -2,6 +2,12 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.157
+
+- **Fixed:** dashboards made with New dashboard were only visible to the person who made them; every dashboard is now for everyone (wall screens and other people too).
+- **Fixed:** a board that stops sending without saying goodbye is now shown offline after 3 minutes, instead of staying "online".
+- Each device message is now handled once (it was received twice).
+
 ## V5.2.156
 
 - **The Devices page is redesigned:** one tidy list grouped by area with live values and one clear status word per device (never listed twice), quick filters, and a device page with Overview, Readings & switches, Troubleshooting (connection history, update details, technical details, Copy report) and Advanced. **Device settings** keeps only everyday choices: name, area, use this device, delete.

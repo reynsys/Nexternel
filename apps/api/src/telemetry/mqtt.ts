@@ -10,7 +10,7 @@ import {
 import { getLiveState, parseMqttPayload, setLiveState, getAllLiveStates } from "./state-cache.js";
 import { LIVE_CAPABILITY_PRESENCE_MS } from "../devices/presence.js";
 import { getPool } from "../db.js";
-import { applyBoardHealthTopic } from "../devices/board-health.js";
+import { applyBoardHealthTopic, boardFingerprint } from "../devices/board-health.js";
 import { looksLikeShellyCommandTopic, isShellyGen1MqttPrefix } from "../shelly/topics.js";
 import { parseShellyMqttSwitchUpdates } from "../shelly/notify.js";
 import {
@@ -728,8 +728,36 @@ function startPresenceSweeper() {
   if (presenceTimer) return;
   presenceTimer = setInterval(() => {
     void sweepLiveCapabilityFreshness();
+    void sweepSilentBoards();
   }, 15_000);
   presenceTimer.unref?.();
+}
+
+/** A Nexternel board reports every minute (time since restart); this long without a word = gone. */
+const BOARD_SILENT_MS = 3 * 60_000;
+
+/**
+ * Boards with Nexternel's shared settings report every minute, so a board that has said nothing for
+ * three minutes is gone — even when its last word was "online" and the message service has not (yet)
+ * passed on its last will. It is marked offline like any drop-out (connection history, bell); its next
+ * message brings it back. A board is known to report every minute by its software fingerprint.
+ */
+async function sweepSilentBoards() {
+  try {
+    const r = await getPool().query<{ prefix: string }>(
+      `SELECT mqtt_topic_prefix AS prefix FROM devices
+        WHERE is_enabled AND COALESCE(firmware_type, 'esphome') = 'esphome' AND mqtt_availability = 'online'
+          AND last_seen_at < NOW() - make_interval(secs => $1)`,
+      [BOARD_SILENT_MS / 1000]
+    );
+    for (const { prefix } of r.rows) {
+      if (!prefix || !boardFingerprint(prefix)) continue;
+      markDeviceOffline(prefix);
+      void staleCapabilitiesForPrefix(prefix);
+    }
+  } catch {
+    /* next sweep */
+  }
 }
 
 /** Mark in-memory live values stale when they age out — device Offline is derived at read time. */

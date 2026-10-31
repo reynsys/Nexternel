@@ -19,7 +19,16 @@ export function collectMqttSubscriptionTopics(input: {
     if (!topic) continue;
     topics.add(topic);
   }
-  return [...topics].sort();
+  // One subscription per message: a topic already covered by a wider "…/#" is left out, otherwise the
+  // message service sends Nexternel the same message once for each (every message arrived twice).
+  return [...topics].filter((t) => ![...topics].some((other) => other !== t && covers(other, t))).sort();
+}
+
+/** True when the filter `wide` ("a/#") also matches every message of `narrow` ("a/b/#", "a/b/c"). */
+export function covers(wide: string, narrow: string): boolean {
+  if (!wide.endsWith("/#")) return false;
+  const base = wide.slice(0, -2);
+  return narrow === base || narrow.startsWith(`${base}/`);
 }
 
 /** Device slug from `nexternel/garden-relays` → `garden-relays`. */

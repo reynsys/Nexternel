@@ -24,6 +24,10 @@ CREATE INDEX IF NOT EXISTS idx_v3_dashboards_tab_order ON v3_dashboards(tab_orde
 export async function ensureDashboardSchema(): Promise<void> {
   await getPool().query(ENSURE_SQL);
   await getPool().query(TAB_ORDER_SQL);
+  // Every dashboard is for everyone on this Nexternel (wall screens, other people). Dashboards made
+  // with "New dashboard" used to be kept for their maker only, without saying so; the column is added
+  // once, "everyone" for every dashboard — a later "only me" choice can set it false.
+  await getPool().query(`ALTER TABLE v3_dashboards ADD COLUMN IF NOT EXISTS visible_to_all BOOLEAN NOT NULL DEFAULT TRUE`);
   // One-time style backfill: rows still at 0 get creation order (default first).
   await getPool().query(`
     WITH numbered AS (
