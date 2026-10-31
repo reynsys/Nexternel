@@ -77,7 +77,7 @@ export function InstalledPlugin({
             ) : null}
             <FormControlLabel
               control={<Switch checked={p.enabled} disabled={busy !== null} onChange={(e) => onToggle(e.target.checked)} />}
-              label={p.enabled ? "On" : "Off"}
+              label="Switched on"
             />
           </Stack>
         ) : null}

@@ -26,7 +26,16 @@ import {
 const STALE_COLOUR = "#5B6474";
 const DOT_OFF = "rgba(128, 138, 156, 0.28)";
 
-const pulse = keyframes`50% { opacity: .3; }`;
+/**
+ * Act now: a quick double flash, like an emergency beacon, once a second. Sharp steps (not a slow
+ * fade) so it catches the eye from across the room; it never goes fully dark, so the colour stays readable.
+ */
+const actNowFlash = keyframes`
+  0%, 12% { opacity: 1; }
+  12.01%, 24% { opacity: .2; }
+  24.01%, 36% { opacity: 1; }
+  36.01%, 100% { opacity: .2; }
+`;
 
 /** In a narrow panel title (see the title tile's container), lights take less room. */
 const COMPACT = { "@container nx-title (max-width: 230px)": { width: 16 } } as const;
@@ -112,7 +121,7 @@ export function StatusLight({ capabilityId, kind, unit, look, placement, edge = 
   const colour = statusColour(state, look);
   const blinkSx =
     look.blink && state === "alert"
-      ? { animation: `${pulse} 1.4s ease-in-out infinite`, "@media (prefers-reduced-motion: reduce)": { animation: "none" } }
+      ? { animation: `${actNowFlash} 1s step-end infinite`, "@media (prefers-reduced-motion: reduce)": { animation: "none" } }
       : {};
   const label = state === "stale" || !status ? "No recent reading" : statusTooltip(status, value, unit);
   const centred = placement === "in-tile" ? ({ position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)", zIndex: 2 } as const) : {};

@@ -41,6 +41,19 @@ export async function ensureDevicesSchema(): Promise<void> {
     CREATE TRIGGER nx_device_connection AFTER UPDATE OF mqtt_availability ON devices
       FOR EACH ROW EXECUTE FUNCTION nx_record_device_connection();
   `);
+  // Board updates from Nexternel: each board's outcome with everything ESPHome wrote (its last 10 kept).
+  await getPool().query(`
+    CREATE TABLE IF NOT EXISTS board_update_log (
+      id          BIGSERIAL PRIMARY KEY,
+      device_id   UUID NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+      started_at  TIMESTAMPTZ NOT NULL,
+      finished_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      outcome     VARCHAR(16) NOT NULL,
+      message     TEXT NOT NULL,
+      log         TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_board_update_log ON board_update_log (device_id, finished_at DESC);
+  `);
 }
 
 /**

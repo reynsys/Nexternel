@@ -1256,6 +1256,9 @@ export const api = {
   startBoardUpdates: (deviceIds: string[]) =>
     apiFetch<{ run: BoardUpdateRun }>("/api/v1/esphome/updates", { method: "POST", body: JSON.stringify({ deviceIds }) }),
   boardUpdates: () => apiFetch<{ run: BoardUpdateRun }>("/api/v1/esphome/updates"),
+  boardUpdateLog: (id: string) => apiFetch<{ entry: BoardUpdateLog }>(`/api/v1/esphome/updates/log/${encodeURIComponent(id)}`),
+  boardUpdateHistory: (deviceId: string) =>
+    apiFetch<{ updates: Omit<BoardUpdateLog, "deviceId" | "log">[] }>(`/api/v1/esphome/boards/${encodeURIComponent(deviceId)}/updates`),
   /** Link a board to its ESPHome settings file (only a file with the board's own message address). */
   linkBoardFile: (deviceId: string, file: string) =>
     apiFetch<{ ok: true }>("/api/v1/esphome/link", { method: "POST", body: JSON.stringify({ deviceId, file }) }),
@@ -2573,10 +2576,16 @@ export type BoardStatus = {
   reachable: boolean;
   deployedVersion: string | null;
   currentVersion: string | null;
+  /** How often it dropped off Wi-Fi in the last 15 minutes (UNSTEADY_DROPS or more: unsteady). */
+  recentDrops: number;
 };
+/** From this many drop-outs in 15 minutes a board's Wi-Fi counts as unsteady (same as the server). */
+export const UNSTEADY_DROPS = 3;
+/** One kept board update: outcome and everything ESPHome wrote. */
+export type BoardUpdateLog = { id: string; deviceId: string; startedAt: string; finishedAt: string; outcome: string; message: string; log: string };
 export type BoardUpdateStep = "waiting" | "preparing" | "sending" | "restarting" | "done" | "failed";
 export type BoardUpdateRun = {
   running: boolean;
   startedAt: string | null;
-  items: { deviceId: string; name: string; step: BoardUpdateStep; message: string; startedAt: string | null; finishedAt: string | null }[];
+  items: { deviceId: string; name: string; step: BoardUpdateStep; message: string; startedAt: string | null; finishedAt: string | null; logId: string | null }[];
 };

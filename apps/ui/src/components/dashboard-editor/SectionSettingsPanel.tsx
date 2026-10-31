@@ -48,7 +48,7 @@ export function SectionSettingsPanel({ section, onClose, onChange, onMove, onDel
           <SettingBlock label="Section name on the dashboard" help="Off: the panels show inside the section's frame without its name bar.">
             <FormControlLabel
               control={<Switch checked={s.showTitle !== false} onChange={(e) => onChange({ showTitle: e.target.checked })} />}
-              label={s.showTitle !== false ? "Shown above the panels" : "Hidden"}
+              label="Show the name above the panels"
             />
           </SettingBlock>
           <SettingBlock

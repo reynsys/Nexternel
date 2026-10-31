@@ -42,3 +42,12 @@ test("isPanelContentSizeReady requires positive dimensions", () => {
   assert.equal(isPanelContentSizeReady({ width: 0, height: 0 }), false);
   assert.equal(isPanelContentSizeReady({ width: 1, height: 1 }), true);
 });
+
+test("measurePanelContentSize ignores a scaled-down parent (the editor's preview)", () => {
+  const el = {
+    offsetWidth: 400,
+    offsetHeight: 300,
+    getBoundingClientRect: () => ({ width: 200, height: 150, top: 0, left: 0, right: 0, bottom: 0, x: 0, y: 0, toJSON: () => ({}) }),
+  } as HTMLElement;
+  assert.deepEqual(measurePanelContentSize(el), { width: 400, height: 300 });
+});

@@ -2,6 +2,15 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.151
+
+- **Fixed:** after updating boards, Devices kept saying every board needed an update. Nexternel now has ESPHome itself do the update, so ESPHome always knows what each board runs, and a board that already runs the newest software is not sent it again.
+- **Show details** for every board update: what went wrong in plain words, the errors ESPHome reported, and its full record to copy. The last 10 updates of each board are kept.
+- A board whose Wi-Fi keeps dropping is flagged before updating, with the advice to use a USB cable.
+- **Fixed:** the preview in the panel editor drew gauges and charts small in a corner; it now looks exactly like the panel on the dashboard.
+- The red "act now" status light flashes quickly to catch the eye. "Traffic light dots" is renamed "Three dots".
+- Switches have clear labels that no longer change when switched (for example "Show the name above the panels").
+
 ## V5.2.150
 
 - **Fixed:** updating ESP32 boards from Nexternel stopped with "does not match the source … used to generate cache". Nexternel now builds with exactly the same setup as the ESPHome page, and clears a board's old build files by itself when they no longer match.

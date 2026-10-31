@@ -68,7 +68,7 @@ export function DashboardSettingsPanel(p: Props) {
           <SettingBlock label="In the Dashboard Menu">
             <FormControlLabel
               control={<Switch checked={p.showName} onChange={(e) => p.onShowName(e.target.checked)} />}
-              label={p.showName ? "Icon and name" : "Icon only"}
+              label="Show the name next to the icon"
             />
           </SettingBlock>
           <SettingBlock
@@ -89,7 +89,7 @@ export function DashboardSettingsPanel(p: Props) {
           <SettingBlock label="Section shortcuts" help="A row of buttons above the sections; one tap jumps to a section. Handy on long dashboards.">
             <FormControlLabel
               control={<Switch checked={p.sectionShortcuts} onChange={(e) => p.onSectionShortcuts(e.target.checked)} />}
-              label={p.sectionShortcuts ? "Shown" : "Hidden"}
+              label="Show section shortcuts"
             />
           </SettingBlock>
           <Typography variant="caption" color="text.secondary">

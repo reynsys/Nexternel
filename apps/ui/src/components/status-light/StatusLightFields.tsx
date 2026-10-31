@@ -30,7 +30,7 @@ export function statusLightConfig(value: PanelStatusLight): { statusLight?: Pane
 const STYLE_LABELS = {
   pill: "Rounded rectangle",
   bar: "Bar",
-  dots: "Traffic light dots",
+  dots: "Three dots",
   glow: "Glowing border",
   off: "Off",
 } as const;

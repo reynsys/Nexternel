@@ -4,10 +4,11 @@ import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import ErrorRoundedIcon from "@mui/icons-material/ErrorRounded";
 import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded";
 import SystemUpdateAltRoundedIcon from "@mui/icons-material/SystemUpdateAltRounded";
-import type { BoardUpdateStep } from "../../../api";
+import { UNSTEADY_DROPS, type BoardUpdateStep } from "../../../api";
 import { updateBoards, useBoardUpdates } from "../../../lib/board-updates";
 import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
 import { ICON_SIZE } from "../../../lib/appearance/type";
+import { BoardUpdateDetailsButton } from "./BoardUpdateDetails";
 
 export function StepIcon({ step }: { step: BoardUpdateStep }) {
   if (step === "done") return <CheckCircleRoundedIcon color="success" sx={{ fontSize: ICON_SIZE.title }} />;
@@ -27,6 +28,7 @@ export function BoardUpdatesCard({ canEdit }: { canEdit: boolean }) {
   const [error, setError] = useState<string | null>(null);
   if (!boards) return null;
   const behind = boards.filter((b) => b.needsUpdate);
+  const unsteady = behind.filter((b) => b.recentDrops >= UNSTEADY_DROPS);
   const showRun = run && run.items.length > 0 && (run.running || run.items.some((i) => i.finishedAt && Date.now() - Date.parse(i.finishedAt) < 30 * 60_000));
   if (!behind.length && !showRun) return null;
 
@@ -64,6 +66,12 @@ export function BoardUpdatesCard({ canEdit }: { canEdit: boolean }) {
           ) : null}
         </Stack>
         {error ? <Alert severity="error" sx={{ mt: 1.5 }}>{error}</Alert> : null}
+        {unsteady.length && !run?.running ? (
+          <Alert severity="warning" sx={{ mt: 1.5 }}>
+            {unsteady.map((b) => `${b.name} dropped off Wi‑Fi ${b.recentDrops} times in the last 15 minutes`).join("; ")}. Updating over Wi‑Fi
+            may fail; a USB cable is safer (Devices → the board → Install with a USB cable).
+          </Alert>
+        ) : null}
         {showRun ? (
           <Stack spacing={1} sx={{ mt: 2 }}>
             {run!.items.map((i) => (
@@ -71,7 +79,7 @@ export function BoardUpdatesCard({ canEdit }: { canEdit: boolean }) {
                 <Box sx={{ pt: 0.25 }}>
                   <StepIcon step={i.step} />
                 </Box>
-                <Box sx={{ minWidth: 0 }}>
+                <Box sx={{ minWidth: 0, flex: 1 }}>
                   <Typography variant="body2" fontWeight="fontWeightBold">
                     {i.name}
                   </Typography>
@@ -79,6 +87,7 @@ export function BoardUpdatesCard({ canEdit }: { canEdit: boolean }) {
                     {i.message}
                   </Typography>
                 </Box>
+                {i.logId ? <BoardUpdateDetailsButton logId={i.logId} name={i.name} /> : null}
               </Stack>
             ))}
           </Stack>

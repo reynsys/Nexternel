@@ -95,6 +95,8 @@ apps/api/src/esphome/builder/storage.ts
 apps/api/src/esphome/builder/validate.ts
 apps/api/src/esphome/cli-log.test.ts
 apps/api/src/esphome/cli-log.ts
+apps/api/src/esphome/esphome-jobs.test.ts
+apps/api/src/esphome/esphome-jobs.ts
 apps/api/src/esphome/file-identity.ts
 apps/api/src/esphome/gate.ts
 apps/api/src/esphome/lifecycle.ts
@@ -402,6 +404,7 @@ apps/ui/src/lib/room-nav.ts
 apps/ui/src/lib/slot-bindings.ts
 apps/ui/src/lib/status-light-show.test.ts
 apps/ui/src/lib/status-light-show.ts
+apps/ui/src/lib/switch-labels-guard.test.ts
 apps/ui/src/lib/switch-styles.test.ts
 apps/ui/src/lib/switch-styles.ts
 apps/ui/src/lib/usePanelPoll.ts
@@ -415,6 +418,7 @@ apps/ui/src/lib/widget-bindings.ts
 apps/ui/src/lib/widget-title.ts
 apps/ui/src/main.tsx
 apps/ui/src/pages/admin/AreasPage.tsx
+apps/ui/src/pages/admin/devices/BoardUpdateDetails.tsx
 apps/ui/src/pages/admin/devices/BoardUpdatesCard.tsx
 apps/ui/src/pages/admin/devices/CameraPane.tsx
 apps/ui/src/pages/admin/devices/ConnectionHistory.tsx

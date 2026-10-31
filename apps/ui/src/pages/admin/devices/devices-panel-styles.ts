@@ -1,4 +1,5 @@
 import { alpha, type SxProps, type Theme } from "@mui/material/styles";
+import type { SystemStyleObject } from "@mui/system";
 import { insetStyle } from "../../../skins/surfaceStyles";
 
 /** Outer shell shared by navigator and detail pane: a card, as the Look draws cards. */
@@ -79,7 +80,7 @@ export function devicesNavItemSx(theme: Theme, selected: boolean): SxProps<Theme
 }
 
 /** A group of actions inside the detail pane: a box inside a card. */
-export function devicesActionGroupSx(theme: Theme): SxProps<Theme> {
+export function devicesActionGroupSx(theme: Theme): SystemStyleObject<Theme> {
   return { p: 2, ...insetStyle(theme.nx) };
 }
 

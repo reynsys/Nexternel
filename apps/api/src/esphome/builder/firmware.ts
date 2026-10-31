@@ -20,6 +20,7 @@ import { assertEsphomeBuildPrerequisites } from "../secrets.js";
 import { loadEsphomeYaml } from "../yaml.js";
 import { fileAddress, filesForAddress, forgetFileAddress } from "../file-identity.js";
 import { writeDeviceYamlFile } from "./storage.js";
+import { runEsphomeJob } from "../esphome-jobs.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -103,10 +104,7 @@ function execOutput(err: unknown): string {
   return [e.stdout, e.stderr, e.message].filter(Boolean).join("\n").trim();
 }
 
-async function runEsphomeCli(
-  args: string[],
-  opts?: { treatAsCompile?: boolean }
-): Promise<{ ok: true; log: string } | { ok: false; log: string }> {
+async function runEsphomeCli(args: string[]): Promise<{ ok: true; log: string } | { ok: false; log: string }> {
   try {
     // Through ESPHome's own start-up script, never `esphome` directly: the script sets where ESPHome
     // keeps its build tools (ESP-IDF, PlatformIO) in the kept /config folder — the same setup the
@@ -117,17 +115,9 @@ async function runEsphomeCli(
       ["exec", ESPHOME_CONTAINER, "/entrypoint.sh", ...args],
       { timeout: CLI_TIMEOUT_MS, maxBuffer: 12 * 1024 * 1024 }
     );
-    const log = [stdout, stderr].filter(Boolean).join("\n").trim();
-    if (opts?.treatAsCompile && !esphomeCompileSucceeded(log, true)) {
-      return { ok: false, log };
-    }
-    return { ok: true, log };
+    return { ok: true, log: [stdout, stderr].filter(Boolean).join("\n").trim() };
   } catch (err) {
-    const log = execOutput(err);
-    if (opts?.treatAsCompile && esphomeCompileSucceeded(log, false)) {
-      return { ok: true, log };
-    }
-    return { ok: false, log };
+    return { ok: false, log: execOutput(err) };
   }
 }
 
@@ -210,7 +200,7 @@ export async function readCompiledFirmware(
   return null;
 }
 
-/** Run `esphome compile` inside the ESPHome Docker container. */
+/** Build the board's software (ESPHome compile). */
 export async function compileEsphomeDevice(deviceId: string): Promise<FirmwareActionResult> {
   const meta = requireEsphomeMeta(await getDeviceEsphomeMeta(deviceId));
   const yamlPath = await requireYamlOnDisk(meta);
@@ -221,11 +211,12 @@ export async function compileEsphomeDevice(deviceId: string): Promise<FirmwareAc
   await setLifecycleState(deviceId, "building");
   const compileStartedMs = Date.now();
   const stem = yamlStem(meta);
-  let result = await runEsphomeCli(["compile", configPath], { treatAsCompile: true });
+  // Built by ESPHome's own job list, so ESPHome's record of the board stays right (esphome-jobs.ts).
+  let result = await runEsphomeJob("compile", yamlPath);
   // A board's build files made with another setup of the build tools: clear them and build once more.
   if (!result.ok && buildCacheMismatch(result.log)) {
     await runEsphomeCli(["clean", configPath]);
-    result = await runEsphomeCli(["compile", configPath], { treatAsCompile: true });
+    result = await runEsphomeJob("compile", yamlPath);
   }
   const firmwarePath = compiledFirmwarePath(stem);
   const firmwareFresh =
@@ -251,17 +242,16 @@ export async function deviceYamlFile(deviceId: string): Promise<string | null> {
 }
 
 /**
- * Run `esphome upload` (OTA) inside the ESPHome Docker container. `address` is the board's IP when
+ * Send the last build to the board over Wi-Fi (ESPHome upload). `address` is the board's IP when
  * known (ESPHome's own list): finding it by name (.local) often fails inside Docker.
  */
 export async function uploadEsphomeDevice(deviceId: string, address?: string | null): Promise<FirmwareActionResult> {
   const meta = requireEsphomeMeta(await getDeviceEsphomeMeta(deviceId));
   const yamlPath = await requireYamlOnDisk(meta);
-  const configPath = yamlConfigPath(meta);
 
   await setLifecycleState(deviceId, "connecting");
-  // Always say where to send it: without --device, ESPHome asks on screen, which nobody can answer here.
-  const result = await runEsphomeCli(["upload", configPath, "--device", address || "OTA"]);
+  // Sent by ESPHome's own job list (ESPHome then records what the board runs); always to an address.
+  const result = await runEsphomeJob("upload", yamlPath, address || "OTA");
   if (result.ok) {
     await setLifecycleState(deviceId, "connecting");
     return { ok: true, lifecycleState: "connecting", log: result.log, yamlPath };

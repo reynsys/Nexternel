@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from "fastify";
 import { requirePermission } from "../auth/rbac.js";
-import { listBoardStatus, startBoardUpdates, updateRun } from "./board-updates.js";
+import { boardUpdateHistory, listBoardStatus, startBoardUpdates, updateLog, updateRun } from "./board-updates.js";
 import { linkDeviceYamlFile } from "./builder/firmware.js";
 
 export const boardUpdateRoutes: FastifyPluginAsync = async (app) => {
@@ -13,6 +13,21 @@ export const boardUpdateRoutes: FastifyPluginAsync = async (app) => {
   app.get("/api/v1/esphome/updates", async (request, reply) => {
     if (!requirePermission(request, reply, "viewDevices")) return;
     return { run: updateRun() };
+  });
+
+  /** One kept update record: the outcome and everything ESPHome wrote. */
+  app.get<{ Params: { id: string } }>("/api/v1/esphome/updates/log/:id", async (request, reply) => {
+    if (!requirePermission(request, reply, "viewDevices")) return;
+    const entry = await updateLog(request.params.id);
+    if (!entry) return reply.code(404).send({ error: { code: "not_found", message: "This update record is no longer kept." } });
+    return { entry };
+  });
+
+  /** A board's kept updates, newest first. */
+  app.get<{ Params: { deviceId: string } }>("/api/v1/esphome/boards/:deviceId/updates", async (request, reply) => {
+    if (!requirePermission(request, reply, "viewDevices")) return;
+    if (!/^[0-9a-f-]{36}$/i.test(request.params.deviceId)) return { updates: [] };
+    return { updates: await boardUpdateHistory(request.params.deviceId) };
   });
 
   /** Update these boards over Wi-Fi, one after another, in the background. */

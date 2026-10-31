@@ -1,3 +1,5 @@
+import { measureLayoutSize } from "./panel-size.ts";
+
 /** Authoritative rectangle available to a visualization renderer (floor-rounded px). */
 export type VisualizationRect = {
   width: number;
@@ -8,11 +10,7 @@ export const EMPTY_VISUALIZATION_RECT: VisualizationRect = { width: 0, height: 0
 
 /** Floor pixel dimensions from a visualization slot or host element. */
 export function measureVisualizationRect(el: HTMLElement): VisualizationRect {
-  const r = el.getBoundingClientRect();
-  return {
-    width: Math.max(0, Math.floor(r.width)),
-    height: Math.max(0, Math.floor(r.height)),
-  };
+  return measureLayoutSize(el);
 }
 
 /** True when a ResizeObserver callback should publish new visualization context state. */

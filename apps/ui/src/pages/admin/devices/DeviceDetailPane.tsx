@@ -3,6 +3,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { openEsphome } from "../../../lib/esphome-open";
 import { ConnectionHistory } from "./ConnectionHistory";
 import { StepIcon } from "./BoardUpdatesCard";
+import { BoardUpdateDetailsButton } from "./BoardUpdateDetails";
 import { refreshBoards, updateBoards, useBoardUpdates } from "../../../lib/board-updates";
 import SystemUpdateAltRoundedIcon from "@mui/icons-material/SystemUpdateAltRounded";
 import UsbRoundedIcon from "@mui/icons-material/UsbRounded";
@@ -36,7 +37,7 @@ import DownloadRoundedIcon from "@mui/icons-material/DownloadRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
 import SyncRoundedIcon from "@mui/icons-material/SyncRounded";
-import { api, type DeviceRecord } from "../../../api";
+import { api, UNSTEADY_DROPS, type DeviceRecord } from "../../../api";
 import { AREA } from "../../../lib/area-labels";
 import {
   connectivityChipColor,
@@ -752,6 +753,36 @@ function ReadingName({
  * Overview → Board software (ESPHome boards): is the board up to date, and the two everyday actions —
  * Update board (over Wi-Fi, Nexternel does every step) and Install with a USB cable (new boards).
  */
+/** The board's kept updates (newest first, up to 3 shown), each with its details. */
+function LastBoardUpdates({ deviceId, name, refreshKey }: { deviceId: string; name: string; refreshKey: string }) {
+  const [updates, setUpdates] = useState<{ id: string; finishedAt: string; outcome: string; message: string }[]>([]);
+  useEffect(() => {
+    api
+      .boardUpdateHistory(deviceId)
+      .then((r) => setUpdates(r.updates.slice(0, 3)))
+      .catch(() => setUpdates([]));
+  }, [deviceId, refreshKey]);
+  if (!updates.length) return null;
+  return (
+    <Stack spacing={1} sx={{ mb: 1.5 }}>
+      <Typography variant="caption" color="text.secondary">
+        Last updates from Nexternel
+      </Typography>
+      {updates.map((u) => (
+        <Stack key={u.id} direction="row" spacing={1} alignItems="center">
+          <StepIcon step={u.outcome === "failed" ? "failed" : "done"} />
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="body2" color={u.outcome === "failed" ? "error" : "text.secondary"} noWrap title={u.message}>
+              {new Date(u.finishedAt).toLocaleString()} — {u.message}
+            </Typography>
+          </Box>
+          <BoardUpdateDetailsButton logId={u.id} name={name} />
+        </Stack>
+      ))}
+    </Stack>
+  );
+}
+
 function BoardSoftware({ device, canEdit, busy, onUsb }: { device: DeviceRecord; canEdit: boolean; busy: boolean; onUsb: () => void }) {
   const theme = useTheme();
   const { boards, run } = useBoardUpdates();
@@ -773,7 +804,8 @@ function BoardSoftware({ device, canEdit, busy, onUsb }: { device: DeviceRecord;
         : `Up to date${board.deployedVersion ? ` (ESPHome ${board.deployedVersion})` : ""}.`;
 
   return (
-    <Box sx={devicesActionGroupSx(theme)}>
+    // A full row of its own (long messages wrap or shorten instead of widening the page).
+    <Box sx={{ ...devicesActionGroupSx(theme), flex: "1 1 100%", minWidth: 0 }}>
       <Typography variant="subtitle2" gutterBottom>
         Board software
       </Typography>
@@ -791,6 +823,12 @@ function BoardSoftware({ device, canEdit, busy, onUsb }: { device: DeviceRecord;
           {status}
         </Typography>
       )}
+      {board && board.recentDrops >= UNSTEADY_DROPS ? (
+        <Alert severity="warning" sx={{ mb: 1.5 }}>
+          This board dropped off Wi‑Fi {board.recentDrops} times in the last 15 minutes. Updating over Wi‑Fi may fail; a USB cable is safer.
+        </Alert>
+      ) : null}
+      <LastBoardUpdates deviceId={device.id} name={device.name} refreshKey={item?.logId ?? ""} />
       {canEdit && board?.linkProblem === "several" ? (
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
           <TextField select size="small" label="Settings file" value={choice} onChange={(e) => setChoice(e.target.value)} sx={{ minWidth: 240 }}>
