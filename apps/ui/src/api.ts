@@ -2575,6 +2575,8 @@ export type BoardStatus = {
   needsUpdate: boolean;
   /** current: runs the newest build; update: needs one; unknown: the board does not report which software it runs yet. */
   updateState: "current" | "update" | "unknown";
+  /** The software fingerprint the board reports (what it runs), or null. */
+  fingerprint: string | null;
   reachable: boolean;
   deployedVersion: string | null;
   currentVersion: string | null;

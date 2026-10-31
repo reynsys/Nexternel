@@ -2,7 +2,7 @@ import { CODE_TEXT } from "../../lib/appearance/type";
 import { CameraPane } from "./devices/CameraPane";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Alert, Box, Button, Card, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, FormControlLabel, InputLabel, MenuItem, Paper, Select, Stack, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { Alert, Box, Button, Card, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, FormControlLabel, InputLabel, MenuItem, Paper, Select, Stack, Switch, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
 import {
   api,
   type CameraRecord,
@@ -10,15 +10,14 @@ import {
   type EsphomeCatalogEntry,
 } from "../../api";
 import { AREA } from "../../lib/area-labels";
-import { esphomeDashboardUrl } from "../../lib/device-utils";
-import { openEsphome } from "../../lib/esphome-open";
-import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
 import { useConfirm } from "../../components/confirm";
 import { EsphomeAddDeviceWizard } from "./EsphomeAddDeviceWizard";
 import { EsphomeDevicePanelDialog } from "./EsphomeDevicePanelDialog";
 import { BoardUpdatesCard } from "./devices/BoardUpdatesCard";
 import { DeviceDetailPane } from "./devices/DeviceDetailPane";
 import { DeviceNavigator } from "./devices/DeviceNavigator";
+import { useCapabilityValues } from "./devices/use-capability-values";
+import { useBoardUpdates } from "../../lib/board-updates";
 import { ReadingSettingsDialog, type ReadingToEdit } from "./devices/ReadingSettingsDialog";
 import {
   isPhysicalDevice,
@@ -26,7 +25,6 @@ import {
   selectionToSearchParams,
   type DeviceSelection,
   type StatusFilter,
-  type TypeFilter,
 } from "./devices/device-nav-utils";
 import { insetSx } from "../../skins/surfaceStyles";
 import { ButtonRow } from "../../components/ButtonRow";
@@ -34,12 +32,11 @@ import { useLiveChanges } from "../../lib/live-changes";
 
 type AreaOption = { id: string; name: string };
 
+/** Device settings: only everyday things. The technical address is how Nexternel recognises the board. */
 const emptyForm = {
   name: "",
   roomId: "",
-  mqttTopicPrefix: "",
-  esphomeName: "",
-  ipAddress: "",
+  isEnabled: true,
 };
 
 const emptyShellyForm = {
@@ -109,7 +106,8 @@ export function DevicesPage() {
   const [systems, setSystems] = useState<{ id: string; label: string }[]>([]);
   const [deviceSearch, setDeviceSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+  const capabilityValues = useCapabilityValues();
+  const { boards: boardStatuses } = useBoardUpdates();
   const [octopusNeedsAttention, setOctopusNeedsAttention] = useState(false);
   const [cameras, setCameras] = useState<CameraRecord[]>([]);
 
@@ -341,21 +339,15 @@ export function DevicesPage() {
 
   function openEdit(device: DeviceRecord) {
     setEditing(device);
-    setForm({
-      name: device.name,
-      roomId: device.roomId ?? "",
-      mqttTopicPrefix: device.mqttTopicPrefix,
-      esphomeName: device.esphomeName ?? "",
-      ipAddress: device.ipAddress ?? "",
-    });
+    setForm({ name: device.name, roomId: device.roomId ?? "", isEnabled: device.isEnabled });
     setDialogOpen(true);
   }
 
   async function onSave(e: FormEvent) {
     e.preventDefault();
     if (!editing) return;
-    if (!form.name.trim() || !form.mqttTopicPrefix.trim()) {
-      setError("Name and MQTT topic prefix are required");
+    if (!form.name.trim()) {
+      setError("Give the device a name");
       return;
     }
     setBusy(true);
@@ -363,14 +355,12 @@ export function DevicesPage() {
       await api.updateDevice(editing.id, {
         name: form.name.trim(),
         roomId: form.roomId || null,
-        mqttTopicPrefix: form.mqttTopicPrefix.trim(),
-        esphomeName: form.esphomeName.trim() || null,
-        ipAddress: form.ipAddress.trim() || null,
+        isEnabled: form.isEnabled,
       });
       setDialogOpen(false);
       setEditing(null);
       setForm(emptyForm);
-      setInfo("Device updated");
+      setInfo("Device settings saved");
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed");
@@ -514,9 +504,8 @@ export function DevicesPage() {
     }
   }
 
-  const esphomeUrl = esphomeDashboardUrl(hostname);
   const physicalDeviceCount = devices.filter(isPhysicalDevice).length;
-  const showConnectedServices = statusFilter === "all" && typeFilter === "all";
+  const showConnectedServices = true;
   const showNavigator = !isNarrow || !selection;
   const showDetail = !isNarrow || Boolean(selection);
 
@@ -667,8 +656,8 @@ export function DevicesPage() {
                 onSearchChange={setDeviceSearch}
                 statusFilter={statusFilter}
                 onStatusFilterChange={setStatusFilter}
-                typeFilter={typeFilter}
-                onTypeFilterChange={setTypeFilter}
+                values={capabilityValues}
+                boards={boardStatuses}
                 octopusNeedsAttention={octopusNeedsAttention}
                 showOctopus={isAdmin}
                 showConnectedServices={showConnectedServices}
@@ -699,6 +688,7 @@ export function DevicesPage() {
                 showBack={isNarrow && Boolean(selection)}
                 onBack={() => setSelection(null)}
                 actions={detailActions}
+                values={capabilityValues}
               />
               )}
             </Box>
@@ -748,9 +738,14 @@ export function DevicesPage() {
         maxWidth="sm"
       >
         <form onSubmit={(e) => void onSave(e)}>
-          <DialogTitle>Edit device</DialogTitle>
+          <DialogTitle>
+            Device settings
+            <Typography variant="body2" color="text.secondary">
+              {editing?.name}
+            </Typography>
+          </DialogTitle>
           <DialogContent>
-            <Stack spacing={2} sx={{ mt: 1 }}>
+            <Stack spacing={2.5} sx={{ mt: 1 }}>
               <TextField
                 label="Name"
                 value={form.name}
@@ -758,7 +753,7 @@ export function DevicesPage() {
                 required
                 fullWidth
               />
-              <FormControl fullWidth size="small">
+              <FormControl fullWidth>
                 <InputLabel id="device-area">{AREA.singular}</InputLabel>
                 <Select
                   labelId="device-area"
@@ -766,57 +761,50 @@ export function DevicesPage() {
                   value={form.roomId}
                   onChange={(e) => setForm((f) => ({ ...f, roomId: e.target.value }))}
                 >
-                  <MenuItem value="">— None —</MenuItem>
+                  <MenuItem value="">No {AREA.singular.toLowerCase()}</MenuItem>
                   {areas.map((a) => (
                     <MenuItem key={a.id} value={a.id}>
                       {a.name}
                     </MenuItem>
                   ))}
                 </Select>
-              </FormControl>
-              <TextField
-                label="MQTT topic prefix"
-                value={form.mqttTopicPrefix}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, mqttTopicPrefix: e.target.value }))
-                }
-                required
-                fullWidth
-                helperText={
-                  editing?.firmwareType === "shelly"
-                    ? "Shelly MQTT topic prefix from the device"
-                    : "Must match the device topic prefix in ESPHome"
-                }
-              />
-              {editing?.firmwareType !== "shelly" && (
-                <TextField
-                  label="ESPHome name"
-                  value={form.esphomeName}
-                  onChange={(e) => setForm((f) => ({ ...f, esphomeName: e.target.value }))}
-                  fullWidth
-                />
-              )}
-              <TextField
-                label="IP address"
-                value={form.ipAddress}
-                onChange={(e) => setForm((f) => ({ ...f, ipAddress: e.target.value }))}
-                fullWidth
-              />
-              {!areas.length && (
-                <Typography variant="caption" color="text.secondary">
-                  No {AREA.plural.toLowerCase()} yet — create some under {AREA.plural} first
-                  (optional).
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75 }}>
+                  Its readings show this {AREA.singular.toLowerCase()} under their panels' titles.
                 </Typography>
-              )}
-              {editing?.firmwareType !== "shelly" && (
-                <Button variant="outlined" size="small" endIcon={<OpenInNewRoundedIcon />} onClick={() => void openEsphome(esphomeUrl)} sx={{ alignSelf: "flex-start" }}>
-                  Open ESPHome
+              </FormControl>
+              <FormControlLabel
+                control={<Switch checked={form.isEnabled} onChange={(e) => setForm((f) => ({ ...f, isEnabled: e.target.checked }))} />}
+                label={
+                  <span>
+                    Use this device
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      Off: Nexternel ignores it until it is switched on again; nothing is deleted.
+                    </Typography>
+                  </span>
+                }
+              />
+              <Box sx={{ borderTop: 1, borderColor: "divider", pt: 2 }}>
+                <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+                  Its technical address is fixed: it is how Nexternel recognises the device (Troubleshooting → Technical details).
+                </Typography>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  disabled={busy}
+                  onClick={() => {
+                    if (!editing) return;
+                    setDialogOpen(false);
+                    setDeleteYamlToo(false);
+                    setDeleteTarget(editing);
+                  }}
+                >
+                  Delete device
                 </Button>
-              )}
+              </Box>
             </Stack>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setDialogOpen(false)} disabled={busy}>
+            <Button variant="outlined" onClick={() => setDialogOpen(false)} disabled={busy}>
               Cancel
             </Button>
             <Button type="submit" variant="contained" disabled={busy}>

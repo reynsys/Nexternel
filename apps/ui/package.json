@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc --noEmit -p tsconfig.json && vite build",
     "preview": "vite preview",
-    "test": "node --import ./scripts/stage2-test-loader.mjs --experimental-strip-types --test \"src/lib/**/*.test.ts\" \"src/panels/**/*.test.ts\" \"src/widgets/**/*.test.ts\"",
+    "test": "node --import ./scripts/stage2-test-loader.mjs --experimental-strip-types --test \"src/lib/**/*.test.ts\" \"src/panels/**/*.test.ts\" \"src/widgets/**/*.test.ts\" \"src/pages/**/*.test.ts\"",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {

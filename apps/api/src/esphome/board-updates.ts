@@ -59,6 +59,8 @@ export type BoardStatus = {
    * not report which software it runs yet (or nothing is built yet), so Nexternel cannot tell.
    */
   updateState: "current" | "update" | "unknown";
+  /** The software fingerprint the board reports (what it runs), or null. */
+  fingerprint: string | null;
   /** The board can be reached over Wi-Fi now. */
   reachable: boolean;
   deployedVersion: string | null;
@@ -101,6 +103,7 @@ export async function listBoardStatus(): Promise<BoardStatus[]> {
       known: Boolean(b),
       needsUpdate: updateState === "update",
       updateState,
+      fingerprint: boardFingerprint(d.mqtt_topic_prefix),
       reachable: Boolean(b && (b.state === "online" || b.ip)),
       deployedVersion: b?.deployed_version ?? null,
       currentVersion: b?.current_version ?? null,

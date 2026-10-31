@@ -589,24 +589,25 @@ export async function loadEsphomeYaml(esphomeName: string): Promise<string | nul
   return (await findEsphomeYaml(esphomeName))?.text ?? null;
 }
 
-/** The settings file for this name (also with - and _ swapped), as ESPHome names it ("devices/x.yaml" or "x.yaml"). */
+/** The settings file with exactly this name ("x" → "x.yaml" or "devices/x.yaml"); never a similar name. */
 export async function findEsphomeYaml(esphomeName: string): Promise<{ path: string; text: string } | null> {
-  const candidates = [...new Set([esphomeName, esphomeName.replace(/_/g, "-"), esphomeName.replace(/-/g, "_")])].filter(Boolean);
-
-  for (const base of candidates) {
-    const fileName = `${base}.yaml`;
-    for (const dir of ESPHOME_DIRS) {
-      for (const sub of ["", "devices"]) {
-        try {
-          const text = await readFile(join(dir, sub, fileName), "utf8");
-          return { path: sub ? `${sub}/${fileName}` : fileName, text };
-        } catch {
-          /* try next path */
-        }
+  const fileName = `${esphomeName}.yaml`;
+  for (const dir of ESPHOME_DIRS) {
+    for (const sub of ["", "devices"]) {
+      try {
+        const text = await readFile(join(dir, sub, fileName), "utf8");
+        return { path: sub ? `${sub}/${fileName}` : fileName, text };
+      } catch {
+        /* try next path */
       }
     }
   }
   return null;
+}
+
+/** A settings file by its exact path in the ESPHome folder ("garden-relays.yaml", "devices/x.yaml"). */
+export async function readEsphomeFile(relPath: string): Promise<string | null> {
+  return readEsphomeRelativePath(relPath);
 }
 
 async function readEsphomeRelativePath(relPath: string): Promise<string | null> {
@@ -625,7 +626,11 @@ async function readEsphomeRelativePath(relPath: string): Promise<string | null> 
 export async function loadEsphomeYamlMerged(esphomeName: string): Promise<string | null> {
   const base = await loadEsphomeYaml(esphomeName);
   if (!base) return null;
+  return withIncludes(base);
+}
 
+/** A settings file with the files it !includes appended (one copy each). */
+async function withIncludes(base: string): Promise<string> {
   const mergedParts = [base];
   const seenPaths = new Set<string>();
   const queue = [...base.matchAll(/!include\s+['"]?([^'"\s#]+)['"]?/g)].map((m) => m[1]);
@@ -658,17 +663,11 @@ export async function suggestFromEsphome(
   return parseEsphomeYaml(yaml, esphomeName, esphomeName);
 }
 
-/** Try several file/name variants until YAML loads. */
-export async function suggestFromEsphomeCandidates(
-  names: string[]
-): Promise<EsphomeImportSuggestion | null> {
-  const tried = new Set<string>();
-  for (const raw of names) {
-    if (!raw || tried.has(raw)) continue;
-    tried.add(raw);
-    const yaml = await loadEsphomeYamlMerged(raw);
-    if (!yaml) continue;
-    return parseEsphomeYaml(yaml, raw, raw);
-  }
-  return null;
+/** What a board's own settings file (its exact path) gives Nexternel: readings and switches. */
+export async function suggestFromEsphomeFile(relPath: string): Promise<EsphomeImportSuggestion | null> {
+  const stem = relPath.replace(/^devices\//, "").replace(/\.yaml$/, "");
+  const base = await readEsphomeFile(relPath);
+  if (!base) return null;
+  const yaml = await withIncludes(base);
+  return parseEsphomeYaml(yaml, stem, stem);
 }

@@ -2,7 +2,8 @@ import type { PoolClient } from "pg";
 import { getPool } from "../db.js";
 import { preferCatalogDisplayName } from "./display-name.js";
 import type { EsphomeImportSuggestion } from "../esphome/yaml.js";
-import { suggestFromEsphomeCandidates } from "../esphome/yaml.js";
+import { suggestFromEsphomeFile } from "../esphome/yaml.js";
+import { linkedSettingsFile } from "../esphome/file-identity.js";
 import { removeDeviceYamlFile } from "../esphome/builder/storage.js";
 import {
   buildShellyGen1RelayTopics,
@@ -275,22 +276,16 @@ export async function getDeviceDetailed(id: string): Promise<DeviceDetail | null
   return all.find((d) => d.id === id) ?? null;
 }
 
-/** YAML lookup names for an ESPHome device (esphome name, slug, MQTT prefix tail). */
-export function esphomeNameCandidates(
-  device: Pick<DeviceDetail, "esphomeName" | "slug" | "mqttTopicPrefix">
-): string[] {
-  const out: string[] = [];
-  if (device.esphomeName?.trim()) out.push(device.esphomeName.trim());
-  if (device.slug?.trim()) out.push(device.slug.trim());
-  const tail = device.mqttTopicPrefix?.split("/").pop()?.trim();
-  if (tail) out.push(tail);
-  return [...new Set(out)];
-}
-
+/**
+ * What a board's own settings file gives Nexternel (its readings and switches) — only the file linked
+ * to the board, or the one file whose message address is exactly the board's (then linked). Never a
+ * file found by a similar name.
+ */
 export async function esphomeSuggestionForDevice(
-  device: Pick<DeviceDetail, "esphomeName" | "slug" | "mqttTopicPrefix">
+  device: Pick<DeviceDetail, "id" | "mqttTopicPrefix"> & { esphomeYamlPath?: string | null }
 ): Promise<EsphomeImportSuggestion | null> {
-  return suggestFromEsphomeCandidates(esphomeNameCandidates(device));
+  const file = await linkedSettingsFile(device.id, device.esphomeYamlPath ?? null, device.mqttTopicPrefix);
+  return file ? suggestFromEsphomeFile(file) : null;
 }
 
 async function pruneOrphanSensorsAndRelays(

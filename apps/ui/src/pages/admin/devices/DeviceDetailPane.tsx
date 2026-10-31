@@ -1,71 +1,40 @@
-import { ICON_SIZE, CODE_TEXT } from "../../../lib/appearance/type";
 import { useEffect, useState, type ReactNode } from "react";
-import { openEsphome } from "../../../lib/esphome-open";
-import { ConnectionHistory } from "./ConnectionHistory";
-import { StepIcon } from "./BoardUpdatesCard";
-import { BoardUpdateDetailsButton } from "./BoardUpdateDetails";
-import { refreshBoards, updateBoards, useBoardUpdates } from "../../../lib/board-updates";
-import SystemUpdateAltRoundedIcon from "@mui/icons-material/SystemUpdateAltRounded";
-import UsbRoundedIcon from "@mui/icons-material/UsbRounded";
-import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  FormControl,
-  FormControlLabel,
-  MenuItem,
-  TextField,
-  Select,
-  Stack,
-  Switch,
-  Tab,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Tabs,
-  Typography,
-  useTheme,
-} from "@mui/material";
+import { Alert, Box, Button, Stack, Tab, Tabs, Typography, useTheme } from "@mui/material";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
-import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
 import DevicesOtherRoundedIcon from "@mui/icons-material/DevicesOtherRounded";
 import DownloadRoundedIcon from "@mui/icons-material/DownloadRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
 import SyncRoundedIcon from "@mui/icons-material/SyncRounded";
-import { api, UNSTEADY_DROPS, type DeviceRecord } from "../../../api";
+import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
+import type { Capability, DeviceRecord } from "../../../api";
+import { ICON_SIZE } from "../../../lib/appearance/type";
 import { AREA } from "../../../lib/area-labels";
-import {
-  connectivityChipColor,
-  connectivityLabel,
-  deviceConnectivityState,
-  esphomeDashboardUrl,
-  esphomeProvisioningLifecycleLabel,
-  formatLastSeen,
-} from "../../../lib/device-utils";
+import { esphomeDashboardUrl } from "../../../lib/device-utils";
+import { openEsphome } from "../../../lib/esphome-open";
+import { useBoardUpdates } from "../../../lib/board-updates";
 import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
+import { ButtonRow } from "../../../components/ButtonRow";
 import { OctopusSettingsCard } from "../OctopusSettingsCard";
-import { deviceTypeLabel, type DeviceSelection } from "./device-nav-utils";
-import { ItemIcon } from "../../../lib/icons/ItemIcon";
+import type { DeviceSelection } from "./device-nav-utils";
 import type { ReadingToEdit } from "./ReadingSettingsDialog";
+import { deviceStatus } from "./device-summary";
+import { InfoCard, KIND_WORD, KindTile, StatusWord, shortWhen, useDeviceConnection, type DeviceKind } from "./DeviceBits";
+import { DeviceOverviewTab } from "./DeviceOverviewTab";
+import { DeviceReadingsTab } from "./DeviceReadingsTab";
+import { DeviceTroubleshootingTab } from "./DeviceTroubleshootingTab";
 import {
-  devicesActionGroupSx,
   devicesContainedButton,
   devicesOutlinedButton,
   devicesPanelBodySx,
   devicesPanelChromeSx,
   devicesPanelHeaderSx,
 } from "./devices-panel-styles";
-import { insetSx } from "../../../skins/surfaceStyles";
-import { ButtonRow } from "../../../components/ButtonRow";
 
-type TabKey = "overview" | "capabilities" | "configuration" | "advanced";
+type TabKey = "overview" | "readings" | "troubleshooting" | "advanced";
 
 export type DeviceDetailActions = {
+  /** Device settings (name, area, use this device, delete). */
   onEdit: (device: DeviceRecord) => void;
   onToggleEnabled: (device: DeviceRecord) => void;
   onRestoreYaml: (device: DeviceRecord) => void;
@@ -78,12 +47,7 @@ export type DeviceDetailActions = {
   onUpdateCapabilitySystem: (capabilityId: string, systemId: string | null) => void;
   /** Open a reading's Name & icon settings. */
   onEditReading: (reading: ReadingToEdit) => void;
-  onRemoveEntity: (
-    kind: "sensor" | "relay",
-    deviceId: string,
-    entityId: string,
-    name: string
-  ) => void;
+  onRemoveEntity: (kind: "sensor" | "relay", deviceId: string, entityId: string, name: string) => void;
 };
 
 type Props = {
@@ -96,45 +60,32 @@ type Props = {
   showBack: boolean;
   onBack: () => void;
   actions: DeviceDetailActions;
+  /** Current values of every reading and switch. */
+  values: Map<string, Capability>;
 };
 
-function DetailShell({
-  title,
-  subtitle,
-  showBack,
-  onBack,
-  children,
-}: {
-  title: string;
-  subtitle?: string;
-  showBack?: boolean;
-  onBack?: () => void;
-  children: ReactNode;
-}) {
+/** The page of something that is not a board or switch (an online service). */
+function DetailShell({ title, subtitle, kind, showBack, onBack, children }: { title: string; subtitle?: string; kind?: DeviceKind; showBack?: boolean; onBack?: () => void; children: ReactNode }) {
   const theme = useTheme();
   const contentSurface = useContentSurfaceSx();
   return (
     <Box sx={devicesPanelChromeSx(contentSurface, theme)}>
       <Box sx={devicesPanelHeaderSx(theme)}>
-        <Stack spacing={0.5}>
-          {showBack && onBack && (
-            <Button
-              {...devicesOutlinedButton}
-              startIcon={<ArrowBackRoundedIcon />}
-              onClick={onBack}
-              sx={{ alignSelf: "flex-start", mb: 0.5 }}
-            >
-              Back
-            </Button>
-          )}
-          <Typography variant="subtitle1">
-            {title}
-          </Typography>
-          {subtitle && (
-            <Typography variant="caption" color="text.secondary">
-              {subtitle}
-            </Typography>
-          )}
+        {showBack && onBack ? (
+          <Button {...devicesOutlinedButton} startIcon={<ArrowBackRoundedIcon />} onClick={onBack} sx={{ mb: 1 }}>
+            Back
+          </Button>
+        ) : null}
+        <Stack direction="row" spacing={1.5} alignItems="center">
+          {kind ? <KindTile kind={kind} size={48} /> : null}
+          <Box>
+            <Typography variant="h6">{title}</Typography>
+            {subtitle ? (
+              <Typography variant="body2" color="text.secondary">
+                {subtitle}
+              </Typography>
+            ) : null}
+          </Box>
         </Stack>
       </Box>
       <Box sx={devicesPanelBodySx()}>{children}</Box>
@@ -147,536 +98,78 @@ function EmptyDetail() {
   const contentSurface = useContentSurfaceSx();
   return (
     <Box sx={devicesPanelChromeSx(contentSurface, theme)}>
-      <Box
-        sx={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          textAlign: "center",
-          p: 4,
-          minHeight: 280,
-        }}
-      >
+      <Box sx={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", p: 4, minHeight: 280 }}>
         <DevicesOtherRoundedIcon sx={{ fontSize: ICON_SIZE.empty, color: "text.disabled", mb: 1.5 }} />
         <Typography variant="h6" color="text.secondary" gutterBottom>
-          Select a device
+          Choose a device
         </Typography>
         <Typography variant="body2" color="text.secondary" maxWidth={320}>
-          Choose a device or connected service from the list to view details and actions.
+          Pick one from the list to see its readings, switches and settings.
         </Typography>
       </Box>
     </Box>
   );
 }
 
-function StatusChips({ device }: { device: DeviceRecord }) {
-  const lifecycle = esphomeProvisioningLifecycleLabel(device.esphomeLifecycleState);
-  const connectivity = deviceConnectivityState(device);
-  return (
-    <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
-      <Chip
-        size="small"
-        label={connectivityLabel(connectivity)}
-        color={connectivityChipColor(connectivity)}
-      />
-      <Chip size="small" variant="outlined" label={deviceTypeLabel(device)} />
-      {!device.isEnabled && <Chip size="small" label="Disabled" color="warning" />}
-      {lifecycle && (
-        <Chip
-          size="small"
-          variant="outlined"
-          color={
-            device.esphomeLifecycleState === "error" ||
-            device.esphomeLifecycleState === "validation_failed" ||
-            device.esphomeLifecycleState === "configuration_missing"
-              ? "error"
-              : device.esphomeLifecycleState === "connecting"
-                ? "warning"
-                : "default"
-          }
-          label={lifecycle}
-        />
-      )}
-      <Chip
-        size="small"
-        variant="outlined"
-        label={device.roomName ?? `No ${AREA.singular}`}
-      />
-    </Stack>
-  );
-}
-
-function OverviewTab({
-  device,
-  isAdmin,
-  busy,
-  actions,
-}: {
-  device: DeviceRecord;
-  isAdmin: boolean;
-  busy: boolean;
-  actions: DeviceDetailActions;
-}) {
-  const theme = useTheme();
-  const connectivity = deviceConnectivityState(device);
-  const isEsphome = (device.firmwareType || "esphome") === "esphome";
-
-  return (
-    <ButtonRow>
-      {device.esphomeLifecycleState === "configuration_missing" && (
-        <Alert severity="warning">
-          ESPHome YAML file is missing on the server. The device row is kept in Nexternel.
-          {device.esphomeManagementMode === "managed"
-            ? " Use Recreate settings file to recreate it from the builder configuration, or restore the file on the server."
-            : " Restore the YAML file on the server, or delete this registration."}
-        </Alert>
-      )}
-
-      <Box sx={devicesActionGroupSx(theme)}>
-        <Typography variant="subtitle2" gutterBottom>
-          Connection
-        </Typography>
-        <Typography variant="body2" fontFamily={CODE_TEXT.fontFamily} color="text.secondary">
-          {device.mqttTopicPrefix}
-          {device.ipAddress ? ` · ${device.ipAddress}` : ""}
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          {device.sensors.length} sensor(s) · {device.relays.length} relay(s) · last seen{" "}
-          {formatLastSeen(device.lastSeenAt)}
-          {device.esphomeLifecycleState === "connecting" && connectivity !== "online"
-            ? " · waiting for device on MQTT"
-            : ""}
-        </Typography>
-        <ConnectionHistory deviceId={device.id} refresh={connectivity} />
-      </Box>
-
-      {isAdmin && (
-        <Box sx={devicesActionGroupSx(theme)}>
-          <Typography variant="subtitle2" gutterBottom>
-            Device
-          </Typography>
-          <ButtonRow direction="row" flexWrap="wrap" useFlexGap alignItems="center">
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={device.isEnabled}
-                  onChange={() => void actions.onToggleEnabled(device)}
-                  size="small"
-                />
-              }
-              label="Enabled"
-            />
-            <Button
-              {...devicesContainedButton}
-              startIcon={<EditRoundedIcon />}
-              onClick={() => actions.onEdit(device)}
-            >
-              Edit device
-            </Button>
-            <Button
-              {...devicesOutlinedButton}
-              color="error"
-              startIcon={<DeleteRoundedIcon />}
-              onClick={() => actions.onDelete(device)}
-            >
-              Delete
-            </Button>
-          </ButtonRow>
-        </Box>
-      )}
-
-      {isEsphome && <BoardSoftware device={device} canEdit={isAdmin} busy={busy} onUsb={() => actions.onOpenEsphomePanel(device, "usb")} />}
-    </ButtonRow>
-  );
-}
-
-function CapabilitiesTab({
-  device,
-  isAdmin,
-  systems,
-  actions,
-}: {
-  device: DeviceRecord;
-  isAdmin: boolean;
-  systems: { id: string; label: string }[];
-  actions: DeviceDetailActions;
-}) {
-  return (
-    <TableContainer sx={[{ overflow: "hidden" }, insetSx()]}>
-      <Table size="small">
-        <TableHead>
-          <TableRow>
-            <TableCell>Entity</TableCell>
-            <TableCell>Type</TableCell>
-            {isAdmin && <TableCell>Function</TableCell>}
-            <TableCell>MQTT</TableCell>
-            {isAdmin && <TableCell align="right">Actions</TableCell>}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-        {device.sensors.map((s) => (
-          <TableRow key={s.id} hover>
-            <TableCell>
-              <ReadingName name={s.customName ?? s.name} deviceName={s.customName ? s.name : null} icon={s.icon} kind={s.sensorType} />
-            </TableCell>
-            <TableCell>sensor · {s.sensorType}</TableCell>
-            {isAdmin && (
-              <TableCell sx={{ minWidth: 140 }}>
-                {s.capabilityId ? (
-                  <FormControl size="small" fullWidth>
-                    <Select
-                      value={s.systemId ?? ""}
-                      displayEmpty
-                      onChange={(e) =>
-                        void actions.onUpdateCapabilitySystem(
-                          s.capabilityId!,
-                          e.target.value ? String(e.target.value) : null
-                        )
-                      }
-                    >
-                      <MenuItem value="">—</MenuItem>
-                      {systems.map((sys) => (
-                        <MenuItem key={sys.id} value={sys.id}>
-                          {sys.label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                ) : (
-                  <Typography variant="caption" color="text.secondary">
-                    Not ready yet
-                  </Typography>
-                )}
-              </TableCell>
-            )}
-            <TableCell>
-              <Typography variant="caption" fontFamily={CODE_TEXT.fontFamily}>
-                {s.mqttStateTopic}
-              </Typography>
-            </TableCell>
-            {isAdmin && (
-              <TableCell align="right">
-                <ButtonRow direction="row" justifyContent="flex-end">
-                  <Button
-                    {...devicesOutlinedButton}
-                    disabled={!s.capabilityId}
-                    onClick={() =>
-                      s.capabilityId &&
-                      actions.onEditReading({
-                        capabilityId: s.capabilityId,
-                        originalName: s.name,
-                        customName: s.customName ?? null,
-                        icon: s.icon ?? null,
-                        kind: s.sensorType,
-                        unit: s.unit ?? null,
-                      })
-                    }
-                  >
-                    Name &amp; icon
-                  </Button>
-                  <Button
-                    {...devicesOutlinedButton}
-                    color="error"
-                    onClick={() => void actions.onRemoveEntity("sensor", device.id, s.id, s.name)}
-                  >
-                    Remove
-                  </Button>
-                </ButtonRow>
-              </TableCell>
-            )}
-          </TableRow>
-        ))}
-        {device.relays.map((r) => (
-          <TableRow key={r.id} hover>
-            <TableCell>
-              <ReadingName
-                name={`${r.customName ?? r.name}${r.lastState ? ` (${r.lastState})` : ""}`}
-                deviceName={r.customName ? r.name : null}
-                icon={r.icon}
-                kind="switch"
-              />
-            </TableCell>
-            <TableCell>relay</TableCell>
-            {isAdmin && (
-              <TableCell sx={{ minWidth: 140 }}>
-                {r.capabilityId ? (
-                  <FormControl size="small" fullWidth>
-                    <Select
-                      value={r.systemId ?? ""}
-                      displayEmpty
-                      onChange={(e) =>
-                        void actions.onUpdateCapabilitySystem(
-                          r.capabilityId!,
-                          e.target.value ? String(e.target.value) : null
-                        )
-                      }
-                    >
-                      <MenuItem value="">—</MenuItem>
-                      {systems.map((sys) => (
-                        <MenuItem key={sys.id} value={sys.id}>
-                          {sys.label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                ) : (
-                  <Typography variant="caption" color="text.secondary">
-                    Not ready yet
-                  </Typography>
-                )}
-              </TableCell>
-            )}
-            <TableCell>
-              <Typography variant="caption" fontFamily={CODE_TEXT.fontFamily}>
-                {r.mqttStateTopic}
-              </Typography>
-            </TableCell>
-            {isAdmin && (
-              <TableCell align="right">
-                <ButtonRow direction="row" justifyContent="flex-end">
-                  <Button
-                    {...devicesOutlinedButton}
-                    disabled={!r.capabilityId}
-                    onClick={() =>
-                      r.capabilityId &&
-                      actions.onEditReading({
-                        capabilityId: r.capabilityId,
-                        originalName: r.name,
-                        customName: r.customName ?? null,
-                        icon: r.icon ?? null,
-                        kind: "switch",
-                      })
-                    }
-                  >
-                    Name &amp; icon
-                  </Button>
-                  <Button
-                    {...devicesOutlinedButton}
-                    color="error"
-                    onClick={() => void actions.onRemoveEntity("relay", device.id, r.id, r.name)}
-                  >
-                    Remove
-                  </Button>
-                </ButtonRow>
-              </TableCell>
-            )}
-          </TableRow>
-        ))}
-        {device.sensors.length === 0 && device.relays.length === 0 && (
-          <TableRow>
-            <TableCell colSpan={isAdmin ? 5 : 3}>
-              <Typography variant="body2" color="text.secondary">
-                No sensors or relays — import from ESPHome YAML or sync.
-              </Typography>
-            </TableCell>
-          </TableRow>
-        )}
-      </TableBody>
-    </Table>
-    </TableContainer>
-  );
-}
-
-function ConfigurationTab({
-  device,
-  isAdmin,
-  busy,
-  actions,
-}: {
-  device: DeviceRecord;
-  isAdmin: boolean;
-  busy: boolean;
-  actions: DeviceDetailActions;
-}) {
-  const theme = useTheme();
-  const isEsphome = (device.firmwareType || "esphome") === "esphome";
-  if (!isEsphome) {
-    return (
-      <Typography variant="body2" color="text.secondary">
-        Configuration tools are available for ESPHome devices.
-      </Typography>
-    );
-  }
-
-  return (
-    <Box sx={devicesActionGroupSx(theme)}>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-        Management mode: <strong>{device.esphomeManagementMode ?? "imported"}</strong>
-      </Typography>
-      {isAdmin && (
-        <ButtonRow direction="row" flexWrap="wrap" useFlexGap>
-          {device.esphomeManagementMode === "managed" ? (
-            <Button
-              {...devicesContainedButton}
-              startIcon={<EditRoundedIcon />}
-              disabled={busy}
-              onClick={() => actions.onEditBuilder(device)}
-            >
-              Edit configuration
-            </Button>
-          ) : (
-            <Button
-              {...devicesContainedButton}
-              disabled={busy}
-              onClick={() => void actions.onAdoptToBuilder(device)}
-            >
-              Manage in Nexternel
-            </Button>
-          )}
-        </ButtonRow>
-      )}
-    </Box>
-  );
-}
-
-function AdvancedTab({
-  device,
-  isAdmin,
-  hostname,
-  busy,
-  actions,
-}: {
-  hostname: string;
-  device: DeviceRecord;
-  isAdmin: boolean;
-  busy: boolean;
-  actions: DeviceDetailActions;
-}) {
-  const theme = useTheme();
-  const isEsphome = (device.firmwareType || "esphome") === "esphome";
-
-  return (
-    <ButtonRow>
-      {isEsphome && isAdmin && (
-        <Box sx={devicesActionGroupSx(theme)}>
-          <Typography variant="subtitle2">ESPHome — for experienced users</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-            The board's ESPHome settings file and tools. Everyday updates are on the Overview tab (Update board).
-          </Typography>
-          <ButtonRow direction="row" flexWrap="wrap" useFlexGap>
-            <Button {...devicesOutlinedButton} startIcon={<EditRoundedIcon />} disabled={busy} onClick={() => actions.onOpenEsphomePanel(device, "file")}>
-              Open settings file
-            </Button>
-            <Button {...devicesOutlinedButton} startIcon={<SyncRoundedIcon />} disabled={busy} onClick={() => void actions.onSyncEsphome(device)}>
-              Reload from ESPHome
-            </Button>
-            <Button
-              {...devicesOutlinedButton}
-              onClick={() => void openEsphome(esphomeDashboardUrl(hostname, device.esphomeName || device.slug))}
-              endIcon={<OpenInNewRoundedIcon />}
-            >
-              Open in ESPHome
-            </Button>
-            {device.esphomeLifecycleState === "configuration_missing" &&
-              device.esphomeManagementMode === "managed" && (
-                <Button
-                  {...devicesOutlinedButton}
-                  disabled={busy}
-                  onClick={() => void actions.onRestoreYaml(device)}
-                >
-                  Recreate settings file
-                </Button>
-              )}
-            <Button
-              {...devicesOutlinedButton}
-              startIcon={<DownloadRoundedIcon />}
-              disabled={busy}
-              onClick={() => void actions.onDownloadFirmware(device)}
-            >
-              Download firmware (.bin)
-            </Button>
-          </ButtonRow>
-        </Box>
-      )}
-      {isAdmin && (
-        <Box sx={devicesActionGroupSx(theme)}>
-          <Typography variant="subtitle2" gutterBottom color="error">
-            Danger zone
-          </Typography>
-          <Button
-            {...devicesOutlinedButton}
-            color="error"
-            startIcon={<DeleteRoundedIcon />}
-            onClick={() => actions.onDelete(device)}
-          >
-            Delete device
-          </Button>
-        </Box>
-      )}
-    </ButtonRow>
-  );
-}
-
-export function DeviceDetailPane({
-  selection,
-  device,
-  isAdmin,
-  busy,
-  hostname,
-  systems,
-  showBack,
-  onBack,
-  actions,
-}: Props) {
+/**
+ * A device's page: its picture, name, area and kind, its status in one word, Device settings; then
+ * Overview, Readings & switches, Troubleshooting and Advanced. The same frame for every kind of device.
+ */
+export function DeviceDetailPane({ selection, device, isAdmin, busy, hostname, systems, showBack, onBack, actions, values }: Props) {
   const theme = useTheme();
   const contentSurface = useContentSurfaceSx();
+  const { boards } = useBoardUpdates();
   const [tab, setTab] = useState<TabKey>("overview");
-  const selectionKey =
-    selection?.kind === "device"
-      ? `device:${selection.deviceId}`
-      : selection?.kind === "service"
-        ? `service:${selection.serviceId}`
-        : "none";
+  const selectionKey = selection?.kind === "device" ? `device:${selection.deviceId}` : selection?.kind === "service" ? "service" : "none";
+  useEffect(() => setTab("overview"), [selectionKey]);
+  const connection = useDeviceConnection(device?.id ?? "", `${device?.id}:${device?.connectivityState}:${device?.lastSeenAt?.slice(0, 15)}`);
 
-  useEffect(() => {
-    setTab("overview");
-  }, [selectionKey]);
-
-  if (!selection) {
-    return <EmptyDetail />;
-  }
-
+  if (!selection) return <EmptyDetail />;
   if (selection.kind === "service") {
     return (
-      <DetailShell
-        title="Octopus Home Mini"
-        subtitle="Connected service · Kraken API"
-        showBack={showBack}
-        onBack={onBack}
-      >
+      <DetailShell title="Octopus Home Mini" subtitle="Online service · energy use from Octopus" kind="service" showBack={showBack} onBack={onBack}>
         <OctopusSettingsCard embedded />
       </DetailShell>
     );
   }
-
   if (!device) {
     return (
       <DetailShell title="Device" showBack={showBack} onBack={onBack}>
-        <Alert severity="warning">Device not found. It may have been deleted.</Alert>
+        <Alert severity="warning">This device is no longer there. It may have been deleted.</Alert>
       </DetailShell>
     );
   }
 
+  const kind: DeviceKind = device.firmwareType === "shelly" ? "switch" : "board";
+  const isBoard = kind === "board";
+  const board = boards?.find((b) => b.deviceId === device.id) ?? null;
+  const status = deviceStatus(device, board);
+  const since = connection?.since && status.tone !== "off" ? ` since ${shortWhen(connection.since).replace(/^Today /, "")}` : "";
+
   return (
     <Box sx={devicesPanelChromeSx(contentSurface, theme)}>
       <Box sx={devicesPanelHeaderSx(theme)}>
-        <Stack spacing={1}>
-          {showBack && (
-            <Button
-              {...devicesOutlinedButton}
-              startIcon={<ArrowBackRoundedIcon />}
-              onClick={onBack}
-              sx={{ alignSelf: "flex-start" }}
-            >
-              Back
+        {showBack ? (
+          <Button {...devicesOutlinedButton} startIcon={<ArrowBackRoundedIcon />} onClick={onBack} sx={{ mb: 1 }}>
+            Back
+          </Button>
+        ) : null}
+        <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap>
+          <KindTile kind={kind} size={48} />
+          <Box sx={{ flex: 1, minWidth: 180 }}>
+            <Typography variant="h6" noWrap>
+              {device.name}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {device.roomName ?? `No ${AREA.singular.toLowerCase()}`} · {KIND_WORD[kind]}
+            </Typography>
+          </Box>
+          <StatusWord word={`${status.word}${status.tone === "ok" || status.tone === "bad" ? since : ""}`} tone={status.tone} emphasis />
+          {isAdmin ? (
+            <Button {...devicesOutlinedButton} startIcon={<TuneRoundedIcon />} onClick={() => actions.onEdit(device)}>
+              Device settings
             </Button>
-          )}
-          <Typography variant="subtitle1">
-            {device.name}
-          </Typography>
-          <StatusChips device={device} />
+          ) : null}
         </Stack>
       </Box>
 
@@ -685,199 +178,91 @@ export function DeviceDetailPane({
         onChange={(_, v: TabKey) => setTab(v)}
         variant="scrollable"
         allowScrollButtonsMobile
-        sx={{
-          px: 1,
-          borderBottom: "1px solid",
-          borderColor: "divider",
-          minHeight: 44,
-          "& .MuiTab-root": { minHeight: 44, textTransform: "none", fontWeight: "fontWeightBold" },
-        }}
+        sx={{ px: 1, borderBottom: "1px solid", borderColor: "divider", minHeight: 44, "& .MuiTab-root": { minHeight: 44, textTransform: "none", fontWeight: "fontWeightBold" } }}
       >
         <Tab value="overview" label="Overview" />
-        <Tab value="capabilities" label="Readings & switches" />
-        <Tab value="configuration" label="Configuration" />
-        <Tab value="advanced" label="Advanced" />
+        <Tab value="readings" label="Readings & switches" />
+        <Tab value="troubleshooting" label="Troubleshooting" />
+        {isBoard && isAdmin ? <Tab value="advanced" label="Advanced" /> : null}
       </Tabs>
 
       <Box sx={{ ...devicesPanelBodySx(), pt: 2 }}>
-        {tab === "overview" && (
-          <OverviewTab
+        {tab === "overview" ? (
+          <DeviceOverviewTab
             device={device}
             isAdmin={isAdmin}
             busy={busy}
-            actions={actions}
+            connection={connection}
+            values={values}
+            onUsb={() => actions.onOpenEsphomePanel(device, "usb")}
+            onShowReadings={() => setTab("readings")}
           />
-        )}
-        {tab === "capabilities" && (
-          <CapabilitiesTab device={device} isAdmin={isAdmin} systems={systems} actions={actions} />
-        )}
-        {tab === "configuration" && (
-          <ConfigurationTab device={device} isAdmin={isAdmin} busy={busy} actions={actions} />
-        )}
-        {tab === "advanced" && (
-          <AdvancedTab device={device} isAdmin={isAdmin} hostname={hostname} busy={busy} actions={actions} />
-        )}
+        ) : null}
+        {tab === "readings" ? (
+          <DeviceReadingsTab
+            device={device}
+            isAdmin={isAdmin}
+            values={values}
+            systems={systems}
+            onEditReading={actions.onEditReading}
+            onRemove={(k, id, eid, name) => void actions.onRemoveEntity(k, id, eid, name)}
+            onSetSystem={(cap, sys) => void actions.onUpdateCapabilitySystem(cap, sys)}
+          />
+        ) : null}
+        {tab === "troubleshooting" ? <DeviceTroubleshootingTab device={device} connection={connection} board={board} /> : null}
+        {tab === "advanced" && isBoard && isAdmin ? <AdvancedTab device={device} hostname={hostname} busy={busy} actions={actions} /> : null}
       </Box>
     </Box>
   );
 }
 
-/** A reading's name with its icon; when you renamed it, the device's own name underneath. */
-function ReadingName({
-  name,
-  deviceName,
-  icon,
-  kind,
-}: {
-  name: string;
-  deviceName: string | null;
-  icon?: string | null;
-  kind: string;
-}) {
+/** Advanced (boards): how its ESPHome settings are kept, and the ESPHome tools for experienced users. */
+function AdvancedTab({ device, hostname, busy, actions }: { device: DeviceRecord; hostname: string; busy: boolean; actions: DeviceDetailActions }) {
+  const managed = device.esphomeManagementMode === "managed";
   return (
-    <Stack direction="row" spacing={1} alignItems="flex-start">
-      <ItemIcon iconId={icon} kind={kind} sx={{ fontSize: ICON_SIZE.title, color: "primary.main", mt: "1px" }} />
-      <Box sx={{ minWidth: 0 }}>
-        <Typography variant="body2">{name}</Typography>
-        {deviceName && (
-          <Typography variant="caption" color="text.secondary">
-            Device: {deviceName}
-          </Typography>
-        )}
-      </Box>
-    </Stack>
-  );
-}
-
-/**
- * Overview → Board software (ESPHome boards): is the board up to date, and the two everyday actions —
- * Update board (over Wi-Fi, Nexternel does every step) and Install with USB (new boards).
- */
-/** The board's kept updates (newest first, up to 3 shown), each with its details. */
-function LastBoardUpdates({ deviceId, name, refreshKey }: { deviceId: string; name: string; refreshKey: string }) {
-  const [updates, setUpdates] = useState<{ id: string; finishedAt: string; outcome: string; message: string }[]>([]);
-  useEffect(() => {
-    api
-      .boardUpdateHistory(deviceId)
-      .then((r) => setUpdates(r.updates.slice(0, 3)))
-      .catch(() => setUpdates([]));
-  }, [deviceId, refreshKey]);
-  if (!updates.length) return null;
-  return (
-    <Stack spacing={1} sx={{ mb: 1.5 }}>
-      <Typography variant="caption" color="text.secondary">
-        Last updates from Nexternel
-      </Typography>
-      {updates.map((u) => (
-        <Stack key={u.id} direction="row" spacing={1} alignItems="center">
-          <StepIcon step={u.outcome === "failed" ? "failed" : "done"} />
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="body2" color={u.outcome === "failed" ? "error" : "text.secondary"} noWrap title={u.message}>
-              {new Date(u.finishedAt).toLocaleString()} — {u.message}
-            </Typography>
-          </Box>
-          <BoardUpdateDetailsButton logId={u.id} name={name} />
-        </Stack>
-      ))}
-    </Stack>
-  );
-}
-
-function BoardSoftware({ device, canEdit, busy, onUsb }: { device: DeviceRecord; canEdit: boolean; busy: boolean; onUsb: () => void }) {
-  const theme = useTheme();
-  const { boards, run } = useBoardUpdates();
-  const [error, setError] = useState<string | null>(null);
-  const board = boards?.find((b) => b.deviceId === device.id);
-  const item = run?.items.find((i) => i.deviceId === device.id);
-  const showItem = item && (run?.running || (item.finishedAt && Date.now() - Date.parse(item.finishedAt) < 30 * 60_000));
-  const [choice, setChoice] = useState("");
-  const status = !boards
-    ? "Checking…"
-    : !board?.file
-      ? board?.linkProblem === "several"
-        ? "Several ESPHome settings files use this board's message address. Choose which one is this board's:"
-        : `No ESPHome settings file uses this board's message address (${device.mqttTopicPrefix}), so it cannot be updated from here.`
-      : !board.known
-        ? `ESPHome does not list ${board.file}.`
-      : board.updateState === "update"
-        ? "An update is ready: the board runs older software than the newest build of its settings."
-        : board.updateState === "unknown"
-          ? "Not known yet: this board does not report which software it runs. One update from Nexternel starts it."
-          : `Up to date — it runs the newest build${board.deployedVersion ? ` (ESPHome ${board.deployedVersion})` : ""}.`;
-
-  return (
-    // A full row of its own (long messages wrap or shorten instead of widening the page).
-    <Box sx={{ ...devicesActionGroupSx(theme), flex: "1 1 100%", minWidth: 0 }}>
-      <Typography variant="subtitle2" gutterBottom>
-        Board software
-      </Typography>
-      {showItem ? (
-        <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ mb: 1.5 }}>
-          <Box sx={{ pt: 0.25 }}>
-            <StepIcon step={item.step} />
-          </Box>
-          <Typography variant="body2" color={item.step === "failed" ? "error" : "text.secondary"}>
-            {item.message}
-          </Typography>
-        </Stack>
-      ) : (
-        <Typography variant="body2" color={board?.needsUpdate ? "warning.main" : "text.secondary"} sx={{ mb: 1.5 }}>
-          {status}
+    <Stack spacing={2}>
+      <InfoCard title="Settings kept by">
+        <Typography variant="body2" color="text.secondary">
+          {managed
+            ? "Nexternel keeps this board's settings: change them with Edit configuration."
+            : "The board's own ESPHome settings file. Nexternel can take it over, so you change its settings here instead."}
         </Typography>
-      )}
-      {board && board.recentDrops >= UNSTEADY_DROPS ? (
-        <Alert severity="warning" sx={{ mb: 1.5 }}>
-          This board dropped off Wi‑Fi {board.recentDrops} times in the last 15 minutes. Updating over Wi‑Fi may fail; a USB cable is safer.
-        </Alert>
-      ) : null}
-      <LastBoardUpdates deviceId={device.id} name={device.name} refreshKey={item?.logId ?? ""} />
-      {canEdit && board?.linkProblem === "several" ? (
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
-          <TextField select size="small" label="Settings file" value={choice} onChange={(e) => setChoice(e.target.value)} sx={{ minWidth: 240 }}>
-            {board.choices.map((f) => (
-              <MenuItem key={f} value={f}>
-                {f}
-              </MenuItem>
-            ))}
-          </TextField>
-          <Button
-            {...devicesContainedButton}
-            disabled={!choice}
-            onClick={() => {
-              setError(null);
-              api
-                .linkBoardFile(device.id, choice)
-                .then(() => refreshBoards())
-                .catch((err) => setError(err instanceof Error ? err.message : "Could not link"));
-            }}
-          >
-            Link
-          </Button>
-        </Stack>
-      ) : null}
-      {error ? <Alert severity="error" sx={{ mb: 1.5 }}>{error}</Alert> : null}
-      {canEdit ? (
+        <ButtonRow direction="row">
+          {managed ? (
+            <Button {...devicesContainedButton} startIcon={<EditRoundedIcon />} disabled={busy} onClick={() => actions.onEditBuilder(device)}>
+              Edit configuration
+            </Button>
+          ) : (
+            <Button {...devicesContainedButton} disabled={busy} onClick={() => void actions.onAdoptToBuilder(device)}>
+              Manage in Nexternel
+            </Button>
+          )}
+        </ButtonRow>
+      </InfoCard>
+      <InfoCard title="ESPHome — for experienced users">
+        <Typography variant="body2" color="text.secondary">
+          The board's ESPHome settings file and tools. Everyday updates are on the Overview tab (Update board).
+        </Typography>
         <ButtonRow direction="row" flexWrap="wrap" useFlexGap>
-          <Button
-            {...(board?.needsUpdate ? devicesContainedButton : devicesOutlinedButton)}
-            startIcon={<SystemUpdateAltRoundedIcon />}
-            disabled={busy || !board?.known || Boolean(run?.running)}
-            onClick={() => {
-              setError(null);
-              updateBoards([device.id]).catch((err) => setError(err instanceof Error ? err.message : "Could not start the update"));
-            }}
-          >
-            Update board
+          <Button {...devicesOutlinedButton} startIcon={<EditRoundedIcon />} disabled={busy} onClick={() => actions.onOpenEsphomePanel(device, "file")}>
+            Open settings file
           </Button>
-          <Button {...devicesOutlinedButton} startIcon={<UsbRoundedIcon />} disabled={busy} onClick={onUsb}>
-            Install with USB
+          <Button {...devicesOutlinedButton} startIcon={<SyncRoundedIcon />} disabled={busy} onClick={() => void actions.onSyncEsphome(device)}>
+            Reload from ESPHome
+          </Button>
+          <Button {...devicesOutlinedButton} onClick={() => void openEsphome(esphomeDashboardUrl(hostname, device.esphomeName || device.slug))} endIcon={<OpenInNewRoundedIcon />}>
+            Open in ESPHome
+          </Button>
+          {device.esphomeLifecycleState === "configuration_missing" && managed ? (
+            <Button {...devicesOutlinedButton} disabled={busy} onClick={() => void actions.onRestoreYaml(device)}>
+              Recreate settings file
+            </Button>
+          ) : null}
+          <Button {...devicesOutlinedButton} startIcon={<DownloadRoundedIcon />} disabled={busy} onClick={() => void actions.onDownloadFirmware(device)}>
+            Download firmware
           </Button>
         </ButtonRow>
-      ) : null}
-      <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-        Update board sends the latest software to the board over Wi‑Fi; it restarts once. A new board, or one not on your
-        Wi‑Fi, is installed with a USB cable. More tools for experienced users are under Advanced.
-      </Typography>
-    </Box>
+      </InfoCard>
+    </Stack>
   );
 }

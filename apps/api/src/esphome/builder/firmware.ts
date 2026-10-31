@@ -17,8 +17,8 @@ import {
   esphomeCompileSucceeded,
 } from "../cli-log.js";
 import { assertEsphomeBuildPrerequisites } from "../secrets.js";
-import { loadEsphomeYaml } from "../yaml.js";
-import { fileAddress, filesForAddress, forgetFileAddress } from "../file-identity.js";
+import { readEsphomeFile } from "../yaml.js";
+import { esphomeBuildName, fileAddress, forgetFileAddress, linkedSettingsFile } from "../file-identity.js";
 import { writeDeviceYamlFile } from "./storage.js";
 import { runEsphomeJob } from "../esphome-jobs.js";
 
@@ -54,11 +54,8 @@ async function getDeviceEsphomeMeta(deviceId: string): Promise<DeviceEsphomeMeta
  * and the person links it (Devices → the board → Board software).
  */
 async function linkYamlFile(meta: DeviceEsphomeMeta & { mqtt_topic_prefix: string | null }): Promise<void> {
-  if (!meta.mqtt_topic_prefix) return;
-  const files = await filesForAddress(meta.mqtt_topic_prefix);
-  if (files.length !== 1) return;
-  meta.esphome_yaml_path = files[0]!;
-  await getPool().query(`UPDATE devices SET esphome_yaml_path = $2 WHERE id = $1 AND COALESCE(esphome_yaml_path, '') = ''`, [meta.id, files[0]]);
+  const file = await linkedSettingsFile(meta.id, meta.esphome_yaml_path, meta.mqtt_topic_prefix);
+  if (file) meta.esphome_yaml_path = file;
 }
 
 /** Link a board to a settings file chosen by the person; only a file with the board's own address. */
@@ -71,19 +68,23 @@ export async function linkDeviceYamlFile(deviceId: string, file: string): Promis
   await getPool().query(`UPDATE devices SET esphome_yaml_path = $2 WHERE id = $1`, [deviceId, file]);
 }
 
+/**
+ * The board's own settings file — only the file linked to it (by its exact message address, see
+ * linkYamlFile). Never a file guessed from a similar name.
+ */
 function yamlRelativePath(meta: DeviceEsphomeMeta): string {
   const raw = meta.esphome_yaml_path?.trim();
   if (raw) return raw.replace(/^\/+/, "");
-  const stem = meta.esphome_name?.trim() || meta.slug;
-  return `${stem}.yaml`;
+  throw new Error("This board is not linked to its ESPHome settings file yet. Link it under Devices → the board → Overview → Software.");
 }
 
 function yamlConfigPath(meta: DeviceEsphomeMeta): string {
   return `/config/${yamlRelativePath(meta)}`;
 }
 
-function yamlStem(meta: DeviceEsphomeMeta): string {
-  return yamlRelativePath(meta).replace(/\.yaml$/, "").replace(/^devices\//, "");
+/** The folder ESPHome builds the board in: its own name for the board (asked from ESPHome). */
+async function buildName(meta: DeviceEsphomeMeta): Promise<string | null> {
+  return esphomeBuildName(yamlRelativePath(meta));
 }
 
 async function setLifecycleState(
@@ -131,15 +132,7 @@ function requireEsphomeMeta(meta: DeviceEsphomeMeta | null): DeviceEsphomeMeta {
 
 async function requireYamlOnDisk(meta: DeviceEsphomeMeta): Promise<string> {
   const yamlPath = yamlRelativePath(meta);
-  // Not linked: the usual file name is used only when that file's board is this device (same address).
-  const own = (meta as DeviceEsphomeMeta & { mqtt_topic_prefix?: string | null }).mqtt_topic_prefix ?? null;
-  if (!meta.esphome_yaml_path?.trim() && own) {
-    const address = await fileAddress(yamlPath);
-    if (address && address !== own) {
-      throw new Error(`${yamlPath} belongs to another board (${address}). Link this device's own settings file first (Devices → the board → Board software).`);
-    }
-  }
-  const existing = await loadEsphomeYaml(yamlStem(meta));
+  const existing = await readEsphomeFile(yamlPath);
   if (!existing) {
     throw new Error(`ESPHome configuration not found for this device (${yamlPath})`);
   }
@@ -152,8 +145,9 @@ export async function readDeviceEsphomeYaml(
   const meta = await getDeviceEsphomeMeta(deviceId);
   if (!meta || meta.firmware_type !== "esphome") return null;
 
+  if (!meta.esphome_yaml_path?.trim()) return null;
   const path = yamlRelativePath(meta);
-  const yaml = await loadEsphomeYaml(yamlStem(meta));
+  const yaml = await readEsphomeFile(path);
   if (!yaml) return null;
   return { yaml, path, managementMode: meta.esphome_management_mode };
 }
@@ -185,7 +179,8 @@ export async function readCompiledFirmware(
   deviceId: string
 ): Promise<{ buffer: Buffer; filename: string; artifact: string } | null> {
   const meta = requireEsphomeMeta(await getDeviceEsphomeMeta(deviceId));
-  const stem = yamlStem(meta);
+  const stem = await buildName(meta);
+  if (!stem) return null;
   const buildDir = path.join(esphomeDir(), ".esphome", "build", stem, "build");
   for (const name of FIRMWARE_BIN_CANDIDATES) {
     const full = path.join(buildDir, name);
@@ -210,7 +205,7 @@ export async function compileEsphomeDevice(deviceId: string): Promise<FirmwareAc
 
   await setLifecycleState(deviceId, "building");
   const compileStartedMs = Date.now();
-  const stem = yamlStem(meta);
+  const stem = await buildName(meta);
   // Built by ESPHome's own job list, so ESPHome's record of the board stays right (esphome-jobs.ts).
   let result = await runEsphomeJob("compile", yamlPath);
   // A board's build files made with another setup of the build tools: clear them and build once more.
@@ -218,7 +213,7 @@ export async function compileEsphomeDevice(deviceId: string): Promise<FirmwareAc
     await runEsphomeCli(["clean", configPath]);
     result = await runEsphomeJob("compile", yamlPath);
   }
-  const firmwarePath = compiledFirmwarePath(stem);
+  const firmwarePath = stem ? compiledFirmwarePath(stem) : null;
   const firmwareFresh =
     firmwarePath !== null &&
     fs.statSync(firmwarePath).mtimeMs >= compileStartedMs - 10_000;
@@ -291,8 +286,7 @@ export async function saveDeviceEsphomeYaml(
   const relativePath = yamlRelativePath(meta);
   const configPath = yamlConfigPath(meta);
 
-  const stem = yamlStem(meta);
-  const previous = await loadEsphomeYaml(stem);
+  const previous = await readEsphomeFile(relativePath);
 
   await writeDeviceYamlFile(relativePath, yaml);
   forgetFileAddress(relativePath);

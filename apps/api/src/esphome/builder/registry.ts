@@ -12,7 +12,8 @@ import {
   getDeviceDetailed,
   syncDeviceFromEsphomeSuggestion,
 } from "../../devices/service.js";
-import { loadEsphomeYaml, loadEsphomeYamlMerged, parseEsphomeYaml, suggestFromEsphome } from "../yaml.js";
+import { loadEsphomeYaml, parseEsphomeYaml, readEsphomeFile, suggestFromEsphome } from "../yaml.js";
+import { linkedSettingsFile } from "../file-identity.js";
 import { buildEsphomeDriverManifest } from "../../v4/drivers/esphome.js";
 import {
   mapCandidatesToCapabilities,
@@ -280,9 +281,12 @@ export async function adoptEsphomeDeviceToManaged(deviceId: string): Promise<{
     throw new Error("Device is already managed by the Device Builder");
   }
 
-  const slug = device.esphomeName?.trim() || device.slug;
-  const yaml = (await loadEsphomeYaml(slug)) ?? (await loadEsphomeYamlMerged(slug));
-  if (!yaml) throw new Error("ESPHome YAML not found for this device");
+  // The board's own settings file (linked by its exact message address), never one with a similar name.
+  const file = await linkedSettingsFile(device.id, device.esphomeYamlPath ?? null, device.mqttTopicPrefix);
+  if (!file) throw new Error("This board is not linked to its ESPHome settings file yet. Link it under Devices → the board → Overview → Software.");
+  const slug = file.replace(/^devices\//, "").replace(/\.yaml$/, "");
+  const yaml = await readEsphomeFile(file);
+  if (!yaml) throw new Error(`The board's settings file (${file}) is not on the server.`);
 
   const parsed = inferBuilderConfigFromYaml(yaml, slug, device.name);
   if (!parsed) {

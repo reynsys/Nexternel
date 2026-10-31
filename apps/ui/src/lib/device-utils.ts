@@ -69,12 +69,5 @@ export function esphomeLifecycleLabel(state: string | null | undefined): string 
 }
 
 /** Build/install/config lifecycle — excludes MQTT connectivity states. */
-export function esphomeProvisioningLifecycleLabel(
-  state: string | null | undefined
-): string | null {
-  if (!state || state === "online" || state === "offline") return null;
-  return esphomeLifecycleLabel(state);
-}
-
 /** @deprecated Use ESPHOME_INSTALL_WORKFLOW_TITLE from esphome-install-guide.ts */
 export { ESPHOME_INSTALL_WORKFLOW_TITLE as ESPHOME_WIZARD_INSTALL_TITLE } from "./esphome-install-guide";

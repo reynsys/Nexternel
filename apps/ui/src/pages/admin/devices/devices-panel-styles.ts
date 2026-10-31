@@ -39,22 +39,6 @@ export function devicesPanelBodySx(): SxProps<Theme> {
   };
 }
 
-export function devicesSectionHeaderSx(theme: Theme): SxProps<Theme> {
-  return {
-    px: 2,
-    py: 0.75,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    bgcolor: alpha(theme.palette.text.primary, theme.palette.mode === "dark" ? 0.04 : 0.03),
-    borderBottom: "1px solid",
-    borderColor: "divider",
-    cursor: "pointer",
-    userSelect: "none",
-  };
-}
-
-/** A device in the list; the chosen one looks like a chosen option tile in the Look. */
 export function devicesNavItemSx(theme: Theme, selected: boolean): SxProps<Theme> {
   const n = theme.nx;
   const chosen = {

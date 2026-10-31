@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.156
+
+- **The Devices page is redesigned:** one tidy list grouped by area with live values and one clear status word per device (never listed twice), quick filters, and a device page with Overview, Readings & switches, Troubleshooting (connection history, update details, technical details, Copy report) and Advanced. **Device settings** keeps only everyday choices: name, area, use this device, delete.
+- Nexternel no longer looks for a board's settings file by a similar name — only the board's own linked file is used.
+
 ## V5.2.155
 
 - **Clearer button names everywhere:** every button now says plainly what it does (for example **Update boards**, **Reload from ESPHome**, **Install with USB**, **Reset name**), with the same wording and capitals throughout. A built-in check keeps it that way.

@@ -18,16 +18,15 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
-import VideocamRoundedIcon from "@mui/icons-material/VideocamRounded";
+import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
+import { InfoCard, KindTile, StatusWord } from "./DeviceBits";
 import {
   api,
   type CameraBrandPreset,
   type CameraRecord,
 } from "../../../api";
 import { AREA } from "../../../lib/area-labels";
-import { ButtonRow } from "../../../components/ButtonRow";
 import { useLiveChanges } from "../../../lib/live-changes";
 
 type AreaOption = { id: string; name: string };
@@ -243,40 +242,39 @@ function CamerasPage({ pane }: { pane: CameraPaneProps }) {
       )}
       {cam ? (
         <>
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <VideocamRoundedIcon color="primary" />
-            <Typography variant="h6" sx={{ flex: 1, minWidth: 0 }} noWrap>
-              {cam.name}
-            </Typography>
+          {/* The same header as every device: picture, name, area and kind, status, settings. */}
+          <Stack direction="row" alignItems="center" spacing={1.5} flexWrap="wrap" useFlexGap>
+            <KindTile kind="camera" size={48} />
+            <Box sx={{ flex: 1, minWidth: 180 }}>
+              <Typography variant="h6" noWrap>
+                {cam.name}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {cam.areaName ?? `No ${AREA.singular.toLowerCase()}`} · Camera
+              </Typography>
+            </Box>
+            <StatusWord word={cam.enabled ? "On" : "Switched off"} tone={cam.enabled ? "ok" : "off"} emphasis />
             {canEdit ? (
-              <ButtonRow direction="row" flexWrap="nowrap">
-                <Button variant="outlined" startIcon={<EditRoundedIcon />} onClick={() => openEdit(cam)}>
-                  Edit
-                </Button>
-                <Button variant="outlined" color="error" startIcon={<DeleteRoundedIcon />} onClick={() => setDeleteTarget(cam)}>
-                  Delete
-                </Button>
-              </ButtonRow>
+              <Button variant="outlined" startIcon={<TuneRoundedIcon />} onClick={() => openEdit(cam)}>
+                Camera settings
+              </Button>
             ) : null}
           </Stack>
-          <Stack spacing={1.5}>
-            <Box>
-              <Typography variant="subtitle2">{AREA.singular}</Typography>
-              <Typography variant="body2" color="text.secondary">{cam.areaName ?? "None"}</Typography>
-            </Box>
-            <Box>
-              <Typography variant="subtitle2">Address</Typography>
-              <Typography variant="body2" color="text.secondary" fontFamily={CODE_TEXT.fontFamily}>
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "repeat(2, minmax(0, 1fr))" }, gap: 2 }}>
+            <InfoCard title="Live picture">
+              <Typography variant="body2" color="text.secondary">
+                {cam.enabled ? "On — shown in camera panels." : "Off — camera panels show nothing until it is switched on (Camera settings)."}
+              </Typography>
+            </InfoCard>
+            <InfoCard title="Technical details">
+              <Typography variant="caption" color="text.secondary">
+                Address
+              </Typography>
+              <Typography variant="body2" fontFamily={CODE_TEXT.fontFamily} sx={{ wordBreak: "break-all" }}>
                 {cam.connectionPreview || (cam.host ? `${cam.host}${cam.path ? cam.path : ""}` : cam.streamId)}
               </Typography>
-            </Box>
-            <Box>
-              <Typography variant="subtitle2">Live picture</Typography>
-              <Typography variant="body2" color="text.secondary">
-                {cam.enabled ? "On — shown in camera panels." : "Off — camera panels show nothing until it is switched on (Edit)."}
-              </Typography>
-            </Box>
-          </Stack>
+            </InfoCard>
+          </Box>
         </>
       ) : pane.cameraId !== "new" ? (
         <Typography color="text.secondary">This camera no longer exists.</Typography>
@@ -295,7 +293,7 @@ function CamerasPage({ pane }: { pane: CameraPaneProps }) {
         maxWidth="sm"
       >
         <form onSubmit={(e) => void onSave(e)}>
-          <DialogTitle>{editing ? "Edit camera" : "Add camera"}</DialogTitle>
+          <DialogTitle>{editing ? "Camera settings" : "Add camera"}</DialogTitle>
           <DialogContent>
             <Stack spacing={2} sx={{ mt: 1 }}>
               <Typography variant="body2" color="text.secondary">
@@ -469,7 +467,23 @@ function CamerasPage({ pane }: { pane: CameraPaneProps }) {
             </Stack>
           </DialogContent>
           <DialogActions>
+            {editing ? (
+              <Button
+                variant="outlined"
+                color="error"
+                startIcon={<DeleteRoundedIcon />}
+                disabled={busy}
+                sx={{ mr: "auto" }}
+                onClick={() => {
+                  setDialogOpen(false);
+                  setDeleteTarget(editing);
+                }}
+              >
+                Delete camera
+              </Button>
+            ) : null}
             <Button
+              variant="outlined"
               onClick={() => {
                 setDialogOpen(false);
                 if (pane.cameraId === "new") pane.onCancelNew();
@@ -498,7 +512,7 @@ function CamerasPage({ pane }: { pane: CameraPaneProps }) {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)} disabled={busy}>
+          <Button variant="outlined" onClick={() => setDeleteTarget(null)} disabled={busy}>
             Cancel
           </Button>
           <Button

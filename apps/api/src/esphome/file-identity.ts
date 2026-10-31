@@ -1,4 +1,5 @@
 import { execFile } from "child_process";
+import { getPool } from "../db.js";
 import { promisify } from "util";
 
 /**
@@ -23,6 +24,12 @@ export async function esphomeGet<T>(path: string, timeoutSec = 10): Promise<T | 
   } catch {
     return null;
   }
+}
+
+/** The board name ESPHome builds a settings file under (its esphome: name — the build folder's name). */
+export async function esphomeBuildName(file: string): Promise<string | null> {
+  const r = await esphomeGet<{ configured?: { configuration: string; name?: string }[] }>("/devices");
+  return r?.configured?.find((c) => c.configuration === file)?.name?.trim() || null;
 }
 
 /** The settings files ESPHome has (e.g. "garden-relays.yaml"). */
@@ -54,4 +61,17 @@ export async function filesForAddress(address: string): Promise<string[]> {
   const out: string[] = [];
   for (const file of await esphomeFiles()) if ((await fileAddress(file)) === address) out.push(file);
   return out;
+}
+
+/**
+ * A device's own settings file: the one linked to it; else the one file whose message address is
+ * exactly the device's — then linked, once. None or several: null (the person links it).
+ */
+export async function linkedSettingsFile(deviceId: string, linked: string | null, address: string | null): Promise<string | null> {
+  if (linked?.trim()) return linked.trim().replace(/^\/+/, "");
+  if (!address) return null;
+  const files = await filesForAddress(address);
+  if (files.length !== 1) return null;
+  await getPool().query(`UPDATE devices SET esphome_yaml_path = $2 WHERE id = $1 AND COALESCE(esphome_yaml_path, '') = ''`, [deviceId, files[0]]);
+  return files[0]!;
 }
