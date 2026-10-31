@@ -130,7 +130,7 @@ export function AppNavbar({
               to="/login"
               onClick={() => setOpen(false)}
             >
-              Login
+              Sign in
             </Button>
           )}
         </Box>

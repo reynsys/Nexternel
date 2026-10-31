@@ -98,7 +98,7 @@ export function SectionSettingsPanel({ section, onCancel, onApply, onChange, onM
                 </Typography>
                 <ButtonRow direction="row" sx={{ mt: 1 }}>
                   <Button variant="outlined" onClick={() => setAskDelete(false)}>
-                    Keep it
+                    Cancel
                   </Button>
                   <Button variant="contained" color="error" onClick={onDelete}>
                     Delete

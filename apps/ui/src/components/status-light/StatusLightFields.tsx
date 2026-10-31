@@ -381,7 +381,7 @@ export function StatusLimitsEditor({
     <>
       {status?.custom ? (
         <Button disabled={saving} onClick={() => void done(api.resetStatusLimits(reading.id))} sx={{ mr: "auto" }}>
-          Back to starting limits
+          Reset limits
         </Button>
       ) : null}
       <Button onClick={onClose} disabled={saving}>

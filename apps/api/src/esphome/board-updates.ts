@@ -223,7 +223,7 @@ async function keepLog(item: UpdateItem, log: string[]): Promise<void> {
 /** "It dropped off Wi-Fi 9 times in the 15 minutes before." — or nothing when it was steady. */
 function dropsNote(drops: number): string {
   return drops >= UNSTEADY_DROPS
-    ? ` It dropped off Wi-Fi ${drops} times in the 15 minutes before, so its Wi-Fi is unsteady: install the update with a USB cable instead (Devices → the board → Install with a USB cable).`
+    ? ` It dropped off Wi-Fi ${drops} times in the 15 minutes before, so its Wi-Fi is unsteady: install the update with a USB cable instead (Devices → the board → Install with USB).`
     : "";
 }
 

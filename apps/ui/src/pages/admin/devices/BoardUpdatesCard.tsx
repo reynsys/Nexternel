@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Alert, Box, Button, Card, CardContent, CircularProgress, Stack, Typography } from "@mui/material";
-import { ButtonRow } from "../../../components/ButtonRow";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import ErrorRoundedIcon from "@mui/icons-material/ErrorRounded";
 import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded";
@@ -81,25 +80,16 @@ export function BoardUpdatesCard({ canEdit }: { canEdit: boolean }) {
             )}
           </Box>
           {canEdit && !run?.running && (behind.length || unknown.length) ? (
-            <ButtonRow>
-              {behind.length ? (
-                <Button variant="contained" onClick={() => start(behind.map((b) => b.deviceId))}>
-                  Update all boards
-                </Button>
-              ) : null}
-              {unknown.length ? (
-                <Button variant={behind.length ? "outlined" : "contained"} onClick={() => start(unknown.map((b) => b.deviceId))}>
-                  Update {unknown.length === 1 ? "it" : "them"} once
-                </Button>
-              ) : null}
-            </ButtonRow>
+            <Button variant="contained" onClick={() => start([...behind, ...unknown].map((b) => b.deviceId))}>
+              Update boards
+            </Button>
           ) : null}
         </Stack>
         {error ? <Alert severity="error" sx={{ mt: 1.5 }}>{error}</Alert> : null}
         {unsteady.length && !run?.running ? (
           <Alert severity="warning" sx={{ mt: 1.5 }}>
             {unsteady.map((b) => `${b.name} dropped off Wi‑Fi ${b.recentDrops} times in the last 15 minutes`).join("; ")}. Updating over Wi‑Fi
-            may fail; a USB cable is safer (Devices → the board → Install with a USB cable).
+            may fail; a USB cable is safer (Devices → the board → Install with USB).
           </Alert>
         ) : null}
         {showRun ? (

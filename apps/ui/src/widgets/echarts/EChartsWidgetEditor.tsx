@@ -417,7 +417,7 @@ export function EChartsWidgetEditor({
                   sx={{ fontFamily: CODE_TEXT.fontFamily, "& textarea": { fontFamily: "inherit" } }}
                 />
                 <Button size="small" onClick={() => setOverrideText("")}>
-                  Reset override
+                  Reset
                 </Button>
               </>
             )}

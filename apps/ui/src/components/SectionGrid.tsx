@@ -427,7 +427,7 @@ export function SectionGrid({
           {/* While editing: add a panel here. Otherwise (for people who may edit): start editing with it. */}
           {(editMode ? onAddPanel : onStartAdding) ? (
             <Button variant={editMode ? "contained" : "outlined"} startIcon={<AddIcon />} onClick={editMode ? onAddPanel : onStartAdding}>
-              {editMode ? "Add panel" : "Add panels"}
+              {editMode ? "Add panel" : "Edit dashboard"}
             </Button>
           ) : null}
         </Stack>

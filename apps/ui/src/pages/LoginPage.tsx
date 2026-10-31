@@ -76,7 +76,7 @@ export function LoginPage() {
           {busy ? "Signing in…" : "Sign in"}
         </Button>
         <Button type="button" onClick={clearSavedLogin} disabled={busy} fullWidth>
-          Clear saved login
+          Forget saved sign-in
         </Button>
       </ButtonRow>
     </Paper>

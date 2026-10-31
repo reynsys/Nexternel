@@ -161,7 +161,7 @@ export function SystemStatusPage() {
                     {restartBusy === "all" ? "Restarting…" : "Restart Nexternel"}
                   </Button>
                   <Button variant="outlined" disabled={restartBusy !== null} onClick={() => void restart("mqtt")}>
-                    {restartBusy === "mqtt" ? "Restarting…" : "Restart device messages"}
+                    {restartBusy === "mqtt" ? "Restarting…" : "Restart messaging"}
                   </Button>
                 </ButtonRow>
                 {restartMsg ? (

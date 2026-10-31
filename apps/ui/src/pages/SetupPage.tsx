@@ -348,7 +348,7 @@ export function SetupPage() {
                     Back
                   </Button>
                   <Button variant="contained" onClick={() => void onRestore()} disabled={busy}>
-                    Restore this home
+                    Restore backup
                   </Button>
                 </ButtonRow>
               </>

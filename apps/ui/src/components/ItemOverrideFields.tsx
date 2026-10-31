@@ -64,7 +64,7 @@ export function ItemOverrideFields({ defaultName, defaultIcon, kind, value, onCh
               )
             }
           >
-            {icon === "auto" ? "Reading's icon" : icon === "none" ? "No icon" : "Chosen icon"}
+            Change icon
           </Button>
           {overrideHasValue(value) && (
             <Button size="small" onClick={() => onChange(undefined)}>

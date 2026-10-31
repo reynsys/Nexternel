@@ -257,7 +257,7 @@ export function DevicesPage() {
       );
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Adopt to builder failed");
+      setError(err instanceof Error ? err.message : "Could not move it to Nexternel");
     } finally {
       setBusy(false);
     }
@@ -408,7 +408,7 @@ export function DevicesPage() {
       setInfo(`Regenerated ${res.yamlPath} for ${d.name}`);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Regenerate YAML failed");
+      setError(err instanceof Error ? err.message : "Could not recreate the settings file");
     } finally {
       setBusy(false);
     }
@@ -619,7 +619,7 @@ export function DevicesPage() {
                     variant="contained"
                     onClick={() => openAddDeviceWizard(entry.fileName)}
                   >
-                    Register
+                    Add device
                   </Button>
                   <Button
                     size="small"
@@ -838,7 +838,7 @@ export function DevicesPage() {
             <Stack spacing={2} sx={{ mt: 1 }}>
               <Alert severity="info">
                 Shellies must use this server’s MQTT (same user/password as Nexternel).
-                Use <strong>Find on MQTT</strong> to list devices that announce themselves, or
+                Use <strong>Search network</strong> to list devices that announce themselves, or
                 paste the device ID manually. For older Gen&nbsp;1 devices (e.g. SHSW-1), choose
                 <strong>Gen 1</strong> below.
               </Alert>
@@ -849,7 +849,7 @@ export function DevicesPage() {
                   disabled={busy || discoverBusy}
                   onClick={() => void onDiscoverShellies()}
                 >
-                  {discoverBusy ? "Scanning…" : "Find on MQTT"}
+                  {discoverBusy ? "Searching…" : "Search network"}
                 </Button>
                 <Typography variant="caption" color="text.secondary">
                   Takes a few seconds
@@ -892,7 +892,7 @@ export function DevicesPage() {
                               disabled={d.alreadyRegistered || busy}
                               onClick={() => adoptDiscoveredShelly(d)}
                             >
-                              Use
+                              Add
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -961,7 +961,7 @@ export function DevicesPage() {
                 helperText={
                   shellyForm.shellyGen === 1
                     ? "Device ID from the Shelly web UI (shellies/… prefix is added automatically)"
-                    : "MQTT topic prefix from the Shelly — or pick one from Find on MQTT"
+                    : "MQTT topic prefix from the Shelly — or pick one from Search network"
                 }
               />
               <FormControl fullWidth size="small">

@@ -259,7 +259,7 @@ export function ManageDashboardsPanel({ compact, currentDashboardId, onDashboard
                   </Typography>
                   <ButtonRow direction="row" justifyContent="flex-end" sx={{ mt: 1 }}>
                     <Button variant="outlined" onClick={() => setRowMode(null)}>
-                      Keep it
+                      Cancel
                     </Button>
                     <Button variant="contained" color="error" disabled={busy} onClick={() => void remove(d.id)}>
                       Delete

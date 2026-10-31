@@ -240,7 +240,7 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
       });
     } else {
       const message =
-        "Session expired — sign in again (Sign out or Clear saved login on the login page).";
+        "Session expired — sign in again (Sign out, or Forget saved sign-in on the sign-in page).";
       pushDiagnosticError({
         kind: "api",
         message,

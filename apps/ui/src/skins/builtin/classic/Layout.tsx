@@ -90,7 +90,7 @@ export function ClassicLayout() {
             </Button>
           ) : (
             <Button component={RouterLink} to="/login" variant="outlined" size="small">
-              Login
+              Sign in
             </Button>
           )}
         </Toolbar>

@@ -62,7 +62,7 @@ export function PanelPlaceActions() {
           </Typography>
           <ButtonRow direction="row" sx={{ mt: 1 }}>
             <Button variant="outlined" onClick={() => setAskRemove(false)}>
-              Keep it
+              Cancel
             </Button>
             <Button variant="contained" color="error" onClick={place.onRemove}>
               Remove
@@ -71,7 +71,7 @@ export function PanelPlaceActions() {
         </Box>
       ) : (
         <Button variant="outlined" color="error" startIcon={<DeleteOutlineIcon />} onClick={() => setAskRemove(true)} sx={{ alignSelf: "flex-start" }}>
-          Remove this {place.kind}
+          Remove panel
         </Button>
       )}
     </Stack>

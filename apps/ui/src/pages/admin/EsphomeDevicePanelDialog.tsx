@@ -217,7 +217,7 @@ export function EsphomeDevicePanelDialog({
   return (
     <Dialog open={open} onClose={() => !busy && onClose()} fullWidth maxWidth="md">
       <DialogTitle>
-        {mode === "file" ? "Settings file" : "Install with a USB cable"} — {device?.name ?? ""}
+        {mode === "file" ? "Settings file" : "Install with USB"} — {device?.name ?? ""}
       </DialogTitle>
       <DialogContent>
 
@@ -257,7 +257,7 @@ export function EsphomeDevicePanelDialog({
                       startIcon={<BuildRoundedIcon />}
                       onClick={() => void runCompile()}
                     >
-                      {busy && lastAction === "compile" ? "Preparing…" : "Prepare firmware"}
+                      {busy && lastAction === "compile" ? "Building…" : "Build firmware"}
                     </Button>
                     {logSummary && lastAction === "compile" && (
                       <Alert severity={(lastCompileOk ?? logSummary.ok) ? "success" : busy ? "info" : "error"} sx={{ alignSelf: "stretch" }}>
@@ -272,7 +272,7 @@ export function EsphomeDevicePanelDialog({
                 <StepLabel>Install it with the cable</StepLabel>
                 <StepContent>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                    Download the file. Plug the board into this computer with a USB cable, open ESPHome Web in Chrome or Edge, then
+                    Download firmware. Plug the board into this computer with a USB cable, open ESPHome Web in Chrome or Edge, then
                     choose <strong>Connect</strong> → <strong>Install</strong> → the file you downloaded.
                   </Typography>
                   <ButtonRow direction="row" flexWrap="wrap" useFlexGap>
@@ -314,7 +314,7 @@ export function EsphomeDevicePanelDialog({
                 onClick={() => setTroubleOpen((v) => !v)}
                 endIcon={<ExpandMoreRoundedIcon sx={{ transform: troubleOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />}
               >
-                Having trouble?
+                Help
               </Button>
               <Collapse in={troubleOpen}>
                 <Stack spacing={1.5} sx={{ mt: 1.5 }}>

@@ -13,8 +13,11 @@ const health = new Map<string, { wifiDbm?: number; wifiAt?: string; uptimeS?: nu
 /** The topics, from the readings' names in the shared board file ("WiFi signal" → wifi_signal). */
 const HEALTH_TOPIC = /^(.+)\/sensor\/(wifi_signal|uptime)\/state$/;
 
-/** "<prefix>/text_sensor/software_fingerprint/state": ESPHome's fingerprint of the running software. */
-const FINGERPRINT_TOPIC = /^(.+)\/text_sensor\/software_fingerprint\/state$/;
+/**
+ * "<prefix>/sensor/software_fingerprint/state": ESPHome's fingerprint of the running software. ESPHome
+ * sends text readings under "sensor" too (seen on the boards); "text_sensor" is accepted as well.
+ */
+const FINGERPRINT_TOPIC = /^(.+)\/(?:text_)?sensor\/software_fingerprint\/state$/;
 const fingerprints = new Map<string, string>();
 
 /** Which software a board says it runs (8 hex characters), or null when it does not say (older software). */

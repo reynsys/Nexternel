@@ -10,6 +10,7 @@ import type { Theme } from "@mui/material/styles";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import LogoutIcon from "@mui/icons-material/Logout";
+import LoginIcon from "@mui/icons-material/Login";
 import { Link as RouterLink } from "react-router-dom";
 import { APP_VERSION } from "../../../version";
 import { MenuContent } from "./MenuContent";
@@ -225,8 +226,8 @@ export function SideMenu({
           )
         ) : (
           <ButtonRow direction={collapsed ? "column" : "row"} alignItems="center">
-            <Button component={RouterLink} to="/login" variant="outlined" size="small" fullWidth={!collapsed}>
-              {collapsed ? "In" : "Sign in"}
+            <Button component={RouterLink} to="/login" variant="outlined" size="small" fullWidth={!collapsed} aria-label="Sign in" title={collapsed ? "Sign in" : undefined}>
+              {collapsed ? <LoginIcon fontSize="small" /> : "Sign in"}
             </Button>
             {collapseToggle}
           </ButtonRow>

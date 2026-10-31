@@ -73,7 +73,7 @@ function PermissionEditor({
           variant="outlined"
           onClick={() => onChange({ ...VIEWER_PERMISSIONS })}
         >
-          Viewer preset
+          View only
         </Button>
       </ButtonRow>
       {groups.map(([group, items]) => (

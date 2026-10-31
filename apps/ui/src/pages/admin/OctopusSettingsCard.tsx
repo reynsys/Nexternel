@@ -190,7 +190,7 @@ export function OctopusSettingsCard({ embedded = false }: OctopusSettingsCardPro
               disabled={busy || discoverBusy || testBusy}
               onClick={() => void onDiscover()}
             >
-              {discoverBusy ? "…" : "Discover"}
+              {discoverBusy ? "Finding…" : "Find my meters"}
             </Button>
           </Stack>
           <TextField
@@ -222,7 +222,7 @@ export function OctopusSettingsCard({ embedded = false }: OctopusSettingsCardPro
               disabled={busy || discoverBusy || testBusy}
               onClick={() => void onTestPoll()}
             >
-              {testBusy ? "Testing…" : "Test poll now"}
+              {testBusy ? "Testing…" : "Test connection"}
             </Button>
           </ButtonRow>
         </Stack>

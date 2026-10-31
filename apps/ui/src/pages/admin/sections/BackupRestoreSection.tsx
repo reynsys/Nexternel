@@ -287,7 +287,7 @@ export function BackupRestoreSection() {
               onClick={() => void onCreateBackup()}
               disabled={createBusy || (!!createJob && createJob.status !== "ready" && createJob.status !== "failed")}
             >
-              {createBusy ? "Starting…" : "Create Backup"}
+              {createBusy ? "Starting…" : "Create backup"}
             </Button>
             {createErr && <Alert severity="error">{createErr}</Alert>}
             {createJob && createJob.status !== "ready" && createJob.status !== "failed" && (
@@ -312,7 +312,7 @@ export function BackupRestoreSection() {
                   {createJob.filename ? `: ${createJob.filename}` : ""}
                 </Alert>
                 <Button variant="contained" onClick={() => void onDownloadBackup()}>
-                  Download Backup
+                  Download backup
                 </Button>
               </Box>
             )}
@@ -343,7 +343,7 @@ export function BackupRestoreSection() {
           <ButtonRow sx={{ maxWidth: 520 }}>
             <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems="flex-start">
               <Button variant="outlined" onClick={() => restoreFileRef.current?.click()}>
-                Select Backup File
+                Choose backup file
               </Button>
               <Typography variant="body2" color="text.secondary" sx={{ pt: 1 }}>
                 {restoreFile ? restoreFile.name : "No file selected"}
@@ -470,7 +470,7 @@ export function BackupRestoreSection() {
                   disabled={restoreBusy || restoreConfirm !== "RESTORE"}
                   onClick={() => void onRestore()}
                 >
-                  {restoreBusy ? "Starting…" : "Restore Backup"}
+                  {restoreBusy ? "Starting…" : "Restore backup"}
                 </Button>
               </>
             )}

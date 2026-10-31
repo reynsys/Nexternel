@@ -28,7 +28,7 @@ export type ReadingToEdit = {
 
 /**
  * A reading's own name and icon, used everywhere it appears. Device updates never change them;
- * "Use the device's name" goes back to what the device reports.
+ * "Reset name" goes back to what the device reports.
  */
 export function ReadingSettingsDialog({
   reading,
@@ -100,7 +100,7 @@ export function ReadingSettingsDialog({
               onClick={() => setPickerOpen(true)}
               startIcon={<ItemIcon iconId={icon} kind={reading?.kind} />}
             >
-              {icon === "auto" ? "Automatic" : "Change"}
+              Change icon
             </Button>
           </Stack>
           <Typography variant="caption" color="text.secondary">

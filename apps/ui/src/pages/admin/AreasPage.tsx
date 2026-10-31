@@ -278,7 +278,7 @@ export function AreasPage() {
                       </Typography>
                       <ButtonRow direction="row" sx={{ mt: 1 }}>
                         <Button variant="outlined" onClick={() => setAskDelete(false)}>
-                          Keep it
+                          Cancel
                         </Button>
                         <Button variant="contained" color="error" disabled={busy} onClick={() => void remove()}>
                           Delete

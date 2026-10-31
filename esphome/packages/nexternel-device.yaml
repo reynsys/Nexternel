@@ -31,7 +31,7 @@ sensor:
 # without depending on network announcements, which do not reach the server on every home network.
 text_sensor:
   - platform: template
-    # Nexternel reads it as <prefix>/text_sensor/software_fingerprint/state: keep this name.
+    # Nexternel reads it as <prefix>/sensor/software_fingerprint/state: keep this name.
     name: "Software fingerprint"
     id: nexternel_software_fingerprint
     entity_category: diagnostic

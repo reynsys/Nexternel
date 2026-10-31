@@ -229,7 +229,7 @@ function OverviewTab({
         <Alert severity="warning">
           ESPHome YAML file is missing on the server. The device row is kept in Nexternel.
           {device.esphomeManagementMode === "managed"
-            ? " Use Regenerate YAML to recreate it from the builder configuration, or restore the file on the server."
+            ? " Use Recreate settings file to recreate it from the builder configuration, or restore the file on the server."
             : " Restore the YAML file on the server, or delete this registration."}
         </Alert>
       )}
@@ -522,7 +522,7 @@ function ConfigurationTab({
               disabled={busy}
               onClick={() => void actions.onAdoptToBuilder(device)}
             >
-              Adopt to builder
+              Manage in Nexternel
             </Button>
           )}
         </ButtonRow>
@@ -557,10 +557,10 @@ function AdvancedTab({
           </Typography>
           <ButtonRow direction="row" flexWrap="wrap" useFlexGap>
             <Button {...devicesOutlinedButton} startIcon={<EditRoundedIcon />} disabled={busy} onClick={() => actions.onOpenEsphomePanel(device, "file")}>
-              Settings file
+              Open settings file
             </Button>
             <Button {...devicesOutlinedButton} startIcon={<SyncRoundedIcon />} disabled={busy} onClick={() => void actions.onSyncEsphome(device)}>
-              Re-read its ESPHome file
+              Reload from ESPHome
             </Button>
             <Button
               {...devicesOutlinedButton}
@@ -576,7 +576,7 @@ function AdvancedTab({
                   disabled={busy}
                   onClick={() => void actions.onRestoreYaml(device)}
                 >
-                  Regenerate YAML
+                  Recreate settings file
                 </Button>
               )}
             <Button
@@ -694,7 +694,7 @@ export function DeviceDetailPane({
         }}
       >
         <Tab value="overview" label="Overview" />
-        <Tab value="capabilities" label="Capabilities" />
+        <Tab value="capabilities" label="Readings & switches" />
         <Tab value="configuration" label="Configuration" />
         <Tab value="advanced" label="Advanced" />
       </Tabs>
@@ -751,7 +751,7 @@ function ReadingName({
 
 /**
  * Overview → Board software (ESPHome boards): is the board up to date, and the two everyday actions —
- * Update board (over Wi-Fi, Nexternel does every step) and Install with a USB cable (new boards).
+ * Update board (over Wi-Fi, Nexternel does every step) and Install with USB (new boards).
  */
 /** The board's kept updates (newest first, up to 3 shown), each with its details. */
 function LastBoardUpdates({ deviceId, name, refreshKey }: { deviceId: string; name: string; refreshKey: string }) {
@@ -870,7 +870,7 @@ function BoardSoftware({ device, canEdit, busy, onUsb }: { device: DeviceRecord;
             Update board
           </Button>
           <Button {...devicesOutlinedButton} startIcon={<UsbRoundedIcon />} disabled={busy} onClick={onUsb}>
-            Install with a USB cable
+            Install with USB
           </Button>
         </ButtonRow>
       ) : null}

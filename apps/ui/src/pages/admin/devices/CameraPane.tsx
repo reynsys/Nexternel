@@ -390,7 +390,7 @@ function CamerasPage({ pane }: { pane: CameraPaneProps }) {
                   onClick={applyPresetPath}
                   sx={{ alignSelf: "flex-start" }}
                 >
-                  Apply preset path
+                  Use suggested address
                 </Button>
               )}
 

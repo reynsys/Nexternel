@@ -68,6 +68,7 @@ apps/api/src/dashboards/routes.ts
 apps/api/src/dashboards/starter.ts
 apps/api/src/dashboards/store.ts
 apps/api/src/db.ts
+apps/api/src/devices/board-health.test.ts
 apps/api/src/devices/board-health.ts
 apps/api/src/devices/connection-history.test.ts
 apps/api/src/devices/connection-history.ts
@@ -316,6 +317,7 @@ apps/ui/src/lib/auto-scroll.test.ts
 apps/ui/src/lib/auto-scroll.ts
 apps/ui/src/lib/board-updates.ts
 apps/ui/src/lib/button-rows-guard.test.ts
+apps/ui/src/lib/button-words-guard.test.ts
 apps/ui/src/lib/capability-icons.ts
 apps/ui/src/lib/capability-kind-labels.ts
 apps/ui/src/lib/capability-labels.ts

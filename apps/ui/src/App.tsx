@@ -94,7 +94,7 @@ function RequirePermission({
           Your account does not have permission to open this page.
         </Alert>
         <Button component={RouterLink} to="/" variant="contained">
-          Open Dashboards
+          Open dashboards
         </Button>
       </Stack>
     );

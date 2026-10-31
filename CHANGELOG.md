@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.155
+
+- **Clearer button names everywhere:** every button now says plainly what it does (for example **Update boards**, **Reload from ESPHome**, **Install with USB**, **Reset name**), with the same wording and capitals throughout. A built-in check keeps it that way.
+- **Fixed:** after updating, boards still showed "not known" — Nexternel now reads the software each board reports. No further board update is needed.
+
 ## V5.2.154
 
 - **Fixed:** Devices kept saying every board needed an update. Each board now reports which software it runs, and Nexternel only says "needs an update" when that differs from the newest build. Boards that don't report it yet show "Not known yet" — one update starts it.

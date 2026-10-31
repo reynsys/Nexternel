@@ -129,7 +129,7 @@ export function SystemDiagnosticsSection() {
         </Typography>
         <ButtonRow direction="row" flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
           <Button variant="contained" disabled={busy} onClick={() => void loadPipeline()}>
-            {busy ? "Checking…" : "Run the check"}
+            {busy ? "Checking…" : "Run check"}
           </Button>
           <Button variant="outlined" disabled={busy} onClick={() => void startSniff()}>
             Watch all messages for 30 s

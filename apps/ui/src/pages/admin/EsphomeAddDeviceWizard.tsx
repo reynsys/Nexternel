@@ -736,7 +736,7 @@ export function EsphomeAddDeviceWizard({
                 startIcon={<BuildRoundedIcon />}
                 onClick={openEsphomePanelForCreated}
               >
-                Build firmware on server
+                Build firmware
               </Button>
               <Typography variant="body2" color="text.secondary">
                 Opens the install guide for this device. Step 2: build firmware here, then download
@@ -757,7 +757,7 @@ export function EsphomeAddDeviceWizard({
           </Button>
           {path === "choose" ? null : path === "import" ? (
             <Button type="submit" variant="contained" disabled={busy || !importFile}>
-              {busy ? "Registering…" : "Register device"}
+              {busy ? "Adding…" : "Add device"}
             </Button>
           ) : newStep === "review" ? (
             <>

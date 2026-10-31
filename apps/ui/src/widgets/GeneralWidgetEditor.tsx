@@ -216,7 +216,7 @@ export function GeneralWidgetEditor({ open, widget, onClose, onSave, automatic, 
               disabled={geocodeBusy}
               onClick={() => void lookupPlace()}
             >
-              {geocodeBusy ? "Looking up…" : "Look up this place"}
+              {geocodeBusy ? "Finding…" : "Find place"}
             </Button>
             {geocodeError && <Alert severity="error">{geocodeError}</Alert>}
             {geocodeHint && <Alert severity="success">{geocodeHint}</Alert>}
