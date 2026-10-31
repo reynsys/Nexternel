@@ -8,6 +8,7 @@ import { getMqttStatus } from "../telemetry/mqtt.js";
 import { storedBackupsDir } from "../backup/scheduled.js";
 import { nexternelVersionAtLeast } from "../plugins/validate.js";
 import { APP_VERSION } from "../version.js";
+import { pruneActivity } from "../activity/activity.js";
 
 /**
  * Nexternel watches itself and tells the bell when something needs the owner: a device that says it
@@ -200,7 +201,7 @@ export function startSelfCheck(log: { warn: (o: object, m: string) => void }): v
     ticks++;
     const checks = [checkDevices];
     if (ticks % 5 === 1) checks.push(checkMqtt, checkDisk);
-    if (ticks % 360 === 1) checks.push(pruneConnectionHistory);
+    if (ticks % 360 === 1) checks.push(pruneConnectionHistory, pruneActivity);
     void run(checks);
   };
   // The first look waits until devices have had time to report after a start.

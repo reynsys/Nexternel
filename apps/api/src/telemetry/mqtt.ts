@@ -42,6 +42,7 @@ import {
   getBrokerSniffSamples,
   type MqttObservationKind,
 } from "./mqtt-observer.js";
+import { logActivity, logSwitchChange } from "../activity/activity.js";
 
 let client: MqttClient | null = null;
 let status: "disconnected" | "connecting" | "connected" | "error" = "disconnected";
@@ -322,6 +323,7 @@ function applyLiveCapability(
   kind = "switch"
 ) {
   const sensorLike = kind !== "switch";
+  const previous = getLiveState(capabilityId);
   if (!retained || kind === "switch") {
     touchDeviceOnlineByCapability(capabilityId);
   }
@@ -330,6 +332,9 @@ function applyLiveCapability(
     retained,
   });
   if (kind === "switch" && typeof value === "boolean") {
+    // A real change from the board (not the kept value replayed on connecting): into the Activity log.
+    const before = previous?.value;
+    if (!retained && typeof before === "boolean" && before !== value) void logSwitchChange(capabilityId, value);
     void getPool()
       .query(
         `UPDATE relays r
@@ -827,6 +832,7 @@ export async function startTelemetry(): Promise<void> {
   });
 
   client.on("connect", async () => {
+    if (status === "disconnected" || status === "error") void logActivity({ kind: "system", text: "Connection to the message service (MQTT) is back" });
     status = "connected";
     lastError = null;
     try {
@@ -865,7 +871,10 @@ export async function startTelemetry(): Promise<void> {
   });
 
   client.on("close", () => {
-    if (status === "connected") status = "disconnected";
+    if (status === "connected") {
+      status = "disconnected";
+      void logActivity({ kind: "system", text: "Connection to the message service (MQTT) lost" });
+    }
   });
 }
 

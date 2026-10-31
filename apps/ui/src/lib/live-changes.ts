@@ -21,6 +21,7 @@ export type ChangeTopic =
   | "addons"
   | "plugins"
   | "notifications"
+  | "activity"
   | "system";
 
 type Listener = { topics: Set<string>; fn: (topic: string) => void };

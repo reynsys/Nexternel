@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.158
+
+- **New: Activity log** (Settings → Activity, and on each device's Troubleshooting tab) — what happened in Nexternel, newest first: devices going offline and back, restarts, switches turned on or off and by whom, board updates, dashboards changed, and Nexternel's own events. Kept 30 days.
+
 ## V5.2.157
 
 - **Fixed:** dashboards made with New dashboard were only visible to the person who made them; every dashboard is now for everyone (wall screens and other people too).

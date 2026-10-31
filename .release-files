@@ -2,6 +2,8 @@ apps/api/Dockerfile
 apps/api/.dockerignore
 apps/api/openapi/openapi.yaml
 apps/api/package.json
+apps/api/src/activity/activity.ts
+apps/api/src/activity/routes.ts
 apps/api/src/addons/licence.test.ts
 apps/api/src/addons/licence.ts
 apps/api/src/addons/service.ts
@@ -236,6 +238,7 @@ apps/ui/scripts/stage2-test-loader.mjs
 apps/ui/scripts/stage2-test-resolver.mjs
 apps/ui/src/api.ts
 apps/ui/src/App.tsx
+apps/ui/src/components/ActivityList.tsx
 apps/ui/src/components/AdaptiveReading.tsx
 apps/ui/src/components/AddPanelSteps.tsx
 apps/ui/src/components/AddPanelTypePicker.tsx
@@ -456,6 +459,7 @@ apps/ui/src/pages/admin/sections/BackupRestoreSection.tsx
 apps/ui/src/pages/admin/sections/BrandLogoSection.tsx
 apps/ui/src/pages/admin/sections/DeviceFilesPackCard.tsx
 apps/ui/src/pages/admin/sections/ProfileSection.tsx
+apps/ui/src/pages/admin/settings/ActivityPage.tsx
 apps/ui/src/pages/admin/settings/addon-status.ts
 apps/ui/src/pages/admin/settings/AppearanceSettingsPage.tsx
 apps/ui/src/pages/admin/settings/BackupSettingsPage.tsx

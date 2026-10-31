@@ -1416,6 +1416,11 @@ export const api = {
       body: JSON.stringify({ topics, offlineMinutes }),
     }),
   /** When a device was online and offline in the last 24 hours. */
+  activity: (q: { kind?: ActivityKind; deviceId?: string; before?: string; limit?: number } = {}) => {
+    const p = new URLSearchParams();
+    for (const [k, v] of Object.entries(q)) if (v !== undefined && v !== "") p.set(k, String(v));
+    return apiFetch<{ entries: ActivityEntry[] }>(`/api/v1/activity${p.size ? `?${p}` : ""}`);
+  },
   deviceConnection: (id: string) => apiFetch<{ connection: DeviceConnection }>(`/api/v1/devices/${encodeURIComponent(id)}/connection`),
 
   configStatus: () =>
@@ -2553,6 +2558,10 @@ export type AddonsResponse = { available: boolean; serverId: string; addons: Add
 export type BellTopics = { readings: boolean; devices: boolean; mqtt: boolean; disk: boolean; backup: boolean; updates: boolean };
 
 /** A device's connection in the last 24 hours (Devices → the device). */
+/** One line of the Activity log. */
+export type ActivityKind = "device" | "switch" | "update" | "dashboard" | "system";
+export type ActivityEntry = { at: string; kind: ActivityKind; deviceId: string | null; device: string | null; text: string; who: string | null };
+
 export type DeviceConnection = {
   state: "online" | "offline" | "unknown";
   since: string | null;

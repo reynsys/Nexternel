@@ -9,6 +9,7 @@ import {
   reorderDashboards,
   updateDashboard,
 } from "../dashboards/store.js";
+import { logActivity } from "../activity/activity.js";
 
 function toDto(row: Awaited<ReturnType<typeof getDashboard>>) {
   if (!row) return null;
@@ -44,6 +45,7 @@ export const dashboardsRoutes: FastifyPluginAsync = async (app) => {
       ownerUserId: request.user!.id,
       document: emptyDashboardDocument(name),
     });
+    void logActivity({ kind: "dashboard", text: `Dashboard "${name}" made`, who: request.user!.username });
     return { dashboard: toDto(row) };
   });
 
@@ -99,6 +101,7 @@ export const dashboardsRoutes: FastifyPluginAsync = async (app) => {
         error: { code: "not_found", message: "Dashboard not found" },
       });
     }
+    void logActivity({ kind: "dashboard", text: `Dashboard "${row.name}" saved`, who: request.user!.username });
     return { dashboard: toDto(row) };
   });
 
@@ -106,7 +109,9 @@ export const dashboardsRoutes: FastifyPluginAsync = async (app) => {
     "/api/v1/dashboards/:id",
     async (request, reply) => {
       if (!requirePermission(request, reply, "editDashboards")) return;
+      const before = await getDashboard(request.params.id);
       const ok = await deleteDashboard(request.params.id);
+      if (ok && before) void logActivity({ kind: "dashboard", text: `Dashboard "${before.name}" deleted`, who: request.user!.username });
       if (!ok) {
         return reply.code(404).send({
           error: { code: "not_found", message: "Dashboard not found" },

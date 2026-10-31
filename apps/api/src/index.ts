@@ -57,6 +57,8 @@ import { ensureUpdateSchema, startUpdateChecks } from "./system/updates.js";
 import { startSelfCheck } from "./system/self-check.js";
 import { esphomeGateRoutes } from "./esphome/gate.js";
 import { boardUpdateRoutes } from "./esphome/board-update-routes.js";
+import { activityRoutes } from "./activity/routes.js";
+import { ensureActivitySchema, logActivity } from "./activity/activity.js";
 import { maintenanceGuard } from "./system/maintenance.js";
 import { v4Routes } from "./v4/routes.js";
 import { panelApiRoutes } from "./panels/api-routes.js";
@@ -133,6 +135,7 @@ await app.register(async (api) => {
   await api.register(notificationsRoutes);
   await api.register(esphomeGateRoutes);
   await api.register(boardUpdateRoutes);
+  await api.register(activityRoutes);
   await api.register(updateRoutes);
   await api.register(httpsRoutes);
   await api.register(migrateRoutes);
@@ -156,6 +159,7 @@ try {
   await ensureUsersAvatarSchema();
   await ensureRolesSchema();
   await ensureDevicesSchema();
+  await ensureActivitySchema();
   // Readable names for readings named automatically before (e.g. "Pm 2 5" → "PM2.5").
   await repairAutoSensorNames();
   await ensureEsphomeBuilderSchema();
@@ -328,6 +332,7 @@ try {
 
   await app.listen({ port: config.port, host: config.host });
   app.log.info(`Nexternel API ${APP_VERSION} listening on ${config.host}:${config.port}`);
+  void logActivity({ kind: "system", text: `Nexternel ${APP_VERSION} started` });
 } catch (err) {
   app.log.error(err);
   process.exit(1);

@@ -5,6 +5,7 @@ import type { BoardStatus, DeviceConnection, DeviceRecord } from "../../../api";
 import { CODE_TEXT } from "../../../lib/appearance/type";
 import { InfoCard, durationWords, shortWhen } from "./DeviceBits";
 import { LastBoardUpdates } from "./BoardSoftware";
+import { ActivityList } from "../../../components/ActivityList";
 import { devicesOutlinedButton } from "./devices-panel-styles";
 
 const DAY_MS = 24 * 60 * 60_000;
@@ -132,6 +133,10 @@ export function DeviceTroubleshootingTab({ device, connection, board }: { device
           </Typography>
         </InfoCard>
       ) : null}
+
+      <InfoCard title="Activity">
+        <ActivityList deviceId={device.id} showFilters={false} pageSize={20} />
+      </InfoCard>
 
       <InfoCard title="Technical details">
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" }, gap: 1.5 }}>
