@@ -2576,6 +2576,11 @@ export type BoardHealthReport = {
   heapMin: number | null;
   resetReason: string | null;
   version: string | null;
+  ip?: string | null;
+  accessPoint?: string | null;
+  channel?: number | null;
+  lastBreakS?: number | null;
+  lastBreakEndedAt?: string | null;
 };
 
 export type DeviceConnection = {

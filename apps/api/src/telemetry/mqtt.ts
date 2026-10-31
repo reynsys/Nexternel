@@ -11,6 +11,7 @@ import { getLiveState, parseMqttPayload, setLiveState, getAllLiveStates } from "
 import { LIVE_CAPABILITY_PRESENCE_MS } from "../devices/presence.js";
 import { getPool } from "../db.js";
 import { applyBoardHealthTopic, boardFingerprint } from "../devices/board-health.js";
+import { applyBrokerLog, BROKER_LOG_TOPIC } from "./broker-log.js";
 import { looksLikeShellyCommandTopic, isShellyGen1MqttPrefix } from "../shelly/topics.js";
 import { parseShellyMqttSwitchUpdates } from "../shelly/notify.js";
 import {
@@ -670,6 +671,12 @@ async function handleMessage(
     });
   };
 
+  // The message service's own notices (why a device was disconnected).
+  if (topic.startsWith("$SYS/broker/log/")) {
+    applyBrokerLog(payload);
+    return;
+  }
+
   notifyDiscoveryCollectors(topic, payload);
 
   const presenceHandled =
@@ -887,6 +894,7 @@ export async function startTelemetry(): Promise<void> {
           if (err) lastError = err.message;
         });
       }
+      client?.subscribe(BROKER_LOG_TOPIC, { qos: 0 });
       // After subscriptions: pull current Shelly outputs (app/physical may not
       // have published status/switch:N because status_ntf defaults to false).
       requestShellyStatusUpdates();

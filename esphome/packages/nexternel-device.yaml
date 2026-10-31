@@ -28,9 +28,10 @@ text_sensor:
       snprintf(buf, sizeof(buf), "%08x", (unsigned) App.get_config_hash());
       return std::string(buf);
 
-# The board's health report: one small message every minute to <prefix>/health (about 200 bytes) —
-# that it is alive, how long since it restarted and why, its Wi-Fi strength, how often Wi-Fi and the
-# message service dropped since the restart, its free memory and its software. Nexternel can also ask
+# The board's health report: one small message every minute to <prefix>/health (about 300 bytes) —
+# that it is alive, how long since it restarted and why, its Wi-Fi strength and access point, how often
+# Wi-Fi and the message service dropped since the restart and how long the last break lasted, its free
+# memory and its software. Nexternel can also ask
 # for one at any time ("Check now": it presses the Health check button below).
 globals:
   - id: nexternel_wifi_drops
@@ -39,10 +40,37 @@ globals:
   - id: nexternel_mqtt_drops
     type: uint32_t
     initial_value: "0"
+  # The last break from the message service: when it began, how long it lasted, when it ended.
+  - id: nexternel_break_began
+    type: uint32_t
+    initial_value: "0"
+  - id: nexternel_break_ms
+    type: uint32_t
+    initial_value: "0"
+  - id: nexternel_break_ended
+    type: uint32_t
+    initial_value: "0"
+
+# Only warnings and errors go to <prefix>/debug (Nexternel keeps them for Troubleshooting); every
+# routine line would be traffic for nothing. ESPHome's own log page still shows everything.
+esphome:
+  on_boot:
+    - priority: 800
+      then:
+        - lambda: mqtt::global_mqtt_client->set_log_level(ESPHOME_LOG_LEVEL_WARN);
 
 mqtt:
   on_disconnect:
-    - lambda: id(nexternel_mqtt_drops) += 1;
+    - lambda: |-
+        id(nexternel_mqtt_drops) += 1;
+        if (id(nexternel_break_began) == 0) id(nexternel_break_began) = millis() | 1;
+  on_connect:
+    - lambda: |-
+        if (id(nexternel_break_began) != 0) {
+          id(nexternel_break_ms) = millis() - id(nexternel_break_began);
+          id(nexternel_break_ended) = millis();
+          id(nexternel_break_began) = 0;
+        }
 
 script:
   - id: nexternel_health_report
@@ -52,6 +80,20 @@ script:
           payload: |-
             root["up"] = millis() / 1000;
             root["rssi"] = wifi::global_wifi_component->wifi_rssi();
+            // Where it is on the network: its address and the Wi-Fi access point (and channel) it uses.
+            char ip[network::IP_ADDRESS_BUFFER_SIZE];
+            wifi::global_wifi_component->get_ip_addresses()[0].str_to(ip);
+            root["ip"] = ip;
+            auto ap = wifi::global_wifi_component->wifi_bssid();
+            char bssid[18];
+            snprintf(bssid, sizeof(bssid), "%02X:%02X:%02X:%02X:%02X:%02X", ap[0], ap[1], ap[2], ap[3], ap[4], ap[5]);
+            root["ap"] = bssid;
+            root["ch"] = wifi::global_wifi_component->get_wifi_channel();
+            // The last break from the message service: seconds it lasted and seconds since it ended.
+            if (id(nexternel_break_ended) != 0) {
+              root["brk"] = id(nexternel_break_ms) / 100 / 10.0;
+              root["brk_ago"] = (millis() - id(nexternel_break_ended)) / 1000;
+            }
             root["wifi_drops"] = id(nexternel_wifi_drops);
             root["mqtt_drops"] = id(nexternel_mqtt_drops);
             #ifdef USE_ESP32

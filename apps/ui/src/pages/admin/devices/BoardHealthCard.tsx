@@ -51,6 +51,14 @@ export function BoardHealthCard({ device, report: initial }: { device: DeviceRec
         ["Wi‑Fi signal", report.rssi !== null ? `${report.rssi} dBm` : "—"],
         ["Wi‑Fi drops since restart", report.wifiDrops !== null ? String(report.wifiDrops) : "—", (report.wifiDrops ?? 0) > 2],
         ["Message service drops since restart", report.mqttDrops !== null ? String(report.mqttDrops) : "—", (report.mqttDrops ?? 0) > 2],
+        // Boards with the newer shared settings say how long the last break lasted and where they are.
+        ...(report.lastBreakS != null && report.lastBreakEndedAt
+          ? ([["Last break from the message service", `${report.lastBreakS} s, ${shortWhen(report.lastBreakEndedAt)}`, report.lastBreakS > 10]] as [string, string, boolean][])
+          : []),
+        ...(report.accessPoint
+          ? ([["Wi‑Fi access point", `${report.accessPoint}${report.channel != null ? ` · channel ${report.channel}` : ""}`]] as [string, string][])
+          : []),
+        ...(report.ip ? ([["Address", report.ip]] as [string, string][]) : []),
         ["Free memory (lowest)", `${kb(report.heap)}${report.heapMin !== null ? ` (${kb(report.heapMin)})` : ""}`],
         ["Software", report.version ? `ESPHome ${report.version}` : "—"],
       ]

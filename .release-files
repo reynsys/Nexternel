@@ -204,6 +204,7 @@ apps/api/src/system/self-check.ts
 apps/api/src/systems/ensure-schema.ts
 apps/api/src/system/update-routes.ts
 apps/api/src/system/updates.ts
+apps/api/src/telemetry/broker-log.ts
 apps/api/src/telemetry/esphome-topics.test.ts
 apps/api/src/telemetry/esphome-topics.ts
 apps/api/src/telemetry/mqtt-observer.ts

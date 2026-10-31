@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.164
+
+- **New: built-in connection troubleshooting.** When a device loses its connection, the Activity log now says why, in the message service's own words — for example that the board stopped answering, or dropped the connection without saying goodbye.
+- Boards now report how long their last break lasted, which Wi‑Fi access point and channel they use, and their own warnings (Troubleshooting → Board health). They also send less routine traffic than before. Each board needs one update (**Update boards** on Devices).
+
 ## V5.2.163
 
 - **Fixed: switches that did not turn on or off.** A switch now waits for the board to confirm and shows "Switching…" meanwhile. If the board does not answer within a few seconds, it shows "No answer from …" and goes back to the real position — the dashboard no longer shows a switch as on when the relay is off.

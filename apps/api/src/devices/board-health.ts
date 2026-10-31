@@ -19,6 +19,13 @@ export type HealthReport = {
   heapMin: number | null;
   resetReason: string | null;
   version: string | null;
+  /** Where it is on the network: its address, the Wi-Fi access point (BSSID) and channel. */
+  ip: string | null;
+  accessPoint: string | null;
+  channel: number | null;
+  /** The last break from the message service: seconds it lasted, and when it ended. */
+  lastBreakS: number | null;
+  lastBreakEndedAt: string | null;
 };
 
 export type BoardHealth = { wifiDbm: number | null; wifiAt: string | null; restartedAt: string | null; report: HealthReport | null };
@@ -35,6 +42,12 @@ const REPORT_TOPIC = /^(.+)\/health$/;
  * sends text readings under "sensor" too (seen on the boards); "text_sensor" is accepted as well.
  */
 const FINGERPRINT_TOPIC = /^(.+)\/(?:text_)?sensor\/software_fingerprint\/state$/;
+/** The board's own log ("<prefix>/debug"): its warnings and errors go into the Activity log. */
+const LOG_TOPIC = /^(.+)\/debug$/;
+/** "[W][mqtt:313]: text" (ESPHome), after taking out the colour codes. */
+const LOG_LINE = /^\[([WE])\]\[([^\]]+)\]:\s*(.+)$/;
+/** The same warning from the same board is written once every 10 minutes at most. */
+const lastWarning = new Map<string, number>();
 const fingerprints = new Map<string, string>();
 
 /** Which software a board says it runs (8 hex characters), or null when it does not say (older software). */
@@ -104,11 +117,68 @@ function noteUptime(prefix: string, h: State, uptimeS: number, now: number, reas
   h.restartedAt = restartedAt.toISOString();
 }
 
+/** Which board has which address (from the health reports): the message service names boards by address. */
+const addresses = new Map<string, string>();
+
+/** The topic prefix of the board at this address, or null when no report has named it. */
+export function boardAtAddress(ip: string): string | null {
+  return addresses.get(ip) ?? null;
+}
+
+/**
+ * A break from the message service the board reports for the first time (it ended since its last
+ * report): into the Activity log with how long it lasted — the board's own side of a drop.
+ */
+function noteBreak(prefix: string, before: HealthReport | null, now: HealthReport) {
+  if (now.lastBreakS === null || !now.lastBreakEndedAt) return;
+  // The same break as in the last report (a few seconds of clock difference allowed).
+  if (before?.lastBreakEndedAt && Math.abs(Date.parse(before.lastBreakEndedAt) - Date.parse(now.lastBreakEndedAt)) < 5_000) return;
+  // The first report after Nexternel started does not know whether the break was already logged.
+  if (!before) return;
+  const wifiKept = before.wifiDrops !== null && now.wifiDrops === before.wifiDrops;
+  void (async () => {
+    const d = await getPool().query<{ id: string; name: string }>(`SELECT id, name FROM devices WHERE mqtt_topic_prefix = $1`, [prefix]);
+    const row = d.rows[0];
+    if (!row) return;
+    await logActivity({
+      kind: "device",
+      deviceId: row.id,
+      text: `${row.name} says it was cut off from the message service for ${now.lastBreakS} s${wifiKept ? " (its Wi‑Fi stayed connected)" : " (its Wi‑Fi dropped too)"}`,
+    });
+  })().catch(() => undefined);
+}
+
+/** A warning or error in the board's own log (boards with older settings send every line: only these count). */
+function noteBoardWarning(prefix: string, payload: string) {
+  // eslint-disable-next-line no-control-regex
+  const m = LOG_LINE.exec(payload.replace(/\x1b\[[0-9;]*m/g, "").trim());
+  if (!m) return;
+  const [, level, source, text] = m;
+  const key = `${prefix} ${source} ${text}`;
+  const now = Date.now();
+  if (now - (lastWarning.get(key) ?? 0) < 10 * 60_000) return;
+  lastWarning.set(key, now);
+  void (async () => {
+    const d = await getPool().query<{ id: string; name: string }>(`SELECT id, name FROM devices WHERE mqtt_topic_prefix = $1`, [prefix]);
+    const row = d.rows[0];
+    if (!row) return;
+    await logActivity({ kind: "device", deviceId: row.id, text: `${row.name} reported ${level === "E" ? "an error" : "a warning"} (${source}): ${text!.slice(0, 200)}` });
+  })().catch(() => undefined);
+}
+
 /** Listeners waiting for a board's next report (Check now). */
 const waiting = new Map<string, Set<(r: HealthReport) => void>>();
 
 /** True when the message was the board's own health (handled here, not a dashboard reading). */
 export function applyBoardHealthTopic(topic: string, payload: string, retained: boolean, prefixOf: (topic: string) => string | null): boolean {
+  const lg = LOG_TOPIC.exec(topic);
+  if (lg) {
+    const prefix = prefixOf(topic);
+    if (!prefix || prefix !== lg[1]) return false;
+    if (!retained) noteBoardWarning(prefix, payload);
+    return true;
+  }
+
   const f = FINGERPRINT_TOPIC.exec(topic);
   if (f) {
     const prefix = prefixOf(topic);
@@ -142,7 +212,14 @@ export function applyBoardHealthTopic(topic: string, payload: string, retained: 
       heapMin: num(j.heap_min),
       resetReason: resetWords(j.reset, j.reset_text),
       version: typeof j.ver === "string" ? j.ver : null,
+      ip: typeof j.ip === "string" && j.ip ? j.ip : null,
+      accessPoint: typeof j.ap === "string" && /^[0-9A-F:]{17}$/i.test(j.ap) ? j.ap.toUpperCase() : null,
+      channel: num(j.ch),
+      lastBreakS: num(j.brk),
+      lastBreakEndedAt: num(j.brk_ago) !== null ? new Date(now - num(j.brk_ago)! * 1000).toISOString() : null,
     };
+    if (report.ip) addresses.set(report.ip, prefix);
+    noteBreak(prefix, h.report ?? null, report);
     if (report.rssi !== null && report.rssi < 0) {
       h.wifiDbm = Math.round(report.rssi);
       h.wifiAt = report.at;

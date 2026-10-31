@@ -23,6 +23,7 @@ import { ensureAdminFromEnv } from "./auth/ensure-admin.js";
 import { bootstrapInstallationState, getUserCount } from "./installation-meta.js";
 import { syncCapabilitiesFromLegacy } from "./capabilities/sync.js";
 import { startTelemetry } from "./telemetry/mqtt.js";
+import { ensureBrokerLogTopic } from "./telemetry/broker-log.js";
 import { healthRoutes } from "./routes/health.js";
 import { diagnosticsRoutes } from "./routes/diagnostics.js";
 import { authRoutes } from "./routes/auth.js";
@@ -316,6 +317,8 @@ try {
   } catch (err) {
     app.log.warn({ err }, "go2rtc camera sync skipped (is go2rtc up?)");
   }
+  // The message service's notices of dropped connections (once: a line in mosquitto.conf).
+  await ensureBrokerLogTopic().catch((err) => app.log.warn({ err }, "Could not turn on the message service notices"));
   await startTelemetry();
   app.log.info(getMqttLogSafe(), "telemetry started");
   try {
