@@ -55,6 +55,7 @@ import { httpsRoutes } from "./system/https-routes.js";
 import { applyHttps } from "./system/https.js";
 import { ensureUpdateSchema, startUpdateChecks } from "./system/updates.js";
 import { startSelfCheck } from "./system/self-check.js";
+import { startSharedSettingsWatch } from "./esphome/shared-settings.js";
 import { esphomeGateRoutes } from "./esphome/gate.js";
 import { boardUpdateRoutes } from "./esphome/board-update-routes.js";
 import { activityRoutes } from "./activity/routes.js";
@@ -327,6 +328,7 @@ try {
   startUpdateChecks();
   startAddonChecks();
   startBackupScheduler(app.log);
+  startSharedSettingsWatch();
   startSelfCheck(app.log);
   app.log.info("octopus poller started");
 

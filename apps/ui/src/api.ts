@@ -1251,7 +1251,8 @@ export const api = {
 
   system: () => apiFetch<SystemInfo>("/api/v1/system"),
   /** Every ESPHome board: does it need an update, can it be reached; and the update in progress. */
-  esphomeBoards: () => apiFetch<{ boards: BoardStatus[]; run: BoardUpdateRun }>("/api/v1/esphome/boards"),
+  esphomeBoards: () =>
+    apiFetch<{ boards: BoardStatus[]; run: BoardUpdateRun; preparing?: BoardPrepareRun }>("/api/v1/esphome/boards"),
   /** Update these boards over Wi-Fi, one after another (in the background). */
   startBoardUpdates: (deviceIds: string[]) =>
     apiFetch<{ run: BoardUpdateRun }>("/api/v1/esphome/updates", { method: "POST", body: JSON.stringify({ deviceIds }) }),
@@ -2612,6 +2613,8 @@ export type BoardStatus = {
 export const UNSTEADY_DROPS = 3;
 /** One kept board update: outcome and everything ESPHome wrote. */
 export type BoardUpdateLog = { id: string; deviceId: string; startedAt: string; finishedAt: string; outcome: string; message: string; log: string };
+/** New board software being prepared after the shared board settings changed (build only). */
+export type BoardPrepareRun = { running: boolean; done: number; total: number; current: string | null };
 export type BoardUpdateStep = "waiting" | "preparing" | "sending" | "restarting" | "done" | "failed";
 export type BoardUpdateRun = {
   running: boolean;

@@ -76,10 +76,10 @@ export function PanelEditorShell({
               value={current?.id ?? false}
               onChange={(_, v: PanelEditorTabId) => setTab(v)}
               variant="fullWidth"
-              sx={{ borderBottom: 1, borderColor: "divider", minHeight: 40, "& .MuiTab-root": { minHeight: 40 } }}
+
             >
               {shown.map((t) => (
-                <Tab key={t.id} value={t.id} label={t.label} sx={{ textTransform: "none" }} />
+                <Tab key={t.id} value={t.id} label={t.label} />
               ))}
             </Tabs>
           ) : null}

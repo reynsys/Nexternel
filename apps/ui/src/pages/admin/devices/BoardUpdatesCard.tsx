@@ -26,13 +26,32 @@ export function StepIcon({ step }: { step: BoardUpdateStep }) {
  */
 export function BoardUpdatesCard({ canEdit }: { canEdit: boolean }) {
   const surfaceSx = useContentSurfaceSx();
-  const { boards, run } = useBoardUpdates();
+  const { boards, run, preparing } = useBoardUpdates();
   const [error, setError] = useState<string | null>(null);
   if (!boards) return null;
   const behind = boards.filter((b) => b.updateState === "update");
   const unknown = boards.filter((b) => b.known && b.updateState === "unknown");
   const unsteady = [...behind, ...unknown].filter((b) => b.recentDrops >= UNSTEADY_DROPS);
   const showRun = run && run.items.length > 0 && (run.running || run.items.some((i) => i.finishedAt && Date.now() - Date.parse(i.finishedAt) < 30 * 60_000));
+  if (preparing?.running) {
+    // The shared board settings changed (a Nexternel update): ESPHome builds every board once first.
+    return (
+      <Card sx={surfaceSx}>
+        <CardContent>
+          <Stack direction="row" alignItems="center" spacing={1.5}>
+            <CircularProgress size={ICON_SIZE.title + 4} />
+            <Box>
+              <Typography variant="subtitle1">Preparing new board software</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {preparing.done} of {preparing.total} boards{preparing.current ? ` · now ${preparing.current}` : ""}. Nothing is sent to the
+                boards yet; when it is done, the boards that need it show Update boards.
+              </Typography>
+            </Box>
+          </Stack>
+        </CardContent>
+      </Card>
+    );
+  }
   if (!behind.length && !unknown.length && !showRun) return null;
   const start = (ids: string[]) => {
     setError(null);

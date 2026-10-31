@@ -1,6 +1,5 @@
-import { Button } from "@mui/material";
+import { Tab, Tabs } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
-import { ButtonRow } from "./ButtonRow";
 
 export type SegmentNavItem = {
   id: string;
@@ -13,25 +12,13 @@ type Props = {
   activeId: string;
 };
 
-/** Horizontal pill-style nav — active = filled, inactive = outlined button. */
+/** Pages of one area as tabs (phones: the Settings pages) — they switch what is shown, so they look like tabs, not buttons. */
 export function SegmentButtonNav({ items, activeId }: Props) {
   return (
-    <ButtonRow direction="row" flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
-      {items.map((item) => {
-        const active = item.id === activeId;
-        return (
-          <Button
-            key={item.id}
-            component={RouterLink}
-            to={item.to}
-            size="small"
-            variant={active ? "contained" : "outlined"}
-            sx={{ textTransform: "none", fontWeight: active ? 600 : 500 }}
-          >
-            {item.label}
-          </Button>
-        );
-      })}
-    </ButtonRow>
+    <Tabs value={items.some((i) => i.id === activeId) ? activeId : false} variant="scrollable" allowScrollButtonsMobile sx={{ mb: 2 }}>
+      {items.map((item) => (
+        <Tab key={item.id} value={item.id} label={item.label} component={RouterLink} to={item.to} />
+      ))}
+    </Tabs>
   );
 }

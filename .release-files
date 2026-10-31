@@ -108,6 +108,8 @@ apps/api/src/esphome/mqtt-object-id.test.ts
 apps/api/src/esphome/orphan-prune.ts
 apps/api/src/esphome/secrets.test.ts
 apps/api/src/esphome/secrets.ts
+apps/api/src/esphome/shared-settings.test.ts
+apps/api/src/esphome/shared-settings.ts
 apps/api/src/esphome/yaml.test.ts
 apps/api/src/esphome/yaml.ts
 apps/api/src/history/backfill-entity-ids.ts
@@ -257,7 +259,6 @@ apps/ui/src/components/DashboardErrorBoundary.tsx
 apps/ui/src/components/DashboardIconPicker.tsx
 apps/ui/src/components/DashboardTabBar.tsx
 apps/ui/src/components/DashboardTileBody.tsx
-apps/ui/src/components/DevicesTabs.tsx
 apps/ui/src/components/IconPicker.tsx
 apps/ui/src/components/ItemOverrideFields.tsx
 apps/ui/src/components/MaintenanceBanner.tsx

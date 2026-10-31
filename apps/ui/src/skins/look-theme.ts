@@ -229,29 +229,28 @@ export function lookThemeOptions(
         },
       },
       // Tabs are drawn as a row of buttons: outlined, the chosen one filled.
+      // Tabs never look like buttons: words on a thin line, the chosen one in the main colour with a
+      // bar under it — no box, no fill. Buttons (boxed) do things; tabs switch what is shown.
       MuiTabs: {
         styleOverrides: {
-          root: { minHeight: 0, padding: "2px 0" },
-          indicator: { display: "none" },
-          flexContainer: { gap: "var(--nx-control-gap)", padding: "var(--nx-decor-reach)" },
+          root: { minHeight: 0, borderBottom: `1px solid ${t.line || base.palette.divider}` },
+          indicator: { height: 3, borderRadius: "3px 3px 0 0", backgroundColor: primary.main },
+          flexContainer: { gap: 4 },
         },
       },
       MuiTab: {
         styleOverrides: {
           root: {
-            minHeight: 40,
-            padding: "6px 14px",
-            borderRadius: t.radiusControl,
-            border: buttonEdge,
-            color: primary.main,
-            textTransform: t.buttonCase,
-            ...set("backgroundColor", t.secondaryFill),
-            "&.Mui-selected": {
-              color: t.primaryInk || primary.contrastText,
-              backgroundColor: t.primaryFill || primary.main,
-              border: t.primaryBorder || `1px solid ${primary.main}`,
-              fontWeight: 600,
-            },
+            minHeight: 44,
+            padding: "8px 14px",
+            textTransform: "none",
+            fontWeight: 600,
+            color: "inherit",
+            opacity: 0.72,
+            borderRadius: `${t.radiusControl} ${t.radiusControl} 0 0`,
+            "&:hover": { opacity: 1, backgroundColor: "rgba(128,128,128,.08)" },
+            "&.Mui-selected": { opacity: 1, color: primary.main },
+            "&.Mui-focusVisible": { outline: `2px solid ${primary.main}`, outlineOffset: -2 },
           },
         },
       },

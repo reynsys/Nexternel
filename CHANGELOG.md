@@ -2,6 +2,14 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.161
+
+- **Tabs now look like tabs** everywhere (an underline under the chosen one, no box), so they are never mistaken for buttons.
+
+## V5.2.160
+
+- **Fixed:** after V5.2.159 the boards did not show that the health report was waiting for them. When an update changes the shared board settings, Nexternel now prepares the new software for every board by itself (Devices shows the progress) and then offers **Update boards**.
+
 ## V5.2.159
 
 - **New: board health report.** Every board sends one small report a minute — how long it has been running and why it last restarted (for example a power dip or a crash), its Wi‑Fi strength, how often it lost Wi‑Fi or the message service, and its free memory. See it on the device's **Troubleshooting** tab, with **Check now** to ask the board straight away. Restarts and their reasons appear in the Activity log. Each board needs one update to start sending it.

@@ -178,7 +178,7 @@ export function DeviceDetailPane({ selection, device, isAdmin, busy, hostname, s
         onChange={(_, v: TabKey) => setTab(v)}
         variant="scrollable"
         allowScrollButtonsMobile
-        sx={{ px: 1, borderBottom: "1px solid", borderColor: "divider", minHeight: 44, "& .MuiTab-root": { minHeight: 44, textTransform: "none", fontWeight: "fontWeightBold" } }}
+        sx={{ px: 1 }}
       >
         <Tab value="overview" label="Overview" />
         <Tab value="readings" label="Readings & switches" />

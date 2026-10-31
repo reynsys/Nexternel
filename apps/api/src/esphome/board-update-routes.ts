@@ -2,12 +2,13 @@ import type { FastifyPluginAsync } from "fastify";
 import { requirePermission } from "../auth/rbac.js";
 import { boardUpdateHistory, listBoardStatus, startBoardUpdates, updateLog, updateRun } from "./board-updates.js";
 import { linkDeviceYamlFile } from "./builder/firmware.js";
+import { prepareRun } from "./shared-settings.js";
 
 export const boardUpdateRoutes: FastifyPluginAsync = async (app) => {
   /** Every ESPHome board: does it need an update, can it be reached; and the update in progress. */
   app.get("/api/v1/esphome/boards", async (request, reply) => {
     if (!requirePermission(request, reply, "viewDevices")) return;
-    return { boards: await listBoardStatus(), run: updateRun() };
+    return { boards: await listBoardStatus(), run: updateRun(), preparing: prepareRun() };
   });
 
   app.get("/api/v1/esphome/updates", async (request, reply) => {
