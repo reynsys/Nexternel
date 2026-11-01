@@ -1,5 +1,6 @@
 import { getPool } from "../db.js";
 import { publishChange } from "../live/changes.js";
+import { SwitchRepeats } from "./switch-repeats.js";
 
 /**
  * The Activity log: what happened in Nexternel, newest first, kept 30 days — like the log screen of
@@ -48,11 +49,16 @@ export function noteSwitchCommand(capabilityId: string, value: boolean, who: str
   commands.set(capabilityId, { who, value, at: Date.now() });
 }
 
+/** Switches the board turns on and off by itself again and again: a summary instead of every change. */
+const repeats = new SwitchRepeats();
+
 /** A switch's state changed (a live message from the board, not a kept one). */
 export async function logSwitchChange(capabilityId: string, value: boolean): Promise<void> {
   const cmd = commands.get(capabilityId);
   const fromNexternel = cmd && cmd.value === value && Date.now() - cmd.at < 20_000;
   if (cmd && fromNexternel) commands.delete(capabilityId);
+  const verdict = fromNexternel ? ({ kind: "write" } as const) : repeats.note(capabilityId, Date.now());
+  if (verdict.kind === "quiet") return;
   try {
     const r = await getPool().query<{ device_id: string; device: string; name: string }>(
       `SELECT c.device_id, d.name AS device, COALESCE(NULLIF(c.custom_name, ''), c.name) AS name
@@ -61,12 +67,13 @@ export async function logSwitchChange(capabilityId: string, value: boolean): Pro
     );
     const row = r.rows[0];
     if (!row) return;
-    await logActivity({
-      kind: "switch",
-      deviceId: row.device_id,
-      text: `${row.device} · ${row.name} turned ${value ? "on" : "off"}${fromNexternel ? "" : " (at the switch, or by the board itself)"}`,
-      who: fromNexternel ? cmd!.who : null,
-    });
+    const text =
+      verdict.kind === "busy"
+        ? `${row.device} · ${row.name} keeps turning on and off by itself — from now on one line an hour says how often`
+        : verdict.kind === "summary"
+          ? `${row.device} · ${row.name} turned on or off ${verdict.count} times by itself in the last ${verdict.minutes} minutes`
+          : `${row.device} · ${row.name} turned ${value ? "on" : "off"}${fromNexternel ? "" : " (at the switch, or by the board itself)"}`;
+    await logActivity({ kind: "switch", deviceId: row.device_id, text, who: fromNexternel ? cmd!.who : null });
   } catch {
     /* see logActivity */
   }

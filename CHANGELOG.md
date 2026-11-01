@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.167
+
+- **Activity log is easier to read.** A switch that the board turns on and off by itself all the time (for example a sensor that measures in turns) now shows one line an hour saying how often, instead of hundreds of lines.
+- **Clearer connection messages.** A board that lost touch for a moment and came straight back no longer suggests that two devices share a name; that warning now only shows when it really looks like it.
+
 ## V5.2.166
 
 - **Fixed: after installing V5.2.165, Settings → System → Updates still offered it.** The update itself was installed; only the version number shown by the server was not raised. This can no longer happen — a release now stops when the two numbers differ.

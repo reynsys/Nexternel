@@ -41,6 +41,25 @@ const addressOf = new Map<string, string>();
 /** The same notice for the same client is written once a minute at most. */
 const lastWritten = new Map<string, number>();
 
+/**
+ * A board that lost touch for a moment and came back before the message service noticed it was gone.
+ * Only when this happens again and again within a short time is it likely two devices share a name.
+ */
+const TAKEOVER = "came back before the message service noticed it was gone, so its old connection was closed (it lost touch for a moment)";
+const DUPLICATE =
+  "keeps pushing out its own connection — two devices are probably using the same name. Give each device its own name in its settings";
+const DUPLICATE_COUNT = 5;
+const DUPLICATE_WINDOW = 2 * 60_000;
+const takeovers = new Map<string, number[]>();
+
+/** The words for a takeover: a moment's break, or (many within a short time) two devices with one name. */
+export function takeoverWords(clientId: string, now = Date.now()): string {
+  const recent = (takeovers.get(clientId) ?? []).filter((t) => now - t <= DUPLICATE_WINDOW);
+  recent.push(now);
+  takeovers.set(clientId, recent);
+  return recent.length >= DUPLICATE_COUNT ? DUPLICATE : TAKEOVER;
+}
+
 const CONNECTED = /^New client connected from (\S+?):\d+ as (\S+) /;
 
 /** Mosquitto 2.1: "Client <id> [<address>:<port>] disconnected: <reason>." */
@@ -51,7 +70,7 @@ const REASON_WORDS: { re: RegExp; words: string }[] = [
     words: "stopped answering, so the message service closed its connection (nothing was heard from it within its keep-alive time)",
   },
   { re: /closed by client/i, words: "dropped its connection to the message service without saying goodbye (a Wi‑Fi hiccup, or it restarted its connection)" },
-  { re: /session taken over|already connected/i, words: "connected again while its old connection was still open, so the old one was closed. If this repeats every few seconds, two devices use the same name" },
+  { re: /session taken over|already connected/i, words: TAKEOVER },
   { re: /not authori[sz]ed|bad user|password/i, words: "was refused by the message service: wrong user name or password" },
   { re: /socket error|protocol error|connection reset|broken pipe/i, words: "lost its connection to the message service (a network error)" },
 ];
@@ -69,7 +88,7 @@ const ENDED: { re: RegExp; words: string }[] = [
   },
   {
     re: /^Client (\S+) already connected, closing old connection/,
-    words: "connected again while its old connection was still open, so the old one was closed. If this repeats every few seconds, two devices use the same name",
+    words: TAKEOVER,
   },
   { re: /^Client (\S+) disconnected, not authori[sz]ed/, words: "was refused by the message service: wrong user name or password" },
 ];
@@ -99,9 +118,10 @@ export function applyBrokerLog(payload: string): void {
   }
 }
 
-function notice(clientId: string, address: string | null, words: string) {
+function notice(clientId: string, address: string | null, given: string) {
   // Nexternel's own connection is already in the log ("Connection to the message service …").
   if (clientId.startsWith("nexternel-api-")) return;
+  const words = given === TAKEOVER ? takeoverWords(clientId) : given;
   const key = `${clientId} ${words}`;
   const now = Date.now();
   if (now - (lastWritten.get(key) ?? 0) < 60_000) return;
