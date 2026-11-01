@@ -216,6 +216,7 @@ apps/api/src/telemetry/mqtt-observer.ts
 apps/api/src/telemetry/mqtt-subscriptions.test.ts
 apps/api/src/telemetry/mqtt-subscriptions.ts
 apps/api/src/telemetry/mqtt.ts
+apps/api/src/telemetry/state-cache.test.ts
 apps/api/src/telemetry/state-cache.ts
 apps/api/src/telemetry/topic-resolver.test.ts
 apps/api/src/telemetry/topic-resolver.ts
@@ -515,6 +516,7 @@ apps/ui/src/panels/PanelReadingValue.tsx
 apps/ui/src/panels/PanelRenderer.tsx
 apps/ui/src/panels/PanelUnavailable.tsx
 apps/ui/src/panels/PanelValueSummary.tsx
+apps/ui/src/panels/parse-capability-reading.test.ts
 apps/ui/src/panels/parse-capability-reading.ts
 apps/ui/src/panels/placement.test.ts
 apps/ui/src/panels/placement.ts

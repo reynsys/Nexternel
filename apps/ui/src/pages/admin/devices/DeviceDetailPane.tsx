@@ -143,7 +143,7 @@ export function DeviceDetailPane({ selection, device, isAdmin, busy, hostname, s
   const kind: DeviceKind = device.firmwareType === "shelly" ? "switch" : "board";
   const isBoard = kind === "board";
   const board = boards?.find((b) => b.deviceId === device.id) ?? null;
-  const status = deviceStatus(device, board);
+  const status = deviceStatus(device, board, values);
   const since = connection?.since && status.tone !== "off" ? ` since ${shortWhen(connection.since).replace(/^Today /, "")}` : "";
 
   return (
@@ -209,7 +209,7 @@ export function DeviceDetailPane({ selection, device, isAdmin, busy, hostname, s
             onSetSystem={(cap, sys) => void actions.onUpdateCapabilitySystem(cap, sys)}
           />
         ) : null}
-        {tab === "troubleshooting" ? <DeviceTroubleshootingTab device={device} connection={connection} board={board} /> : null}
+        {tab === "troubleshooting" ? <DeviceTroubleshootingTab device={device} connection={connection} board={board} values={values} /> : null}
         {tab === "advanced" && isBoard && isAdmin ? <AdvancedTab device={device} hostname={hostname} busy={busy} actions={actions} /> : null}
       </Box>
     </Box>

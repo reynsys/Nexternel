@@ -9,6 +9,7 @@ import { storedBackupsDir } from "../backup/scheduled.js";
 import { nexternelVersionAtLeast } from "../plugins/validate.js";
 import { APP_VERSION } from "../version.js";
 import { pruneActivity } from "../activity/activity.js";
+import { getAllLiveStates } from "../telemetry/state-cache.js";
 
 /**
  * Nexternel watches itself and tells the bell when something needs the owner: a device that says it
@@ -124,6 +125,62 @@ async function checkDevices(): Promise<void> {
   }
 }
 
+/** Readings whose board cannot read the sensor (it sends "nan"): since when, and which were reported. */
+const sensorSilentSince = new Map<string, number>();
+const sensorReported = new Set<string>();
+
+/**
+ * A sensor that is not answering while its board is online (the health check alone would say all is
+ * well): reported after the same wait as an offline device, and again when it reads once more.
+ */
+async function checkSensors(): Promise<void> {
+  const wait = (await getOfflineMinutes()) * 60_000;
+  const now = Date.now();
+  const silent = new Set(getAllLiveStates().filter((s) => s.quality === "error").map((s) => s.capabilityId));
+  for (const id of silent) if (!sensorSilentSince.has(id)) sensorSilentSince.set(id, now);
+  const due = [...sensorSilentSince].filter(([id, since]) => (silent.has(id) ? !sensorReported.has(id) && now - since >= wait : true));
+  if (!due.length) return;
+  const names = await getPool().query<{ id: string; device: string; name: string }>(
+    `SELECT c.id, d.name AS device, COALESCE(NULLIF(c.custom_name, ''), c.name) AS name
+       FROM capabilities c JOIN devices d ON d.id = c.device_id WHERE c.id = ANY($1::uuid[])`,
+    [due.map(([id]) => id)]
+  );
+  const named = new Map(names.rows.map((r) => [r.id, r]));
+  // One message per board and per change, naming its readings ("Kids Room · Temperature, Humidity").
+  const groups = new Map<string, { device: string; names: string[]; since: number; silent: boolean }>();
+  for (const [id, since] of due) {
+    const silentNow = silent.has(id);
+    if (silentNow) sensorReported.add(id);
+    else {
+      const wasReported = sensorReported.has(id);
+      sensorSilentSince.delete(id);
+      sensorReported.delete(id);
+      if (!wasReported) continue;
+    }
+    const row = named.get(id);
+    if (!row) continue;
+    const key = `${row.device}|${silentNow}`;
+    const g = groups.get(key) ?? { device: row.device, names: [], since, silent: silentNow };
+    g.names.push(row.name);
+    g.since = Math.min(g.since, since);
+    groups.set(key, g);
+  }
+  for (const g of groups.values()) {
+    const what = `${g.device} · ${g.names.join(", ")}`;
+    const one = g.names.length === 1;
+    if (g.silent) {
+      await post(
+        "devices",
+        "warning",
+        `${what} ${one ? "is" : "are"} not answering`,
+        `Since ${clock(new Date(g.since))} the board is online but cannot read ${one ? "this sensor" : "these sensors"}, so ${one ? "the reading shows" : "the readings show"} "Sensor not answering". Check the sensor's wires, and that the board's settings name the pin the sensor is connected to.`
+      );
+    } else {
+      await post("devices", "info", `${what} ${one ? "reads" : "read"} again`, `The sensor${one ? " is" : "s are"} answering again.`);
+    }
+  }
+}
+
 async function checkMqtt(): Promise<void> {
   const connected = getMqttStatus().status === "connected";
   if (connected) {
@@ -199,7 +256,7 @@ export function startSelfCheck(log: { warn: (o: object, m: string) => void }): v
   let ticks = 0;
   const tick = () => {
     ticks++;
-    const checks = [checkDevices];
+    const checks = [checkDevices, checkSensors];
     if (ticks % 5 === 1) checks.push(checkMqtt, checkDisk);
     if (ticks % 360 === 1) checks.push(pruneConnectionHistory, pruneActivity);
     void run(checks);

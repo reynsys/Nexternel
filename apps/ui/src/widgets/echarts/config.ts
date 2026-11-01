@@ -147,7 +147,7 @@ export function resolveMinMax(
 
 export function liveValue(cap: Capability | undefined): number | null {
   if (!cap?.state) return null;
-  if (cap.state.quality === "stale" || cap.state.quality === "unknown") return null;
+  if (cap.state.quality === "stale" || cap.state.quality === "unknown" || cap.state.quality === "error") return null;
   const v = cap.state.value;
   if (typeof v === "number" && Number.isFinite(v)) return v;
   if (typeof v === "string" && v.trim()) {

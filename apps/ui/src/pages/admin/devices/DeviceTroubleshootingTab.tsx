@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Box, Button, Stack, Typography } from "@mui/material";
 import ContentCopyRoundedIcon from "@mui/icons-material/ContentCopyRounded";
-import type { BoardStatus, DeviceConnection, DeviceRecord } from "../../../api";
+import type { BoardStatus, Capability, DeviceConnection, DeviceRecord } from "../../../api";
 import { CODE_TEXT } from "../../../lib/appearance/type";
 import { InfoCard, durationWords, shortWhen } from "./DeviceBits";
 import { LastBoardUpdates } from "./BoardSoftware";
@@ -46,7 +46,18 @@ function technical(device: DeviceRecord, board: BoardStatus | null): { label: st
  * the last 24 hours (and its Wi‑Fi), every update with its details, its technical details, and a
  * report to copy for support.
  */
-export function DeviceTroubleshootingTab({ device, connection, board }: { device: DeviceRecord; connection: DeviceConnection | null; board: BoardStatus | null }) {
+export function DeviceTroubleshootingTab({
+  device,
+  connection,
+  board,
+  values,
+}: {
+  device: DeviceRecord;
+  connection: DeviceConnection | null;
+  board: BoardStatus | null;
+  /** Current values of every reading, for the health box's sensor line. */
+  values: Map<string, Capability>;
+}) {
   const [copied, setCopied] = useState(false);
   const isBoard = (device.firmwareType || "esphome") === "esphome";
   const details = technical(device, board);
@@ -126,7 +137,7 @@ export function DeviceTroubleshootingTab({ device, connection, board }: { device
         )}
       </InfoCard>
 
-      {isBoard ? <BoardHealthCard device={device} report={connection?.health ?? null} /> : null}
+      {isBoard ? <BoardHealthCard device={device} report={connection?.health ?? null} values={values} /> : null}
 
       {isBoard ? (
         <InfoCard title="Updates from Nexternel">

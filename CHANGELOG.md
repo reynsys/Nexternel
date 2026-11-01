@@ -2,6 +2,13 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.173
+
+- **A sensor that stops answering is now shown clearly.** When a board is online but cannot read its sensor (loose wire, wrong pin, failing sensor), its readings no longer stay empty, and a gauge no longer shows 0. They now say **Sensor not answering**.
+  - **Devices:** the board shows **Sensor not answering** and is counted under **Needs attention**. **Board health** names the sensors that are not answering.
+  - **Activity log:** one line when a sensor stops answering, and one when it reads again.
+  - **Bell:** a warning after the same wait as for a device that went offline (one message per board), and a message when it reads again.
+
 ## V5.2.172
 
 - **Panels per row.** In a section's settings (while editing a dashboard), choose **2, 3, 4, 5 or 6** panels per row: every panel in that section gets the same width and they line up in neat rows, with no gap at the end. Heights stay as they are, and you can still resize panels afterwards. A choice is greyed out when it would make a panel narrower than it can be (a history chart needs at least the width of two standard panels).

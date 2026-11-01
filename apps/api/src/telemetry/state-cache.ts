@@ -60,6 +60,15 @@ export function setLiveState(
   return state;
 }
 
+/**
+ * A board's way of saying it could not read its sensor: ESPHome sends "nan" (and "inf" from a failed
+ * calculation). Such a reading is kept as no value, quality "error" — the board is fine, its sensor is not.
+ */
+export function isNoReading(value: unknown): boolean {
+  if (typeof value === "number") return !Number.isFinite(value);
+  return typeof value === "string" && /^[+-]?(nan|inf(inity)?)$/i.test(value.trim());
+}
+
 export function subscribeLive(listener: Listener): () => void {
   listeners.add(listener);
   return () => listeners.delete(listener);

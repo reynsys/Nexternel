@@ -21,3 +21,11 @@ test("one status word: switched off, offline, update ready, online", () => {
   assert.equal(deviceStatus(dev(), { updateState: "update" } as never).word, "Update ready");
   assert.equal(deviceStatus(dev()).word, "Online");
 });
+
+test("an online board whose sensor does not answer needs attention, and its summary says so", () => {
+  const values = new Map<string, Capability>([["t", { id: "t", unit: "°C", state: { value: null, quality: "error", updatedAt: "" } } as Capability]]);
+  const board = dev({ sensors: [sensor("t", "°C")] });
+  assert.deepEqual(deviceStatus(board, null, values), { word: "Sensor not answering", tone: "warn" });
+  assert.equal(deviceSummary(board, values), "Sensor not answering");
+  assert.equal(deviceStatus(dev({ connectivityState: "offline", sensors: [sensor("t", "°C")] }), null, values).word, "Offline");
+});

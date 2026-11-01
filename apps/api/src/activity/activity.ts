@@ -79,6 +79,25 @@ export async function logSwitchChange(capabilityId: string, value: boolean): Pro
   }
 }
 
+/** A reading whose board stopped (or started again) being able to read its sensor. */
+export async function logSensorAnswer(capabilityId: string, answering: boolean): Promise<void> {
+  try {
+    const r = await getPool().query<{ device_id: string; device: string; name: string }>(
+      `SELECT c.device_id, d.name AS device, COALESCE(NULLIF(c.custom_name, ''), c.name) AS name
+         FROM capabilities c JOIN devices d ON d.id = c.device_id WHERE c.id = $1`,
+      [capabilityId]
+    );
+    const row = r.rows[0];
+    if (!row) return;
+    const text = answering
+      ? `${row.device} · ${row.name} reads again`
+      : `${row.device} · ${row.name} is not answering — the board is online but cannot read this sensor`;
+    await logActivity({ kind: "device", deviceId: row.device_id, text });
+  } catch {
+    /* see logActivity */
+  }
+}
+
 export type ActivityEntry = { at: string; kind: ActivityKind; deviceId: string | null; device: string | null; text: string; who: string | null };
 
 /** Newest first; `before` (an ISO time) pages back; filter by kind or device. */

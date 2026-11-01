@@ -66,7 +66,7 @@ export function DeviceNavigator({
     const add = (areaKey: string, e: Entry) => byArea.set(areaKey, [...(byArea.get(areaKey) ?? []), e]);
     const q = search.trim().toLowerCase();
     for (const d of devices.filter(isPhysicalDevice)) {
-      const status = deviceStatus(d, boards?.find((b) => b.deviceId === d.id));
+      const status = deviceStatus(d, boards?.find((b) => b.deviceId === d.id), values);
       add(d.roomId ?? "", {
         key: `d-${d.id}`,
         kind: d.firmwareType === "shelly" ? "switch" : "board",

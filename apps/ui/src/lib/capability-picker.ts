@@ -65,7 +65,7 @@ export function capabilityKindHint(kind: string | undefined): string {
 
 function formatLiveSnippet(cap: Capability): string {
   const state = cap.state;
-  if (!state || state.quality === "unknown" || state.quality === "stale") return "";
+  if (!state || state.quality === "unknown" || state.quality === "stale" || state.quality === "error") return "";
   const v = state.value;
   if (typeof v === "number" && Number.isFinite(v)) {
     return `now: ${v}${cap.unit?.trim() ? ` ${cap.unit.trim()}` : ""}`;

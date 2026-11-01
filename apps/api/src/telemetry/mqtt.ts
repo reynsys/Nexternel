@@ -7,7 +7,7 @@ import {
   listStateTopicBindings,
   getCapabilityById,
 } from "../capabilities/store.js";
-import { getLiveState, parseMqttPayload, setLiveState, getAllLiveStates } from "./state-cache.js";
+import { getLiveState, isNoReading, parseMqttPayload, setLiveState, getAllLiveStates } from "./state-cache.js";
 import { LIVE_CAPABILITY_PRESENCE_MS } from "../devices/presence.js";
 import { getPool } from "../db.js";
 import { applyBoardHealthTopic, boardFingerprint } from "../devices/board-health.js";
@@ -43,7 +43,7 @@ import {
   getBrokerSniffSamples,
   type MqttObservationKind,
 } from "./mqtt-observer.js";
-import { logActivity, logSwitchChange, noteSwitchCommand } from "../activity/activity.js";
+import { logActivity, logSensorAnswer, logSwitchChange, noteSwitchCommand } from "../activity/activity.js";
 
 let client: MqttClient | null = null;
 let status: "disconnected" | "connecting" | "connected" | "error" = "disconnected";
@@ -364,10 +364,15 @@ function applyLiveCapability(
   if (!retained || kind === "switch") {
     touchDeviceOnlineByCapability(capabilityId);
   }
-  setLiveState(capabilityId, value, {
-    quality: retained && sensorLike ? "stale" : "good",
+  // A board that cannot read its sensor sends "nan": no value, and the reading says so.
+  const noReading = sensorLike && isNoReading(value);
+  setLiveState(capabilityId, noReading ? null : value, {
+    quality: noReading ? "error" : retained && sensorLike ? "stale" : "good",
     retained,
   });
+  if (sensorLike && !retained && (noReading ? previous?.quality !== "error" : previous?.quality === "error")) {
+    void logSensorAnswer(capabilityId, !noReading);
+  }
   if (kind === "switch" && typeof value === "boolean") {
     confirmSwitch(capabilityId, value);
     // A real change from the board (not the kept value replayed on connecting): into the Activity log.

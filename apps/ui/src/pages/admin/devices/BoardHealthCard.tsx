@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Alert, Box, Button, Typography } from "@mui/material";
 import MonitorHeartRoundedIcon from "@mui/icons-material/MonitorHeartRounded";
-import { api, type BoardHealthReport, type DeviceRecord } from "../../../api";
+import { api, type BoardHealthReport, type Capability, type DeviceRecord } from "../../../api";
 import { InfoCard, durationWords, shortWhen } from "./DeviceBits";
 import { devicesOutlinedButton } from "./devices-panel-styles";
 
@@ -20,9 +20,18 @@ const kb = (b: number | null) => (b === null ? "—" : `${Math.round(b / 1024)} 
 /**
  * Troubleshooting → Board health: the board's last health report (sent every minute) — how long it has
  * been running and why it last restarted, Wi‑Fi, how often Wi‑Fi and the message service dropped since
- * then, free memory — and Check now, which asks the board for a fresh report straight away.
+ * then, free memory, whether its sensors answer — and Check now, which asks the board for a fresh report
+ * straight away.
  */
-export function BoardHealthCard({ device, report: initial }: { device: DeviceRecord; report: BoardHealthReport | null }) {
+export function BoardHealthCard({
+  device,
+  report: initial,
+  values,
+}: {
+  device: DeviceRecord;
+  report: BoardHealthReport | null;
+  values: Map<string, Capability>;
+}) {
   const [report, setReport] = useState<BoardHealthReport | null>(initial);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
@@ -44,8 +53,15 @@ export function BoardHealthCard({ device, report: initial }: { device: DeviceRec
     }
   }
 
+  // A board can be perfectly healthy while a sensor on it does not answer (it sends "nan").
+  const sensors = device.sensors.filter((s) => s.isEnabled && s.capabilityId);
+  const silent = sensors.filter((s) => values.get(s.capabilityId!)?.state?.quality === "error").map((s) => s.customName || s.name);
+  const sensorRow: [string, string, boolean][] = sensors.length
+    ? [["Sensors", silent.length ? `Not answering: ${silent.join(", ")}` : "All answering", silent.length > 0]]
+    : [];
   const rows: [string, string, boolean?][] = report
     ? [
+        ...sensorRow,
         ["Running for", uptimeWords(report.uptimeS)],
         ["Last restart", report.resetReason ?? "Not known", /power|crash|watchdog|frozen|locked|glitch/i.test(report.resetReason ?? "")],
         ["Wi‑Fi signal", report.rssi !== null ? `${report.rssi} dBm` : "—"],
@@ -73,6 +89,11 @@ export function BoardHealthCard({ device, report: initial }: { device: DeviceRec
         </Button>
       }
     >
+      {sensorRow.length && !report ? (
+        <Typography variant="body2" color={silent.length ? "warning.main" : "text.secondary"}>
+          Sensors: {sensorRow[0]![1]}
+        </Typography>
+      ) : null}
       {report ? (
         <>
           <Typography variant="caption" color="text.secondary">

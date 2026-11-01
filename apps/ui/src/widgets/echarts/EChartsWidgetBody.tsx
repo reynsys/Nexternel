@@ -4,6 +4,7 @@ import ReactECharts from "echarts-for-react";
 import type { Capability, HistoryRange, WidgetInstance } from "../../api";
 import { api } from "../../api";
 import { liveValue, parseEchartsConfig, resolveMinMax } from "./config";
+import { SENSOR_NOT_ANSWERING } from "../../panels/parse-capability-reading";
 import { primaryCapabilityId } from "../../lib/widget-bindings";
 import { buildFinalOption } from "./merge-option";
 import { echartsInitTheme, echartsPaletteFromTheme } from "./chart-theme";
@@ -151,6 +152,17 @@ export function EChartsWidgetBody({
       <Typography variant="body2" color="text.secondary">
         {error}
       </Typography>
+    );
+  }
+
+  // A gauge would draw 0; say instead that the board cannot read this sensor.
+  if (preset.family === "gauge" && cap?.state?.quality === "error") {
+    return (
+      <Box sx={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", p: 1 }}>
+        <Typography variant="body2" color="warning.main">
+          {SENSOR_NOT_ANSWERING}
+        </Typography>
+      </Box>
     );
   }
 

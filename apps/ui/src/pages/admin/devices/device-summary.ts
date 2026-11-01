@@ -11,12 +11,16 @@ export type DeviceStatus = { word: string; tone: StatusTone };
 
 const PROBLEM_LIFECYCLE = new Set(["error", "configuration_missing", "validation_failed"]);
 
-export function deviceStatus(d: DeviceRecord, board?: BoardStatus | null): DeviceStatus {
+export function deviceStatus(d: DeviceRecord, board?: BoardStatus | null, values?: Map<string, Capability>): DeviceStatus {
   if (!d.isEnabled) return { word: "Switched off", tone: "off" };
   if (PROBLEM_LIFECYCLE.has(d.esphomeLifecycleState ?? "")) return { word: "Needs attention", tone: "warn" };
   const c = deviceConnectivityState(d);
   if (c === "offline") return { word: "Offline", tone: "bad" };
   if (c === "no_recent_data") return { word: "No recent data", tone: "warn" };
+  // Online, but a sensor on it does not answer (the board sends "nan").
+  if (values && d.sensors.some((s) => s.isEnabled && s.capabilityId && values.get(s.capabilityId)?.state?.quality === "error")) {
+    return { word: "Sensor not answering", tone: "warn" };
+  }
   if (board?.updateState === "update") return { word: "Update ready", tone: "warn" };
   return { word: "Online", tone: "ok" };
 }
