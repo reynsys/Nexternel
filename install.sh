@@ -2,7 +2,7 @@
 # =============================================================================
 # Nexternel installer — on a fresh Ubuntu, Debian or Raspberry Pi OS (64-bit) machine:
 #
-#   curl -fsSL https://www.reynsys.com/install.sh | bash
+#   curl -fsSL https://www.nexternel.com/install.sh | bash
 #
 # It installs Docker if needed, downloads Nexternel into ~/nexternel, creates all service
 # passwords, starts everything, and prints the address to open. The browser then offers

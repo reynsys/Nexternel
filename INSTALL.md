@@ -17,7 +17,7 @@
 Open a terminal on the machine (or connect to it with SSH) and run:
 
 ```bash
-curl -fsSL https://www.reynsys.com/install.sh | bash
+curl -fsSL https://www.nexternel.com/install.sh | bash
 ```
 
 The installer:

@@ -31,7 +31,7 @@ home and needs no cloud account: your data stays with you.
 On a 64-bit Ubuntu, Debian or Raspberry Pi OS machine:
 
 ```bash
-curl -fsSL https://www.reynsys.com/install.sh | bash
+curl -fsSL https://www.nexternel.com/install.sh | bash
 ```
 
 Then open the address it shows (`http://nexternel.local`, or for example `http://192.168.1.20`) and choose
