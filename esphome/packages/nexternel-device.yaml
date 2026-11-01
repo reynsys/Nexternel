@@ -1,4 +1,9 @@
 # Every Nexternel board includes this file.
+#
+# What's new — Devices shows the newest line as the reason when a board needs this file's changes.
+# Add a line whenever a change here alters what the boards run (comments alone never need an update).
+# - V5.2.168: emergency Wi-Fi hotspot
+#
 # MQTT is the connection the dashboard uses.
 # The native API stays available so ESPHome can install updates and show logs.
 # An idle API must not restart the board.

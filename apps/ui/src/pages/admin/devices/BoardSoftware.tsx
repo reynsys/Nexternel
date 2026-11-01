@@ -60,7 +60,7 @@ export function BoardSoftware({ device, canEdit, busy, onUsb, showHistory = true
       : !board.known
         ? `ESPHome does not list ${board.file}.`
       : board.updateState === "update"
-        ? "An update is ready: the board runs older software than the newest build of its settings."
+        ? `An update is ready. Why: ${board.updateReason ? `${board.updateReason.charAt(0).toLowerCase()}${board.updateReason.slice(1)}` : "the board runs older software than the newest build of its settings"}.`
         : board.updateState === "unknown"
           ? "Not known yet: this board does not report which software it runs. One update from Nexternel starts it."
           : `Up to date — it runs the newest build${board.deployedVersion ? ` (ESPHome ${board.deployedVersion})` : ""}.`;

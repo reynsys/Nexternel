@@ -15,6 +15,7 @@ test("without the board's own fingerprint (or a build) it is not known", () => {
   assert.equal(boardUpdateState(undefined, "913f5c2a"), "unknown");
 });
 
-test("a newer ESPHome than the board runs is always an update", () => {
-  assert.equal(boardUpdateState(board({ update_available: true }), null), "update");
+test("a newer ESPHome on the server alone is not an update: the board's settings decide", () => {
+  assert.equal(boardUpdateState(board({ update_available: true }), "913f5c2a"), "current");
+  assert.equal(boardUpdateState(board({ update_available: true }), null), "unknown");
 });

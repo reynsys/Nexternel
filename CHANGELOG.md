@@ -2,6 +2,13 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.174
+
+- **Board updates only when something changed for that board, and you see why.** "Update ready" now says the reason, for example "the shared board settings changed (emergency Wi-Fi hotspot, new in V5.2.168)" or "its settings file was changed (1 Nov, 17:46)". With no reason, there is no update.
+- **A newer ESPHome on the server alone no longer asks for board updates.** The board's own settings decide.
+- **Editing an explanation in the shared board settings never asks for board updates.** Only real setting changes count.
+- **Who started a board update** is shown while it runs ("Started by … at …") and in the Activity log. Nexternel never updates boards on its own.
+
 ## V5.2.173
 
 - **A sensor that stops answering is now shown clearly.** When a board is online but cannot read its sensor (loose wire, wrong pin, failing sensor), its readings no longer stay empty, and a gauge no longer shows 0. They now say **Sensor not answering**.

@@ -2627,6 +2627,8 @@ export type BoardStatus = {
   linkProblem: "none" | "several" | null;
   choices: string[];
   needsUpdate: boolean;
+  /** Why it needs an update, in plain words (never "update" without one). */
+  updateReason?: string | null;
   /** current: runs the newest build; update: needs one; unknown: the board does not report which software it runs yet. */
   updateState: "current" | "update" | "unknown";
   /** The software fingerprint the board reports (what it runs), or null. */
@@ -2647,5 +2649,7 @@ export type BoardUpdateStep = "waiting" | "preparing" | "sending" | "restarting"
 export type BoardUpdateRun = {
   running: boolean;
   startedAt: string | null;
+  /** Who started it. */
+  startedBy?: string | null;
   items: { deviceId: string; name: string; step: BoardUpdateStep; message: string; startedAt: string | null; finishedAt: string | null; logId: string | null }[];
 };

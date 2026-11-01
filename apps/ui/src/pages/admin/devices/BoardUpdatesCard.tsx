@@ -75,15 +75,18 @@ export function BoardUpdatesCard({ canEdit }: { canEdit: boolean }) {
             </Typography>
             {run?.running ? (
               <Typography variant="body2" color="text.secondary">
+                {run.startedBy && run.startedAt
+                  ? `Started by ${run.startedBy} at ${new Date(run.startedAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}. `
+                  : ""}
                 One after another, over Wi‑Fi. Each board restarts once; you can keep using Nexternel.
               </Typography>
             ) : (
               <>
-                {behind.length ? (
-                  <Typography variant="body2" color="text.secondary">
-                    They run older software than the newest build of their settings: {behind.map((b) => b.name).join(", ")}.
+                {behind.map((b) => (
+                  <Typography key={b.deviceId} variant="body2" color="text.secondary">
+                    <b>{b.name}</b>: {b.updateReason ?? "it runs older software than the newest build of its settings"}.
                   </Typography>
-                ) : null}
+                ))}
                 {unknown.length ? (
                   <Typography variant="body2" color="text.secondary">
                     Not known yet: {unknown.map((b) => b.name).join(", ")}. {unknown.length === 1 ? "It does" : "They do"} not report which

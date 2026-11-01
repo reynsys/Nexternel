@@ -115,7 +115,7 @@ export async function listActivity(opts: { kind?: ActivityKind; deviceId?: strin
         -- Restarts are written to activity_log with their reason (board-health.ts).
         WHERE e.state IN ('online', 'offline')
        UNION ALL
-       SELECT u.finished_at, 'update', u.device_id, d.name, d.name || ': ' || u.message, NULL
+       SELECT u.finished_at, 'update', u.device_id, d.name, d.name || ': ' || u.message, u.started_by
          FROM board_update_log u JOIN devices d ON d.id = u.device_id
      ) x
      WHERE ($1::text IS NULL OR x.kind = $1)

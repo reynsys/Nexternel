@@ -53,6 +53,8 @@ export async function ensureDevicesSchema(): Promise<void> {
       log         TEXT NOT NULL
     );
     CREATE INDEX IF NOT EXISTS idx_board_update_log ON board_update_log (device_id, finished_at DESC);
+    -- Who started the update (a person's name); empty for older records.
+    ALTER TABLE board_update_log ADD COLUMN IF NOT EXISTS started_by TEXT;
   `);
 }
 

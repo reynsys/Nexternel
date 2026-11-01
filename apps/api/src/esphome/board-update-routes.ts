@@ -38,7 +38,7 @@ export const boardUpdateRoutes: FastifyPluginAsync = async (app) => {
     const boards = (await listBoardStatus()).filter((b) => wanted.has(b.deviceId));
     if (!boards.length) return reply.code(400).send({ error: { code: "bad_request", message: "Choose at least one ESPHome board." } });
     try {
-      return { run: startBoardUpdates(boards) };
+      return { run: startBoardUpdates(boards, request.user!.username) };
     } catch (err) {
       return reply.code(409).send({ error: { code: "busy", message: err instanceof Error ? err.message : "Busy" } });
     }

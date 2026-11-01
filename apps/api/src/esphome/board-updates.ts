@@ -4,6 +4,10 @@ import { compileEsphomeDevice, deviceYamlFile, uploadEsphomeDevice } from "./bui
 import { esphomeGet, filesForAddress } from "./file-identity.js";
 import { buildCacheMismatch } from "./cli-log.js";
 import { boardFingerprint } from "../devices/board-health.js";
+import fs from "fs";
+import path from "path";
+import { esphomeDir } from "../migrate/paths.js";
+import { sharedSettingsChangedAt, sharedSettingsNews } from "./shared-settings.js";
 
 /**
  * Updating boards from Nexternel: for each board, prepare its firmware on this server (ESPHome
@@ -55,6 +59,11 @@ export type BoardStatus = {
   /** The board runs older software or settings than its file (it needs an update). */
   needsUpdate: boolean;
   /**
+   * Why it needs one, in plain words (its own settings file changed, the shared board settings
+   * changed and what is new). A board is never "update" without a reason.
+   */
+  updateReason: string | null;
+  /**
    * "current": runs exactly the newest build; "update": needs an update; "unknown": the board does
    * not report which software it runs yet (or nothing is built yet), so Nexternel cannot tell.
    */
@@ -93,7 +102,10 @@ export async function listBoardStatus(): Promise<BoardStatus[]> {
     const file = await deviceYamlFile(d.id);
     const b = file ? boards.get(file) : undefined;
     const choices = !file && d.mqtt_topic_prefix ? await filesForAddress(d.mqtt_topic_prefix) : [];
-    const updateState = boardUpdateState(b, boardFingerprint(d.mqtt_topic_prefix));
+    let updateState = boardUpdateState(b, boardFingerprint(d.mqtt_topic_prefix));
+    const updateReason = updateState === "update" && file ? await updateReasonFor(d.id, file, b) : null;
+    // Only a newer ESPHome on the server, nothing in the board's settings: no update (it would change nothing).
+    if (updateState === "update" && !updateReason) updateState = "current";
     out.push({
       deviceId: d.id,
       name: d.name,
@@ -102,6 +114,7 @@ export async function listBoardStatus(): Promise<BoardStatus[]> {
       choices,
       known: Boolean(b),
       needsUpdate: updateState === "update",
+      updateReason,
       updateState,
       fingerprint: boardFingerprint(d.mqtt_topic_prefix),
       reachable: Boolean(b && (b.state === "online" || b.ip)),
@@ -113,13 +126,43 @@ export async function listBoardStatus(): Promise<BoardStatus[]> {
   return out;
 }
 
+const when = (d: Date) => d.toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+
 /**
- * Does the board need an update? A newer ESPHome than it runs (ESPHome hears the version over MQTT),
- * or the fingerprint it reports differs from ESPHome's fingerprint of the newest build of its file.
+ * Why a board whose software differs from the newest build needs an update: what changed since its
+ * last update from Nexternel. Null when only ESPHome on the server is newer (then nothing is needed).
+ */
+async function updateReasonFor(deviceId: string, file: string, board: EsphomeBoard | undefined): Promise<string | null> {
+  const r = await getPool().query<{ at: Date | null }>(
+    `SELECT MAX(finished_at) AS at FROM board_update_log WHERE device_id = $1 AND outcome = 'done'`,
+    [deviceId]
+  );
+  const last = r.rows[0]?.at ?? null;
+  const reasons: string[] = [];
+  try {
+    const changed = fs.statSync(path.join(esphomeDir(), file)).mtime;
+    if (!last || changed > last) reasons.push(`its settings file was changed (${when(changed)})`);
+  } catch {
+    /* no file: nothing to say */
+  }
+  const shared = await sharedSettingsChangedAt();
+  if (shared && (!last || shared > last)) {
+    // "V5.2.168: emergency Wi-Fi hotspot" → "(emergency Wi-Fi hotspot, new in V5.2.168)"
+    const news = /^(V[\d.]+):\s*(.+)$/.exec(sharedSettingsNews() ?? "");
+    reasons.push(`the shared board settings changed${news ? ` (${news[2]}, new in ${news[1]})` : ""}`);
+  }
+  if (reasons.length) return reasons.join("; ").replace(/^./, (c) => c.toUpperCase());
+  const newerEsphome = board?.deployed_version && board.current_version && board.deployed_version !== board.current_version;
+  if (newerEsphome) return null;
+  return "It runs different software from its settings file (installed some other way, or its last update did not finish)";
+}
+
+/**
+ * Does the board's software differ from the newest build of its file? The fingerprint it reports is
+ * compared with ESPHome's fingerprint of that build. A newer ESPHome alone is not a reason.
  */
 export function boardUpdateState(board: EsphomeBoard | undefined, running: string | null): BoardStatus["updateState"] {
   if (!board) return "unknown";
-  if (board.update_available) return "update";
   const newest = board.expected_config_hash?.toLowerCase() || null;
   if (!running || !newest) return "unknown";
   return running === newest ? "current" : "update";
@@ -136,9 +179,15 @@ export type UpdateItem = {
   /** The kept record of this update (GET /api/v1/esphome/updates/log/:id), once it has finished. */
   logId: string | null;
 };
-export type UpdateRun = { running: boolean; startedAt: string | null; items: UpdateItem[] };
+export type UpdateRun = {
+  running: boolean;
+  startedAt: string | null;
+  /** Who started it (the person signed in); boards are never updated without someone asking. */
+  startedBy: string | null;
+  items: UpdateItem[];
+};
 
-let run: UpdateRun = { running: false, startedAt: null, items: [] };
+let run: UpdateRun = { running: false, startedAt: null, startedBy: null, items: [] };
 
 export function updateRun(): UpdateRun {
   return run;
@@ -212,8 +261,8 @@ async function confirmsNewSoftware(prefix: string | null, expected: string | und
 
 async function keepLog(item: UpdateItem, log: string[]): Promise<void> {
   const r = await getPool().query<{ id: string }>(
-    `INSERT INTO board_update_log (device_id, started_at, outcome, message, log) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-    [item.deviceId, item.startedAt, item.step, item.message, log.join("\n\n")]
+    `INSERT INTO board_update_log (device_id, started_at, outcome, message, log, started_by) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+    [item.deviceId, item.startedAt, item.step, item.message, log.join("\n\n"), run.startedBy]
   );
   item.logId = r.rows[0]?.id ?? null;
   await getPool().query(
@@ -289,11 +338,12 @@ export async function boardUpdateHistory(deviceId: string): Promise<{ id: string
 }
 
 /** Start updating these boards (one after another). Refused while an update is already running. */
-export function startBoardUpdates(boards: { deviceId: string; name: string }[]): UpdateRun {
+export function startBoardUpdates(boards: { deviceId: string; name: string }[], startedBy: string): UpdateRun {
   if (run.running) throw new Error("Boards are already being updated. Wait until it has finished.");
   run = {
     running: true,
     startedAt: new Date().toISOString(),
+    startedBy,
     items: boards.map((b) => ({ deviceId: b.deviceId, name: b.name, step: "waiting", message: "Waiting…", startedAt: null, finishedAt: null, logId: null })),
   };
   publishChange("devices");
