@@ -101,8 +101,9 @@ export function DashboardTabBar({
     enabled: editMode && canEdit && !display.active,
     onError: setError,
   });
-  const addButton = (size: number) => (
-    <Tooltip title="Add dashboard">
+  // In a standing column (the rail) names show on the left, so they never cover the next button.
+  const addButton = (size: number, tip?: "left") => (
+    <Tooltip title="Add dashboard" placement={tip}>
       <Button
         variant="outlined"
         aria-label="Add dashboard"
@@ -129,10 +130,10 @@ export function DashboardTabBar({
   // In the dock, rail and rooms-panel corner the cog is a button like the rooms beside it.
   const tools = (dir: "row" | "column", size = 44) => (
     <Stack direction={dir} alignItems="center" sx={{ flexShrink: 0, gap: "var(--nx-control-gap)" }}>
-      {canAdd ? addButton(size) : null}
-      {skin.id === "mui-dashboard" && !display.active ? <NotificationBell place="dashboard" canClear={canClearNotifications} /> : null}
+      {canAdd ? addButton(size, dir === "column" ? "left" : undefined) : null}
+      {skin.id === "mui-dashboard" && !display.active ? <NotificationBell place="dashboard" canClear={canClearNotifications} tip={dir === "column" ? "left" : undefined} /> : null}
       {canEdit && (
-        <Tooltip title="Dashboard Options">
+        <Tooltip title="Dashboard Options" placement={dir === "column" ? "left" : undefined}>
           <Button
             variant={editMode ? "contained" : "outlined"}
             aria-label="Dashboard Options"

@@ -49,7 +49,16 @@ const LEVEL_COLOR: Record<NotificationItem["level"], string> = {
  * dashboard tools (beside the Dashboard Options cog; other pages keep it at the top of the side
  * menu). "bar" (phone top bar, top-menu layout) shows whenever the bell is on.
  */
-export function NotificationBell({ canClear, place = "bar" }: { canClear?: boolean; place?: "menu" | "menu-bottom" | "dashboard" | "bar" }) {
+export function NotificationBell({
+  canClear,
+  place = "bar",
+  tip,
+}: {
+  canClear?: boolean;
+  place?: "menu" | "menu-bottom" | "dashboard" | "bar";
+  /** Where its name shows when pointed at (left in the rail, so it never covers the next button). */
+  tip?: "left";
+}) {
   const skin = useOptionalSkin();
   const prefs = normalizeBellPrefs(skin?.themePrefs.bell);
   const lights = useStatusLightPrefs();
@@ -119,7 +128,7 @@ export function NotificationBell({ canClear, place = "bar" }: { canClear?: boole
 
   return (
     <>
-      <Tooltip title={unread ? `${unread} new notification${unread === 1 ? "" : "s"}` : "Notifications"}>
+      <Tooltip title={unread ? `${unread} new notification${unread === 1 ? "" : "s"}` : "Notifications"} placement={tip}>
         <IconButton size="small" aria-label="Notifications" onClick={(e) => void open(e.currentTarget)} color="inherit">
           <Badge
             badgeContent={unread}

@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.165
+
+- **New Right rail:** it now works just like the Dock, standing up on the right — the room under the pointer grows and its name shows beside it. No more fold button; the rail always stays slim.
+
 ## V5.2.164
 
 - **New: built-in connection troubleshooting.** When a device loses its connection, the Activity log now says why, in the message service's own words — for example that the board stopped answering, or dropped the connection without saying goodbye.
