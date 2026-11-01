@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.169
+
+- **Fixed: switches flashed "Switching…" for a moment** between Off and On. A switch now goes straight to its new position when the board answers quickly; "Switching…" only shows when the board takes longer than half a second.
+
 ## V5.2.168
 
 - **Every board now has an emergency Wi‑Fi hotspot.** If a board cannot reach your Wi‑Fi (new router, changed password), it opens its own Wi‑Fi; join it from a phone and choose your Wi‑Fi again. Its name and password are in **Devices → a board → Advanced**. Boards need one update (**Update boards** on Devices).

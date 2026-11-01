@@ -2,6 +2,11 @@ import { useEffect, useState } from "react";
 
 /** How long a "no answer" message stays under a switch. */
 const ERROR_SHOWN_MS = 10_000;
+/**
+ * A board usually answers within a fraction of a second: only a slower answer shows "Switching…"
+ * (and the greyed switch), so a quick switch goes straight from Off to On without a flash between.
+ */
+const SHOW_WAITING_AFTER_MS = 600;
 import type { Capability } from "../../api";
 import { api } from "../../api";
 
@@ -35,6 +40,16 @@ export function useSwitchControl(
     const t = window.setTimeout(() => setPending(null), 5_000);
     return () => window.clearTimeout(t);
   }, [pending, busy]);
+
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    if (!busy) {
+      setSlow(false);
+      return;
+    }
+    const t = window.setTimeout(() => setSlow(true), SHOW_WAITING_AFTER_MS);
+    return () => window.clearTimeout(t);
+  }, [busy]);
 
   useEffect(() => {
     if (!error) return;
@@ -85,6 +100,6 @@ export function useSwitchControl(
     }
   }
 
-  /** `busy`: sent, waiting for the board to report the new position. */
-  return { on, busy, error, canCommand, toggle, setOn, pulse };
+  /** `busy`: sent, and the board has not reported the new position for a while (see SHOW_WAITING_AFTER_MS). */
+  return { on, busy: slow, error, canCommand, toggle, setOn, pulse };
 }
