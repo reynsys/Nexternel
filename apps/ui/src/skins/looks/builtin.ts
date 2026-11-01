@@ -107,10 +107,6 @@ function standardRoles(theme: Theme) {
     avatarFill: R.main.solid,
     avatarInk: R.main.ink,
     avatarBorder: "",
-    brandFill: `linear-gradient(135deg, ${R.main.solid} 0%, ${R.second.solid} 100%)`,
-    brandBorder: `1px solid ${R.main.solid}`,
-    brandShadow: "",
-    brandRadius: "999px",
   };
 }
 

@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.170
+
+- **Nexternel has its own logo** — a hexagon planet with its ring. You see it in the menu (in your Appearance colours), in the browser tab, as the icon when you add Nexternel to a phone's home screen, and on the sign-in page.
+
 ## V5.2.169
 
 - **Fixed: switches flashed "Switching…" for a moment** between Off and On. A switch now goes straight to its new position when the board answers quickly; "Switching…" only shows when the board takes longer than half a second.

@@ -242,6 +242,11 @@ apps/ui/index.html
 apps/ui/nginx.conf
 apps/ui/package.json
 apps/ui/package-lock.json
+apps/ui/public/apple-touch-icon.png
+apps/ui/public/favicon-32.png
+apps/ui/public/favicon.svg
+apps/ui/public/icon-192.png
+apps/ui/public/icon-512.png
 apps/ui/scripts/stage2-test-loader.mjs
 apps/ui/scripts/stage2-test-resolver.mjs
 apps/ui/src/api.ts

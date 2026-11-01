@@ -165,11 +165,6 @@ export type LookTokens = {
   avatarFill: string;
   avatarInk: string;
   avatarBorder: string;
-  /** The Nexternel mark at the top of the menu (when there is no own logo). */
-  brandFill: string;
-  brandBorder: string;
-  brandShadow: string;
-  brandRadius: string;
 };
 
 /** A font a Look offers. Its CSS (e.g. @font-face) comes with the Look's css. */

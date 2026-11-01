@@ -19,6 +19,7 @@ import { api, rememberAuth, type BackupInspectResult, type BackupJob } from "../
 import { useSkin } from "../skins/SkinProvider";
 import { choiceSx } from "../skins/surfaceStyles";
 import { ButtonRow } from "../components/ButtonRow";
+import { BrandMark } from "../components/BrandMark";
 
 /**
  * Welcome screen on a new installation: start a new home, or take over one from its backup.
@@ -185,9 +186,10 @@ export function SetupPage() {
       <Card>
         <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
           <ButtonRow>
-            <Typography variant="h5">
-              Welcome to Nexternel
-            </Typography>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <BrandMark size={52} />
+              <Typography variant="h5">Welcome to Nexternel</Typography>
+            </Stack>
 
             {step === "choose" && (
               <>
