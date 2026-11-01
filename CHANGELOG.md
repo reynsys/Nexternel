@@ -2,6 +2,12 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.172
+
+- **Panels per row.** In a section's settings (while editing a dashboard), choose **2, 3, 4, 5 or 6** panels per row: every panel in that section gets the same width and they line up in neat rows, with no gap at the end. Heights stay as they are, and you can still resize panels afterwards. A choice is greyed out when it would make a panel narrower than it can be (a history chart needs at least the width of two standard panels).
+- **Finer resizing.** Dragging a panel's resize corner now moves in smaller steps (a sixth of before), so panels can be sized more precisely.
+- Your dashboards look exactly as before: every saved panel size is converted once, automatically, to the finer steps (also when a backup is restored, and when updating from any older version).
+
 ## V5.2.171
 
 - **New sign-in screen.** It now fills the whole screen: a welcome side with the logo, and the sign-in box beside it (stacked on a phone). The welcome side shows the background and effect last chosen in Appearance on that device; on a new device it shows the standard Nexternel look. The sign-in box always stays plain and easy to read.

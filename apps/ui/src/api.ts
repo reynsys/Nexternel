@@ -1,5 +1,6 @@
 import { pushDiagnosticError } from "./diagnostics/errorRing";
 import { dashboardHistoryScheduler } from "./lib/dashboard-data-runtime/history-scheduler";
+import type { DashboardGridCols } from "@nexternel/domain";
 
 const ACCESS_KEY = "nexternel_access_token";
 const REFRESH_KEY = "nexternel_refresh_token";
@@ -2511,7 +2512,7 @@ export type DashboardSection = {
   collapsed?: boolean;
   roomId?: string | null;
   icon?: string;
-  /** 12-col span: 12 full, 6 half, 4 third, 3 quarter */
+  /** Section width on the page's 12-column grid: 12 full, 6 half, 4 third, 3 quarter */
   colSpan?: number;
   /** false: no title bar (icon, name, panel count) outside editing — just the frame round the panels. */
   showTitle?: boolean;
@@ -2526,8 +2527,8 @@ export type DashboardDocument = {
   showTabLabel?: boolean;
   /** Section quick-jump chips below tab bar (off by default). */
   showSectionNav?: boolean;
-  /** Columns panels are arranged on: 12 (6 across), 10 (5 across), 8 (4 across). Absent = 12. */
-  gridCols?: 12 | 10 | 8;
+  /** Steps panels are arranged on (six to a square): 60 (5 across) or 48 (4 across). */
+  gridCols?: DashboardGridCols;
   sections: DashboardSection[];
 };
 

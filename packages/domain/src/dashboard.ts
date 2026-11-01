@@ -101,15 +101,18 @@ export const DashboardDocumentV3Schema = z.object({
   tabIcon: z.string().optional(),
   showTabLabel: z.boolean().optional().default(true),
   showSectionNav: z.boolean().optional().default(false),
-  /** Columns panels are arranged on: 10 (5 standard panels across) or 8 (4 across). */
-  gridCols: z.union([z.literal(12), z.literal(10), z.literal(8)]).optional(),
+  /**
+   * Steps panels are arranged on: 60 (5 standard panels across) or 48 (4 across). A step is a sixth
+   * of a square (see GRID_STEPS_PER_SQUARE). 12, 10 and 8 are older documents counted in squares.
+   */
+  gridCols: z.union([z.literal(60), z.literal(48), z.literal(12), z.literal(10), z.literal(8)]).optional(),
   sections: z.array(DashboardSectionV3Schema).default([]),
 });
 
 export type DashboardDocumentV3 = z.infer<typeof DashboardDocumentV3Schema>;
 
-/** Canonical persisted dashboard document (V5 — schema v3). */
-export type PersistedDashboardDocument = DashboardDocumentV3;
+/** Canonical persisted dashboard document (V5 — schema v3), as migrated: always counted in steps. */
+export type PersistedDashboardDocument = Omit<DashboardDocumentV3, "gridCols"> & { gridCols?: DashboardGridCols };
 
 /** Legacy persisted dashboard document (PostgreSQL JSONB) — v2 compatibility read. */
 export const DashboardDocumentSchema = z.object({
@@ -264,10 +267,34 @@ export function packPanelsForColumns<P extends { layout: PanelLayout }>(panels: 
   return panels.map((p) => ({ ...p, layout: placed.get(p)! }));
 }
 
-/** Panels across: every dashboard is 10 columns (5 standard panels) or 8; older 12-column ones move to 10 once. */
-function withPanelsAcross(sections: DashboardSectionV3[], gridCols: 12 | 10 | 8 | undefined): { sections: DashboardSectionV3[]; gridCols: 10 | 8 } {
-  if (gridCols === 10 || gridCols === 8) return { sections, gridCols };
-  return { sections: sections.map((s) => ({ ...s, panels: packPanelsForColumns(s.panels, 10) })), gridCols: 10 };
+/**
+ * Panel widths and places are counted in steps, six to a square: rows of 60 steps split evenly
+ * into 2, 3, 4, 5, 6, 10 or 12 panels. Heights stay in squares.
+ */
+export const GRID_STEPS_PER_SQUARE = 6;
+
+export type DashboardGridCols = 60 | 48;
+
+/**
+ * Panels across: every dashboard is 60 steps (5 standard panels) or 48 (4). Older documents are
+ * counted in squares and move once: 12 squares are packed onto 10, then each square becomes 6 steps,
+ * so every panel keeps exactly its size and place.
+ */
+function withPanelsAcross(sections: DashboardSectionV3[], gridCols: unknown): { sections: DashboardSectionV3[]; gridCols: DashboardGridCols } {
+  if (gridCols === 60 || gridCols === 48) return { sections, gridCols };
+  const squares = gridCols === 8 ? 8 : 10;
+  const packed = gridCols === 10 || gridCols === 8 ? sections : sections.map((s) => ({ ...s, panels: packPanelsForColumns(s.panels, 10) }));
+  const k = GRID_STEPS_PER_SQUARE;
+  return {
+    sections: packed.map((s) => ({
+      ...s,
+      panels: s.panels.map((p) => ({
+        ...p,
+        layout: { ...p.layout, x: p.layout.x * k, w: p.layout.w * k, ...(p.layout.minW ? { minW: p.layout.minW * k } : {}) },
+      })),
+    })),
+    gridCols: (squares * k) as DashboardGridCols,
+  };
 }
 
 function parseMigrationSections(rawSections: unknown[]): DashboardSectionV3[] {
@@ -285,8 +312,8 @@ function documentShell(
   showTabLabel: boolean,
   showSectionNav: boolean,
   sections: DashboardSectionV3[],
-  gridCols?: 12 | 10 | 8
-): DashboardDocumentV3 {
+  gridCols?: DashboardGridCols
+): PersistedDashboardDocument {
   const validated = DashboardDocumentV3Schema.safeParse({
     schemaVersion: 3,
     name,
@@ -296,7 +323,7 @@ function documentShell(
     ...(gridCols ? { gridCols } : {}),
     sections,
   });
-  if (validated.success) return validated.data;
+  if (validated.success) return validated.data as PersistedDashboardDocument;
   return {
     schemaVersion: 3,
     name,
@@ -308,7 +335,7 @@ function documentShell(
   };
 }
 
-export function emptyDashboardDocument(name = "Dashboard"): DashboardDocumentV3 {
+export function emptyDashboardDocument(name = "Dashboard"): PersistedDashboardDocument {
   return {
     schemaVersion: 3,
     name,
@@ -316,7 +343,7 @@ export function emptyDashboardDocument(name = "Dashboard"): DashboardDocumentV3 
     showTabLabel: true,
     showSectionNav: false,
     // New dashboards: 5 panels across.
-    gridCols: 10,
+    gridCols: 60,
     sections: [
       {
         id: "section-main",
@@ -348,31 +375,36 @@ export function migrateDashboardDocument(raw: unknown): PersistedDashboardDocume
       : DEFAULT_DASHBOARD_TAB_ICON;
   const showTabLabel = doc.showTabLabel !== false;
   const showSectionNav = doc.showSectionNav === true;
-  const gridCols = doc.gridCols === 10 || doc.gridCols === 8 || doc.gridCols === 12 ? (doc.gridCols as 12 | 10 | 8) : undefined;
 
   if (doc.schemaVersion === 3 && Array.isArray(doc.sections)) {
-    const across = withPanelsAcross(parseMigrationSections(doc.sections).sort((a, b) => a.order - b.order), gridCols);
+    const across = withPanelsAcross(parseMigrationSections(doc.sections).sort((a, b) => a.order - b.order), doc.gridCols);
     return documentShell(name, tabIcon, showTabLabel, showSectionNav, across.sections, across.gridCols);
   }
 
+  // Older documents have no gridCols: they were arranged 12 squares wide.
   if (doc.schemaVersion === 2 && Array.isArray(doc.sections)) {
     const sections = parseMigrationSections(doc.sections).sort((a, b) => a.order - b.order);
     if (sections.length === 0) {
       return emptyDashboardDocument(name);
     }
-    return documentShell(name, tabIcon, showTabLabel, showSectionNav, sections);
+    const across = withPanelsAcross(sections, undefined);
+    return documentShell(name, tabIcon, showTabLabel, showSectionNav, across.sections, across.gridCols);
   }
 
   const panels = readPanelList(Array.isArray(doc.widgets) ? (doc.widgets as unknown[]) : []);
-  return documentShell(name, tabIcon, showTabLabel, showSectionNav, [
-    {
-      id: "section-main",
-      title: "Main",
-      order: 0,
-      collapsed: false,
-      icon: DEFAULT_SECTION_ICON,
-      colSpan: 12,
-      panels,
-    },
-  ]);
+  const across = withPanelsAcross(
+    [
+      {
+        id: "section-main",
+        title: "Main",
+        order: 0,
+        collapsed: false,
+        icon: DEFAULT_SECTION_ICON,
+        colSpan: 12,
+        panels,
+      },
+    ],
+    undefined
+  );
+  return documentShell(name, tabIcon, showTabLabel, showSectionNav, across.sections, across.gridCols);
 }

@@ -1,6 +1,6 @@
 import type { Layout } from "react-grid-layout";
 
-import { migrateContributionPanelType } from "@nexternel/domain";
+import { GRID_STEPS_PER_SQUARE, migrateContributionPanelType } from "@nexternel/domain";
 
 import type { PanelInstance } from "../api";
 import { runtimeConfigToPanelRecord } from "../lib/panel-compatibility/panel-config";
@@ -62,7 +62,11 @@ function finiteGridUnit(value: unknown, fallback: number): number {
 
 
 
-/** Resolve the authoritative Dashboard placement contract for a Panel type (grid units). */
+/**
+ * Resolve the authoritative Dashboard placement contract for a Panel type (grid units).
+ * Panel types describe widths in squares; the dashboard counts widths in steps (six to a square),
+ * so widths are converted here, once. Heights are squares on both sides.
+ */
 
 export function panelPlacementLimits(type: string): PanelPlacementLimits {
 
@@ -74,15 +78,15 @@ export function panelPlacementLimits(type: string): PanelPlacementLimits {
 
   const sizing = resolved.descriptor?.sizing;
 
-  const minW = Math.max(1, finiteGridUnit(sizing?.minWidth, PLATFORM_PLACEMENT_MIN_W));
+  const minW = Math.max(1, finiteGridUnit(sizing?.minWidth, PLATFORM_PLACEMENT_MIN_W)) * GRID_STEPS_PER_SQUARE;
 
   const minH = Math.max(1, finiteGridUnit(sizing?.minHeight, PLATFORM_PLACEMENT_MIN_H));
 
-  const maxW = Math.max(minW, finiteGridUnit(sizing?.maxWidth, DASHBOARD_GRID_COLS));
+  const maxW = Math.max(minW, finiteGridUnit(sizing?.maxWidth, DASHBOARD_GRID_COLS) * GRID_STEPS_PER_SQUARE);
 
   const maxH = Math.max(minH, finiteGridUnit(sizing?.maxHeight, 64));
 
-  const preferredW = Math.max(minW, finiteGridUnit(sizing?.preferredWidth, 4));
+  const preferredW = Math.max(minW, finiteGridUnit(sizing?.preferredWidth, 4) * GRID_STEPS_PER_SQUARE);
 
   const preferredH = Math.max(minH, finiteGridUnit(sizing?.preferredHeight, 3));
 
@@ -184,7 +188,7 @@ export function panelItemPlacementFloor(panel: PlacementPanel): { minW: number; 
     return { minW: base.minW, minH: base.minH };
   }
   // One reading needs 2 squares across and the type's own height (half height allowed).
-  const cellW = Math.max(base.minW, PLATFORM_PLACEMENT_MIN_W);
+  const cellW = Math.max(base.minW, PLATFORM_PLACEMENT_MIN_W * GRID_STEPS_PER_SQUARE);
   const cellH = base.minH;
   if (stacksDown(panel)) {
     return {
@@ -233,9 +237,9 @@ export function enforcePanelPlacement<T extends PlacementPanel>(panel: T): T {
   const { maxW, maxH } = panelPlacementLimits(panel.type);
   const { minW, minH } = panelItemPlacementFloor(panel);
 
-  const l = panel.layout ?? { i: panel.id, x: 0, y: 0, w: 4, h: 4 };
+  const l = panel.layout ?? { i: panel.id, x: 0, y: 0, w: 4 * GRID_STEPS_PER_SQUARE, h: 4 };
 
-  const w = Math.min(maxW, Math.max(l.w ?? 4, minW));
+  const w = Math.min(maxW, Math.max(l.w ?? 4 * GRID_STEPS_PER_SQUARE, minW));
 
   const h = Math.min(maxH, Math.max(l.h ?? 4, minH));
 

@@ -1,4 +1,5 @@
 import type { DashboardSection, WidgetInstance } from "../api";
+import { GRID_STEPS_PER_SQUARE } from "@nexternel/domain";
 import { newId } from "./dashboard-document";
 import { sectionPanels, sectionWithPanels } from "./panel-compatibility/section-panels";
 import { isCorePanelType } from "./panel-compatibility/panel-type";
@@ -51,7 +52,9 @@ function makePanelWidget(
   titleSuffix?: string,
   extraConfig?: Record<string, unknown>
 ): WidgetInstance {
-  const size = panelDefaultSize(panelKind);
+  // Default sizes are in squares; dashboard widths are in steps.
+  const squares = panelDefaultSize(panelKind);
+  const size = { ...squares, w: squares.w * GRID_STEPS_PER_SQUARE, minW: squares.minW * GRID_STEPS_PER_SQUARE };
   const widgetId = newId("w");
   const baseTitle = panelLabel(panelKind);
   const title = titleSuffix ? `${baseTitle} — ${titleSuffix}` : baseTitle;

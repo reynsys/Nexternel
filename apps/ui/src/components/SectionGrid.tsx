@@ -58,7 +58,7 @@ import { createEdgeScroller } from "../lib/edge-scroll";
 const RESIZE_MARK = `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g stroke="#000" stroke-width="1.2" stroke-linejoin="round"><path d="M5.5 5.5l5.6 1.2-4.4 4.4z"/><path d="M18.5 18.5l-5.6-1.2 4.4-4.4z"/></g><circle cx="12" cy="12" r="1.5"/></svg>')}")`;
 
 type Props = {
-  /** Columns the dashboard's panels are arranged on (12, 10 or 8). */
+  /** Steps the dashboard's panels are arranged on (60 or 48; six to a square). */
   gridCols?: number;
   sectionId: string;
   sectionRoomId?: string | null;
@@ -120,7 +120,7 @@ function PanelEditButton({ name, kind, onEdit }: { name: string; kind: "panel" |
  * RGL inside accordion/collapse needs measured width — WidthProvider often stays at 0.
  */
 export function SectionGrid({
-  gridCols = 12,
+  gridCols = 60,
   sectionId,
   sectionRoomId,
   sectionTitle,
@@ -171,7 +171,7 @@ export function SectionGrid({
   }, []);
 
 
-  /** Saved placement (12-wide arrangement, with each panel's size limits). */
+  /** Saved placement (full-width arrangement in steps, with each panel's size limits). */
   const savedItems = useMemo(
     () =>
       panels

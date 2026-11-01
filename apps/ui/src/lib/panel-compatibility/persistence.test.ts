@@ -47,9 +47,9 @@ test("v3 serialize strips legacy placement mins from persisted layout", () => {
               i: "c1",
               x: 0,
               y: 0,
-              w: 8,
+              w: 48,
               h: 5,
-              minW: 6,
+              minW: 36,
               minH: 4,
             },
             bindings: {},
@@ -60,7 +60,7 @@ test("v3 serialize strips legacy placement mins from persisted layout", () => {
     ],
   });
   const layout = doc.sections[0].panels?.[0]?.layout;
-  assert.deepEqual(layout, { i: "c1", x: 0, y: 0, w: 8, h: 5 });
+  assert.deepEqual(layout, { i: "c1", x: 0, y: 0, w: 48, h: 5 }); // widths in steps (8 squares)
 });
 
 test("hydrate maps legacy widgets to runtime panels", () => {

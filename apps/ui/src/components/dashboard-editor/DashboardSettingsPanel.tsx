@@ -4,6 +4,7 @@ import { SidePanel } from "../side-panel/SidePanel";
 import { SidePanelButtons } from "../side-panel/SidePanelButtons";
 import { DashboardIconPicker } from "../DashboardIconPicker";
 import { ManageDashboardsPanel } from "../ManageDashboardsPanel";
+import type { DashboardGridCols } from "@nexternel/domain";
 
 export type DashboardSettingsPage = "this" | "all";
 
@@ -23,8 +24,8 @@ type Props = {
   showName: boolean;
   onShowName: (v: boolean) => void;
   /** Columns the panels are arranged on: 10 = 5 across, 8 = 4 across. */
-  gridCols: 10 | 8 | 12;
-  onGridCols: (v: 10 | 8) => void;
+  gridCols: DashboardGridCols;
+  onGridCols: (v: DashboardGridCols) => void;
   sectionShortcuts: boolean;
   onSectionShortcuts: (v: boolean) => void;
   onDashboardsChanged: () => void;
@@ -94,11 +95,11 @@ export function DashboardSettingsPanel(p: Props) {
               exclusive
               size="small"
               aria-label="Panels across"
-              value={p.gridCols === 8 ? 8 : 10}
-              onChange={(_e, v: 10 | 8 | null) => v && p.onGridCols(v)}
+              value={p.gridCols === 48 ? 48 : 60}
+              onChange={(_e, v: DashboardGridCols | null) => v && p.onGridCols(v)}
             >
-              <ToggleButton value={10}>5</ToggleButton>
-              <ToggleButton value={8}>4</ToggleButton>
+              <ToggleButton value={60}>5</ToggleButton>
+              <ToggleButton value={48}>4</ToggleButton>
             </ToggleButtonGroup>
           </SettingBlock>
           <SettingBlock label="Section shortcuts" help="A row of buttons above the sections; one tap jumps to a section. Handy on long dashboards.">

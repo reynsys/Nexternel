@@ -39,7 +39,7 @@ export function emptyDocument(name = "Dashboard"): DashboardDocument {
     tabIcon: DEFAULT_DASHBOARD_TAB_ICON,
     showTabLabel: true,
     showSectionNav: false,
-    gridCols: 10,
+    gridCols: 60,
     sections: [
       {
         id: "section-main",
@@ -157,11 +157,11 @@ export function nextWidgetY(widgets: WidgetInstance[]): number {
   return Math.max(...widgets.map((w) => w.layout.y + w.layout.h));
 }
 
-/** Place next widget to the right when space remains, else next row. */
+/** Place next widget to the right when space remains, else next row (`w`, `cols` in steps). */
 export function nextWidgetPlacement(
   widgets: WidgetInstance[],
   w: number,
-  cols = 12
+  cols: number
 ): { x: number; y: number } {
   if (widgets.length === 0) return { x: 0, y: 0 };
   const byRow = new Map<number, WidgetInstance[]>();

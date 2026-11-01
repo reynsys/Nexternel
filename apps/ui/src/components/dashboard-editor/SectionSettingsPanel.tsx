@@ -20,6 +20,8 @@ export type SectionSettingsValue = {
   isFirst: boolean;
   isLast: boolean;
   isOnly: boolean;
+  /** Panels per row: the choices for this dashboard, whether every panel here fits, and the current one. */
+  perRow: { choices: { n: number; fits: boolean }[]; current: number | null };
 };
 
 type Props = {
@@ -31,6 +33,8 @@ type Props = {
   onChange: (patch: { title?: string; icon?: string; showTitle?: boolean; colSpan?: SectionColSpan }) => void;
   onMove: (dir: -1 | 1) => void;
   onDelete: () => void;
+  /** Makes every panel here the same width, `n` to a row. */
+  onPanelsPerRow: (n: number) => void;
 };
 
 const WIDTHS: SectionColSpan[] = [12, 6, 4, 3];
@@ -40,7 +44,7 @@ const WIDTHS: SectionColSpan[] = [12, 6, 4, 3];
  * The section being changed is outlined on the dashboard. Deleting asks first, here. Changes show
  * straight away; Apply keeps them, Cancel puts the section back.
  */
-export function SectionSettingsPanel({ section, onCancel, onApply, onChange, onMove, onDelete }: Props) {
+export function SectionSettingsPanel({ section, onCancel, onApply, onChange, onMove, onDelete, onPanelsPerRow }: Props) {
   const [askDelete, setAskDelete] = useState(false);
   useEffect(() => setAskDelete(false), [section?.id]);
   const s = section;
@@ -80,6 +84,28 @@ export function SectionSettingsPanel({ section, onCancel, onApply, onChange, onM
               ))}
             </Box>
           </SettingBlock>
+          {s.panelCount > 0 ? (
+            <SettingBlock
+              label="Panels per row"
+              help={`Makes every panel in this section the same width, in rows of this many. Heights stay as they are; you can still resize panels afterwards.${
+                s.perRow.choices.some((c) => !c.fits) ? " Greyed-out choices would make some panels here narrower than they can be." : ""
+              }`}
+            >
+              <ToggleButtonGroup
+                exclusive
+                size="small"
+                aria-label="Panels per row"
+                value={s.perRow.current}
+                onChange={(_e, v: number | null) => v && onPanelsPerRow(v)}
+              >
+                {s.perRow.choices.map((c) => (
+                  <ToggleButton key={c.n} value={c.n} disabled={!c.fits}>
+                    {c.n}
+                  </ToggleButton>
+                ))}
+              </ToggleButtonGroup>
+            </SettingBlock>
+          ) : null}
           <SettingBlock label="Position on the page">
             <ButtonRow direction="row">
               <Button variant="outlined" startIcon={<ArrowUpwardIcon />} disabled={s.isFirst} onClick={() => onMove(-1)}>

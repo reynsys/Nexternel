@@ -113,16 +113,43 @@ test("a section's hidden bar (showTitle: false) is kept when saved and loaded", 
   assert.equal(migrated.sections[1]?.showTitle, undefined);
 });
 
-test("every dashboard is 5 across: a 12-column one moves to 10 once, in order; 10 and 8 are kept", () => {
-  const p = (i: string, x: number, y: number, w: number, h: number) => ({ id: i, type: "panel.status", layout: { i, x, y, w, h } });
-  const old = { schemaVersion: 3, name: "T", sections: [{ id: "s", title: "S", order: 0, panels: [p("a", 0, 0, 2, 2), p("b", 2, 0, 2, 2), p("c", 4, 0, 2, 2), p("d", 6, 0, 2, 2), p("e", 8, 0, 2, 2), p("f", 10, 0, 2, 2), p("w", 0, 2, 12, 2)] }] };
-  const moved = migrateDashboardDocument(old) as unknown as { gridCols: number; sections: Array<{ panels: Array<{ id: string; layout: { x: number; y: number; w: number } }> }> };
-  assert.equal(moved.gridCols, 10);
-  const at = Object.fromEntries(moved.sections[0]!.panels.map((q) => [q.id, [q.layout.x, q.layout.y, q.layout.w]]));
-  assert.deepEqual(at.e, [8, 0, 2]);
-  assert.deepEqual(at.f, [0, 2, 2]);
-  assert.deepEqual(at.w, [0, 4, 10]);
-  const again = migrateDashboardDocument(moved) as unknown as { gridCols: number; sections: Array<{ panels: Array<{ id: string; layout: { x: number } }> }> };
+type Migrated = { gridCols: number; sections: Array<{ panels: Array<{ id: string; layout: { x: number; y: number; w: number; h: number } }> }> };
+const lp = (i: string, x: number, y: number, w: number, h: number) => ({ id: i, type: "panel.status", layout: { i, x, y, w, h } });
+const placesOf = (doc: Migrated) => Object.fromEntries(doc.sections[0]!.panels.map((q) => [q.id, [q.layout.x, q.layout.y, q.layout.w, q.layout.h]]));
+
+test("every dashboard is 5 across: a 12-column one moves to 10 once, in order, then into steps (×6)", () => {
+  const old = { schemaVersion: 3, name: "T", sections: [{ id: "s", title: "S", order: 0, panels: [lp("a", 0, 0, 2, 2), lp("b", 2, 0, 2, 2), lp("c", 4, 0, 2, 2), lp("d", 6, 0, 2, 2), lp("e", 8, 0, 2, 2), lp("f", 10, 0, 2, 2), lp("w", 0, 2, 12, 2)] }] };
+  const moved = migrateDashboardDocument(old) as unknown as Migrated;
+  assert.equal(moved.gridCols, 60);
+  const at = placesOf(moved);
+  assert.deepEqual(at.e, [48, 0, 12, 2]);
+  assert.deepEqual(at.f, [0, 2, 12, 2]);
+  assert.deepEqual(at.w, [0, 4, 60, 2]);
+  const again = migrateDashboardDocument(moved) as unknown as Migrated;
   assert.deepEqual(again.sections, moved.sections); // only once
-  assert.equal((migrateDashboardDocument({ ...old, gridCols: 8 }) as { gridCols?: number }).gridCols, 8);
+  assert.equal(again.gridCols, 60);
+  assert.equal((migrateDashboardDocument({ ...old, gridCols: 8 }) as { gridCols?: number }).gridCols, 48);
+});
+
+test("a 10-column dashboard keeps every panel's size and place exactly: widths and places ×6, heights kept", () => {
+  // The live Energy dashboard on 01/11/2026.
+  const energy = { schemaVersion: 3, name: "Energy", gridCols: 10, sections: [{ id: "s", title: "Main", order: 0, panels: [lp("g1", 0, 0, 3, 3), lp("g2", 3, 0, 3, 3), lp("g3", 6, 0, 3, 3), lp("c1", 0, 3, 3, 3), lp("c2", 3, 3, 4, 3), lp("c3", 0, 6, 4, 3)] }] };
+  const moved = migrateDashboardDocument(energy) as unknown as Migrated;
+  assert.equal(moved.gridCols, 60);
+  assert.deepEqual(placesOf(moved), {
+    g1: [0, 0, 18, 3], g2: [18, 0, 18, 3], g3: [36, 0, 18, 3],
+    c1: [0, 3, 18, 3], c2: [18, 3, 24, 3], c3: [0, 6, 24, 3],
+  });
+  const fourAcross = migrateDashboardDocument({ ...energy, gridCols: 8 }) as unknown as Migrated;
+  assert.equal(fourAcross.gridCols, 48);
+  assert.deepEqual(placesOf(fourAcross).c2, [18, 3, 24, 3]);
+});
+
+test("older documents without panels across (v1 widgets, v2 sections) move to 60 steps too", () => {
+  const v1 = migrateDashboardDocument({ name: "Old", widgets: [lp("a", 10, 0, 2, 2)] }) as unknown as Migrated;
+  assert.equal(v1.gridCols, 60);
+  assert.deepEqual(placesOf(v1).a, [0, 0, 12, 2]); // packed onto 10 squares first, then ×6
+  const v2 = migrateDashboardDocument({ schemaVersion: 2, name: "Old", sections: [{ id: "s", title: "S", order: 0, widgets: [lp("a", 0, 0, 4, 2)] }] }) as unknown as Migrated;
+  assert.equal(v2.gridCols, 60);
+  assert.deepEqual(placesOf(v2).a, [0, 0, 24, 2]);
 });

@@ -47,6 +47,7 @@ import {
   isCorePanelCatalogType,
   panelUsesCapabilityScope,
   readPanelStatusLight,
+  type DashboardGridCols,
   type PanelContentMode,
   type PanelStatusLight,
 } from "@nexternel/domain";
@@ -104,6 +105,7 @@ import { defaultPresetForKind } from "../widgets/echarts/config";
 import {
   clampSectionLayout,
   enforcePanelPlacement,
+  panelItemPlacementFloor,
   panelPlacementLimits,
   panelSectionLayoutMatches,
 } from "../panels/placement";
@@ -116,7 +118,7 @@ import { useLiveChanges } from "../lib/live-changes";
 import { displayPath, useDisplayMode } from "../lib/display-mode";
 import { useSkin } from "../skins/SkinProvider";
 import { normalizeRoomNav, shownRoomNav } from "../lib/room-nav";
-import { rearrangeForColumns } from "../panels/flow-layout";
+import { arrangeInRows, currentPanelsPerRow, panelsPerRowChoices, rearrangeForColumns } from "../panels/flow-layout";
 
 function sectionContentSummary(panels: RuntimePanelInstance[]): string {
   const count = panels.length;
@@ -149,7 +151,7 @@ function DashboardPageContent() {
   const [showTabLabel, setShowTabLabel] = useState(true);
   const [showSectionNav, setShowSectionNav] = useState(false);
   /** Columns panels are arranged on (12 = 6 across, 10 = 5 across, 8 = 4 across). */
-  const [gridCols, setGridCols] = useState<12 | 10 | 8>(10);
+  const [gridCols, setGridCols] = useState<DashboardGridCols>(60);
   const [sections, setSections] = useState<RuntimeDashboardSection[]>(
     () => emptyDocument().sections as RuntimeDashboardSection[]
   );
@@ -193,7 +195,7 @@ function DashboardPageContent() {
     tabIcon: string;
     showTabLabel: boolean;
     showSectionNav: boolean;
-    gridCols: 12 | 10 | 8;
+    gridCols: DashboardGridCols;
     sections: RuntimeDashboardSection[];
   } | null>(null);
   const menuKey = settingsPanel ? (settingsPanel.type === "section" ? `section:${settingsPanel.id}` : "dashboard") : null;
@@ -219,7 +221,7 @@ function DashboardPageContent() {
     tabIcon: string;
     showTabLabel: boolean;
     showSectionNav: boolean;
-    gridCols: 12 | 10 | 8;
+    gridCols: DashboardGridCols;
     sections: RuntimeDashboardSection[];
   } | null>(null);
 
@@ -331,7 +333,7 @@ function DashboardPageContent() {
     setTabIcon(normalized.tabIcon ?? "dashboard");
     setShowTabLabel(normalized.showTabLabel !== false);
     setShowSectionNav(normalized.showSectionNav === true);
-    setGridCols((normalized as { gridCols?: 12 | 10 | 8 }).gridCols ?? 10);
+    setGridCols((normalized as { gridCols?: DashboardGridCols }).gridCols ?? 60);
     setSections(normalized.sections);
     if (normalized.sections[0]) setAddSectionId(normalized.sections[0].id);
   }
@@ -508,7 +510,7 @@ function DashboardPageContent() {
   }
 
   /** Rearrange every section for a new number of columns (same order and shapes). */
-  function changePanelsAcross(cols: 12 | 10 | 8) {
+  function changePanelsAcross(cols: DashboardGridCols) {
     if (cols === gridCols) return;
     setGridCols(cols);
     setSections((prev) =>
@@ -528,6 +530,25 @@ function DashboardPageContent() {
         );
       })
     );
+  }
+
+  /** Section settings → Panels per row: every panel in the section the same width, `perRow` to a row. */
+  function arrangeSectionInRows(sectionId: string, perRow: number) {
+    updateSection(sectionId, (s) => {
+      const list = sectionPanels(s);
+      const placed = arrangeInRows(
+        list.map((w) => ({ i: w.id, x: w.layout.x, y: w.layout.y, w: w.layout.w, h: w.layout.h })),
+        perRow,
+        gridCols
+      );
+      return sectionWithPanels(
+        s,
+        list.map((w) => {
+          const l = placed.find((x) => x.i === w.id);
+          return l ? enforcePanelPlacement({ ...w, layout: { i: w.id, x: l.x, y: l.y, w: l.w, h: l.h } }) : w;
+        })
+      );
+    });
   }
 
   function onLayoutChange(sectionId: string, next: Layout[]) {
@@ -682,7 +703,7 @@ function DashboardPageContent() {
       setSections((prev) =>
         prev.map((s) => {
           if (s.id !== sectionId) return s;
-          const pos = nextWidgetPlacement(sectionPanels(s), placement.preferredW);
+          const pos = nextWidgetPlacement(sectionPanels(s), placement.preferredW, gridCols);
           const panel = decodePanelInstance(
             enforcePanelPlacement({
               id: widgetId,
@@ -718,7 +739,7 @@ function DashboardPageContent() {
     setSections((prev) =>
       prev.map((s) => {
         if (s.id !== sectionId) return s;
-        const pos = nextWidgetPlacement(sectionPanels(s), placement.preferredW);
+        const pos = nextWidgetPlacement(sectionPanels(s), placement.preferredW, gridCols);
         const panel = decodePanelInstance(
           enforcePanelPlacement({
             id: widgetId,
@@ -867,7 +888,7 @@ function DashboardPageContent() {
       if (!moved) return prev;
       return stripped.map((s) => {
         if (s.id !== toSectionId) return s;
-        const pos = nextWidgetPlacement(sectionPanels(s), moved!.layout.w);
+        const pos = nextWidgetPlacement(sectionPanels(s), moved!.layout.w, gridCols);
         const placed = enforcePanelPlacement({
           ...moved!,
           layout: {
@@ -1138,6 +1159,14 @@ function DashboardPageContent() {
                     isFirst: idx === 0,
                     isLast: idx === ordered.length - 1,
                     isOnly: ordered.length === 1,
+                    perRow: (() => {
+                      const list = sectionPanels(sec);
+                      const widest = Math.max(0, ...list.map((w) => panelItemPlacementFloor(w).minW));
+                      return {
+                        choices: panelsPerRowChoices(gridCols).map((n) => ({ n, fits: gridCols / n >= widest })),
+                        current: currentPanelsPerRow(list.map((w) => w.layout), gridCols),
+                      };
+                    })(),
                   }
                 : null
             }
@@ -1146,6 +1175,7 @@ function DashboardPageContent() {
             onChange={(patch) => sec && updateSection(sec.id, patch)}
             onMove={(dir) => sec && moveSection(sec.id, dir)}
             onDelete={() => sec && removeSection(sec.id)}
+            onPanelsPerRow={(n) => sec && arrangeSectionInRows(sec.id, n)}
           />
         );
       })()}
