@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.166
+
+- **Fixed: after installing V5.2.165, Settings → System → Updates still offered it.** The update itself was installed; only the version number shown by the server was not raised. This can no longer happen — a release now stops when the two numbers differ.
+- **Appearance:** the Cancel / Apply bar now stays on the Appearance page instead of following you to every page. If you leave with changes not applied, Nexternel asks: **Stay here**, **Don't keep** or **Apply and continue**.
+
 ## V5.2.165
 
 - **New Right rail:** it now works just like the Dock, standing up on the right — the room under the pointer grows and its name shows beside it. No more fold button; the rail always stays slim.

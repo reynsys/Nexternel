@@ -3,8 +3,8 @@ import { SidePanelButtons } from "../components/side-panel/SidePanelButtons";
 import { BOTTOM_NAV_HEIGHT_PX } from "./builtin/mui-dashboard/BottomNav";
 
 /**
- * Shown while Appearance changes are being tried (Settings → Appearance), on every page until they
- * are applied or cancelled — so leaving the page never keeps or loses them without asking.
+ * Shown on Settings → Appearance while changes are being tried, until they are applied or cancelled.
+ * Leaving the page asks first (ThemeOptionsPanel).
  */
 export function AppearanceTrialBar({ onCancel, onApply }: { onCancel: () => void; onApply: () => void }) {
   return (

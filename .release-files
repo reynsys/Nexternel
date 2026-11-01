@@ -424,6 +424,7 @@ apps/ui/src/lib/use-arrange-dashboards.ts
 apps/ui/src/lib/usePanelPoll.ts
 apps/ui/src/lib/user-display.ts
 apps/ui/src/lib/user-events.ts
+apps/ui/src/lib/version-sync-guard.test.ts
 apps/ui/src/lib/visualization-dimension-contract.test.ts
 apps/ui/src/lib/visualization-rect-context.tsx
 apps/ui/src/lib/visualization-rect.test.ts

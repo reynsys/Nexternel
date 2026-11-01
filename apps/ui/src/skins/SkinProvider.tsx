@@ -25,7 +25,6 @@ import {
   DEFAULT_THEME_PREFS,
 } from "./themePrefs";
 import { AppearanceCssVars } from "./AppearanceCssVars";
-import { AppearanceTrialBar } from "./AppearanceTrialBar";
 import { MOTION_CSS } from "../lib/motion";
 import { BackgroundEffects } from "./effects/BackgroundEffects";
 import { looksVersion, resolveLook, subscribeLooks } from "./looks/registry";
@@ -348,7 +347,6 @@ export function SkinProvider({ children }: { children: ReactNode }) {
         ) : null}
         <BackgroundEffects prefs={display.light ? { ...themePrefs, effectId: "off" } : themePrefs} />
         {children}
-        {trial ? <AppearanceTrialBar onCancel={cancelTrial} onApply={applyTrial} /> : null}
       </ThemeProvider>
     </SkinContext.Provider>
   );
