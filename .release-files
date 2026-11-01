@@ -105,6 +105,8 @@ apps/api/src/esphome/esphome-jobs.test.ts
 apps/api/src/esphome/esphome-jobs.ts
 apps/api/src/esphome/file-identity.ts
 apps/api/src/esphome/gate.ts
+apps/api/src/esphome/hotspot.test.ts
+apps/api/src/esphome/hotspot.ts
 apps/api/src/esphome/lifecycle.ts
 apps/api/src/esphome/mqtt-object-id.test.ts
 apps/api/src/esphome/orphan-prune.ts

@@ -9,9 +9,18 @@ api:
 # which drops the connection now and then. A board's own file can still choose otherwise.
 wifi:
   power_save_mode: none
+  # Emergency hotspot: when the board cannot reach the home Wi-Fi for a minute, it opens its own
+  # Wi-Fi named after the board, to choose the Wi-Fi again from a phone (captive_portal). One password
+  # for every board, kept by Nexternel in secrets.yaml (Devices → a board → Advanced shows it).
+  # A board's own file can set its own hotspot instead.
+  ap:
+    password: !secret nexternel_ap_password
   # Counted for the health report (below).
   on_disconnect:
     - lambda: id(nexternel_wifi_drops) += 1;
+
+# The page the emergency hotspot shows.
+captive_portal:
 
 # Which software the board runs: ESPHome's fingerprint of its settings (the same one ESPHome gives each
 # build). Nexternel compares it with the newest build to tell whether the board needs an update —

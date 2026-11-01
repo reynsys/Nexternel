@@ -1,7 +1,7 @@
 /** Nexternel Backend API — Generation 5 (V5 Constitution) */
 export const VERSION_GENERATION = 5;
 export const VERSION_HARDWARE = 2;
-export const VERSION_SOFTWARE = 167;
+export const VERSION_SOFTWARE = 168;
 
 export function formatVersion(
   gen = VERSION_GENERATION,

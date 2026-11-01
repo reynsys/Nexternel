@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.168
+
+- **Every board now has an emergency Wi‑Fi hotspot.** If a board cannot reach your Wi‑Fi (new router, changed password), it opens its own Wi‑Fi; join it from a phone and choose your Wi‑Fi again. Its name and password are in **Devices → a board → Advanced**. Boards need one update (**Update boards** on Devices).
+
 ## V5.2.167
 
 - **Activity log is easier to read.** A switch that the board turns on and off by itself all the time (for example a sensor that measures in turns) now shows one line an hour saying how often, instead of hundreds of lines.

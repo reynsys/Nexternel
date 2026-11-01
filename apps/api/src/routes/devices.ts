@@ -26,6 +26,7 @@ import {
   updateDevice,
 } from "../devices/service.js";
 import { nextHealthReport } from "../devices/board-health.js";
+import { deviceHotspot } from "../esphome/hotspot.js";
 import { requestHealthReport } from "../telemetry/mqtt.js";
 import { logActivity } from "../activity/activity.js";
 
@@ -58,6 +59,15 @@ export const devicesRoutes: FastifyPluginAsync = async (app) => {
     const summary = await deviceConnection(request.params.id).catch(() => null);
     if (!summary) return reply.code(404).send({ error: { code: "not_found", message: "Device not found" } });
     return { connection: summary };
+  });
+
+  /** The board's emergency Wi-Fi hotspot: its name and password (people who may change devices). */
+  app.get<{ Params: { id: string } }>("/api/v1/devices/:id/hotspot", async (request, reply) => {
+    if (!requirePermission(request, reply, "editDevices")) return;
+    const r = await getPool().query<{ name: string | null }>(`SELECT COALESCE(NULLIF(esphome_name, ''), slug) AS name FROM devices WHERE id = $1 AND firmware_type = 'esphome'`, [request.params.id]);
+    const dev = r.rows[0];
+    if (!dev?.name) return reply.code(404).send({ error: { code: "not_found", message: "Not an ESPHome board" } });
+    return { hotspot: await deviceHotspot(request.params.id, dev.name) };
   });
 
   /** Check now: ask the board for its health report and wait (up to 10 s) for the answer. */

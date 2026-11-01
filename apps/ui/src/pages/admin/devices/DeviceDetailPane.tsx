@@ -7,7 +7,7 @@ import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
 import SyncRoundedIcon from "@mui/icons-material/SyncRounded";
 import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
-import type { Capability, DeviceRecord } from "../../../api";
+import { api, type BoardHotspot, type Capability, type DeviceRecord } from "../../../api";
 import { ICON_SIZE } from "../../../lib/appearance/type";
 import { AREA } from "../../../lib/area-labels";
 import { esphomeDashboardUrl } from "../../../lib/device-utils";
@@ -216,6 +216,54 @@ export function DeviceDetailPane({ selection, device, isAdmin, busy, hostname, s
   );
 }
 
+/**
+ * The board's emergency Wi-Fi hotspot: when it cannot reach the home Wi-Fi, it opens its own; joining
+ * it from a phone shows the board's page to choose the Wi-Fi again.
+ */
+function HotspotCard({ deviceId }: { deviceId: string }) {
+  const [hotspot, setHotspot] = useState<BoardHotspot | null>(null);
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    let live = true;
+    setHotspot(null);
+    setShown(false);
+    api
+      .deviceHotspot(deviceId)
+      .then((r) => live && setHotspot(r.hotspot))
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [deviceId]);
+  if (!hotspot) return null;
+  return (
+    <InfoCard title="Emergency Wi‑Fi hotspot">
+      <Typography variant="body2" color="text.secondary">
+        If the board cannot reach your Wi‑Fi for a minute or two (new router, changed password), it opens its own Wi‑Fi. Join it from a phone: a page opens where you choose your Wi‑Fi again.
+      </Typography>
+      {hotspot.own ? (
+        <Typography variant="body2">
+          {hotspot.name ? <>Name: <b>{hotspot.name}</b>. </> : null}This board sets its own hotspot in its settings file (open it below to see the password).
+        </Typography>
+      ) : (
+        <Stack direction="row" alignItems="center" flexWrap="wrap" sx={{ gap: 1.5 }}>
+          <Typography variant="body2">
+            Name: <b>{hotspot.name}</b>
+          </Typography>
+          <Typography variant="body2">
+            Password: <b>{hotspot.password ? (shown ? hotspot.password : "••••••••••••") : "not set yet — restart Nexternel"}</b>
+          </Typography>
+          {hotspot.password ? (
+            <Button {...devicesOutlinedButton} size="small" onClick={() => setShown((v) => !v)}>
+              {shown ? "Hide password" : "Show password"}
+            </Button>
+          ) : null}
+        </Stack>
+      )}
+    </InfoCard>
+  );
+}
+
 /** Advanced (boards): how its ESPHome settings are kept, and the ESPHome tools for experienced users. */
 function AdvancedTab({ device, hostname, busy, actions }: { device: DeviceRecord; hostname: string; busy: boolean; actions: DeviceDetailActions }) {
   const managed = device.esphomeManagementMode === "managed";
@@ -239,6 +287,7 @@ function AdvancedTab({ device, hostname, busy, actions }: { device: DeviceRecord
           )}
         </ButtonRow>
       </InfoCard>
+      <HotspotCard deviceId={device.id} />
       <InfoCard title="ESPHome — for experienced users">
         <Typography variant="body2" color="text.secondary">
           The board's ESPHome settings file and tools. Everyday updates are on the Overview tab (Update board).

@@ -212,6 +212,12 @@ try {
     app.log.warn({ err }, "ESPHome secrets alignment skipped");
   }
   try {
+    const { ensureHotspotPassword } = await import("./esphome/hotspot.js");
+    if (ensureHotspotPassword()) app.log.info("esphome/secrets.yaml: emergency hotspot password added");
+  } catch (err) {
+    app.log.warn({ err }, "Emergency hotspot password skipped");
+  }
+  try {
     const { syncMosquittoPasswdForInstallation, mosquittoPasswdNeedsSync } =
       await import("./migrate/ensure-mosquitto-credentials.js");
     const { restartNexternelServices } = await import("./backup/post-restore.js");
