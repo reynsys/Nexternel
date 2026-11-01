@@ -4,30 +4,47 @@ import { dashboardHistoryScheduler } from "./lib/dashboard-data-runtime/history-
 const ACCESS_KEY = "nexternel_access_token";
 const REFRESH_KEY = "nexternel_refresh_token";
 
-export function getStoredAccessToken(): string | null {
+/*
+ * Where the sign-in is kept: localStorage stays after the browser closes ("Keep me signed in"),
+ * sessionStorage ends with the tab. A renewed sign-in stays where the old one was.
+ */
+function readToken(key: string): string | null {
   try {
-    return localStorage.getItem(ACCESS_KEY);
+    return sessionStorage.getItem(key) ?? localStorage.getItem(key);
   } catch {
     return null;
   }
+}
+
+function keptOnDevice(): boolean {
+  try {
+    return sessionStorage.getItem(ACCESS_KEY) === null;
+  } catch {
+    return true;
+  }
+}
+
+export function getStoredAccessToken(): string | null {
+  return readToken(ACCESS_KEY);
 }
 
 export function getStoredRefreshToken(): string | null {
-  try {
-    return localStorage.getItem(REFRESH_KEY);
-  } catch {
-    return null;
-  }
+  return readToken(REFRESH_KEY);
 }
 
-export function storeTokens(accessToken: string, refreshToken: string) {
-  localStorage.setItem(ACCESS_KEY, accessToken);
-  localStorage.setItem(REFRESH_KEY, refreshToken);
+export function storeTokens(accessToken: string, refreshToken: string, keep = keptOnDevice()) {
+  const store = keep ? localStorage : sessionStorage;
+  (keep ? sessionStorage : localStorage).removeItem(ACCESS_KEY);
+  (keep ? sessionStorage : localStorage).removeItem(REFRESH_KEY);
+  store.setItem(ACCESS_KEY, accessToken);
+  store.setItem(REFRESH_KEY, refreshToken);
 }
 
 export function clearStoredTokens() {
-  localStorage.removeItem(ACCESS_KEY);
-  localStorage.removeItem(REFRESH_KEY);
+  for (const store of [localStorage, sessionStorage]) {
+    store.removeItem(ACCESS_KEY);
+    store.removeItem(REFRESH_KEY);
+  }
   lastKnownMe = null;
 }
 
@@ -376,9 +393,9 @@ export type PanelResolveResult = {
 /** @deprecated use ResolvedPanelCapability */
 export type ResolvedViewCapability = ResolvedPanelCapability;
 
-export function rememberAuth(data: AuthResponse) {
+export function rememberAuth(data: AuthResponse, keep = true) {
   if (data.accessToken && data.refreshToken) {
-    storeTokens(data.accessToken, data.refreshToken);
+    storeTokens(data.accessToken, data.refreshToken, keep);
   }
 }
 
@@ -669,7 +686,8 @@ export const api = {
       }
     ),
 
-  async login(username: string, password: string) {
+  /** keep: stay signed in after the browser closes (else only until this tab is closed). */
+  async login(username: string, password: string, keep = true) {
     clearStoredTokens();
     const data = await apiFetch<AuthResponse>("/api/v1/auth/login", {
       method: "POST",
@@ -678,7 +696,7 @@ export const api = {
     if (!data.accessToken || !data.refreshToken) {
       throw new Error("Login response missing tokens from API");
     }
-    rememberAuth(data);
+    rememberAuth(data, keep);
     return data;
   },
 

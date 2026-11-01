@@ -2,6 +2,12 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.171
+
+- **New sign-in screen.** It now fills the whole screen: a welcome side with the logo, and the sign-in box beside it (stacked on a phone). The welcome side shows the background and effect last chosen in Appearance on that device; on a new device it shows the standard Nexternel look. The sign-in box always stays plain and easy to read.
+- **Show password** button (the eye) in the password box.
+- **Keep me signed in on this device** — untick it on a shared computer and you are signed out when the browser tab is closed.
+
 ## V5.2.170
 
 - **Nexternel has its own logo** — a hexagon planet with its ring. You see it in the menu (in your Appearance colours), in the browser tab, as the icon when you add Nexternel to a phone's home screen, and on the sign-in page.

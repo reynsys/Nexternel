@@ -144,16 +144,17 @@ export function App() {
           }
         />
       ))}
+      {/* Signing in: full screen, without the menu (there is nothing in it before signing in). */}
+      <Route
+        path="login"
+        element={
+          <SetupGate>
+            <LoginPage />
+          </SetupGate>
+        }
+      />
       <Route element={<AppLayout />}>
         <Route path="setup" element={<SetupPage />} />
-        <Route
-          path="login"
-          element={
-            <SetupGate>
-              <LoginPage />
-            </SetupGate>
-          }
-        />
         {/* Retired developer pages (Troubleshoot, panel preview): the diagnostic report lives in Settings → System. */}
         <Route path="troubleshoot/*" element={<Navigate to="/admin/settings/system" replace />} />
         <Route path="panels" element={<Navigate to="/admin/settings/system" replace />} />
