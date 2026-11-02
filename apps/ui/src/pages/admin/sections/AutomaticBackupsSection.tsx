@@ -222,7 +222,14 @@ export function AutomaticBackupsSection() {
                 const res = await api.backupNow();
                 setSchedule(res.schedule);
                 setFiles(res.files);
-                setNotice({ ok: true, text: res.result.message });
+                setNotice(
+                  res.result.ok
+                    ? {
+                        ok: true,
+                        text: `${res.result.message} It opens with this server's backup key, not a password — download the emergency kit if you have not kept it yet.`,
+                      }
+                    : { ok: false, text: `Backup failed: ${res.result.message}` }
+                );
               })
             }
           >

@@ -15,6 +15,7 @@ import {
 import { api, type BackupInspectResult, type BackupJob } from "../../../api";
 import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
 import { ButtonRow } from "../../../components/ButtonRow";
+import { backupSecretError, backupSecretField } from "../../../lib/backup-file";
 
 const PHASE_LABELS: Record<string, string> = {
   queued: "Checking backup",
@@ -183,7 +184,7 @@ export function BackupRestoreSection() {
       return;
     }
     if (!restorePassword) {
-      setInspectErr("Enter the backup password.");
+      setInspectErr(`Enter the ${backupSecretField(restoreFile.name).label.toLowerCase()}.`);
       return;
     }
     setInspectBusy(true);
@@ -197,7 +198,7 @@ export function BackupRestoreSection() {
       }
       setInspect(result);
     } catch (err) {
-      setInspectErr(err instanceof Error ? err.message : "Could not read backup");
+      setInspectErr(backupSecretError(restoreFile.name, err instanceof Error ? err.message : "Could not read backup"));
     } finally {
       setInspectBusy(false);
     }
@@ -249,8 +250,8 @@ export function BackupRestoreSection() {
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             A one-off backup with a password you choose, downloaded to this computer — or restore a
-            backup file from another server. For a backup made automatically on this server, use
-            the backup key from the emergency kit as the password.
+            backup file from another server. A backup the server made itself (Back up now or the
+            daily backup) opens with that server's backup key from its emergency kit.
           </Typography>
 
           <Typography variant="subtitle2" gutterBottom>
@@ -350,7 +351,8 @@ export function BackupRestoreSection() {
               </Typography>
             </Stack>
             <TextField
-              label="Backup password"
+              label={backupSecretField(restoreFile?.name).label}
+              helperText={backupSecretField(restoreFile?.name).hint}
               type="password"
               value={restorePassword}
               onChange={(e) => {

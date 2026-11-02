@@ -20,6 +20,7 @@ import { useSkin } from "../skins/SkinProvider";
 import { choiceSx } from "../skins/surfaceStyles";
 import { ButtonRow } from "../components/ButtonRow";
 import { BrandMark } from "../components/BrandMark";
+import { backupSecretError, backupSecretField } from "../lib/backup-file";
 
 /**
  * Welcome screen on a new installation: start a new home, or take over one from its backup.
@@ -134,7 +135,7 @@ export function SetupPage() {
       setInspect(result);
       go("review");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not open the backup");
+      setError(backupSecretError(backupFile.name, err instanceof Error ? err.message : "Could not open the backup"));
     } finally {
       setBusy(false);
     }
@@ -295,7 +296,8 @@ export function SetupPage() {
                   />
                 </Button>
                 <TextField
-                  label="Backup password or key"
+                  label={backupSecretField(backupFile?.name).label}
+                  helperText={backupSecretField(backupFile?.name).hint}
                   type="password"
                   value={backupPassword}
                   onChange={(e) => setBackupPassword(e.target.value)}

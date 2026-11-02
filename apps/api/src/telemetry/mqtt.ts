@@ -878,6 +878,16 @@ export async function startTelemetry(): Promise<void> {
     password: password || undefined,
     clientId: `nexternel-api-${Date.now()}`,
     reconnectPeriod: 5000,
+    // Keep trying after a refused login too (mqtt.js stops for good by default): the login can
+    // change underneath, e.g. a restore carries the old server's login over.
+    reconnectOnConnackError: true,
+  });
+
+  // Each retry uses the login as it is now, not the one this connection started with.
+  client.on("reconnect", () => {
+    if (!client) return;
+    client.options.username = config.mqttUsername() || undefined;
+    client.options.password = config.mqttPassword() || undefined;
   });
 
   client.on("connect", async () => {

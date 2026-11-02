@@ -39,15 +39,29 @@ const SERVICE_CONTAINERS: Record<Exclude<RestartableService, "all" | "restored-s
   api: "nexternel-api",
 };
 
+/** Restarted only when already running: `docker restart` would switch a stopped one on. */
+const ESPHOME_CONTAINER = "nexternel-esphome";
+
 function containersForService(service: RestartableService): string[] {
   if (service === "restored-services") {
     // ESPHome reads the MQTT login from the restored device files only when it starts.
-    return [SERVICE_CONTAINERS.mqtt, "nexternel-esphome"];
+    return [SERVICE_CONTAINERS.mqtt, ESPHOME_CONTAINER];
   }
   if (service === "all") {
     return [SERVICE_CONTAINERS.mqtt, SERVICE_CONTAINERS.api];
   }
   return [SERVICE_CONTAINERS[service]];
+}
+
+async function isContainerRunning(name: string): Promise<boolean> {
+  try {
+    const { stdout } = await execFileAsync("docker", ["inspect", "-f", "{{.State.Running}}", name], {
+      timeout: 15_000,
+    });
+    return stdout.trim() === "true";
+  } catch {
+    return false; // not there at all
+  }
 }
 
 export async function restartNexternelServices(
@@ -60,7 +74,10 @@ export async function restartNexternelServices(
         "Automatic service restart is not enabled. Contact your installer or enable it in docker-compose.",
     };
   }
-  const containers = containersForService(service);
+  const containers: string[] = [];
+  for (const name of containersForService(service)) {
+    if (name !== ESPHOME_CONTAINER || (await isContainerRunning(name))) containers.push(name);
+  }
   try {
     await execFileAsync("docker", ["restart", ...containers], {
       timeout: 120_000,

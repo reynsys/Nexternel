@@ -199,6 +199,8 @@ apps/api/src/system/host-ip.ts
 apps/api/src/system/https-routes.ts
 apps/api/src/system/https.test.ts
 apps/api/src/system/https.ts
+apps/api/src/system/log-redact.test.ts
+apps/api/src/system/log-redact.ts
 apps/api/src/system/maintenance.test.ts
 apps/api/src/system/maintenance.ts
 apps/api/src/system/repair-live-data.test.ts
@@ -331,6 +333,8 @@ apps/ui/src/lib/appearance/type.ts
 apps/ui/src/lib/area-labels.ts
 apps/ui/src/lib/auto-scroll.test.ts
 apps/ui/src/lib/auto-scroll.ts
+apps/ui/src/lib/backup-file.test.ts
+apps/ui/src/lib/backup-file.ts
 apps/ui/src/lib/board-updates.ts
 apps/ui/src/lib/button-rows-guard.test.ts
 apps/ui/src/lib/button-words-guard.test.ts

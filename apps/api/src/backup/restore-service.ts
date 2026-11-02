@@ -356,25 +356,24 @@ export async function runRestoreBackupJob(
       warnings.push(
         "Services were not restarted automatically. Open Settings → System and use Restart services if Live data does not appear."
       );
-    } else {
-      // The broker came back with the restored login: wait for the API's MQTT link before verifying.
-      updateJob(jobId, { status: "verifying", percent: 92, message: "Reconnecting to devices" });
-      // A fresh connection: the old one keeps retrying with the login it started with.
-      await startTelemetry().catch(() => {
-        /* waitForMqtt reports it */
-      });
-      const reconnected = await waitForMqtt(60_000);
-      if (reconnected) {
-        await refreshTelemetrySubscriptions().catch(() => {
-          /* verification reports it */
-        });
-      }
-      phases.push({
-        name: "Reconnect to MQTT",
-        ok: reconnected,
-        message: reconnected ? "Connected." : "The MQTT broker did not accept the connection within 60 s.",
+    }
+    // Wait for the API's MQTT link (with the restored login) before verifying — also when the
+    // restart reported a problem: the broker may have restarted all the same.
+    updateJob(jobId, { status: "verifying", percent: 92, message: "Reconnecting to devices" });
+    await startTelemetry().catch(() => {
+      /* waitForMqtt reports it */
+    });
+    const reconnected = await waitForMqtt(restart.ok ? 60_000 : 15_000);
+    if (reconnected) {
+      await refreshTelemetrySubscriptions().catch(() => {
+        /* verification reports it */
       });
     }
+    phases.push({
+      name: "Reconnect to MQTT",
+      ok: reconnected,
+      message: reconnected ? "Connected." : "The MQTT broker did not accept the connection in time.",
+    });
 
     updateJob(jobId, { status: "verifying", percent: 95, message: "Verifying installation" });
     const verification = await verifyRestore();

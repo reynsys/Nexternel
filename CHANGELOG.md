@@ -2,6 +2,14 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.175
+
+- **Restoring a backup says what opens it.** A backup the server made itself (**Back up now** or the daily backup) is locked with that server's **backup key** from its emergency kit, not with a password. When you pick such a file, the box now says **Backup key** and where to find it. A one-off backup you made with your own password says **Backup password**. A wrong key or password now says which one is needed.
+- **After Back up now**, a note reminds you that this backup opens with the server's backup key, so keep the emergency kit. A backup that failed is now shown as failed, not in green.
+- **The message service (MQTT) reconnects by itself after its login changes**, for example after restoring a backup from another server. Before, Nexternel stopped trying after one refused login and showed "MQTT broker is not connected" until the services were restarted.
+- **Restoring a backup no longer switches ESPHome on.** After a restore, ESPHome is restarted only when it was already running. A restore on a system without ESPHome no longer ends with "MQTT broker is not connected".
+- **Sign-in passes are no longer written in the server's request log.**
+
 ## V5.2.174
 
 - **Board updates only when something changed for that board, and you see why.** "Update ready" now says the reason, for example "the shared board settings changed (emergency Wi-Fi hotspot, new in V5.2.168)" or "its settings file was changed (1 Nov, 17:46)". With no reason, there is no update.

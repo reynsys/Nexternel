@@ -67,8 +67,9 @@ import { panelApiRoutes } from "./panels/api-routes.js";
 import { wsRoutes } from "./telemetry/ws.js";
 import { changeTopicFor, publishChange } from "./live/changes.js";
 import { APP_VERSION } from "./version.js";
+import { serializeRequestForLog } from "./system/log-redact.js";
 
-const app = Fastify({ logger: true });
+const app = Fastify({ logger: { serializers: { req: serializeRequestForLog } } });
 // An id in the address that is not even a valid id (the database refuses it: "invalid input syntax")
 // means there is no such thing: "not found", never a server error. Everything else as before.
 app.setErrorHandler((err, _request, reply) => {
