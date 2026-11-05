@@ -136,6 +136,12 @@ export function shortWhen(iso: string): string {
   return d.toDateString() === new Date().toDateString() ? `Today ${clock}` : `${d.toLocaleDateString([], { weekday: "short", day: "numeric", month: "short" })} ${clock}`;
 }
 
+/** "fair (-61 dBm)"; a reading that stopped being renewed says when it is from. */
+export function wifiSignalWords(c: { wifiDbm: number | null; wifiQuality: string | null; wifiAt?: string | null }): string {
+  const old = c.wifiAt && Date.now() - Date.parse(c.wifiAt) > 3 * 60_000;
+  return `Wi‑Fi signal: ${c.wifiQuality} (${c.wifiDbm} dBm)${old ? `, last heard ${shortWhen(c.wifiAt!).replace(/^Today /, "")}` : ""}`;
+}
+
 /** "under a minute", "4 min", "3 hours". */
 export function durationWords(minutes: number): string {
   return minutes < 1 ? "under a minute" : minutes >= 120 ? `${Math.round(minutes / 60)} hours` : `${minutes} min`;

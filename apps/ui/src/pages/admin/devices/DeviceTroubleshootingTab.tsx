@@ -3,10 +3,11 @@ import { Box, Button, Stack, Typography } from "@mui/material";
 import ContentCopyRoundedIcon from "@mui/icons-material/ContentCopyRounded";
 import type { BoardStatus, Capability, DeviceConnection, DeviceRecord } from "../../../api";
 import { CODE_TEXT } from "../../../lib/appearance/type";
-import { InfoCard, durationWords, shortWhen } from "./DeviceBits";
+import { InfoCard, durationWords, shortWhen, wifiSignalWords } from "./DeviceBits";
 import { LastBoardUpdates } from "./BoardSoftware";
 import { ActivityList } from "../../../components/ActivityList";
 import { BoardHealthCard } from "./BoardHealthCard";
+import { BoardSignalHistory } from "./BoardSignalHistory";
 import { devicesOutlinedButton } from "./devices-panel-styles";
 
 const DAY_MS = 24 * 60 * 60_000;
@@ -115,7 +116,7 @@ export function DeviceTroubleshootingTab({
             <Stack direction="row" spacing={3} flexWrap="wrap" useFlexGap>
               {connection.wifiDbm != null ? (
                 <Typography variant="body2" color={connection.wifiQuality === "weak" || connection.wifiQuality === "very weak" ? "warning.main" : "text.secondary"}>
-                  Wi‑Fi signal: {connection.wifiQuality} ({connection.wifiDbm} dBm)
+                  {wifiSignalWords(connection)}
                 </Typography>
               ) : null}
               {connection.restartedAt ? (
@@ -138,6 +139,8 @@ export function DeviceTroubleshootingTab({
       </InfoCard>
 
       {isBoard ? <BoardHealthCard device={device} report={connection?.health ?? null} values={values} /> : null}
+
+      {isBoard ? <BoardSignalHistory deviceId={device.id} /> : null}
 
       {isBoard ? (
         <InfoCard title="Updates from Nexternel">

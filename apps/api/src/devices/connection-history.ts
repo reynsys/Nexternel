@@ -15,6 +15,8 @@ export type ConnectionSummary = {
   restarts: number;
   /** The board's Wi-Fi signal (dBm) and when it last restarted, when the board sends them. */
   wifiDbm: number | null;
+  /** When the board last told its signal: the value can be old when its messages stopped arriving. */
+  wifiAt: string | null;
   wifiQuality: string | null;
   restartedAt: string | null;
   /** The board's last health report (boards with the current shared settings). */
@@ -51,6 +53,7 @@ export function summarizeConnection(events: Event[], current: string, now = new 
     longestMinutes: outages.reduce((m, o) => Math.max(m, o.minutes), 0),
     restarts,
     wifiDbm: null,
+    wifiAt: null,
     wifiQuality: null,
     restartedAt: null,
   };
@@ -81,6 +84,7 @@ export async function deviceConnection(deviceId: string): Promise<ConnectionSumm
   return {
     ...summarizeConnection(rows.rows, dev.rows[0]!.mqtt_availability),
     wifiDbm: h.wifiDbm,
+    wifiAt: h.wifiAt,
     wifiQuality: h.wifiDbm !== null ? signalWord(h.wifiDbm) : null,
     restartedAt: h.restartedAt,
     health: h.report,

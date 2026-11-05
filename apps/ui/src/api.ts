@@ -1444,6 +1444,8 @@ export const api = {
   checkDeviceHealth: (id: string) =>
     apiFetch<{ ok: boolean; report: BoardHealthReport | null }>(`/api/v1/devices/${encodeURIComponent(id)}/health-check`, { method: "POST" }),
   deviceConnection: (id: string) => apiFetch<{ connection: DeviceConnection }>(`/api/v1/devices/${encodeURIComponent(id)}/connection`),
+  boardHealthHistory: (id: string, hours = 24) =>
+    apiFetch<{ history: BoardHealthHistory }>(`/api/v1/devices/${encodeURIComponent(id)}/health-history?hours=${hours}`),
   deviceHotspot: (id: string) => apiFetch<{ hotspot: BoardHotspot }>(`/api/v1/devices/${encodeURIComponent(id)}/hotspot`),
 
   configStatus: () =>
@@ -2603,6 +2605,16 @@ export type BoardHealthReport = {
   lastBreakEndedAt?: string | null;
 };
 
+/** How a board's health reports went: its signal over time (rssi null: a gap) and reports that did not arrive. */
+export type BoardHealthHistory = {
+  points: { at: string; rssi: number | null }[];
+  received: number;
+  expected: number;
+  weakest: number | null;
+  strongest: number | null;
+  mqttDrops: number;
+};
+
 /** A board's emergency Wi-Fi hotspot: the shared one (name + password), or one set in its own file. */
 export type BoardHotspot = { own: false; name: string; password: string | null } | { own: true; name: string | null };
 
@@ -2613,6 +2625,7 @@ export type DeviceConnection = {
   longestMinutes: number;
   restarts: number;
   wifiDbm: number | null;
+  wifiAt?: string | null;
   wifiQuality: string | null;
   restartedAt: string | null;
   health?: BoardHealthReport | null;

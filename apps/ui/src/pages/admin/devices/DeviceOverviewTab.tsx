@@ -3,7 +3,7 @@ import { Alert, Box, Button, Stack, Typography } from "@mui/material";
 import { api, type Capability, type DeviceConnection, type DeviceRecord } from "../../../api";
 import { deviceConnectivityState } from "../../../lib/device-utils";
 import { BoardSoftware } from "./BoardSoftware";
-import { InfoCard, durationWords, shortWhen } from "./DeviceBits";
+import { InfoCard, durationWords, shortWhen, wifiSignalWords } from "./DeviceBits";
 import { readingValue, switchWord } from "./device-summary";
 import { devicesOutlinedButton } from "./devices-panel-styles";
 
@@ -55,7 +55,7 @@ export function DeviceOverviewTab({ device, isAdmin, busy, connection, values, o
           ) : null}
           {connection?.wifiDbm != null ? (
             <Typography variant="body2" color={connection.wifiQuality === "weak" || connection.wifiQuality === "very weak" ? "warning.main" : "text.secondary"}>
-              Wi‑Fi signal: {connection.wifiQuality} ({connection.wifiDbm} dBm)
+              {wifiSignalWords(connection)}
             </Typography>
           ) : null}
           {connection ? (

@@ -3,6 +3,7 @@ import { getPool } from "../db.js";
 import { addNotification, type NotificationLevel } from "../notifications/service.js";
 import { bellTopicOn, getOfflineMinutes, type BellTopic } from "../notifications/topics.js";
 import { pruneConnectionHistory } from "../devices/connection-history.js";
+import { pruneBoardHealth } from "../devices/board-health-history.js";
 import { listDevicesDetailed } from "../devices/service.js";
 import { getMqttStatus } from "../telemetry/mqtt.js";
 import { storedBackupsDir } from "../backup/scheduled.js";
@@ -258,7 +259,7 @@ export function startSelfCheck(log: { warn: (o: object, m: string) => void }): v
     ticks++;
     const checks = [checkDevices, checkSensors];
     if (ticks % 5 === 1) checks.push(checkMqtt, checkDisk);
-    if (ticks % 360 === 1) checks.push(pruneConnectionHistory, pruneActivity);
+    if (ticks % 360 === 1) checks.push(pruneConnectionHistory, pruneActivity, pruneBoardHealth);
     void run(checks);
   };
   // The first look waits until devices have had time to report after a start.

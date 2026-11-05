@@ -72,6 +72,8 @@ apps/api/src/dashboards/routes.ts
 apps/api/src/dashboards/starter.ts
 apps/api/src/dashboards/store.ts
 apps/api/src/db.ts
+apps/api/src/devices/board-health-history.test.ts
+apps/api/src/devices/board-health-history.ts
 apps/api/src/devices/board-health.test.ts
 apps/api/src/devices/board-health.ts
 apps/api/src/devices/connection-history.test.ts
@@ -449,6 +451,7 @@ apps/ui/src/lib/widget-title.ts
 apps/ui/src/main.tsx
 apps/ui/src/pages/admin/AreasPage.tsx
 apps/ui/src/pages/admin/devices/BoardHealthCard.tsx
+apps/ui/src/pages/admin/devices/BoardSignalHistory.tsx
 apps/ui/src/pages/admin/devices/BoardSoftware.tsx
 apps/ui/src/pages/admin/devices/BoardUpdateDetails.tsx
 apps/ui/src/pages/admin/devices/BoardUpdatesCard.tsx

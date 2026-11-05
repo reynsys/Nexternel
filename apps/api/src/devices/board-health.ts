@@ -1,5 +1,6 @@
 import { getPool } from "../db.js";
 import { logActivity } from "../activity/activity.js";
+import { recordHealthSample } from "./board-health-history.js";
 
 /**
  * A board's own health, from what every Nexternel board sends (esphome/packages/nexternel-device.yaml):
@@ -143,7 +144,7 @@ function noteBreak(prefix: string, before: HealthReport | null, now: HealthRepor
     await logActivity({
       kind: "device",
       deviceId: row.id,
-      text: `${row.name} says it was cut off from the message service for ${now.lastBreakS} s${wifiKept ? " (its Wi‑Fi stayed connected)" : " (its Wi‑Fi dropped too)"}`,
+      text: `${row.name} says it was cut off from the message service for ${now.lastBreakS} s${wifiKept ? " (it stayed joined to the Wi‑Fi, but its messages were not getting through)" : " (its Wi‑Fi dropped too)"}`,
     });
   })().catch(() => undefined);
 }
@@ -228,6 +229,7 @@ export function applyBoardHealthTopic(topic: string, payload: string, retained: 
     noteUptime(prefix, h, report.uptimeS, now, report.resetReason);
     h.report = report;
     health.set(prefix, h);
+    void recordHealthSample(prefix, report).catch(() => undefined);
     for (const fn of waiting.get(prefix) ?? []) fn(report);
     waiting.delete(prefix);
     return true;

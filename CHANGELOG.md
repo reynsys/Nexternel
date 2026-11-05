@@ -2,6 +2,13 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.176
+
+- **New: Wi‑Fi signal history** for every board (Devices → a board → Troubleshooting): the signal over the last 24 hours, 7 days or 14 days, how many of its reports arrived, and how often it lost the message service. A gap in the line means no report arrived.
+- **Clearer connection messages:** a board that keeps losing touch and coming back no longer says two devices are probably using the same name. That message now appears only when the same name really comes from two different addresses.
+- **"Its Wi‑Fi stayed connected" now says what it means:** the board stayed joined to the Wi‑Fi, but its messages were not getting through.
+- **An old Wi‑Fi signal reading says so:** when a board's reports stop arriving, Devices shows when the signal was last heard.
+
 ## V5.2.175
 
 - **Restoring a backup says what opens it.** A backup the server made itself (**Back up now** or the daily backup) is locked with that server's **backup key** from its emergency kit, not with a password. When you pick such a file, the box now says **Backup key** and where to find it. A one-off backup you made with your own password says **Backup password**. A wrong key or password now says which one is needed.

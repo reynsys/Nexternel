@@ -43,21 +43,24 @@ const lastWritten = new Map<string, number>();
 
 /**
  * A board that lost touch for a moment and came back before the message service noticed it was gone.
- * Only when this happens again and again within a short time is it likely two devices share a name.
+ * When this happens again and again within a short time, the address tells why: always the same one
+ * is a board that cannot hold its connection; different ones are two devices sharing a name.
  */
 const TAKEOVER = "came back before the message service noticed it was gone, so its old connection was closed (it lost touch for a moment)";
 const DUPLICATE =
-  "keeps pushing out its own connection — two devices are probably using the same name. Give each device its own name in its settings";
-const DUPLICATE_COUNT = 5;
-const DUPLICATE_WINDOW = 2 * 60_000;
-const takeovers = new Map<string, number[]>();
+  "keeps pushing out its own connection — two devices at different addresses are using the same name. Give each device its own name in its settings";
+const UNSTEADY = "keeps losing touch and coming back: its messages are not getting through reliably";
+const REPEAT_COUNT = 5;
+const REPEAT_WINDOW = 2 * 60_000;
+const takeovers = new Map<string, { at: number; address: string | null }[]>();
 
-/** The words for a takeover: a moment's break, or (many within a short time) two devices with one name. */
-export function takeoverWords(clientId: string, now = Date.now()): string {
-  const recent = (takeovers.get(clientId) ?? []).filter((t) => now - t <= DUPLICATE_WINDOW);
-  recent.push(now);
+/** The words for a takeover: a moment's break, a board that keeps losing touch, or two devices with one name. */
+export function takeoverWords(clientId: string, address: string | null, now = Date.now()): string {
+  const recent = (takeovers.get(clientId) ?? []).filter((t) => now - t.at <= REPEAT_WINDOW);
+  recent.push({ at: now, address });
   takeovers.set(clientId, recent);
-  return recent.length >= DUPLICATE_COUNT ? DUPLICATE : TAKEOVER;
+  if (recent.length < REPEAT_COUNT) return TAKEOVER;
+  return new Set(recent.map((t) => t.address).filter(Boolean)).size > 1 ? DUPLICATE : UNSTEADY;
 }
 
 const CONNECTED = /^New client connected from (\S+?):\d+ as (\S+) /;
@@ -121,7 +124,7 @@ export function applyBrokerLog(payload: string): void {
 function notice(clientId: string, address: string | null, given: string) {
   // Nexternel's own connection is already in the log ("Connection to the message service …").
   if (clientId.startsWith("nexternel-api-")) return;
-  const words = given === TAKEOVER ? takeoverWords(clientId) : given;
+  const words = given === TAKEOVER ? takeoverWords(clientId, address) : given;
   const key = `${clientId} ${words}`;
   const now = Date.now();
   if (now - (lastWritten.get(key) ?? 0) < 60_000) return;

@@ -26,6 +26,7 @@ import {
   updateDevice,
 } from "../devices/service.js";
 import { nextHealthReport } from "../devices/board-health.js";
+import { boardHealthHistory } from "../devices/board-health-history.js";
 import { deviceHotspot } from "../esphome/hotspot.js";
 import { requestHealthReport } from "../telemetry/mqtt.js";
 import { logActivity } from "../activity/activity.js";
@@ -59,6 +60,13 @@ export const devicesRoutes: FastifyPluginAsync = async (app) => {
     const summary = await deviceConnection(request.params.id).catch(() => null);
     if (!summary) return reply.code(404).send({ error: { code: "not_found", message: "Device not found" } });
     return { connection: summary };
+  });
+
+  /** How the board's health reports went in the last hours (1–336): Wi‑Fi signal, and reports that did not arrive. */
+  app.get<{ Params: { id: string }; Querystring: { hours?: string } }>("/api/v1/devices/:id/health-history", async (request, reply) => {
+    if (!requirePermission(request, reply, "viewDevices")) return;
+    const hours = Math.min(336, Math.max(1, Math.round(Number(request.query.hours)) || 24));
+    return { history: await boardHealthHistory(request.params.id, hours) };
   });
 
   /** The board's emergency Wi-Fi hotspot: its name and password (people who may change devices). */

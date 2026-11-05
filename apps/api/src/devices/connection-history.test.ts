@@ -30,7 +30,7 @@ test("an outage still going on counts up to now", () => {
 
 test("no history: state only", () => {
   assert.deepEqual(summarizeConnection([], "online", now), {
-    state: "online", since: null, outages: [], longestMinutes: 0, restarts: 0, wifiDbm: null, wifiQuality: null, restartedAt: null,
+    state: "online", since: null, outages: [], longestMinutes: 0, restarts: 0, wifiDbm: null, wifiAt: null, wifiQuality: null, restartedAt: null,
   });
 });
 

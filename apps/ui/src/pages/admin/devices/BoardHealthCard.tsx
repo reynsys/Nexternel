@@ -96,7 +96,7 @@ export function BoardHealthCard({
       ) : null}
       {report ? (
         <>
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" color={Date.now() - Date.parse(report.at) > 3 * 60_000 ? "warning.main" : "text.secondary"}>
             Last report: {shortWhen(report.at)} · the board sends one every minute
           </Typography>
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" }, gap: 1.5 }}>

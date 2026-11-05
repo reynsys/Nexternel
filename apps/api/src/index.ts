@@ -61,6 +61,7 @@ import { esphomeGateRoutes } from "./esphome/gate.js";
 import { boardUpdateRoutes } from "./esphome/board-update-routes.js";
 import { activityRoutes } from "./activity/routes.js";
 import { ensureActivitySchema, logActivity } from "./activity/activity.js";
+import { ensureBoardHealthSchema } from "./devices/board-health-history.js";
 import { maintenanceGuard } from "./system/maintenance.js";
 import { v4Routes } from "./v4/routes.js";
 import { panelApiRoutes } from "./panels/api-routes.js";
@@ -163,6 +164,7 @@ try {
   await ensureRolesSchema();
   await ensureDevicesSchema();
   await ensureActivitySchema();
+  await ensureBoardHealthSchema();
   // Readable names for readings named automatically before (e.g. "Pm 2 5" → "PM2.5").
   await repairAutoSensorNames();
   await ensureEsphomeBuilderSchema();
