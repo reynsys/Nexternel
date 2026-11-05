@@ -266,7 +266,7 @@ export async function validateDeviceEsphomeYaml(
 ): Promise<ValidateYamlResult> {
   const meta = requireEsphomeMeta(await getDeviceEsphomeMeta(deviceId));
   await requireYamlOnDisk(meta);
-  const result = await runEsphomeCli(["config", "validate", yamlConfigPath(meta)]);
+  const result = await runEsphomeCli(["config", yamlConfigPath(meta)]);
   return { ok: result.ok, log: result.log };
 }
 
@@ -291,7 +291,7 @@ export async function saveDeviceEsphomeYaml(
   await writeDeviceYamlFile(relativePath, yaml);
   forgetFileAddress(relativePath);
 
-  const validation = await runEsphomeCli(["config", "validate", configPath]);
+  const validation = await runEsphomeCli(["config", configPath]);
   if (!validation.ok) {
     if (previous) {
       await writeDeviceYamlFile(relativePath, previous);

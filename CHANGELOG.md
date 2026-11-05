@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.180
+
+- Saving or checking a board's settings file from Devices no longer fails on a file that is fine.
+
 ## V5.2.179
 
 - A switch that gets no answer when pressed on is now cancelled. If the board reports it came on anyway, Nexternel switches it off again and says so in the Activity log.
