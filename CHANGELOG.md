@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.178
+
+- **Background effect tiles are true miniatures** of the real effect: the same look and crowding at a small size. In **Network (follows you)**, the tile reacts when the pointer is over it. The real backgrounds have not changed.
+- **Background effect colour** now says **Main colour** and **Background colours**. "Accent" was another name for your main colour, not a separate setting.
+
 ## V5.2.177
 
 - **Appearance is easier to find your way around.** All colours are now together on the new **Colours** tab: Light or Dark, main, second and third colours, background and background effect colour. **Style** holds how panels and buttons are drawn, and background effects. **Theme** holds the ready-made themes only and says that picking one replaces your colours. No option was removed.

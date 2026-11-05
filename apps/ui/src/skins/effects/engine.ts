@@ -15,6 +15,8 @@ export type EffectOptions = {
   speed: number;
   colours: Rgb[];
   light: boolean;
+  /** Drawn in a small tile: a miniature of the whole screen, not a piece of it. */
+  miniature?: boolean;
 };
 
 type Particle = {
@@ -47,6 +49,15 @@ const BASE_COUNT: Record<Exclude<BackgroundEffectId, "off">, number> = {
   waves: 5,
 };
 
+/** A miniature draws a screen this many times larger than its tile, scaled down to fit. */
+const MINI_ZOOM = 3;
+/** Dots and lines this much thicker in a miniature, or they would disappear when scaled down. */
+const MINI_THICK = 2;
+/** A miniature's screen is far shorter than a real one: this keeps the speed looking the same. */
+const MINI_SPEED = 0.4;
+/** How much of a real screen's height a band of Aurora or Waves moves through, in a miniature. */
+const MINI_BAND = 0.3;
+
 const rgba = (c: Rgb, a: number) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
 const rnd = (a: number, b: number) => a + Math.random() * (b - a);
 
@@ -66,6 +77,8 @@ export function startEffect(canvas: HTMLCanvasElement, initial: EffectOptions): 
   let raf = 0;
   let stopped = false;
   const pointer = { x: -9999, y: -9999 };
+  const thick = () => (opts.miniature ? MINI_THICK : 1);
+  const speed = () => opts.speed * (opts.miniature ? MINI_SPEED : 1);
   const sprites = new Map<string, HTMLCanvasElement>();
 
   function sprite(col: Rgb): HTMLCanvasElement {
@@ -104,13 +117,13 @@ export function startEffect(canvas: HTMLCanvasElement, initial: EffectOptions): 
     };
     switch (opts.id) {
       case "snow":
-        Object.assign(p, { r: rnd(1, 3.2), vy: rnd(18, 42), vx: rnd(-8, 8), a: rnd(0.35, 0.85) });
+        Object.assign(p, { r: rnd(1, 3.2) * thick(), vy: rnd(18, 42), vx: rnd(-8, 8), a: rnd(0.35, 0.85) });
         break;
       case "rain":
         Object.assign(p, { len: rnd(10, 22), vy: rnd(380, 560), vx: -60, a: rnd(0.18, 0.4) });
         break;
       case "stars":
-        Object.assign(p, { y: rnd(0, H), r: rnd(0.5, 1.8), a: rnd(0.3, 1), tw: rnd(0.6, 2.2), vx: rnd(-3, 3) });
+        Object.assign(p, { y: rnd(0, H), r: rnd(0.5, 1.8) * thick(), a: rnd(0.3, 1), tw: rnd(0.6, 2.2), vx: rnd(-3, 3) });
         break;
       case "fireflies":
         Object.assign(p, { y: rnd(0, H), r: rnd(7, 15), vx: rnd(-14, 14), vy: rnd(-14, 14), tw: rnd(0.6, 1.6) });
@@ -127,7 +140,7 @@ export function startEffect(canvas: HTMLCanvasElement, initial: EffectOptions): 
         break;
       case "aurora":
       case "waves":
-        Object.assign(p, { y: rnd(H * 0.25, H * 0.8), amp: rnd(20, 55), k: rnd(0.004, 0.009), w: rnd(0.25, 0.6) });
+        Object.assign(p, { y: rnd(H * 0.25, H * 0.8), amp: rnd(20, 55) * (opts.miniature ? MINI_BAND : 1), k: rnd(0.004, 0.009), w: rnd(0.25, 0.6) });
         break;
     }
     return p;
@@ -138,18 +151,21 @@ export function startEffect(canvas: HTMLCanvasElement, initial: EffectOptions): 
     const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
     // The layer is as tall as the screen can get (see .nx-page-layer), not just the window.
     const box = canvas.getBoundingClientRect();
-    W = box.width || window.innerWidth;
-    H = box.height || window.innerHeight;
-    canvas.width = Math.round(W * dpr);
-    canvas.height = Math.round(H * dpr);
-    g2d.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const zoom = opts.miniature ? MINI_ZOOM : 1;
+    canvas.width = Math.round((box.width || window.innerWidth) * dpr);
+    canvas.height = Math.round((box.height || window.innerHeight) * dpr);
+    W = (box.width || window.innerWidth) * zoom;
+    H = (box.height || window.innerHeight) * zoom;
+    g2d.setTransform(dpr / zoom, 0, 0, dpr / zoom, 0, 0);
     g2d.clearRect(0, 0, W, H);
     parts = [];
     last = 0;
     if (opts.id === "off" || stopped) return;
     const fixed = opts.id === "aurora" || opts.id === "waves";
-    const areaScale = Math.max(0.35, Math.min(2.2, (W * H) / (1100 * 650)));
-    const n = Math.round(BASE_COUNT[opts.id] * (fixed ? Math.min(opts.amount, 1.4) : areaScale * opts.amount));
+    const area = (W * H) / (1100 * 650);
+    // A miniature keeps the same crowding as a real screen; its dots are drawn larger, so fewer are needed.
+    const areaScale = opts.miniature ? area * 1.5 : Math.max(0.35, Math.min(2.2, area));
+    const n = Math.ceil(BASE_COUNT[opts.id] * (fixed ? Math.min(opts.amount, 1.4) : areaScale * opts.amount));
     for (let i = 0; i < n; i++) parts.push(spawn(true));
     if (opts.id === "waves") parts.forEach((p, i) => (p.y = H * (0.45 + i * 0.1)));
     if (!document.hidden) raf = requestAnimationFrame(frame);
@@ -159,12 +175,12 @@ export function startEffect(canvas: HTMLCanvasElement, initial: EffectOptions): 
     const maxD2 = 120 * 120;
     const reach2 = 170 * 170;
     for (const p of parts) {
-      p.x += p.vx * dt * opts.speed;
-      p.y += p.vy * dt * opts.speed;
+      p.x += p.vx * dt * speed();
+      p.y += p.vy * dt * speed();
       if (p.x < 0 || p.x > W) p.vx *= -1;
       if (p.y < 0 || p.y > H) p.vy *= -1;
     }
-    g2d.lineWidth = 1;
+    g2d.lineWidth = thick();
     for (let i = 0; i < parts.length; i++) {
       const a = parts[i]!;
       for (let j = i + 1; j < parts.length; j++) {
@@ -194,7 +210,7 @@ export function startEffect(canvas: HTMLCanvasElement, initial: EffectOptions): 
       }
       g2d.fillStyle = rgba(a.col, opts.light ? 0.6 : 0.55);
       g2d.beginPath();
-      g2d.arc(a.x, a.y, 2, 0, Math.PI * 2);
+      g2d.arc(a.x, a.y, 2 * thick(), 0, Math.PI * 2);
       g2d.fill();
     }
   }
@@ -202,38 +218,39 @@ export function startEffect(canvas: HTMLCanvasElement, initial: EffectOptions): 
   function bandY(p: Particle, x: number, i: number) {
     return (
       p.y +
-      Math.sin(x * p.k + t * p.w * opts.speed + p.ph) * p.amp +
-      Math.sin(x * p.k * 2.3 - t * 0.3 * opts.speed + i) * p.amp * 0.4
+      Math.sin(x * p.k + t * p.w * speed() + p.ph) * p.amp +
+      Math.sin(x * p.k * 2.3 - t * 0.3 * speed() + i) * p.amp * 0.4
     );
   }
 
   function drawAurora() {
     g2d.globalCompositeOperation = opts.light ? "source-over" : "lighter";
+    const half = 90 * (opts.miniature ? MINI_BAND : 1);
     parts.forEach((p, i) => {
-      const g = g2d.createLinearGradient(0, p.y - 90, 0, p.y + 90);
+      const g = g2d.createLinearGradient(0, p.y - half, 0, p.y + half);
       g.addColorStop(0, rgba(p.col, 0));
       g.addColorStop(0.5, rgba(p.col, opts.light ? 0.16 : 0.14));
       g.addColorStop(1, rgba(p.col, 0));
       g2d.fillStyle = g;
       g2d.beginPath();
       for (let x = 0; x <= W + 20; x += 20) {
-        const y = bandY(p, x, i) - 90;
+        const y = bandY(p, x, i) - half;
         if (x === 0) g2d.moveTo(x, y);
         else g2d.lineTo(x, y);
       }
-      for (let x = W + 20; x >= 0; x -= 20) g2d.lineTo(x, bandY(p, x, i) + 90);
+      for (let x = W + 20; x >= 0; x -= 20) g2d.lineTo(x, bandY(p, x, i) + half);
       g2d.fill();
     });
     g2d.globalCompositeOperation = "source-over";
   }
 
   function drawWaves() {
-    g2d.lineWidth = 1.5;
+    g2d.lineWidth = 1.5 * thick();
     parts.forEach((p, i) => {
       g2d.strokeStyle = rgba(p.col, opts.light ? 0.28 : 0.22);
       g2d.beginPath();
       for (let x = 0; x <= W; x += 12) {
-        const y = p.y + Math.sin(x * p.k * 0.8 + t * (0.5 + i * 0.12) * opts.speed + p.ph) * p.amp * 0.6;
+        const y = p.y + Math.sin(x * p.k * 0.8 + t * (0.5 + i * 0.12) * speed() + p.ph) * p.amp * 0.6;
         if (x === 0) g2d.moveTo(x, y);
         else g2d.lineTo(x, y);
       }
@@ -249,7 +266,7 @@ export function startEffect(canvas: HTMLCanvasElement, initial: EffectOptions): 
   }
 
   function drawParticles(dt: number) {
-    const sp = opts.speed;
+    const sp = speed();
     for (let i = 0; i < parts.length; i++) {
       const p = parts[i]!;
       switch (opts.id) {
@@ -270,7 +287,7 @@ export function startEffect(canvas: HTMLCanvasElement, initial: EffectOptions): 
             parts[i]!.x = rnd(0, W + 80);
           }
           g2d.strokeStyle = rgba(p.col, p.a);
-          g2d.lineWidth = 1;
+          g2d.lineWidth = thick();
           g2d.beginPath();
           g2d.moveTo(p.x, p.y);
           g2d.lineTo(p.x + p.vx * 0.03, p.y - p.len);
@@ -301,7 +318,7 @@ export function startEffect(canvas: HTMLCanvasElement, initial: EffectOptions): 
           p.x += Math.sin(t * 0.8 + p.ph) * 12 * dt * sp;
           if (p.y < -30) parts[i] = spawn(false);
           g2d.strokeStyle = rgba(p.col, p.a);
-          g2d.lineWidth = 1.2;
+          g2d.lineWidth = 1.2 * thick();
           g2d.fillStyle = rgba(p.col, p.a * 0.12);
           g2d.beginPath();
           g2d.arc(p.x, p.y, p.r, 0, Math.PI * 2);
@@ -348,8 +365,16 @@ export function startEffect(canvas: HTMLCanvasElement, initial: EffectOptions): 
     else reset();
   };
   const onPointer = (e: PointerEvent) => {
-    pointer.x = e.clientX;
-    pointer.y = e.clientY;
+    if (!opts.miniature) {
+      pointer.x = e.clientX;
+      pointer.y = e.clientY;
+      return;
+    }
+    // A miniature follows the pointer only while it is over the tile.
+    const box = canvas.getBoundingClientRect();
+    const over = e.clientX >= box.left && e.clientX <= box.right && e.clientY >= box.top && e.clientY <= box.bottom;
+    pointer.x = over ? (e.clientX - box.left) * MINI_ZOOM : -9999;
+    pointer.y = over ? (e.clientY - box.top) * MINI_ZOOM : -9999;
   };
   const onLeave = () => {
     pointer.x = pointer.y = -9999;

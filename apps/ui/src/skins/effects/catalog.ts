@@ -43,8 +43,8 @@ export const EFFECT_SPEEDS = [
 
 export const EFFECT_COLOURS: { value: EffectColour; label: string }[] = [
   { value: "white", label: "White" },
-  { value: "accent", label: "Accent" },
-  { value: "scene", label: "Background" },
+  { value: "accent", label: "Main colour" },
+  { value: "scene", label: "Background colours" },
 ];
 
 const IDS = new Set<string>(BACKGROUND_EFFECTS.map((e) => e.id));

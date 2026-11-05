@@ -552,7 +552,7 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
 
       <Section
         title="Background effect colour"
-        hint={effectId === "off" ? "No background effect is on. Choose one on the Style tab first." : "The colour of the effect moving behind your dashboards."}
+        hint={effectId === "off" ? "No background effect is on. Choose one on the Style tab first." : "White, your main colour, or the colours of your background."}
       >
         {effectId !== "off" ? (
           <Segmented<EffectColour> label="Effect colour" value={themePrefs.effectColour ?? "white"} options={EFFECT_COLOURS} onChange={(v) => set({ effectColour: v })} />
