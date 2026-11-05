@@ -44,6 +44,7 @@ import {
   type MqttObservationKind,
 } from "./mqtt-observer.js";
 import { logActivity, logSensorAnswer, logSwitchChange, noteSwitchCommand } from "../activity/activity.js";
+import { UnansweredPresses } from "./unanswered-presses.js";
 
 let client: MqttClient | null = null;
 let status: "disconnected" | "connecting" | "connected" | "error" = "disconnected";
@@ -323,6 +324,9 @@ function touchDeviceOnlineFromTopic(topic: string, retained: boolean) {
  */
 const switchWaiters = new Map<string, { value: boolean; done: () => void }[]>();
 const SWITCH_ANSWER_MS = 6_000;
+/** A press that got no answer but then came through after all (see unanswered-presses.ts). */
+const unansweredPresses = new UnansweredPresses();
+const SWITCH_BACK_RETRY_MS = 5_000;
 
 function confirmSwitch(capabilityId: string, value: boolean) {
   const waiting = switchWaiters.get(capabilityId);
@@ -375,6 +379,7 @@ function applyLiveCapability(
   }
   if (kind === "switch" && typeof value === "boolean") {
     confirmSwitch(capabilityId, value);
+    if (!retained && unansweredPresses.takeLateOn(capabilityId, value, Date.now())) void switchBackLateOn(capabilityId);
     // A real change from the board (not the kept value replayed on connecting): into the Activity log.
     const before = previous?.value;
     if (!retained && typeof before === "boolean" && before !== value) void logSwitchChange(capabilityId, value);
@@ -965,6 +970,33 @@ export function requestHealthReport(prefix: string): boolean {
 
 export class SwitchNotConfirmedError extends Error {}
 
+/** What a board understands as on or off on its command topic. */
+function switchPayload(cap: { firmware_type: string | null; command_topic: string | null }, on: boolean): string {
+  const shelly = cap.firmware_type === "shelly" || looksLikeShellyCommandTopic(cap.command_topic);
+  if (shelly) return on ? "on" : "off";
+  return on ? "ON" : "OFF";
+}
+
+/** The board reported "on" after its press was given up on: switch it off again, and say so. */
+async function switchBackLateOn(capabilityId: string): Promise<void> {
+  const cap = await getCapabilityById(capabilityId);
+  if (!cap?.command_topic) return;
+  const send = () => {
+    noteSwitchCommand(capabilityId, false, "Nexternel");
+    client?.publish(cap.command_topic!, switchPayload(cap, false), { qos: 1 });
+  };
+  send();
+  // The board may still be cut off: one more try if it has not gone off.
+  setTimeout(() => {
+    if (getLiveState(capabilityId)?.value === true) send();
+  }, SWITCH_BACK_RETRY_MS);
+  void logActivity({
+    kind: "device",
+    deviceId: cap.device_id,
+    text: `${cap.device_name ?? "A board"} · ${cap.name} came on after its press had got no answer, so Nexternel switched it off again`,
+  });
+}
+
 /**
  * Sends a switch command and waits for the board to report the new position. `who` goes into the
  * Activity log with the change. Throws SwitchNotConfirmedError when the board does not answer in time.
@@ -987,6 +1019,9 @@ export async function publishSwitchCommand(
     next = action === "on";
   }
 
+  // A new press decides: an earlier unanswered one no longer counts.
+  unansweredPresses.clear(capabilityId);
+
   // Noted before sending: the board's answer can arrive before the send has finished.
   if (who) noteSwitchCommand(capabilityId, next, who);
 
@@ -998,16 +1033,7 @@ export async function publishSwitchCommand(
     return { value: next };
   }
 
-  const shelly =
-    cap.firmware_type === "shelly" ||
-    looksLikeShellyCommandTopic(cap.command_topic);
-  const payload = shelly
-    ? next
-      ? "on"
-      : "off"
-    : next
-      ? "ON"
-      : "OFF";
+  const payload = switchPayload(cap, next);
   const mqttClient = client;
   if (!mqttClient?.connected) {
     throw new Error("MQTT not connected");
@@ -1026,7 +1052,17 @@ export async function publishSwitchCommand(
 
   // Only the board's own report counts (state topic / events/rpc): no assumed position.
   if (!(await answer)) {
-    throw new SwitchNotConfirmedError(`No answer from ${cap.device_name ?? "the board"}: it may not have switched.`);
+    const board = cap.device_name ?? "the board";
+    if (next) unansweredPresses.note(capabilityId, Date.now());
+    void logActivity({
+      kind: "device",
+      deviceId: cap.device_id,
+      text: `${board} · ${cap.name}: ${next ? "on" : "off"} press got no answer${next ? ", so it was cancelled" : ""}`,
+      who,
+    });
+    throw new SwitchNotConfirmedError(
+      next ? `No answer from ${board}, so this press was cancelled.` : `No answer from ${board}: it may not have switched.`
+    );
   }
   return { value: next };
 }

@@ -187,6 +187,8 @@ export function applyBoardHealthTopic(topic: string, payload: string, retained: 
     // Kept (retained) is fine here: it is what the board said last, and only changes with new software.
     const value = payload.trim().toLowerCase();
     if (/^[0-9a-f]{8}$/.test(value)) fingerprints.set(prefix, value);
+    // Emptied: this board no longer reports (its own file left the shared settings), so it may stay quiet.
+    else if (!value) fingerprints.delete(prefix);
     return true;
   }
 

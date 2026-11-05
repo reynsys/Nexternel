@@ -2,6 +2,12 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.179
+
+- A switch that gets no answer when pressed on is now cancelled. If the board reports it came on anyway, Nexternel switches it off again and says so in the Activity log.
+- Presses with no answer are written in the Activity log.
+- A board taken off the shared settings can stay quiet without being marked offline.
+
 ## V5.2.178
 
 - **Background effect tiles are true miniatures** of the real effect: the same look and crowding at a small size. In **Network (follows you)**, the tile reacts when the pointer is over it. The real backgrounds have not changed.
