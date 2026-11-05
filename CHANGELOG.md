@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.177
+
+- **Appearance is easier to find your way around.** All colours are now together on the new **Colours** tab: Light or Dark, main, second and third colours, background and background effect colour. **Style** holds how panels and buttons are drawn, and background effects. **Theme** holds the ready-made themes only and says that picking one replaces your colours. No option was removed.
+- **Apply and Cancel stay in one place** at the top of Appearance. They are greyed out until you change something, and no longer pop up at the bottom of the page.
+
 ## V5.2.176
 
 - **New: Wi‑Fi signal history** for every board (Devices → a board → Troubleshooting): the signal over the last 24 hours, 7 days or 14 days, how many of its reports arrived, and how often it lost the message service. A gap in the line means no report arrived.

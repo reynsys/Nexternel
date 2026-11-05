@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from "@mui/material";
 import { setLeaveGuard } from "../lib/leave-guard";
-import { AppearanceTrialBar } from "./AppearanceTrialBar";
+import { SidePanelButtons } from "../components/side-panel/SidePanelButtons";
 import { useSkin } from "./SkinProvider";
 import { ThemeOptionsFields } from "./ThemeOptionsFields";
 import { useContentSurfaceSx } from "./useSurfaceStyles";
@@ -9,8 +9,8 @@ import { useContentSurfaceSx } from "./useSurfaceStyles";
 /**
  * Theme / appearance controls (light-dark, accent, skin).
  * Used on Settings → Appearance — not as a floating FAB.
- * Changes show straight away; Apply (in the bar at the bottom) saves them to the account, Cancel
- * puts back how it was. Leaving the page with changes not applied asks Stay / Don't keep / Apply;
+ * Changes show straight away; Apply (always at the top of the page, greyed until something changes)
+ * saves them to the account, Cancel puts back how it was. Leaving the page with changes not applied asks Stay / Don't keep / Apply;
  * leaving any other way (the browser's Back) puts back how it was.
  */
 export function ThemeOptionsPanel() {
@@ -36,11 +36,29 @@ export function ThemeOptionsPanel() {
   };
 
   return (
-    <Card sx={surfaceSx}>
+    <Card sx={[surfaceSx, { overflow: "visible" }]}>
       <CardContent>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          You see changes straight away; press Apply to keep them.
-        </Typography>
+        <Box
+          sx={(t) => ({
+            position: "sticky",
+            top: "var(--nx-top-bar, 0px)",
+            zIndex: t.zIndex.appBar,
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            gap: 1.5,
+            mb: 1,
+            py: 1,
+            bgcolor: t.nxScheme.surfaceSolid.panel,
+          })}
+        >
+          <Typography variant="body2" color={trying ? "text.primary" : "text.secondary"} sx={{ flex: "1 1 260px", display: { xs: "none", sm: "block" } }}>
+            {trying ? "You can see your changes. Press Apply to keep them, or Cancel to put back how it was." : "Your changes show straight away. Press Apply to keep them."}
+          </Typography>
+          <Box sx={{ flex: "0 0 auto", width: { xs: "100%", sm: 240 } }}>
+            <SidePanelButtons onCancel={cancelTrial} onApply={applyTrial} applyDisabled={!trying} cancelDisabled={!trying} />
+          </Box>
+        </Box>
         <ThemeOptionsFields
           themePrefs={themePrefs}
           skinId={skin.id}
@@ -48,10 +66,7 @@ export function ThemeOptionsPanel() {
           onThemeChange={tryThemePrefs}
           onSkinChange={trySkinId}
         />
-        {/* Room for the Apply bar, so it never covers the last choices. */}
-        {trying ? <Box aria-hidden sx={{ height: 96 }} /> : null}
       </CardContent>
-      {trying ? <AppearanceTrialBar onCancel={cancelTrial} onApply={applyTrial} /> : null}
       <Dialog open={Boolean(leaveAsk)} onClose={() => setLeaveAsk(null)} maxWidth="xs" fullWidth>
         <DialogTitle>Keep the Appearance changes?</DialogTitle>
         <DialogContent>

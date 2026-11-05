@@ -47,8 +47,8 @@ type Props = {
 
 const TABS = [
   { id: "theme", label: "Theme" },
-  { id: "style", label: "Style & colours" },
-  { id: "background", label: "Background" },
+  { id: "colours", label: "Colours" },
+  { id: "style", label: "Style" },
   { id: "text", label: "Text" },
   { id: "dashboards", label: "Dashboards" },
 ] as const;
@@ -172,7 +172,8 @@ function Swatch({ colour, label, selected, onClick }: { colour: string; label: s
 /**
  * Settings → Appearance (and Users → Edit): one theme made of a style, a mode, three colours, a
  * background and a font — with a live preview and ready-made themes. Every colour comes from the
- * Appearance engine (lib/appearance), which keeps all text readable.
+ * Appearance engine (lib/appearance), which keeps all text readable. Every colour choice is on the
+ * Colours tab; Style is how things are drawn and what moves.
  */
 export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, onSkinChange, footnote }: Props) {
   const [customHex, setCustomHex] = useState(themePrefs.primary);
@@ -359,12 +360,6 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
               <Segmented label={label} value={themePrefs[key] ?? 1} options={options} onChange={(v) => set({ [key]: v })} />
             </Box>
           ))}
-          <Box>
-            <Typography variant="body2" fontWeight="fontWeightBold" sx={{ mb: 1 }}>
-              Colour
-            </Typography>
-            <Segmented<EffectColour> label="Effect colour" value={themePrefs.effectColour ?? "white"} options={EFFECT_COLOURS} onChange={(v) => set({ effectColour: v })} />
-          </Box>
         </Box>
       ) : null}
     </Section>
@@ -406,8 +401,7 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
 
   const tabContent: Record<string, ReactNode> = {
     theme: (
-      <Stack spacing={3.5} divider={<Divider flexItem />}>
-      <Section title="Ready-made themes" hint="A starting point: style, mode, colours, background and font together. Change anything afterwards.">
+      <Section title="Ready-made themes" hint="Picking one replaces your style, light or dark, colours, background and font. Change anything afterwards; Cancel puts back how it was.">
         <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 1 }}>
           {THEME_PRESETS.filter((p) => resolveLook(p.lookId).id === p.lookId).map((p) => {
             const { s, bg } = presetPreview(p);
@@ -441,28 +435,10 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
           })}
         </Box>
       </Section>
-
-        {modeTiles}
-      </Stack>
     ),
-    style: (
+    colours: (
       <Stack spacing={3.5} divider={<Divider flexItem />}>
-      <Section title="Style" hint="How panels, frames, buttons and switches are drawn. Standard is solid; Glass is see-through over the background.">
-        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 1 }}>
-          {listLooks().map((l) => (
-            <ChoiceTile key={l.id} selected={look.id === l.id} onClick={() => onThemeChange(withLook(themePrefs, l.id))} title={l.label} text={l.description} />
-          ))}
-        </Box>
-        {(look.buttonStyles?.length ?? 0) > 1 ? (
-          <Row label="Buttons" hint={`how buttons are drawn while ${look.label} is chosen`}>
-            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: 1 }}>
-              {look.buttonStyles!.map((b) => (
-                <ChoiceTile key={b.id} selected={chosenLookButtons(look, themePrefs.lookButtons)?.id === b.id} onClick={() => set({ lookButtons: b.id })} title={b.label} text={b.description} />
-              ))}
-            </Box>
-          </Row>
-        ) : null}
-      </Section>
+        {modeTiles}
 
       <Section title="Colours" hint="Three colours that work together. Nexternel keeps every text readable: a colour is made a little lighter or darker where needed, never changed.">
         <Row label="Main colour" hint="buttons, chosen items, the switch when on">
@@ -527,10 +503,6 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
         </Row>
       </Section>
 
-      </Stack>
-    ),
-    background: (
-      <Stack spacing={3.5} divider={<Divider flexItem />}>
       <Section title="Background" hint={BACKGROUND_HINT[kind]}>
         <Segmented
           label="Background type"
@@ -578,6 +550,35 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
         )}
       </Section>
 
+      <Section
+        title="Background effect colour"
+        hint={effectId === "off" ? "No background effect is on. Choose one on the Style tab first." : "The colour of the effect moving behind your dashboards."}
+      >
+        {effectId !== "off" ? (
+          <Segmented<EffectColour> label="Effect colour" value={themePrefs.effectColour ?? "white"} options={EFFECT_COLOURS} onChange={(v) => set({ effectColour: v })} />
+        ) : null}
+      </Section>
+      </Stack>
+    ),
+    style: (
+      <Stack spacing={3.5} divider={<Divider flexItem />}>
+      <Section title="Style" hint="How panels, frames, buttons and switches are drawn. Standard is solid; Glass is see-through over the background.">
+        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 1 }}>
+          {listLooks().map((l) => (
+            <ChoiceTile key={l.id} selected={look.id === l.id} onClick={() => onThemeChange(withLook(themePrefs, l.id))} title={l.label} text={l.description} />
+          ))}
+        </Box>
+        {(look.buttonStyles?.length ?? 0) > 1 ? (
+          <Row label="Buttons" hint={`how buttons are drawn while ${look.label} is chosen`}>
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: 1 }}>
+              {look.buttonStyles!.map((b) => (
+                <ChoiceTile key={b.id} selected={chosenLookButtons(look, themePrefs.lookButtons)?.id === b.id} onClick={() => set({ lookButtons: b.id })} title={b.label} text={b.description} />
+              ))}
+            </Box>
+          </Row>
+        ) : null}
+      </Section>
+
         {effectTiles}
       </Stack>
     ),
@@ -615,7 +616,7 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
   return wide ? (
     <Box sx={{ display: "grid", gridTemplateColumns: "minmax(0, 1.3fr) minmax(360px, 0.8fr)", gap: 3, alignItems: "start" }}>
       {settings}
-      <Box sx={{ position: "sticky", top: 16 }}>
+      <Box sx={{ position: "sticky", top: 80 }}>
         <Typography variant="subtitle1" sx={{ mb: 1 }}>
           Preview
         </Typography>
