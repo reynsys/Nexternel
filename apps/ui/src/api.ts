@@ -1966,7 +1966,7 @@ export type PluginPanelInfo = {
   defaultSize?: { w: number; h: number };
 };
 
-export type PluginPageInfo = { id: string; label: string; block: "tracking" };
+export type PluginPageInfo = { id: string; label: string; block: "tracking" | "setup" };
 
 export type PluginPanelAnswer = { text: string; done: boolean; error: string | null };
 

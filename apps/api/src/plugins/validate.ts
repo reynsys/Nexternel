@@ -118,7 +118,7 @@ function validatePanels(raw: unknown, errors: string[]): PluginPanelDef[] {
   return out;
 }
 
-const PAGE_BLOCKS = ["tracking"] as const;
+const PAGE_BLOCKS = ["tracking", "setup"] as const;
 
 function validatePages(raw: unknown, errors: string[]): PluginPageDef[] {
   if (raw === undefined) return [];

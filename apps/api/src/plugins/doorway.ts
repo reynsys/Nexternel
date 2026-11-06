@@ -12,7 +12,7 @@ import { waitForPluginEvents } from "./events.js";
 import { replyToPageCall } from "./pages.js";
 import { replyToPanelRequest, setPanelContent } from "./panels.js";
 import { pluginOwnSecret, pluginIdFromToken, tokenMatches } from "./secrets.js";
-import { logPluginAction, normalizeGrants, pluginSettingsForRuntime } from "./service.js";
+import { logPluginAction, normalizeGrants, pluginSettingsForRuntime, savePluginSettings } from "./service.js";
 
 /**
  * The plugin doorway: the only part of Nexternel a plugin can talk to.
@@ -91,6 +91,17 @@ export const pluginDoorwayRoutes: FastifyPluginAsync = async (app) => {
     if (!parsed.ok) return reply.code(400).send({ error: { code: "bad_request", message: parsed.error } });
     await definePluginDevices(p.id, parsed.devices);
     return { ok: true, devices: parsed.devices.length };
+  });
+
+  app.put<{ Body: { values?: unknown } }>("/api/v1/plugin-api/settings", async (request, reply) => {
+    const p = request.plugin!;
+    const values = request.body?.values;
+    if (typeof values !== "object" || values === null || Array.isArray(values)) {
+      return reply.code(400).send({ error: { code: "bad_request", message: "values must be an object" } });
+    }
+    const result = await savePluginSettings(p.id, values as Record<string, unknown>, { restart: false });
+    if (!result.ok) return reply.code(400).send({ error: { code: "bad_request", message: result.errors.join("; ") } });
+    return { ok: true };
   });
 
   app.post<{ Body: { readings?: unknown } }>("/api/v1/plugin-api/readings", async (request, reply) => {

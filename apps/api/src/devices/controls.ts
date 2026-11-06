@@ -22,10 +22,14 @@ export type ControlFeatures = {
   fanSpeeds?: string[];
   /** Heating: named settings such as Comfort, Eco and Away. */
   presets?: string[];
+  /** Heating: settings whose temperature the device decides, so it cannot be changed from here. */
+  fixedPresets?: string[];
   /** Light: what this light can do. */
   brightness?: boolean;
   color?: boolean;
   white?: boolean;
+  /** Reached through the maker's internet service, so it stops answering without the internet. */
+  internet?: boolean;
 };
 
 export type ControlColor = { h: number; s: number };
@@ -71,6 +75,11 @@ function oneOf(raw: unknown, allowed: readonly string[], fallback: readonly stri
 
 /** What a device declared, kept to what Nexternel understands, with sensible ranges. */
 export function parseControlFeatures(type: ControlType, raw: unknown): ControlFeatures {
+  const features = parseTypeFeatures(type, raw);
+  return isRecord(raw) && raw.internet === true ? { ...features, internet: true } : features;
+}
+
+function parseTypeFeatures(type: ControlType, raw: unknown): ControlFeatures {
   const f = isRecord(raw) ? raw : {};
   if (type === "light") {
     return { brightness: f.brightness === true, color: f.color === true, white: f.white === true };
@@ -87,7 +96,9 @@ export function parseControlFeatures(type: ControlType, raw: unknown): ControlFe
   };
   if (heating) {
     const presets = Array.isArray(f.presets) ? f.presets.filter((p): p is string => typeof p === "string" && p.trim() !== "").slice(0, 4) : [];
-    return presets.length ? { ...range, presets } : range;
+    if (!presets.length) return range;
+    const fixed = Array.isArray(f.fixedPresets) ? presets.filter((p) => (f.fixedPresets as unknown[]).includes(p)) : [];
+    return fixed.length ? { ...range, presets, fixedPresets: fixed } : { ...range, presets };
   }
   return { ...range, modes: oneOf(f.modes, CLIMATE_MODES, CLIMATE_MODES), fanSpeeds: oneOf(f.fanSpeeds, FAN_SPEEDS, FAN_SPEEDS) };
 }
@@ -141,6 +152,11 @@ export function cleanControlChange(type: ControlType, f: ControlFeatures, raw: u
     if (typeof raw.fan === "string" && f.fanSpeeds?.includes(raw.fan)) out.fan = raw.fan;
   }
   return Object.keys(out).length ? out : null;
+}
+
+/** True while a setting such as Eco decides the temperature, so a new one cannot be sent. */
+export function temperatureIsFixed(f: ControlFeatures, state: ControlState): boolean {
+  return state.preset !== undefined && (f.fixedPresets ?? []).includes(state.preset);
 }
 
 /** A device's report: the parts Nexternel understands. */

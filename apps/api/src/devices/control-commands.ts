@@ -12,10 +12,13 @@ import {
   describeControlChange,
   isControlType,
   reportConfirms,
+  temperatureIsFixed,
 } from "./controls.js";
 
 /** How long a device has to confirm a change. */
 const ANSWER_MS = 6_000;
+/** A device reached through its maker's internet service takes longer to answer. */
+const INTERNET_ANSWER_MS = 15_000;
 const SWITCH_BACK_RETRY_MS = 5_000;
 
 export class ControlRefusedError extends Error {}
@@ -32,7 +35,7 @@ type Waiter = { wanted: ControlState; done: () => void };
 const waiters = new Map<string, Waiter[]>();
 const unanswered = new UnansweredPresses();
 
-function waitForReport(capabilityId: string, wanted: ControlState): Promise<boolean> {
+function waitForReport(capabilityId: string, wanted: ControlState, answerMs: number): Promise<boolean> {
   return new Promise((resolve) => {
     const entry: Waiter = { wanted, done: () => {} };
     const drop = () => {
@@ -43,7 +46,7 @@ function waitForReport(capabilityId: string, wanted: ControlState): Promise<bool
     const timer = setTimeout(() => {
       drop();
       resolve(false);
-    }, ANSWER_MS);
+    }, answerMs);
     entry.done = () => {
       clearTimeout(timer);
       drop();
@@ -104,9 +107,13 @@ export async function setControl(capabilityId: string, rawChange: unknown, who: 
   const change = cleanControlChange(info.type, info.features, rawChange);
   if (!change) throw new ControlRefusedError("This device cannot do that");
   if (!sender) throw new Error("No way to reach this device");
+  const live = (getLiveState(capabilityId)?.value ?? {}) as ControlState;
+  if (change.target !== undefined && change.preset === undefined && temperatureIsFixed(info.features, live)) {
+    throw new ControlRefusedError(`Leave ${live.preset} first, then set the temperature`);
+  }
 
   unanswered.clear(capabilityId);
-  const answer = waitForReport(capabilityId, change);
+  const answer = waitForReport(capabilityId, change, info.features.internet ? INTERNET_ANSWER_MS : ANSWER_MS);
   await sender(capabilityId, change);
   if (await answer) {
     void logActivity({ kind: "device", deviceId: cap.device_id, text: `${cap.device_name} · ${cap.name} ${describeControlChange(change)}`, who });

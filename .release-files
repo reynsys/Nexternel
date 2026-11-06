@@ -585,6 +585,7 @@ apps/ui/src/plugins/blocks/map-base.ts
 apps/ui/src/plugins/blocks/MapPanel.tsx
 apps/ui/src/plugins/blocks/TextPanel.tsx
 apps/ui/src/plugins/loadContributions.ts
+apps/ui/src/plugins/pages/SetupPage.tsx
 apps/ui/src/plugins/pages/TrackingMap.tsx
 apps/ui/src/plugins/pages/TrackingPage.tsx
 apps/ui/src/plugins/PluginHostContext.tsx

@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import TuneOutlinedIcon from "@mui/icons-material/TuneOutlined";
 import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
 import { usePluginHostOptional } from "../plugins/PluginHostContext";
 import { MAIN_NAV, type NavItem } from "./nav";
@@ -13,7 +14,7 @@ export function useMainNav(): NavItem[] {
         (p.pages ?? []).map((page) => ({
           label: page.label,
           to: `/plugin-page/${p.id}/${page.id}`,
-          icon: PlaceOutlinedIcon,
+          icon: page.block === "setup" ? TuneOutlinedIcon : PlaceOutlinedIcon,
           auth: true,
         }))
       );

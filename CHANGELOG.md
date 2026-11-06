@@ -2,6 +2,13 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.187
+
+- New Nest Heating extension: control a Google Nest thermostat from a heating panel. A guided page takes you through Google's one-time setup, step by step. Google charges a one-off US$5.
+- Heating panels show Eco. While Eco is on, the temperature is locked and the panel says Eco.
+- Pressing + or - several times now sends only the final temperature, once you stop pressing.
+- Devices that work through the internet have a small cloud mark on their panel.
+
 ## V5.2.186
 
 - GPS Tracker: the Bell section is gone from the Settings tab. Bell choices stay in Settings → Notifications.

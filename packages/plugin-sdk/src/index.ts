@@ -72,7 +72,7 @@ export interface PluginPanelDef {
 }
 
 /** Whole pages a plugin can offer, drawn by Nexternel like its panels. */
-export type PluginPageBlock = "tracking";
+export type PluginPageBlock = "tracking" | "setup";
 
 /** A page in the side menu, shown while the plugin is switched on. */
 export interface PluginPageDef {

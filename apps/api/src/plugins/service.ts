@@ -300,7 +300,8 @@ export async function setPluginBell(id: string, raw: unknown): Promise<PluginRec
 /** Check and store settings from the plugin's settings page. Secrets left empty keep their value. */
 export async function savePluginSettings(
   id: string,
-  input: Record<string, unknown>
+  input: Record<string, unknown>,
+  { restart = true }: { restart?: boolean } = {}
 ): Promise<{ ok: true; plugin: PluginRecord } | { ok: false; errors: string[] }> {
   const row = await getRow(id);
   if (!row) return { ok: false, errors: ["Plugin not found"] };
@@ -342,9 +343,9 @@ export async function savePluginSettings(
   }
   if (errors.length) return { ok: false, errors };
   const res = await getPool().query<DbRow>(
-    `UPDATE installed_plugins SET settings = $2::jsonb, config_rev = config_rev + 1, updated_at = NOW()
+    `UPDATE installed_plugins SET settings = $2::jsonb, config_rev = config_rev + $3, updated_at = NOW()
      WHERE id = $1 RETURNING ${COLUMNS}`,
-    [id, JSON.stringify(next)]
+    [id, JSON.stringify(next), restart ? 1 : 0]
   );
   await logPluginAction(id, "settings-changed", { keys: Object.keys(input).filter((k) => fields.some((f) => f.key === k)) });
   return { ok: true, plugin: rowToRecord(res.rows[0]!) };

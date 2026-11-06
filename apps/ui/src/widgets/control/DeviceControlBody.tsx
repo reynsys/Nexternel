@@ -1,14 +1,16 @@
 import AcUnitRoundedIcon from "@mui/icons-material/AcUnitRounded";
 import AirRoundedIcon from "@mui/icons-material/AirRounded";
 import AutorenewRoundedIcon from "@mui/icons-material/AutorenewRounded";
+import CloudOutlinedIcon from "@mui/icons-material/CloudOutlined";
 import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
 import WaterDropRoundedIcon from "@mui/icons-material/WaterDropRounded";
 import WbSunnyRoundedIcon from "@mui/icons-material/WbSunnyRounded";
-import { Box, Button, ButtonBase, Dialog, Slider, Switch, Typography, useTheme } from "@mui/material";
+import { Box, Button, ButtonBase, Dialog, Slider, Switch, Tooltip, Typography, useTheme } from "@mui/material";
+import type { SxProps, Theme } from "@mui/material/styles";
 import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { ColourWheel } from "./ColourWheel";
 import { TemperatureDial } from "./TemperatureDial";
-import { FAN_STEPS, WHITE_LIGHT, colorCss, deviceColour, fanWord, isWhiteLight, splitTemperature, type ControlState } from "./control-view";
+import { FAN_STEPS, WHITE_LIGHT, colorCss, deviceColour, fanWord, isWhiteLight, splitTemperature, temperatureIsFixed, type ControlState } from "./control-view";
 import { CONTROL_TEXT, VALUE_WEIGHT } from "../../lib/appearance/type";
 import { choiceSx } from "../../skins/surfaceStyles";
 import { BLIND_SLATS, BLIND_VIEW, CONTROL_LINE_DESIGN, CTRL, controlFitsOneLine, controlScale } from "./control-style";
@@ -54,6 +56,17 @@ function Toggle({ cap, ctl }: View) {
         "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { bgcolor: "var(--c)", opacity: 0.6 },
       }}
     />
+  );
+}
+
+/** Marks a device reached through its maker's internet service. */
+function NeedsInternet({ sx }: { sx: SxProps<Theme> }) {
+  return (
+    <Tooltip title="Needs the internet">
+      <Box role="img" aria-label="Needs the internet" sx={[{ position: "absolute", zIndex: 2, display: "flex", color: "text.secondary" }, ...(Array.isArray(sx) ? sx : [sx])]}>
+        <CloudOutlinedIcon fontSize="small" />
+      </Box>
+    </Tooltip>
   );
 }
 
@@ -143,6 +156,7 @@ function Panel({ cap, ctl, colour, stage, children }: View & { colour: string; s
       sx={{ position: "relative", width: "100%", height: "100%", minHeight: 0, minWidth: 0, display: "flex", flexDirection: "column", p: 1, color: "text.primary", overflow: "hidden" }}
       style={{ "--c": colour, "--nx-ctrl-hole": theme.palette.background.paper } as CSSProperties}
     >
+      {ctl.features.internet ? <NeedsInternet sx={{ top: 12, left: 12 }} /> : null}
       <Box sx={{ position: "absolute", top: 4, right: 4, zIndex: 2 }}>
         <Toggle cap={cap} ctl={ctl} />
       </Box>
@@ -179,15 +193,16 @@ function StepButton({ side, label, disabled, onClick }: { side: "left" | "right"
 function Temperature(view: View) {
   const { cap, ctl } = view;
   const theme = useTheme();
-  const { state, features, change } = ctl;
+  const { state, features, change, changeSoon } = ctl;
   const climate = cap.kind === "climate";
+  const fixed = temperatureIsFixed(features, state);
   const min = features.min ?? (climate ? 16 : 10);
   const max = features.max ?? 30;
   const step = features.step ?? (climate ? 1 : 0.5);
   const on = state.on !== false;
   const noTemperature = climate && state.mode === "fan";
   const bump = (d: -1 | 1) => {
-    if (state.target !== undefined) void change({ target: Math.min(max, Math.max(min, state.target + d * step)) });
+    if (state.target !== undefined) changeSoon({ target: Math.min(max, Math.max(min, state.target + d * step)) });
   };
   const stats = [
     state.heating !== undefined ? <Stat key="now" value={state.heating ? "Heating" : "Idle"} label="Right now" /> : null,
@@ -200,9 +215,9 @@ function Temperature(view: View) {
       colour={deviceColour(cap.kind, state, features, theme.palette.primary.main)}
       stage={
         <>
-          <TemperatureDial value={state.target} current={state.current} min={min} max={max} step={step} enabled={on} word={noTemperature ? "Fan" : undefined} onCommit={(target) => void change({ target })} />
-          <StepButton side="left" label="Lower the set temperature" disabled={!on || noTemperature} onClick={() => bump(-1)} />
-          <StepButton side="right" label="Raise the set temperature" disabled={!on || noTemperature} onClick={() => bump(1)} />
+          <TemperatureDial value={state.target} current={state.current} min={min} max={max} step={step} enabled={on && !fixed} word={noTemperature ? "Fan" : undefined} caption={fixed ? state.preset : undefined} onCommit={(target) => changeSoon({ target })} />
+          <StepButton side="left" label="Lower the set temperature" disabled={!on || noTemperature || fixed} onClick={() => bump(-1)} />
+          <StepButton side="right" label="Raise the set temperature" disabled={!on || noTemperature || fixed} onClick={() => bump(1)} />
         </>
       }
     >
@@ -408,7 +423,7 @@ function lineLevel(kind: string, state: ControlState): { label: string; value: n
 }
 
 function LineMiddle({ cap, ctl }: View) {
-  const { state, features, change } = ctl;
+  const { state, features, change, changeSoon } = ctl;
   const [drag, setDrag] = useState<number | null>(null);
   const temperature = cap.kind === "thermostat" || cap.kind === "climate";
   const on = state.on !== false;
@@ -422,26 +437,27 @@ function LineMiddle({ cap, ctl }: View) {
   if (temperature) {
     const climate = cap.kind === "climate";
     const noTemperature = climate && state.mode === "fan";
+    const fixed = temperatureIsFixed(features, state);
     const min = features.min ?? (climate ? 16 : 10);
     const max = features.max ?? 30;
     const step = features.step ?? (climate ? 1 : 0.5);
     const bump = (d: -1 | 1) => {
-      if (state.target !== undefined) void change({ target: Math.min(max, Math.max(min, state.target + d * step)) });
+      if (state.target !== undefined) changeSoon({ target: Math.min(max, Math.max(min, state.target + d * step)) });
     };
     const mode = climate && state.mode ? WORD[state.mode] ?? state.mode : "";
     return (
       <Box sx={{ mt: "8px", display: "flex", flexDirection: "column", gap: "8px" }}>
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
-          <LineStep sign="−" label="Lower the set temperature" disabled={!on || noTemperature} onClick={() => bump(-1)} />
+          <LineStep sign="−" label="Lower the set temperature" disabled={!on || noTemperature || fixed} onClick={() => bump(-1)} />
           {noTemperature || state.target === undefined ? (
             big(noTemperature ? "Fan" : "—", noTemperature ? "Mode" : "Set to")
           ) : (
             <Box sx={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <Box component="span" sx={{ fontSize: CONTROL_TEXT.row, fontWeight: "fontWeightBold", color: "text.secondary", whiteSpace: "nowrap" }}>Set to</Box>
+              <Box component="span" sx={{ fontSize: CONTROL_TEXT.row, fontWeight: "fontWeightBold", color: "text.secondary", whiteSpace: "nowrap" }}>{fixed ? state.preset : "Set to"}</Box>
               <LineTemperature value={state.target} />
             </Box>
           )}
-          <LineStep sign="+" label="Raise the set temperature" disabled={!on || noTemperature} onClick={() => bump(1)} />
+          <LineStep sign="+" label="Raise the set temperature" disabled={!on || noTemperature || fixed} onClick={() => bump(1)} />
         </Box>
         {state.current !== undefined ? (
           <Box sx={{ display: "flex", justifyContent: "center", gap: "4px", fontSize: CONTROL_TEXT.row, fontWeight: "fontWeightBold", color: "text.secondary", whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" }}>
@@ -500,6 +516,7 @@ function LineTile({ cap, ctl, onOpen }: View & { onOpen: () => void }) {
       <Button variant="outlined" color="inherit" aria-label={`Open ${cap.name}`} onClick={onOpen} sx={{ position: "absolute", top: 10, left: 10, zIndex: 1, minWidth: 0, minHeight: 0, width: 26, height: 26, p: 0 }}>
         <TuneRoundedIcon fontSize="small" />
       </Button>
+      {features.internet ? <NeedsInternet sx={{ bottom: 10, left: 14 }} /> : null}
       <Box sx={{ gridColumn: 2, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: "8px", opacity: off ? 0.34 : 1, pointerEvents: off ? "none" : undefined }}>
         {ctl.error ? <Typography variant="caption" color="error" role="status" textAlign="center" sx={{ fontWeight: "fontWeightBold" }}>No answer</Typography> : null}
         <LineMiddle cap={cap} ctl={ctl} />

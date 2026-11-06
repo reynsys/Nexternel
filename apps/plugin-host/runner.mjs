@@ -154,6 +154,11 @@ const nx = Object.freeze({
   secret: self.secret,
   /** What the person approved. */
   grants: Object.freeze({ ...self.grants }),
+  /**
+   * Save values into this plugin's own settings (fields listed in its manifest): for what it
+   * learns by itself, such as a sign-in. They go into backups; nx.settings keeps its start values.
+   */
+  saveSettings: (values) => call("PUT", "/settings", { values }),
   /** A folder only this plugin can read and write. */
   dataDir: process.env.NEXTERNEL_PLUGIN_DATA,
 
@@ -162,6 +167,8 @@ const nx = Object.freeze({
   /**
    * Declare this plugin's devices: [{ key, name, items: [{ key, name, kind, unit, control, features }] }].
    * control: true (a switch), or "thermostat", "light", "climate", "cover" or "fan" with features saying what it can do.
+   * features.internet marks a device that needs the internet; features.fixedPresets lists settings
+   * whose temperature the device decides.
    */
   defineDevices: (devices) => call("PUT", "/devices", { devices }),
   /** Send one reading; readings are grouped and sent together. Resend at least every 2 minutes. */

@@ -6,10 +6,25 @@ import {
   describeControlChange,
   parseControlFeatures,
   reportConfirms,
+  temperatureIsFixed,
 } from "./controls.ts";
 
 test("heating gets a sensible range when the device gives none", () => {
   assert.deepEqual(parseControlFeatures("thermostat", {}), { min: 10, max: 30, step: 0.5 });
+});
+
+test("a device reached over the internet keeps that mark, whatever kind it is", () => {
+  assert.equal(parseControlFeatures("thermostat", { internet: true }).internet, true);
+  assert.equal(parseControlFeatures("fan", { internet: true }).internet, true);
+  assert.equal(parseControlFeatures("thermostat", {}).internet, undefined);
+});
+
+test("a setting that decides the temperature must be one of the device's settings", () => {
+  const f = parseControlFeatures("thermostat", { presets: ["Normal", "Eco"], fixedPresets: ["Eco", "Away"] });
+  assert.deepEqual(f.fixedPresets, ["Eco"]);
+  assert.equal(temperatureIsFixed(f, { preset: "Eco" }), true);
+  assert.equal(temperatureIsFixed(f, { preset: "Normal" }), false);
+  assert.equal(temperatureIsFixed(f, {}), false);
 });
 
 test("air conditioning keeps only the modes it has", () => {

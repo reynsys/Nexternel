@@ -6,9 +6,11 @@ export type ControlFeatures = {
   modes?: string[];
   fanSpeeds?: string[];
   presets?: string[];
+  fixedPresets?: string[];
   brightness?: boolean;
   color?: boolean;
   white?: boolean;
+  internet?: boolean;
 };
 
 export type ControlState = {
@@ -36,6 +38,11 @@ export function isDeviceControlKind(kind: string): boolean {
 
 export function controlStateOf(value: unknown): ControlState {
   return typeof value === "object" && value !== null ? (value as ControlState) : {};
+}
+
+/** True while a setting such as Eco decides the temperature, so it cannot be changed from the panel. */
+export function temperatureIsFixed(features: ControlFeatures, state: ControlState): boolean {
+  return state.preset !== undefined && (features.fixedPresets ?? []).includes(state.preset);
 }
 
 /** The whole degrees and the half apart: the big number stays still when .5 comes and goes. */

@@ -28,6 +28,8 @@ type Props = {
   enabled: boolean;
   /** Shown instead of the number when there is no temperature to set (Fan). */
   word?: string;
+  /** Says what the number is when it is not a set temperature (Eco). */
+  caption?: string;
   onCommit: (value: number) => void;
 };
 
@@ -35,7 +37,7 @@ type Props = {
  * The set temperature on a ring of marks: drag it, and it is sent on letting go. The whole degrees
  * never move when .5 comes and goes, and the white dot shows the temperature it is now.
  */
-export function TemperatureDial({ value, current, min, max, step, enabled, word, onCommit }: Props) {
+export function TemperatureDial({ value, current, min, max, step, enabled, word, onCommit, caption }: Props) {
   const [drag, setDrag] = useState<number | null>(null);
   const dragging = useRef<number | null>(null);
   const shown = drag ?? value;
@@ -87,7 +89,7 @@ export function TemperatureDial({ value, current, min, max, step, enabled, word,
         {lit >= 0 ? <circle cx={hx} cy={hy} r={9} fill="var(--nx-ctrl-hole)" stroke="var(--c)" strokeWidth={4} /> : null}
       </svg>
       <Box sx={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "1cqmin", pointerEvents: "none", textAlign: "center" }}>
-        <Box sx={CTRL.caption}>Set to</Box>
+        <Box sx={CTRL.caption}>{caption ?? "Set to"}</Box>
         {word || !parts ? (
           <Box sx={{ ...CTRL.big, fontSize: CONTROL_TEXT.picture }}>{word ?? "—"}</Box>
         ) : (
