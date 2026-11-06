@@ -2,6 +2,13 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.185
+
+- GPS is now called GPS Tracker, in the side menu and on the Extensions page.
+- GPS Tracker has a new Settings tab holding all its settings in one place: map colours, speed units, route, speed limit and quiet hours. Areas have their own tab. Update the extension to see these changes.
+- An extension with its own page now keeps its settings there; Settings → Extensions has a button that opens them.
+- Extensions: an open extension has a Close button, Remove is always visible, and Settings, Permissions and Activity are proper buttons.
+
 ## V5.2.184
 
 - GPS map: the zoom you choose now stays while the map follows the tracker.

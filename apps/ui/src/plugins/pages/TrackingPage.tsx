@@ -17,12 +17,16 @@ import {
 import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
 import PauseRoundedIcon from "@mui/icons-material/PauseRounded";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import { useSearchParams } from "react-router-dom";
 import { api } from "../../api";
 import { ButtonRow } from "../../components/ButtonRow";
+import { hasPermission } from "../../lib/permissions";
 import { dayRange, duration, periodRange, toDateInput, type ReportPeriod } from "../../lib/tracking-format";
 import type { MapLook } from "../../lib/map-panel-content";
 import { contentSurfaceSx } from "../../skins/surfaceStyles";
+import { useShellAuth } from "../../skins/useShellAuth";
 import { MapPanel } from "../blocks/MapPanel";
+import { PluginBellLink, PluginPageSettings } from "../PluginPageSettings";
 import { TrackingMap, type MapCircle, type MapDot } from "./TrackingMap";
 
 type Tracker = { id: number; name: string; status: string };
@@ -47,6 +51,8 @@ type Call = <T>(action: string, params?: Record<string, unknown>) => Promise<T>;
 
 const clock = (at: string) => new Date(at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
 const REPLAY_STEP_MS = 120;
+const SETTINGS_TAB = 4;
+const RESTART_CHECKS_MS = [2000, 5000, 9000];
 
 function useMessage() {
   const [message, setMessage] = useState<string | null>(null);
@@ -335,24 +341,27 @@ function Reports({ call, overview }: { call: Call; overview: Overview }) {
   );
 }
 
-function AreasAlerts({ call, overview }: { call: Call; overview: Overview }) {
+function AlertsBlocked() {
+  return (
+    <Alert severity="warning">
+      GPS Tracker is not allowed to send alerts. Allow it under Settings → Extensions → GPS Tracker → Permissions.
+    </Alert>
+  );
+}
+
+function Areas({ call, overview }: { call: Call; overview: Overview }) {
   const [areas, setAreas] = useState<Area[]>([]);
-  const [settings, setSettings] = useState<AlertSettings | null>(null);
   const [canNotify, setCanNotify] = useState(true);
   const [picked, setPicked] = useState<{ lat: number; lon: number } | null>(null);
   const [name, setName] = useState("");
   const [radius, setRadius] = useState(200);
-  const [saved, setSaved] = useState(false);
   const { message, guard } = useMessage();
   const admin = overview.admin;
 
   const load = useCallback(async () => {
-    const r = await guard(
-      call<{ areas: (Area & { name: string })[]; alerts: AlertSettings; canNotify: boolean }>("alerts")
-    );
+    const r = await guard(call<{ areas: (Area & { name: string })[]; canNotify: boolean }>("alerts"));
     if (!r) return;
     setAreas(r.areas.map((a) => ({ ...a, label: a.name })));
-    setSettings(r.alerts);
     setCanNotify(r.canNotify);
   }, [call, guard]);
   useEffect(() => void load(), [load]);
@@ -365,11 +374,7 @@ function AreasAlerts({ call, overview }: { call: Call; overview: Overview }) {
   return (
     <Stack spacing={2}>
       {message ? <Alert severity="error">{message}</Alert> : null}
-      {!canNotify ? (
-        <Alert severity="warning">
-          This plugin is not allowed to send alerts. Allow it under Settings → Extensions → GPS tracking.
-        </Alert>
-      ) : null}
+      {!canNotify ? <AlertsBlocked /> : null}
       <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", md: "minmax(280px, 1fr) 2fr" } }}>
         <Section>
           <Stack spacing={1.5}>
@@ -443,69 +448,117 @@ function AreasAlerts({ call, overview }: { call: Call; overview: Overview }) {
           />
         </Section>
       </Box>
-      {settings ? (
+    </Stack>
+  );
+}
+
+function SettingsTab({
+  call,
+  overview,
+  pluginId,
+  canChangeSettings,
+  onSaved,
+}: {
+  call: Call;
+  overview: Overview;
+  pluginId: string;
+  canChangeSettings: boolean;
+  onSaved: () => void;
+}) {
+  const [alerts, setAlerts] = useState<AlertSettings | null>(null);
+  const [canNotify, setCanNotify] = useState(true);
+  const [saved, setSaved] = useState(false);
+  const { message, guard } = useMessage();
+
+  useEffect(() => {
+    void guard(call<{ alerts: AlertSettings; canNotify: boolean }>("alerts")).then((r) => {
+      if (!r) return;
+      setAlerts(r.alerts);
+      setCanNotify(r.canNotify);
+    });
+  }, [call, guard]);
+
+  const change = (next: Partial<AlertSettings>) => {
+    setSaved(false);
+    setAlerts((a) => (a ? { ...a, ...next } : a));
+  };
+
+  return (
+    <Stack spacing={2}>
+      {message ? <Alert severity="error">{message}</Alert> : null}
+      {canChangeSettings ? (
+        <Section>
+          <Stack spacing={1.5}>
+            <Typography variant="subtitle2" sx={{ fontWeight: "fontWeightBold" }}>
+              Map and units
+            </Typography>
+            <PluginPageSettings pluginId={pluginId} onSaved={onSaved} />
+          </Stack>
+        </Section>
+      ) : null}
+      {alerts && overview.admin ? (
         <Section>
           <Stack spacing={1.5} sx={{ maxWidth: 420 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: "fontWeightBold" }}>
               Alerts
             </Typography>
+            {!canNotify ? <AlertsBlocked /> : null}
             <TextField
               size="small"
               type="number"
-              disabled={!admin}
               label={`Speed limit (${overview.speedUnit}), 0 for none`}
-              value={settings.speedLimit}
-              onChange={(e) => setSettings({ ...settings, speedLimit: Number(e.target.value) })}
+              value={alerts.speedLimit}
+              onChange={(e) => change({ speedLimit: Number(e.target.value) })}
             />
             <FormControlLabel
-              control={
-                <Switch
-                  disabled={!admin}
-                  checked={settings.quietOn}
-                  onChange={(e) => setSettings({ ...settings, quietOn: e.target.checked })}
-                />
-              }
+              control={<Switch checked={alerts.quietOn} onChange={(e) => change({ quietOn: e.target.checked })} />}
               label="Alert me if a tracker moves during quiet hours"
             />
-            {settings.quietOn ? (
+            {alerts.quietOn ? (
               <Stack direction="row" spacing={1.5}>
                 <TextField
                   size="small"
                   type="time"
-                  disabled={!admin}
                   label="From"
-                  value={settings.quietFrom}
-                  onChange={(e) => setSettings({ ...settings, quietFrom: e.target.value })}
+                  value={alerts.quietFrom}
+                  onChange={(e) => change({ quietFrom: e.target.value })}
                   slotProps={{ inputLabel: { shrink: true } }}
                 />
                 <TextField
                   size="small"
                   type="time"
-                  disabled={!admin}
                   label="To"
-                  value={settings.quietTo}
-                  onChange={(e) => setSettings({ ...settings, quietTo: e.target.value })}
+                  value={alerts.quietTo}
+                  onChange={(e) => change({ quietTo: e.target.value })}
                   slotProps={{ inputLabel: { shrink: true } }}
                 />
               </Stack>
             ) : null}
-            {admin ? (
-              <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-                <Button
-                  variant="contained"
-                  onClick={async () => {
-                    setSaved((await guard(call("saveAlerts", settings))) !== null);
-                  }}
-                >
-                  Save alerts
-                </Button>
-                {saved ? (
-                  <Typography variant="body2" color="text.secondary">
-                    Saved
-                  </Typography>
-                ) : null}
-              </Stack>
-            ) : null}
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+              <Button
+                variant="contained"
+                onClick={async () => {
+                  setSaved((await guard(call("saveAlerts", alerts))) !== null);
+                }}
+              >
+                Save alerts
+              </Button>
+              {saved ? (
+                <Typography variant="body2" color="text.secondary">
+                  Saved
+                </Typography>
+              ) : null}
+            </Stack>
+          </Stack>
+        </Section>
+      ) : null}
+      {canChangeSettings ? (
+        <Section>
+          <Stack spacing={1.5}>
+            <Typography variant="subtitle2" sx={{ fontWeight: "fontWeightBold" }}>
+              Bell
+            </Typography>
+            <PluginBellLink />
           </Stack>
         </Section>
       ) : null}
@@ -513,10 +566,13 @@ function AreasAlerts({ call, overview }: { call: Call; overview: Overview }) {
   );
 }
 
-/** The GPS page: live map, journeys, reports, areas and alerts. Everything comes from the plugin. */
+/** The GPS Tracker page: live map, journeys, reports, areas and settings. Everything comes from the plugin. */
 export function TrackingPage({ pluginId, pageId, title, mapPanelId }: PageProps) {
-  const [tab, setTab] = useState(0);
+  const [searchParams] = useSearchParams();
+  const [tab, setTab] = useState(() => (searchParams.get("tab") === "settings" ? SETTINGS_TAB : 0));
   const [overview, setOverview] = useState<Overview | null>(null);
+  const { isAdmin, permissions } = useShellAuth();
+  const canChangeSettings = hasPermission(permissions, "manageUsers", Boolean(isAdmin));
   const { message, guard } = useMessage();
   const tabRef = useRef(tab);
   tabRef.current = tab;
@@ -530,6 +586,16 @@ export function TrackingPage({ pluginId, pageId, title, mapPanelId }: PageProps)
   }, [call, guard]);
   useEffect(load, [load]);
 
+  // Who cannot change anything has no Settings tab. Until the page knows, it keeps the tab it was opened on.
+  const showSettings = !overview || overview.admin || canChangeSettings;
+  const shownTab = tab === SETTINGS_TAB && !showSettings ? 0 : tab;
+  const reloadAfterSave = useCallback(() => {
+    // Saving restarts the extension for a few seconds; pick up the new units and map colours when it is back.
+    for (const wait of RESTART_CHECKS_MS) {
+      window.setTimeout(() => void call<Overview>("overview").then(setOverview).catch(() => {}), wait);
+    }
+  }, [call]);
+
   return (
     <Stack spacing={2} sx={{ width: "100%" }}>
       <Typography variant="h5" component="h1">
@@ -537,22 +603,32 @@ export function TrackingPage({ pluginId, pageId, title, mapPanelId }: PageProps)
       </Typography>
       {message ? <Alert severity="error">{message}</Alert> : null}
       {overview && overview.trackers.length === 0 && overview.admin ? <AddTracker call={call} onAdded={load} /> : null}
-      <Tabs value={tab} onChange={(_, v) => setTab(v as number)} variant="scrollable" allowScrollButtonsMobile>
+      <Tabs value={shownTab} onChange={(_, v) => setTab(v as number)} variant="scrollable" allowScrollButtonsMobile>
         <Tab label="Live" />
         <Tab label="Journeys" />
         <Tab label="Reports" />
-        <Tab label="Areas and alerts" />
+        <Tab label="Areas" />
+        {showSettings ? <Tab label="Settings" /> : null}
       </Tabs>
-      {tab === 0 && mapPanelId ? (
+      {shownTab === 0 && mapPanelId ? (
         <Section>
           <Box sx={{ height: { xs: 420, md: 560 } }}>
             <MapPanel pluginId={pluginId} panelId={mapPanelId} />
           </Box>
         </Section>
       ) : null}
-      {tab === 1 && overview ? <Journeys call={call} overview={overview} /> : null}
-      {tab === 2 && overview ? <Reports call={call} overview={overview} /> : null}
-      {tab === 3 && overview ? <AreasAlerts call={call} overview={overview} /> : null}
+      {shownTab === 1 && overview ? <Journeys call={call} overview={overview} /> : null}
+      {shownTab === 2 && overview ? <Reports call={call} overview={overview} /> : null}
+      {shownTab === 3 && overview ? <Areas call={call} overview={overview} /> : null}
+      {shownTab === SETTINGS_TAB && overview ? (
+        <SettingsTab
+          call={call}
+          overview={overview}
+          pluginId={pluginId}
+          canChangeSettings={canChangeSettings}
+          onSaved={reloadAfterSave}
+        />
+      ) : null}
     </Stack>
   );
 }

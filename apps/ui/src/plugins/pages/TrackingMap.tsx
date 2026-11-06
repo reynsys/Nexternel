@@ -29,7 +29,7 @@ function dotIcon(color: string): L.DivIcon {
   });
 }
 
-/** The map on the GPS page: a route, dots and areas. */
+/** The map on the GPS Tracker page: a route, dots and areas. */
 export function TrackingMap({ line = [], dots = [], circles = [], fitKey = "", onPick, height = 420, look = "auto" }: Props) {
   const theme = useTheme();
   const holder = useRef<HTMLDivElement | null>(null);

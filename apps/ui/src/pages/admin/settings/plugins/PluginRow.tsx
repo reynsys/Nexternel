@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
-import { Alert, Box, Button, Checkbox, Chip, Collapse, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, Paper, Stack, Switch, Tab, Tabs, Typography } from "@mui/material";
+import { Link as RouterLink } from "react-router-dom";
+import { Alert, Box, Button, Checkbox, Chip, Collapse, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, Paper, Stack, Switch, Typography } from "@mui/material";
 import type { PluginCatalogEntry, PluginGrants, PluginInfo, PluginManifestInfo } from "../../../../api";
 import { PluginPermissionsForm, defaultGrants } from "./PluginPermissionsForm";
 import { PluginSettingsForm } from "./PluginSettingsForm";
@@ -13,6 +14,8 @@ export const PLUGIN_STATUS: Record<PluginInfo["status"], { label: string; color:
   crashed: { label: "Problem", color: "error" },
   stopped: { label: "Off", color: "default" },
 };
+
+type RowTab = "settings" | "permissions" | "activity";
 
 export type InstallTarget =
   | { kind: "catalog"; entry: PluginCatalogEntry }
@@ -42,12 +45,22 @@ export function InstalledPlugin({
   onSettings: (values: Record<string, unknown>) => Promise<void>;
   onRemove: () => void;
 }) {
-  const [tab, setTab] = useState<"settings" | "permissions" | "activity" | null>(
-    p.missingSettings.length > 0 ? "settings" : null
-  );
+  // An extension with its own page keeps its settings there, so they are in one place.
+  const page = p.pages?.[0];
+  const [tab, setTab] = useState<RowTab | null>(p.missingSettings.length > 0 && !page ? "settings" : null);
   const [grants, setGrants] = useState<PluginGrants>(p.grants);
   const status = p.enabled ? PLUGIN_STATUS[p.status] : PLUGIN_STATUS.stopped;
   const grantsChanged = JSON.stringify(grants) !== JSON.stringify(p.grants);
+  const tabButton = (value: RowTab, label: string) => (
+    <Button
+      size="small"
+      variant={tab === value ? "contained" : "outlined"}
+      aria-expanded={tab === value}
+      onClick={() => setTab(tab === value ? null : value)}
+    >
+      {label}
+    </Button>
+  );
 
   return (
     <Paper variant="inset" sx={{ p: 2 }}>
@@ -69,7 +82,7 @@ export function InstalledPlugin({
           </Typography>
         </Box>
         {canManage ? (
-          <Stack direction="row" spacing={1} alignItems="center">
+          <ButtonRow>
             {update ? (
               <Button size="small" variant="contained" disabled={busy !== null} onClick={onUpdate}>
                 Update to {update.version}
@@ -79,21 +92,29 @@ export function InstalledPlugin({
               control={<Switch checked={p.enabled} disabled={busy !== null} onChange={(e) => onToggle(e.target.checked)} />}
               label="Switched on"
             />
-          </Stack>
+            <Button color="error" size="small" disabled={busy !== null} onClick={onRemove}>
+              Remove
+            </Button>
+          </ButtonRow>
         ) : null}
       </Stack>
 
-      <Tabs
-        value={tab ?? false}
-        onChange={(_, v) => setTab(v === tab ? null : v)}
-        variant="scrollable"
-        scrollButtons={false}
-        sx={{ mt: 1, minHeight: 36, "& .MuiTab-root": { minHeight: 36, py: 0.5 } }}
-      >
-        {p.settingsFields.length > 0 && canManage ? <Tab value="settings" label="Settings" onClick={() => tab === "settings" && setTab(null)} /> : null}
-        {canManage ? <Tab value="permissions" label="Permissions" onClick={() => tab === "permissions" && setTab(null)} /> : null}
-        <Tab value="activity" label="Activity" onClick={() => tab === "activity" && setTab(null)} />
-      </Tabs>
+      <ButtonRow sx={{ mt: 1.5 }}>
+        {p.settingsFields.length > 0 && canManage && page ? (
+          <Button
+            size="small"
+            variant="outlined"
+            disabled={!p.enabled}
+            component={RouterLink}
+            to={`/plugin-page/${encodeURIComponent(p.id)}/${encodeURIComponent(page.id)}?tab=settings`}
+          >
+            Open {p.name} settings
+          </Button>
+        ) : null}
+        {p.settingsFields.length > 0 && canManage && !page ? tabButton("settings", "Settings") : null}
+        {canManage ? tabButton("permissions", "Permissions") : null}
+        {tabButton("activity", "Activity")}
+      </ButtonRow>
 
       <Collapse in={tab !== null} unmountOnExit>
         <Box sx={{ pt: 2 }}>
@@ -117,13 +138,11 @@ export function InstalledPlugin({
             </Stack>
           ) : null}
           {tab === "activity" ? <PluginActivityView pluginId={p.id} /> : null}
-          {canManage ? (
-            <Box sx={{ pt: 2 }}>
-              <Button color="error" size="small" disabled={busy !== null} onClick={onRemove}>
-                Remove
-              </Button>
-            </Box>
-          ) : null}
+          <Box sx={{ pt: 2 }}>
+            <Button variant="outlined" size="small" onClick={() => setTab(null)}>
+              Close
+            </Button>
+          </Box>
         </Box>
       </Collapse>
     </Paper>

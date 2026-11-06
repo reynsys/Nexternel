@@ -589,6 +589,7 @@ apps/ui/src/plugins/pages/TrackingMap.tsx
 apps/ui/src/plugins/pages/TrackingPage.tsx
 apps/ui/src/plugins/PluginHostContext.tsx
 apps/ui/src/plugins/PluginPageHost.tsx
+apps/ui/src/plugins/PluginPageSettings.tsx
 apps/ui/src/plugins/PluginUnavailable.tsx
 apps/ui/src/plugins/registry.ts
 apps/ui/src/skins/activeSkin.ts
