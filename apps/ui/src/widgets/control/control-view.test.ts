@@ -56,3 +56,10 @@ test("the one-line panel says the state briefly for blinds and fans", () => {
   assert.equal(controlSummary("fan", { on: true, speed: 55 }), "Medium");
   assert.equal(fanWord(90), "High");
 });
+
+test("heating takes its warm colour only while it is running", () => {
+  const blue = "#1a73e8";
+  assert.equal(deviceColour("thermostat", { heating: true, on: true }, {}, blue), "#ff7a3c");
+  assert.equal(deviceColour("thermostat", { heating: false, on: true }, {}, blue), blue);
+  assert.equal(deviceColour("thermostat", { heating: true, on: false }, {}, blue), blue);
+});

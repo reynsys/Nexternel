@@ -105,9 +105,9 @@ function Row({ tall, children, label }: { tall?: boolean; children: ReactNode; l
   );
 }
 
-function Stat({ value, label }: { value: string; label: string }) {
+function Stat({ value, label, lit }: { value: string; label: string; lit?: boolean }) {
   return (
-    <Box sx={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "2px", borderRadius: 1, bgcolor: CTRL.raised }}>
+    <Box sx={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "2px", borderRadius: 1, bgcolor: lit ? "color-mix(in srgb, var(--c) 24%, transparent)" : CTRL.raised, color: lit ? "var(--c)" : undefined }}>
       <Typography component="b" noWrap sx={{ fontSize: CONTROL_TEXT.stat, fontWeight: "fontWeightBold", lineHeight: 1.1, fontVariantNumeric: "tabular-nums", maxWidth: "100%" }}>{value}</Typography>
       <Typography component="span" variant="caption" noWrap sx={{ color: "text.secondary" }}>{label}</Typography>
     </Box>
@@ -205,7 +205,7 @@ function Temperature(view: View) {
     if (state.target !== undefined) changeSoon({ target: clampToStep(state.target + d * step, min, max, step) });
   };
   const stats = [
-    state.heating !== undefined ? <Stat key="now" value={state.heating ? "Heating" : "Idle"} label="Right now" /> : null,
+    state.heating !== undefined ? <Stat key="now" value={state.heating ? "Heating" : "Idle"} label="Right now" lit={state.heating} /> : null,
     state.humidity !== undefined ? <Stat key="hum" value={`${state.humidity}%`} label="Humidity" /> : null,
     state.outside !== undefined ? <Stat key="out" value={`${state.outside}°`} label="Outside" /> : null,
   ].filter(Boolean);

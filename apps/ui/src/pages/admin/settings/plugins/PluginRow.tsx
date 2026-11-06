@@ -106,9 +106,9 @@ export function InstalledPlugin({
             variant="outlined"
             disabled={!p.enabled}
             component={RouterLink}
-            to={`/plugin-page/${encodeURIComponent(p.id)}/${encodeURIComponent(page.id)}?tab=settings`}
+            to={`/plugin-page/${encodeURIComponent(p.id)}/${encodeURIComponent(page.id)}${page.block === "setup" ? "" : "?tab=settings"}`}
           >
-            Open {p.name} settings
+            {page.block === "setup" ? "Open" : `Open ${p.name} settings`}
           </Button>
         ) : null}
         {p.settingsFields.length > 0 && canManage && !page ? tabButton("settings", "Settings") : null}

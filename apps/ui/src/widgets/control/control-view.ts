@@ -115,9 +115,12 @@ export function deviceColour(kind: string, state: ControlState, features: Contro
     if (isWhiteLight(state) || !state.color) return WHITE_LIGHT;
     return colorCss(state.color);
   }
+  if (kind === "thermostat" && state.heating && state.on !== false) return HEATING_NOW;
   return main;
 }
 
+/** The colour of heating that is running right now, the same as air conditioning on heat. */
+export const HEATING_NOW = "#ff7a3c";
 export const WARM_LIGHT = "#ffc46b";
 export const WHITE_LIGHT = "#fff4e6";
-const MODE_COLOUR: Record<string, string> = { cool: "#5cc8ff", heat: "#ff7a3c", dry: "#4fd6b8", fan: "#d2d4d8" };
+const MODE_COLOUR: Record<string, string> = { cool: "#5cc8ff", heat: HEATING_NOW, dry: "#4fd6b8", fan: "#d2d4d8" };

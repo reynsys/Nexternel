@@ -2,6 +2,12 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.189
+
+- Heating panels turn orange while the heating is actually running, on full and one-line panels.
+- The side menu no longer grows with each extension: extensions with their own page sit inside one Extensions button. GPS Tracker is there now.
+- Nest Heating has no side menu button any more. Open it from Settings → Extensions.
+
 ## V5.2.188
 
 - New gauges start smaller: a quarter of the width and two rows high. Gauges you already have stay as they are.
