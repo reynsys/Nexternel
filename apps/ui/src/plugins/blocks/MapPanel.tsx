@@ -124,7 +124,7 @@ export function MapPanel({ pluginId, panelId }: { pluginId: string; panelId: str
   }
 
   const stopped = saved ? now - Date.parse(saved.updatedAt) > STOPPED_MS : false;
-  const warning = content.note || (stopped ? "Not updating. Check the plugin in Settings → Extensions." : "");
+  const warning = content.note || (stopped ? "Not updating. Check the extension in Extensions → Manage extensions." : "");
 
   return (
     <Box sx={{ position: "relative", width: "100%", height: "100%", minHeight: 0, isolation: "isolate", overflow: "hidden" }}>

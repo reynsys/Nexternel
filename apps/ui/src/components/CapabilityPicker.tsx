@@ -76,7 +76,7 @@ export function CapabilityPicker({
 
   const defaultHelper =
     options.length === 0
-      ? "No capabilities — add a device or Sync capabilities"
+      ? "Nothing to choose yet. Add a device first."
       : "Grouped by device — search then pick from the list";
 
   return (

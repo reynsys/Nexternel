@@ -103,7 +103,7 @@ export function ConversationPanel({
         if (answer.done) break;
       }
     } catch (err) {
-      show({ text: err instanceof Error ? err.message : "Could not ask the plugin", error: true });
+      show({ text: err instanceof Error ? err.message : "Could not ask the extension", error: true });
     } finally {
       if (alive.current) setBusy(false);
     }

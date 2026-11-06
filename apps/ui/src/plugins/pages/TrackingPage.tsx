@@ -344,7 +344,7 @@ function Reports({ call, overview }: { call: Call; overview: Overview }) {
 function AlertsBlocked() {
   return (
     <Alert severity="warning">
-      GPS Tracker is not allowed to send alerts. Allow it under Settings → Extensions → GPS Tracker → Permissions.
+      GPS Tracker is not allowed to send alerts. Allow it under Extensions → Manage extensions → GPS Tracker → Permissions.
     </Alert>
   );
 }

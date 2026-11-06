@@ -4,7 +4,7 @@ import { defaultWidgetTitle } from "./capability-labels";
 import { switchWidgetLabel, isSwitchWidgetType } from "../widgets/switch";
 import { relayPanelLabel, isRelayPanelType } from "../widgets/relay-panel";
 
-const CORE_PLACEHOLDERS = new Set(["Switch", "Stat", "Auto", "Widget"]);
+const CORE_PLACEHOLDERS = new Set(["Switch", "Stat", "Auto", "Widget", "Panel"]);
 
 /** Catalog / type labels that should not count as a custom title. */
 const GENERAL_PLACEHOLDERS: Record<string, string[]> = {

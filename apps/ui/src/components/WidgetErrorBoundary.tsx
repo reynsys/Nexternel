@@ -28,7 +28,7 @@ export class WidgetErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, info: ErrorInfo) {
     // Kept in Settings → System → Diagnostic report, so a message that flashes past can be read later.
     pushDiagnosticError({ kind: "error", message: `Panel: ${error.message}`, source: info.componentStack?.split("\n").find((l) => l.trim())?.trim() });
-    console.error("Widget render error", this.props.widgetId, error, info.componentStack);
+    console.error("This panel could not be shown", this.props.widgetId, error, info.componentStack);
   }
 
   render() {

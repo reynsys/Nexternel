@@ -173,7 +173,7 @@ export async function fetchCatalog(force = false): Promise<CatalogEntry[]> {
 export async function downloadCatalogPackage(entry: CatalogEntry): Promise<Buffer> {
   const data = await fetchLimited(entry.url, MAX_PACKAGE_BYTES);
   if (sha256(data) !== entry.sha256) {
-    throw new Error("The downloaded plugin does not match the official list (checksum differs). Nothing was installed.");
+    throw new Error("The downloaded extension does not match the official list (checksum differs). Nothing was installed.");
   }
   return data;
 }

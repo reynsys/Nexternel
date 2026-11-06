@@ -72,7 +72,7 @@ export function WallDisplayFields({ value, onChange }: { value: WallPrefs | unde
           ))}
         </ToggleButtonGroup>
       </div>
-      <FormControlLabel control={<Switch checked={wall.tabs} onChange={(e) => set({ tabs: e.target.checked })} />} label="Show the room buttons" />
+      <FormControlLabel control={<Switch checked={wall.tabs} onChange={(e) => set({ tabs: e.target.checked })} />} label="Show the Dashboard Menu" />
       <FormControlLabel
         control={<Switch checked={wall.autoscroll} onChange={(e) => set({ autoscroll: e.target.checked })} />}
         label={

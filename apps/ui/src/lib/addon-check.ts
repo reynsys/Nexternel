@@ -21,7 +21,7 @@ export function describeExtensionCheck(
     parts.push(`Ready to update: ${featureUpdates.map((f) => `${f.name} ${f.version}`).join(", ")} — press Update next to it.`);
   }
   if (lost.length) parts.push(`No longer included in your licence: ${lost.map((a) => a.name).join(", ")}.`);
-  if (!shopReached) parts.push("The paid styles could not be checked (the Nexternel shop did not answer); they keep working.");
+  if (!shopReached) parts.push("The paid Looks could not be checked (the Nexternel shop did not answer); they keep working.");
   if (!catalogReached) parts.push("The list of features could not be checked; try again later.");
   if (parts.length) return { text: parts.join(" "), ok: lost.length === 0 && shopReached && catalogReached };
   return { text: "Everything is up to date.", ok: true };

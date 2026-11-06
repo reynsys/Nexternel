@@ -235,7 +235,7 @@ function packFromServer(json: Record<string, unknown>) {
 
 /** Install every pack a licence key unlocks (or update them when already installed). */
 export async function installWithKey(rawKey: string): Promise<AddonInfo[]> {
-  if (!addonsAvailable()) throw new AddonError("Add-ons are not available on this version of Nexternel yet.");
+  if (!addonsAvailable()) throw new AddonError("Paid extensions are not available on this version of Nexternel yet.");
   const key = normalizeLicenceKey(rawKey);
   if (!key) throw new AddonError("That does not look like a licence key. Copy it exactly from your email.");
   const sid = await serverId();
@@ -252,7 +252,7 @@ export async function installWithKey(rawKey: string): Promise<AddonInfo[]> {
     throw new AddonError("The licence server sent a licence this server cannot use.");
   }
   const packIds = Array.isArray(activated.packs) ? (activated.packs as unknown[]).filter((p): p is string => typeof p === "string") : [];
-  if (packIds.length === 0) throw new AddonError("This licence key does not include any add-ons.");
+  if (packIds.length === 0) throw new AddonError("This licence key does not include any extensions.");
 
   for (const packId of packIds) {
     if (!licenceCovers(licence, packId)) continue;
@@ -312,7 +312,7 @@ export async function checkAddons(): Promise<AddonInfo[]> {
         if (!licenceCovers(licence, p.id)) {
           await getPool().query(`UPDATE addons SET status = 'revoked', status_message = $2, checked_at = NOW() WHERE id = $1`, [
             p.id,
-            "This licence no longer includes this add-on.",
+            "This licence no longer includes this extension.",
           ]);
           continue;
         }

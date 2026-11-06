@@ -33,7 +33,7 @@ function sweep(): void {
   const now = Date.now();
   for (const [id, r] of requests) {
     if (now - r.createdAt > REQUEST_TTL_MS) requests.delete(id);
-    else if (!r.done && !r.text && now - r.createdAt > NO_REPLY_MS) finish(r, "The plugin did not answer in time.");
+    else if (!r.done && !r.text && now - r.createdAt > NO_REPLY_MS) finish(r, "The extension did not answer in time.");
   }
 }
 setInterval(sweep, 30_000).unref?.();
@@ -88,7 +88,7 @@ export async function setPanelContent(
   content: { title?: unknown; body?: unknown }
 ): Promise<string | null> {
   const panel = manifest.panels?.find((p) => p.id === panelId);
-  if (!panel) return `This plugin has no panel "${panelId}"`;
+  if (!panel) return `This extension has no panel "${panelId}"`;
   if (panel.block === "conversation") return `Panel "${panelId}" answers questions and has no content to set`;
   await getPool().query(
     `INSERT INTO plugin_panel_content (plugin_id, panel_id, title, body, updated_at)
@@ -112,11 +112,11 @@ export const pluginPanelRoutes: FastifyPluginAsync = async (app) => {
     if (!requireUser(request, reply)) return;
     const found = await findPanel(request.params.pluginId, request.params.panelId);
     if (!found || found.panel.block !== "conversation") {
-      return reply.code(404).send({ error: { code: "not_found", message: "This panel's plugin is not installed." } });
+      return reply.code(404).send({ error: { code: "not_found", message: "This panel's extension is not installed." } });
     }
     if (!found.enabled || found.status !== "running") {
       const name = found.manifest.name ?? found.manifest.id;
-      return reply.code(409).send({ error: { code: "not_running", message: `${name} is not running. Check Settings → Extensions.` } });
+      return reply.code(409).send({ error: { code: "not_running", message: `${name} is not running. Check Extensions → Manage extensions.` } });
     }
     const text = typeof request.body?.text === "string" ? request.body.text.trim().slice(0, 2000) : "";
     if (!text) return reply.code(400).send({ error: { code: "bad_request", message: "Type a question first." } });

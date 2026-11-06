@@ -101,7 +101,7 @@ async function listen() {
           const handler = panelHandlers.find((h) => h.panel === ev.panel);
           const answer = panelAnswer(ev.id);
           if (!handler) {
-            answer.fail("This plugin cannot answer on this panel.");
+            answer.fail("This extension cannot answer on this panel.");
             continue;
           }
           // Answers can take a while; do not hold up other messages (such as switch presses).
@@ -117,7 +117,7 @@ async function listen() {
           // Not awaited: a slow page must not hold up other messages (such as switch presses).
           Promise.resolve()
             .then(() => {
-              if (!handler) throw new Error("This plugin has no such page.");
+              if (!handler) throw new Error("This extension has no such page.");
               return handler.fn({ action: ev.action, params: ev.params, admin: ev.admin });
             })
             .then((result) => reply({ result }))

@@ -73,7 +73,7 @@ export const historyRoutes: FastifyPluginAsync = async (app) => {
       if (capabilityIds.length === 1 && !batchMode) {
         const series = await queryCapabilityHistory(capabilityIds[0]!, range);
         if (series.error && series.points.length === 0) {
-          const isNotFound = series.error === "Capability not found";
+          const isNotFound = series.error === "Item not found";
           return reply.code(isNotFound ? 404 : 502).send({
             error: {
               code: isNotFound ? "not_found" : "influx_error",

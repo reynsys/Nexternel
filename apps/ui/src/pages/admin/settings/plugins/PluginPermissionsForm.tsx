@@ -56,7 +56,7 @@ export function PluginPermissionsForm({ requested, grants, onChange, controlPick
   }, [requested.read, requested.control, controlPickerLater]);
 
   if (keys.length === 0) {
-    return <Typography color="text.secondary">This plugin does not ask for any permissions.</Typography>;
+    return <Typography color="text.secondary">This extension does not ask for any permissions.</Typography>;
   }
 
   return (

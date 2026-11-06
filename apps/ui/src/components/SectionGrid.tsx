@@ -470,7 +470,7 @@ export function SectionGrid({
         <PluginPanelEditor
           open
           widget={editingSaved}
-          kindLabel={getPanelContribution(editing.type)?.label ?? "Plugin panel"}
+          kindLabel={getPanelContribution(editing.type)?.label ?? "Extension panel"}
           automatic={editingAutomatic}
           renderPreview={renderPreview}
           onClose={() => setEditPanelId(null)}

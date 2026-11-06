@@ -285,8 +285,8 @@ export async function sendPluginSwitchCommand(capabilityId: string, on: boolean)
     [capabilityId]
   );
   const row = res.rows[0];
-  if (!row?.plugin_id) throw new Error("The plugin for this switch is not installed");
-  if (!row.enabled) throw new Error("The plugin for this switch is switched off");
+  if (!row?.plugin_id) throw new Error("The extension for this switch is not installed");
+  if (!row.enabled) throw new Error("The extension for this switch is switched off");
   const deviceKey = row.device_slug.slice(pluginSlugPrefix(row.plugin_id).length);
   pushPluginEvent(row.plugin_id, {
     type: "command",
@@ -310,8 +310,8 @@ setControlSender(async (capabilityId, change) => {
     [capabilityId]
   );
   const row = res.rows[0];
-  if (!row?.plugin_id) throw new Error("The plugin for this device is not installed");
-  if (!row.enabled) throw new Error("The plugin for this device is switched off");
+  if (!row?.plugin_id) throw new Error("The extension for this device is not installed");
+  if (!row.enabled) throw new Error("The extension for this device is switched off");
   pushPluginEvent(row.plugin_id, {
     type: "command",
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,

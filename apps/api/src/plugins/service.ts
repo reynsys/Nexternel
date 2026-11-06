@@ -304,7 +304,7 @@ export async function savePluginSettings(
   { restart = true }: { restart?: boolean } = {}
 ): Promise<{ ok: true; plugin: PluginRecord } | { ok: false; errors: string[] }> {
   const row = await getRow(id);
-  if (!row) return { ok: false, errors: ["Plugin not found"] };
+  if (!row) return { ok: false, errors: ["Extension not found"] };
   const fields = row.manifest.settings ?? [];
   const next: Record<string, unknown> = { ...row.settings };
   const errors: string[] = [];
@@ -393,7 +393,7 @@ export async function desiredPlugins(): Promise<DesiredPlugin[]> {
     }
     if (!(await packageInstalled(m.id, m.version))) {
       void restoreMissingPackage(row);
-      await setRunState(row.id, "waiting", "Downloading the plugin again…");
+      await setRunState(row.id, "waiting", "Downloading the extension again…");
       continue;
     }
     out.push({ id: m.id, version: m.version, main: m.main ?? "main.mjs", folder: `packages/${m.id}/${m.version}`, configRev: row.config_rev });

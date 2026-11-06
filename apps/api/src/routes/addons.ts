@@ -55,7 +55,7 @@ export const addonsRoutes: FastifyPluginAsync = async (app) => {
   app.get<{ Params: { id: string } }>("/api/v1/addons/:id/code", async (request, reply) => {
     if (!request.user) return reply.code(401).send({ error: { code: "unauthorized", message: "Authentication required" } });
     const code = await addonCode(request.params.id);
-    if (!code) return reply.code(404).send({ error: { code: "not_found", message: "This add-on is not active here." } });
+    if (!code) return reply.code(404).send({ error: { code: "not_found", message: "This extension is not active here." } });
     return reply.header("content-type", "text/javascript; charset=utf-8").header("cache-control", "no-store").send(code);
   });
 };

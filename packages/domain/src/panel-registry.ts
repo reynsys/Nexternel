@@ -161,8 +161,8 @@ export const CORE_PANEL_REGISTRY: readonly PanelDefinition[] = [
   },
   {
     kind: "panel.rooms",
-    label: "Rooms",
-    description: "Every room (dashboard) as a button — press one to open it.",
+    label: "Dashboard Menu",
+    description: "Every dashboard as a button: press one to open it.",
     scopeMode: "integration",
     supportedKinds: [],
     userSelectable: true,

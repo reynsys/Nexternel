@@ -47,7 +47,7 @@ export function PluginHostProvider({ children }: { children: ReactNode }) {
       setError(null);
       applyContributions(res.plugins);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load plugins");
+      setError(err instanceof Error ? err.message : "Failed to load extensions");
       setPlugins([]);
       resetPluginContributions();
     } finally {

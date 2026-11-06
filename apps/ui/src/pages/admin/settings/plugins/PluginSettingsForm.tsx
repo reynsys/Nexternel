@@ -123,7 +123,7 @@ export function PluginSettingsForm({
         );
       })}
       {error ? <Alert severity="error">{error}</Alert> : null}
-      {saved ? <Alert severity="success">Saved. The plugin restarts with the new settings.</Alert> : null}
+      {saved ? <Alert severity="success">Saved. The extension restarts with the new settings.</Alert> : null}
       <div>
         <Button variant="contained" onClick={() => void save()} disabled={busy}>
           Save settings

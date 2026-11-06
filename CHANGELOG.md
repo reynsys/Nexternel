@@ -2,6 +2,13 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.190
+
+- One word for one thing across Nexternel. Plugin, Add-on, Widget and Capability are gone from the screen: anything you add to Nexternel is an Extension.
+- One Extensions button in the side menu: it holds each extension's page and Manage extensions, which replaces Settings → Extensions.
+- Looks: Appearance and Manage extensions now say Look for Standard, Glass, 3D and HUD.
+- Area is the word for parts of your home. The Rooms panel is now the Dashboard Menu panel.
+
 ## V5.2.189
 
 - Heating panels turn orange while the heating is actually running, on full and one-line panels.

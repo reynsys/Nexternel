@@ -15,7 +15,7 @@ test("add panel groups: readings, switches and cameras, information", () => {
   const generic = groups.find((group) => group.section === "information");
   assert.deepEqual(
     generic?.items.map((item) => item.label),
-    ["Clock", "Weather", "Calendar", "System information", "Rooms"]
+    ["Clock", "Weather", "Calendar", "System information", "Dashboard Menu"]
   );
 
   const switches = groups.find((group) => group.section === "switches");

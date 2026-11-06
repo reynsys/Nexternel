@@ -152,7 +152,7 @@ export const capabilitiesRoutes: FastifyPluginAsync = async (app) => {
     const cap = await getCapabilityById(request.params.id);
     if (!cap) {
       return reply.code(404).send({
-        error: { code: "not_found", message: "Capability not found" },
+        error: { code: "not_found", message: "Item not found" },
       });
     }
     try {

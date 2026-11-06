@@ -52,7 +52,7 @@ export function composeSemanticPanel(
   return {
     mode: "mixed",
     items,
-    emptyMessage: "No capabilities in this scope.",
+    emptyMessage: "Nothing to show here yet.",
   };
 }
 

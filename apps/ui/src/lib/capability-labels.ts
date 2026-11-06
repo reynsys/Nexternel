@@ -75,7 +75,7 @@ function deviceMentionsArea(device: string, area: string): boolean {
  */
 export function capabilityWidgetTitle(
   cap: Pick<Capability, "name" | "deviceName" | "roomName"> | undefined,
-  fallback = "Widget",
+  fallback = "Panel",
   opts?: { prefixDeviceForGenericRelay?: boolean }
 ): string {
   if (!cap) return fallback;
@@ -98,7 +98,7 @@ export function capabilityWidgetTitle(
  * Generic Relay N / Switch → device (± area if not already in the device name)
  */
 export function capabilityLocationLabel(cap: Capability | undefined): string {
-  if (!cap) return "No capability bound";
+  if (!cap) return "Nothing chosen";
   const area = cap.roomName?.trim() || "";
   const device = tidyDeviceName(cap.deviceName, cap.roomName);
   const entity = (cap.name ?? "").trim() || "";
@@ -132,7 +132,7 @@ export function switchWidgetAreaLine(cap: Capability | undefined): string {
   const area = cap.roomName?.trim();
   if (area) return area;
   const loc = capabilityLocationLabel(cap);
-  if (loc && loc !== "No capability bound") return loc;
+  if (loc && loc !== "Nothing chosen") return loc;
   return tidyDeviceName(cap.deviceName, cap.roomName);
 }
 

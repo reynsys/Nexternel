@@ -27,7 +27,7 @@ export const PERMISSION_META: {
   {
     key: "viewDashboards",
     label: "View dashboards",
-    help: "Open dashboards and see widgets",
+    help: "Open dashboards and see panels",
     group: "Dashboards",
   },
   {
@@ -51,7 +51,7 @@ export const PERMISSION_META: {
   {
     key: "viewAreas",
     label: "View Areas",
-    help: "Browse rooms / areas",
+    help: "Browse areas",
     group: "Areas",
   },
   {

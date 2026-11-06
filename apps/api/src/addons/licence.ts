@@ -101,14 +101,14 @@ export function checkPackage(
 ): { ok: true; pkg: AddonPackage; code: Buffer } | { ok: false; reason: string } {
   const pkg = raw as AddonPackage;
   if (!pkg || pkg.format !== 1 || !pkg.manifest || typeof pkg.bundle !== "string" || typeof pkg.signature !== "string") {
-    return { ok: false, reason: "The download is not a Nexternel add-on." };
+    return { ok: false, reason: "The download is not a Nexternel extension." };
   }
   const m = pkg.manifest;
   if (!ID.test(m.id) || m.kind !== "look" || typeof m.name !== "string" || typeof m.version !== "string") {
-    return { ok: false, reason: "The add-on's description is not valid." };
+    return { ok: false, reason: "The extension's description is not valid." };
   }
-  if (expect.packId && m.id !== expect.packId) return { ok: false, reason: "A different add-on was sent." };
-  if (pkg.licenceId !== expect.licenceId) return { ok: false, reason: "The add-on was made for another licence." };
+  if (expect.packId && m.id !== expect.packId) return { ok: false, reason: "A different extension was sent." };
+  if (pkg.licenceId !== expect.licenceId) return { ok: false, reason: "The extension was made for another licence." };
   const text = packageSigningText(pkg);
   const genuine = keys.some((k) => {
     try {
@@ -117,7 +117,7 @@ export function checkPackage(
       return false;
     }
   });
-  if (!genuine) return { ok: false, reason: "The add-on's signature does not match: it was changed or did not come from Nexternel." };
+  if (!genuine) return { ok: false, reason: "The extension's signature does not match: it was changed or did not come from Nexternel." };
   return { ok: true, pkg, code: Buffer.from(pkg.bundle, "base64") };
 }
 

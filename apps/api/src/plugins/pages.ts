@@ -39,11 +39,11 @@ export const pluginPageRoutes: FastifyPluginAsync = async (app) => {
     );
     const row = res.rows[0];
     if (!row?.manifest.pages?.some((p) => p.id === pageId)) {
-      return reply.code(404).send({ error: { code: "not_found", message: "This page's plugin is not installed." } });
+      return reply.code(404).send({ error: { code: "not_found", message: "This page's extension is not installed." } });
     }
     if (!row.enabled || row.status !== "running") {
       const name = row.manifest.name ?? row.manifest.id;
-      return reply.code(409).send({ error: { code: "not_running", message: `${name} is not running. Check Settings → Extensions.` } });
+      return reply.code(409).send({ error: { code: "not_running", message: `${name} is not running. Check Extensions → Manage extensions.` } });
     }
     const action = request.body?.action;
     const params = request.body?.params ?? {};
@@ -54,7 +54,7 @@ export const pluginPageRoutes: FastifyPluginAsync = async (app) => {
     const answer = await new Promise<{ result?: unknown; error?: string }>((resolve) => {
       const timer = setTimeout(() => {
         calls.delete(id);
-        resolve({ error: "The plugin did not answer in time." });
+        resolve({ error: "The extension did not answer in time." });
       }, REPLY_MS);
       calls.set(id, {
         pluginId,

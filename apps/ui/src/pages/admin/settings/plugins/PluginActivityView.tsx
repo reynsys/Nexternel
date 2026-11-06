@@ -49,7 +49,7 @@ export function PluginActivityView({ pluginId }: { pluginId: string }) {
   return (
     <Stack spacing={2}>
       <Box>
-        <Typography variant="subtitle2">Messages from the plugin</Typography>
+        <Typography variant="subtitle2">Messages from the extension</Typography>
         {data.logs.length === 0 ? (
           <Typography variant="body2" color="text.secondary">Nothing yet (messages are kept until Nexternel restarts).</Typography>
         ) : (

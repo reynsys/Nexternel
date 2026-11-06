@@ -79,7 +79,7 @@ const ADD_PANEL_COPY: Record<string, { label?: string; description: string }> = 
     label: "System information",
     description: "How this home’s server is doing.",
   },
-  "panel.rooms": { description: "Every room as a button — a Dashboard Menu inside your dashboard." },
+  "panel.rooms": { description: "Every dashboard as a button: a Dashboard Menu inside your dashboard." },
 };
 
 function sectionLabel(section: PanelCategoryId): string {

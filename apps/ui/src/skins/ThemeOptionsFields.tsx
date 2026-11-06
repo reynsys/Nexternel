@@ -48,7 +48,7 @@ type Props = {
 const TABS = [
   { id: "theme", label: "Theme" },
   { id: "colours", label: "Colours" },
-  { id: "style", label: "Style" },
+  { id: "style", label: "Look" },
   { id: "text", label: "Text" },
   { id: "dashboards", label: "Dashboards" },
 ] as const;
@@ -562,7 +562,7 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
     ),
     style: (
       <Stack spacing={3.5} divider={<Divider flexItem />}>
-      <Section title="Style" hint="How panels, frames, buttons and switches are drawn. Standard is solid; Glass is see-through over the background.">
+      <Section title="Look" hint="How panels, frames, buttons and switches are drawn. Standard is solid; Glass is see-through over the background.">
         <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 1 }}>
           {listLooks().map((l) => (
             <ChoiceTile key={l.id} selected={look.id === l.id} onClick={() => onThemeChange(withLook(themePrefs, l.id))} title={l.label} text={l.description} />

@@ -65,7 +65,7 @@ export const pluginsRoutes: FastifyPluginAsync = async (app) => {
     } catch (err) {
       const detail = err instanceof Error ? err.message : "no connection";
       const message = /\(404\)/.test(detail)
-        ? "No official plugins have been published yet."
+        ? "No official extensions have been published yet."
         : `The official plugin list could not be loaded (${detail}). Check the server's internet connection.`;
       return reply.code(502).send({ error: { code: "catalog_unavailable", message } });
     }
@@ -84,7 +84,7 @@ export const pluginsRoutes: FastifyPluginAsync = async (app) => {
   app.post("/api/v1/plugins/inspect-file", async (request, reply) => {
     if (!requirePermission(request, reply, "manageUsers")) return;
     const upload = await readUpload(request);
-    if (!upload) return reply.code(400).send(badRequest(["Choose a plugin file"]));
+    if (!upload) return reply.code(400).send(badRequest(["Choose an extension file"]));
     const result = await previewPackage(upload.data);
     if (!result.ok) return reply.code(400).send(badRequest(result.errors));
     return { manifest: result.manifest };
@@ -94,7 +94,7 @@ export const pluginsRoutes: FastifyPluginAsync = async (app) => {
   app.post("/api/v1/plugins/install-file", async (request, reply) => {
     if (!requirePermission(request, reply, "manageUsers")) return;
     const upload = await readUpload(request);
-    if (!upload) return reply.code(400).send(badRequest(["Choose a plugin file"]));
+    if (!upload) return reply.code(400).send(badRequest(["Choose an extension file"]));
     if (upload.fields.acceptUnofficial !== "yes") {
       return reply.code(400).send(badRequest(["Confirm that you trust this file before installing it."]));
     }
@@ -107,7 +107,7 @@ export const pluginsRoutes: FastifyPluginAsync = async (app) => {
     if (!requirePermission(request, reply, "manageUsers")) return;
     if (typeof request.body?.enabled !== "boolean") return reply.code(400).send(badRequest(["enabled (true/false) is required"]));
     const plugin = await setPluginEnabled(request.params.id, request.body.enabled);
-    if (!plugin) return reply.code(404).send({ error: { code: "not_found", message: "Plugin not found" } });
+    if (!plugin) return reply.code(404).send({ error: { code: "not_found", message: "Extension not found" } });
     return { plugin };
   });
 
@@ -116,7 +116,7 @@ export const pluginsRoutes: FastifyPluginAsync = async (app) => {
     async (request, reply) => {
       if (!requirePermission(request, reply, "manageUsers")) return;
       const plugin = await setPluginGrants(request.params.id, request.body?.grants ?? {});
-      if (!plugin) return reply.code(404).send({ error: { code: "not_found", message: "Plugin not found" } });
+      if (!plugin) return reply.code(404).send({ error: { code: "not_found", message: "Extension not found" } });
       return { plugin };
     }
   );
@@ -124,7 +124,7 @@ export const pluginsRoutes: FastifyPluginAsync = async (app) => {
   app.put<{ Params: { id: string }; Body: { bell?: unknown } }>("/api/v1/plugins/:id/bell", async (request, reply) => {
     if (!requirePermission(request, reply, "manageUsers")) return;
     const plugin = await setPluginBell(request.params.id, request.body?.bell);
-    if (!plugin) return reply.code(404).send({ error: { code: "not_found", message: "Plugin not found" } });
+    if (!plugin) return reply.code(404).send({ error: { code: "not_found", message: "Extension not found" } });
     return { plugin };
   });
 
@@ -141,14 +141,14 @@ export const pluginsRoutes: FastifyPluginAsync = async (app) => {
   app.get<{ Params: { id: string } }>("/api/v1/plugins/:id/activity", async (request, reply) => {
     if (!requirePermission(request, reply, "viewSystem")) return;
     const plugin = await getPluginRecord(request.params.id);
-    if (!plugin) return reply.code(404).send({ error: { code: "not_found", message: "Plugin not found" } });
+    if (!plugin) return reply.code(404).send({ error: { code: "not_found", message: "Extension not found" } });
     return { logs: pluginLogs(plugin.id), actions: await listPluginActions(plugin.id) };
   });
 
   app.delete<{ Params: { id: string } }>("/api/v1/plugins/:id", async (request, reply) => {
     if (!requirePermission(request, reply, "manageUsers")) return;
     const removed = await removePlugin(request.params.id);
-    if (!removed) return reply.code(404).send({ error: { code: "not_found", message: "Plugin not found" } });
+    if (!removed) return reply.code(404).send({ error: { code: "not_found", message: "Extension not found" } });
     return { ok: true };
   });
 };

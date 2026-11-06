@@ -212,6 +212,17 @@ export function App() {
           }
         />
 
+        <Route
+          path="extensions"
+          element={
+            <RequireAuth>
+              <RequirePermission permission="viewSystem">
+                <ExtensionsSettingsPage />
+              </RequirePermission>
+            </RequireAuth>
+          }
+        />
+
         <Route path="views" element={<Navigate to="/admin/settings/system" replace />} />
 
         {/* The old dashboards page: everything it did is in Dashboard settings → All dashboards. */}
@@ -260,17 +271,10 @@ export function App() {
               </RequirePermission>
             }
           />
-          <Route
-            path="extensions"
-            element={
-              <RequirePermission permission="viewSystem">
-                <ExtensionsSettingsPage />
-              </RequirePermission>
-            }
-          />
-          {/* Plugins and Add-ons are one page now: Extensions. */}
-          <Route path="plugins" element={<Navigate to="/admin/settings/extensions" replace />} />
-          <Route path="addons" element={<Navigate to="/admin/settings/extensions" replace />} />
+          {/* Old addresses of what is now Extensions → Manage extensions. */}
+          <Route path="extensions" element={<Navigate to="/extensions" replace />} />
+          <Route path="plugins" element={<Navigate to="/extensions" replace />} />
+          <Route path="addons" element={<Navigate to="/extensions" replace />} />
           <Route path="configuration" element={<Navigate to="/admin/settings/backup" replace />} />
           <Route
             path="backup"

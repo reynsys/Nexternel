@@ -201,7 +201,7 @@ export function SetupPage() {
                   <Choice
                     icon={<AddHomeRoundedIcon />}
                     title="Start fresh"
-                    text="Create your account, then add your rooms and devices."
+                    text="Create your account, then add your areas and devices."
                     onClick={() => go("account")}
                   />
                   <Choice

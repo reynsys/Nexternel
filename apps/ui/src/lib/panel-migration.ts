@@ -420,7 +420,7 @@ export function planPanelMigration(sections: DashboardSection[]): PanelMigration
 
   const inventory = widgetInventory(sections);
   if (actions.length === 0 && inventory.length === 0) {
-    notes.push("This dashboard has no widgets yet.");
+    notes.push("This dashboard has no panels yet.");
   } else if (actions.length === 0 && inventory.length > 0) {
     const summary = inventory.map((i) => `${i.count}× ${i.type}`).join(", ");
     notes.push(`Widgets on this dashboard: ${summary}.`);

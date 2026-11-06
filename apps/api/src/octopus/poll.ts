@@ -190,7 +190,7 @@ async function runOctopusPoll(force: boolean, options?: PollOptions): Promise<Oc
     caps = await listOctopusCapabilityIds();
   }
   if (!caps.powerCapabilityId && !caps.energyTodayCapabilityId && !caps.gasTodayCapabilityId) {
-    const error = "Octopus capabilities missing — save settings again or Sync capabilities";
+    const error = "Octopus items are missing: save its settings again";
     await recordOctopusPollResult({ ok: false, error });
     return { ok: false, error };
   }

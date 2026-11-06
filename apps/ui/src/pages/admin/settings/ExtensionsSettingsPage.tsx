@@ -21,7 +21,7 @@ import { ADDON_STATUS, day } from "./addon-status";
  */
 type ExtType = "all" | "feature" | "style";
 
-const TYPE_LABEL: Record<Exclude<ExtType, "all">, string> = { feature: "Feature", style: "Style" };
+const TYPE_LABEL: Record<Exclude<ExtType, "all">, string> = { feature: "Feature", style: "Look" };
 
 function Badges({ type, paid }: { type: Exclude<ExtType, "all">; paid: boolean }) {
   return (
@@ -152,7 +152,7 @@ export function ExtensionsSettingsPage() {
       </Stack>
       {a.description ? (
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          {a.description} Choose it in Settings → Appearance → Style.
+          {a.description} Choose it in Settings → Appearance → Look.
         </Typography>
       ) : null}
       <Typography variant="caption" color="text.secondary" component="div" sx={{ mt: 0.75 }}>
@@ -169,6 +169,10 @@ export function ExtensionsSettingsPage() {
 
   return (
     <Stack spacing={3}>
+      <Box>
+        <Typography variant="h4" gutterBottom>Manage extensions</Typography>
+        <Typography color="text.secondary">Extra features and Looks. Free ones install with one click; paid ones unlock with the licence key from your email.</Typography>
+      </Box>
       <Card sx={surfaceSx}>
         <CardContent>
           <Stack spacing={2}>
@@ -177,7 +181,7 @@ export function ExtensionsSettingsPage() {
                 <ToggleButtonGroup exclusive size="small" value={type} onChange={(_e, v: ExtType | null) => v && setType(v)} aria-label="Show">
                   <ToggleButton value="all">All</ToggleButton>
                   <ToggleButton value="feature">Features</ToggleButton>
-                  <ToggleButton value="style">Styles</ToggleButton>
+                  <ToggleButton value="style">Looks</ToggleButton>
                 </ToggleButtonGroup>
               </Box>
               {canManage && addons?.available ? (
@@ -329,8 +333,8 @@ export function ExtensionsSettingsPage() {
               {show("style") ? (
                 <Typography variant="body2" color="text.secondary">
                   {addons?.available
-                    ? "Paid styles (3D, HUD and more) unlock with a licence key from the Nexternel shop — press Enter licence key above."
-                    : "Paid styles will be available when the Nexternel shop opens."}
+                    ? "Paid Looks (3D, HUD and more) unlock with a licence key from the Nexternel shop — press Enter licence key above."
+                    : "Paid Looks will be available when the Nexternel shop opens."}
                 </Typography>
               ) : null}
               <Box sx={{ pt: 1 }}>

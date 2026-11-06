@@ -549,13 +549,13 @@ export const v4Routes: FastifyPluginAsync = async (app) => {
     const capabilityId = request.params.id?.trim();
     if (!capabilityId) {
       return reply.code(400).send({
-        error: { code: "validation_error", message: "Capability id is required" },
+        error: { code: "validation_error", message: "Choose an item" },
       });
     }
     const cap = await getCapabilityById(capabilityId);
     if (!cap) {
       return reply.code(404).send({
-        error: { code: "not_found", message: "Capability not found" },
+        error: { code: "not_found", message: "Item not found" },
       });
     }
     const raw = request.body?.systemId;
@@ -571,7 +571,7 @@ export const v4Routes: FastifyPluginAsync = async (app) => {
     const updated = await updateCapabilitySystemId(capabilityId, systemId);
     if (!updated) {
       return reply.code(404).send({
-        error: { code: "not_found", message: "Capability not found" },
+        error: { code: "not_found", message: "Item not found" },
       });
     }
     return { ok: true, systemId };

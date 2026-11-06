@@ -31,6 +31,9 @@ export function navItemActive(item: NavItem, pathname: string): boolean {
   );
 }
 
+/** Adding, updating and removing extensions (the last page of the Extensions group). */
+export const MANAGE_EXTENSIONS_PATH = "/extensions";
+
 export const MAIN_NAV: NavItem[] = [
   {
     label: "Dashboards",

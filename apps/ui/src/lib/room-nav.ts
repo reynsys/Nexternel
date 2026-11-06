@@ -6,8 +6,8 @@
  */
 export type RoomNav = "dock" | "tabs" | "rail";
 export const ROOM_NAVS: { value: RoomNav; label: string; description: string }[] = [
-  { value: "dock", label: "Dock", description: "A floating island at the bottom that grows with your rooms." },
-  { value: "tabs", label: "Top tabs", description: "A row of room buttons above the dashboard." },
+  { value: "dock", label: "Dock", description: "A floating island at the bottom that grows with your dashboards." },
+  { value: "tabs", label: "Top tabs", description: "A row of dashboard buttons above the dashboard." },
   { value: "rail", label: "Right rail", description: "The dock standing up on the right." },
 ];
 export function normalizeRoomNav(raw: unknown): RoomNav {

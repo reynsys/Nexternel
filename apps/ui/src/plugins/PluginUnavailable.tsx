@@ -10,10 +10,10 @@ export function PluginUnavailable({ pluginName, pluginId, reason = "missing" }: 
   const label = pluginName?.trim() || pluginId?.trim() || "Plugin";
   const detail =
     reason === "disabled"
-      ? "This plugin is installed but disabled."
+      ? "This extension is installed but switched off."
       : reason === "error"
-        ? "This plugin failed to render."
-        : "This plugin is not available.";
+        ? "This extension could not be shown."
+        : "This extension is not available.";
 
   return (
     <Stack

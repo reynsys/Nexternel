@@ -39,7 +39,7 @@ export async function resolveHistoryTarget(
 
   const row = cap.rows[0];
   if (!row) {
-    return { ok: false, status: 404, message: "Capability not found" };
+    return { ok: false, status: 404, message: "Item not found" };
   }
 
   if (row.source_type === "sensor") {

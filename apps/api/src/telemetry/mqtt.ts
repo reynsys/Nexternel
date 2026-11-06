@@ -1007,9 +1007,9 @@ export async function publishSwitchCommand(
   who?: string
 ): Promise<{ value: boolean }> {
   const cap = await getCapabilityById(capabilityId);
-  if (!cap) throw new Error("Capability not found");
-  if (cap.kind !== "switch") throw new Error("Capability is not a switch");
-  if (!cap.command_topic) throw new Error("No command topic for this capability");
+  if (!cap) throw new Error("Item not found");
+  if (cap.kind !== "switch") throw new Error("This item is not a switch");
+  if (!cap.command_topic) throw new Error("This item cannot be switched");
 
   let next: boolean;
   if (action === "toggle") {

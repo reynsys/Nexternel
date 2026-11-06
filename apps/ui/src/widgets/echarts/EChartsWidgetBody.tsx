@@ -60,7 +60,7 @@ export function EChartsWidgetBody({
     }
     if (!capabilityId) {
       setPoints([]);
-      setError("No capability bound");
+      setError("Nothing chosen");
       return;
     }
     let cancelled = false;
@@ -126,7 +126,7 @@ export function EChartsWidgetBody({
   if (preset.needsCapability && !capabilityId && preset.dataMode !== "none") {
     return (
       <Typography variant="body2" color="text.secondary">
-        No capability bound
+        Nothing chosen
       </Typography>
     );
   }
