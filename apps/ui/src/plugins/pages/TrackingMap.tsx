@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Box, useTheme } from "@mui/material";
 import L from "leaflet";
+import { mapIsDark, type MapLook } from "../../lib/map-panel-content";
 import { createMap, mapSx } from "../blocks/map-base";
 
 export type MapDot = { lat: number; lon: number; label?: string; kind?: "start" | "end" | "now" };
@@ -14,6 +15,7 @@ type Props = {
   fitKey?: string;
   onPick?: (lat: number, lon: number) => void;
   height?: number | string;
+  look?: MapLook;
 };
 
 const UK_CENTRE: [number, number] = [54, -2];
@@ -28,7 +30,7 @@ function dotIcon(color: string): L.DivIcon {
 }
 
 /** The map on the GPS page: a route, dots and areas. */
-export function TrackingMap({ line = [], dots = [], circles = [], fitKey = "", onPick, height = 420 }: Props) {
+export function TrackingMap({ line = [], dots = [], circles = [], fitKey = "", onPick, height = 420, look = "auto" }: Props) {
   const theme = useTheme();
   const holder = useRef<HTMLDivElement | null>(null);
   const map = useRef<L.Map | null>(null);
@@ -97,7 +99,7 @@ export function TrackingMap({ line = [], dots = [], circles = [], fitKey = "", o
         overflow: "hidden",
         borderRadius: 1,
         ...(onPick ? { cursor: "crosshair" } : {}),
-        ...mapSx(theme.palette.mode === "dark"),
+        ...mapSx(mapIsDark(look, theme.palette.mode === "dark")),
       }}
     />
   );

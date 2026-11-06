@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { parseMapContent, timeAgo } from "./map-panel-content.ts";
+import { mapIsDark, parseMapContent, timeAgo } from "./map-panel-content.ts";
 
 test("bad JSON gives an empty map", () => {
-  assert.deepEqual(parseMapContent("not json"), { markers: [], trail: [], note: "" });
-  assert.deepEqual(parseMapContent("null"), { markers: [], trail: [], note: "" });
+  assert.deepEqual(parseMapContent("not json"), { markers: [], trail: [], note: "", look: "auto" });
+  assert.deepEqual(parseMapContent("null"), { markers: [], trail: [], note: "", look: "auto" });
 });
 
 test("places outside the world are left out", () => {
@@ -37,4 +37,19 @@ test("time ago reads naturally", () => {
   assert.equal(timeAgo("2026-11-06T11:55:00Z", now), "5 min ago");
   assert.equal(timeAgo("2026-11-06T09:00:00Z", now), "3 h ago");
   assert.equal(timeAgo("2026-11-03T12:00:00Z", now), "3 days ago");
+});
+
+test("moving and map colours are read safely", () => {
+  const c = parseMapContent(JSON.stringify({ look: "light", markers: [{ lat: 1, lon: 2, moving: true }, { lat: 1, lon: 2 }] }));
+  assert.equal(c.look, "light");
+  assert.equal(c.markers[0].moving, true);
+  assert.equal(c.markers[1].moving, false);
+  assert.equal(parseMapContent(JSON.stringify({ look: "purple" })).look, "auto");
+});
+
+test("the map setting wins over Nexternel's look unless it is automatic", () => {
+  assert.equal(mapIsDark("auto", true), true);
+  assert.equal(mapIsDark("auto", false), false);
+  assert.equal(mapIsDark("light", true), false);
+  assert.equal(mapIsDark("dark", false), true);
 });

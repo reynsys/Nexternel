@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.183
+
+- GPS maps can be dark or light: choose under Settings → Extensions → GPS tracking → Map colours.
+- The tracker's dot on the map is green while moving and red while parked.
+
 ## V5.2.182
 
 - New GPS tracking plugin: see your car or other tracker live on a map, on your dashboard and on a new GPS page. Installing the plugin sets everything up, with no address or login to enter.

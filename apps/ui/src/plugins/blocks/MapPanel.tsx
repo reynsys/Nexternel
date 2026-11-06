@@ -4,7 +4,7 @@ import MyLocationIcon from "@mui/icons-material/MyLocation";
 import L from "leaflet";
 import { api } from "../../api";
 import { createMap, mapSx } from "./map-base";
-import { parseMapContent, timeAgo, type MapMarker } from "../../lib/map-panel-content";
+import { mapIsDark, parseMapContent, timeAgo, type MapMarker } from "../../lib/map-panel-content";
 
 const REFRESH_MS = 30_000;
 const CLOSE_ZOOM = 15;
@@ -31,8 +31,8 @@ function sameMarkers(a: MapMarker[], b: MapMarker[]): boolean {
 /** Map building block for plugin panels: shows the places and the trail the plugin last wrote. */
 export function MapPanel({ pluginId, panelId }: { pluginId: string; panelId: string }) {
   const theme = useTheme();
-  const dark = theme.palette.mode === "dark";
-  const color = theme.palette.primary.main;
+  const movingColor = theme.palette.success.main;
+  const parkedColor = theme.palette.error.main;
   const holder = useRef<HTMLDivElement | null>(null);
   const map = useRef<L.Map | null>(null);
   const layers = useRef<L.LayerGroup | null>(null);
@@ -66,6 +66,8 @@ export function MapPanel({ pluginId, panelId }: { pluginId: string; panelId: str
   }, [pluginId, panelId]);
 
   const content = useMemo(() => parseMapContent(saved?.body ?? ""), [saved?.body]);
+  const dark = mapIsDark(content.look, theme.palette.mode === "dark");
+  const color = theme.palette.primary.main;
   const hasPlaces = content.markers.length > 0;
 
   const centre = (m: L.Map, markers: MapMarker[]) => {
@@ -105,11 +107,11 @@ export function MapPanel({ pluginId, panelId }: { pluginId: string; panelId: str
       L.polyline(content.trail, { color, weight: 3, opacity: 0.7 }).addTo(group);
     }
     for (const place of content.markers) {
-      L.marker([place.lat, place.lon], { icon: markerIcon(color, place.heading), keyboard: false }).addTo(group);
+      L.marker([place.lat, place.lon], { icon: markerIcon(place.moving ? movingColor : parkedColor, place.heading), keyboard: false }).addTo(group);
     }
     if (following.current && !sameMarkers(shown.current, content.markers)) centre(m, content.markers);
     shown.current = content.markers;
-  }, [content, color]);
+  }, [content, color, movingColor, parkedColor]);
 
   if (!loaded) return null;
   if (!hasPlaces && !content.note) {

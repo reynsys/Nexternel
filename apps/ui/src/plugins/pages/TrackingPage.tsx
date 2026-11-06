@@ -20,6 +20,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { api } from "../../api";
 import { ButtonRow } from "../../components/ButtonRow";
 import { dayRange, duration, periodRange, toDateInput, type ReportPeriod } from "../../lib/tracking-format";
+import type { MapLook } from "../../lib/map-panel-content";
 import { contentSurfaceSx } from "../../skins/surfaceStyles";
 import { MapPanel } from "../blocks/MapPanel";
 import { TrackingMap, type MapCircle, type MapDot } from "./TrackingMap";
@@ -31,6 +32,7 @@ type Overview = {
   distanceUnit: string;
   trackers: Tracker[];
   places: { lat: number; lon: number; label: string }[];
+  mapLook: MapLook;
 };
 type Trip = { kind: "trip"; start: string; end: string; minutes: number; distance: number; topSpeed: number; from: string; to: string };
 type Stop = { kind: "stop"; start: string; end: string; minutes: number; lat: number; lon: number; place: string };
@@ -227,7 +229,12 @@ function Journeys({ call, overview }: { call: Call; overview: Overview }) {
         </Section>
         <Section>
           <Stack spacing={1}>
-            <TrackingMap line={line} dots={dots} fitKey={selected ? `${selected.start}-${points.length}` : ""} />
+            <TrackingMap
+              line={line}
+              dots={dots}
+              fitKey={selected ? `${selected.start}-${points.length}` : ""}
+              look={overview.mapLook}
+            />
             {selected?.kind === "trip" && points.length > 1 ? (
               <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
                 <Button
@@ -432,6 +439,7 @@ function AreasAlerts({ call, overview }: { call: Call; overview: Overview }) {
             fitKey={String(areas.length)}
             onPick={admin ? (lat, lon) => setPicked({ lat, lon }) : undefined}
             height={360}
+            look={overview.mapLook}
           />
         </Section>
       </Box>
