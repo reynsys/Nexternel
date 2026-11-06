@@ -9,6 +9,7 @@ import { ActivityList } from "../../../components/ActivityList";
 import { BoardHealthCard } from "./BoardHealthCard";
 import { BoardSignalHistory } from "./BoardSignalHistory";
 import { devicesOutlinedButton } from "./devices-panel-styles";
+import { copyTextToClipboard } from "../../../lib/copyText";
 
 const DAY_MS = 24 * 60 * 60_000;
 
@@ -82,7 +83,7 @@ export function DeviceTroubleshootingTab({
         <Button
           {...devicesOutlinedButton}
           startIcon={<ContentCopyRoundedIcon />}
-          onClick={() => void navigator.clipboard?.writeText(report()).then(() => setCopied(true)).catch(() => undefined)}
+          onClick={() => void copyTextToClipboard(report()).then((r) => setCopied(r.ok))}
         >
           {copied ? "Copied" : "Copy report"}
         </Button>

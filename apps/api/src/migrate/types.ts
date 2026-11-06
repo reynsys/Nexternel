@@ -31,6 +31,18 @@ export type ExportedSensor = {
   isEnabled: boolean;
 };
 
+/** Heating, lights, air conditioning: missing in backups from before V5.2.181. */
+export type ExportedControl = {
+  id: string;
+  name: string;
+  slug: string;
+  controlType: string;
+  features: Record<string, unknown>;
+  commandTopic: string;
+  stateTopic: string;
+  isEnabled: boolean;
+};
+
 export type ExportedRelay = {
   id: string;
   name: string;
@@ -56,6 +68,7 @@ export type ExportedDevice = {
   isEnabled: boolean;
   sensors: ExportedSensor[];
   relays: ExportedRelay[];
+  controls?: ExportedControl[];
 };
 
 export type ExportedDashboard = {

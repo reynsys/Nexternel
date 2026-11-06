@@ -205,6 +205,7 @@ export async function upsertDevice(
 
   await client.query(`DELETE FROM sensors WHERE device_id = $1::uuid`, [d.id]);
   await client.query(`DELETE FROM relays WHERE device_id = $1::uuid`, [d.id]);
+  await client.query(`DELETE FROM device_controls WHERE device_id = $1::uuid`, [d.id]);
 
   for (const s of d.sensors) {
     await client.query(
@@ -226,6 +227,14 @@ export async function upsertDevice(
         s.gpioPin,
         s.isEnabled,
       ]
+    );
+  }
+
+  for (const dc of d.controls ?? []) {
+    await client.query(
+      `INSERT INTO device_controls (id, device_id, name, slug, control_type, features, command_topic, state_topic, is_enabled)
+       VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6, $7, $8, $9)`,
+      [dc.id, d.id, dc.name, dc.slug, dc.controlType, JSON.stringify(dc.features ?? {}), dc.commandTopic, dc.stateTopic, dc.isEnabled]
     );
   }
 

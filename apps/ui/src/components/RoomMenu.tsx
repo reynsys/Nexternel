@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefO
 import { Box, Button, Tooltip, Typography, type Theme } from "@mui/material";
 import type { DashboardSummary } from "../api";
 import { getDashboardIcon } from "../lib/dashboard-icons";
+import { DOCK_TILE, dockFit } from "../lib/dock-fit";
 import type { RoomNav } from "../lib/room-nav";
 import { BOTTOM_NAV_HEIGHT_PX } from "../skins/builtin/mui-dashboard/BottomNav";
 import { ARRANGE_ATTR, type ArrangeDashboards } from "../lib/use-arrange-dashboards";
@@ -96,7 +97,7 @@ function RoomTile({
 }
 
 /** A floating island; the room under the pointer grows (like a Mac dock). */
-const TILE = 46;
+const TILE = DOCK_TILE;
 const GROW = 0.22; // the most a room grows; the dock keeps this much room beside its rooms
 /** Space between the dock (or rail) and the edge of the screen (wide screens). */
 const DOCK_GAP = 14;
@@ -134,6 +135,7 @@ const islandFrame = (t: Theme) => ({
 /** Centred under the dashboard at the bottom of the screen. */
 function Dock({ dashboards, activeId, onGo, tools, loading, error, arrange }: Props) {
   const dock = useRef<HTMLDivElement>(null);
+  const rooms = useRef<HTMLDivElement>(null);
   const [centre, setCentre] = useState<number | null>(null);
   // Centre under the dashboard (the dock's own parent), without taking any room in the page.
   useLayoutEffect(() => {
@@ -166,13 +168,32 @@ function Dock({ dashboards, activeId, onGo, tools, loading, error, arrange }: Pr
       document.documentElement.style.removeProperty("--nx-dock-space");
     };
   }, []);
-  const magnify = useMagnify(dock, "row");
+  const magnify = useMagnify(rooms, "row");
+  const toolsBox = useRef<HTMLDivElement>(null);
+  const [fit, setFit] = useState({ size: TILE, columns: dashboards.length });
+  // How much width the dock may use decides the size of its rooms and buttons.
+  useLayoutEffect(() => {
+    const el = dock.current;
+    const tools = toolsBox.current;
+    if (!el || !tools) return undefined;
+    const measure = () => {
+      const narrow = window.innerWidth < 900;
+      const limit = narrow ? window.innerWidth - 16 : centre === null ? window.innerWidth - 32 : 2 * (window.innerWidth - centre) - 32;
+      const css = getComputedStyle(el);
+      // The dock's own edges, the rooms' side space and the line between rooms and buttons.
+      const available = limit - parseFloat(css.paddingLeft) - parseFloat(css.paddingRight) - 16 - 28;
+      const toolTiles = Math.max(1, Math.round(tools.offsetWidth / (fit.size + 8)));
+      const next = dockFit(available, dashboards.length, toolTiles, 8);
+      setFit((f) => (f.size === next.size && f.columns === next.columns ? f : next));
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [centre, dashboards.length, fit.size]);
   return (
     <Box
       ref={dock}
       data-nx-room-menu="dock"
-      onMouseMove={(e) => magnify(e.clientX)}
-      onMouseLeave={() => magnify(null)}
       sx={(t) => ({
         position: "fixed",
         zIndex: t.zIndex.appBar,
@@ -181,27 +202,41 @@ function Dock({ dashboards, activeId, onGo, tools, loading, error, arrange }: Pr
         left: { xs: 8, md: centre === null ? "50%" : `${centre}px` },
         right: { xs: 8, md: "auto" },
         transform: { xs: "none", md: "translateX(-50%)" },
-        maxWidth: { xs: "none", md: "calc(100vw - 32px)" },
+        // Centred on the dashboard area: never wider than that area, so its ends stay on the screen.
+        maxWidth: { xs: "none", md: centre === null ? "calc(100vw - 32px)" : `calc(2 * (100vw - ${centre}px) - 32px)` },
         display: "flex",
         alignItems: "flex-end",
         gap: "calc(var(--nx-control-gap) + 2px)",
-        px: 2,
-        // Room above the rooms so a growing room stays inside the dock.
-        pt: `${Math.ceil(TILE * GROW) + 10}px`,
+        px: 1,
         pb: "10px",
-        overflowX: { xs: "auto", md: "visible" },
-        scrollbarWidth: "none",
         ...islandFrame(t),
         "& [data-nx-room]": { transition: "transform .18s cubic-bezier(.2,.7,.3,1)", transformOrigin: "bottom center", willChange: "transform" },
       })}
     >
-      {loading ? <Typography variant="caption">Loading rooms…</Typography> : null}
-      {error ? <Typography variant="caption" color="error">{error}</Typography> : null}
-      {dashboards.map((d, i) => (
-        <RoomTile key={d.id} d={d} active={d.id === activeId} onGo={() => onGo(d)} size={TILE} tip="bottom" arrange={arrange} index={i} count={dashboards.length} axis="row" />
-      ))}
+      <Box
+        ref={rooms}
+        onMouseMove={(e) => magnify(e.clientX)}
+        onMouseLeave={() => magnify(null)}
+        sx={{
+          display: "grid",
+          gridTemplateColumns: `repeat(${fit.columns}, ${fit.size}px)`,
+          gap: "8px",
+          alignItems: "end",
+          px: 1,
+          // Room above the rooms so a growing room stays inside the dock.
+          pt: `${Math.ceil(TILE * GROW) + 10}px`,
+        }}
+      >
+        {loading ? <Typography variant="caption">Loading rooms…</Typography> : null}
+        {error ? <Typography variant="caption" color="error">{error}</Typography> : null}
+        {dashboards.map((d, i) => (
+          <RoomTile key={d.id} d={d} active={d.id === activeId} onGo={() => onGo(d)} size={fit.size} tip="bottom" arrange={arrange} index={i} count={dashboards.length} axis="row" />
+        ))}
+      </Box>
       <Box sx={{ width: "1px", alignSelf: "stretch", bgcolor: "divider", mx: 0.5, flexShrink: 0 }} />
-      {tools("row", TILE)}
+      <Box ref={toolsBox} sx={{ display: "flex", gap: "8px", flexShrink: 0 }}>
+        {tools("row", fit.size)}
+      </Box>
     </Box>
   );
 }

@@ -1,7 +1,7 @@
 import type { Capability, ResolvedPanelCapability } from "../api";
 import { isInternalRelayEntity } from "../lib/capability-labels";
 
-const CONTROL_KINDS = new Set(["switch", "brightness", "colour"]);
+const CONTROL_KINDS = new Set(["switch", "brightness", "colour", "thermostat", "light", "climate", "cover", "fan"]);
 
 export function isControllableResolvedCapability(
   cap: ResolvedPanelCapability

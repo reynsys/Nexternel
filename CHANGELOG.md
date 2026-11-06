@@ -2,6 +2,14 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.181
+
+- New control panels for heating, air conditioning, dimmable lights, colour lamps, blinds and fans. Every panel keeps all its content and shrinks or grows with the panel.
+- At the smallest size a control shows what it is, its value, a quick control and its switch. The button in the corner opens the complete panel.
+- Colour lamps have White, even when the lamp has no separate white lights.
+- Devices that connect through plugins can now use these panels, and heating can offer settings such as Comfort, Eco and Away.
+- The room dock always shows every room: rooms shrink evenly, then move to two rows, and nothing goes off the screen.
+
 ## V5.2.180
 
 - Saving or checking a board's settings file from Devices no longer fails on a file that is fine.

@@ -110,7 +110,7 @@ async function listen() {
           continue;
         }
         if (ev.type !== "command") continue;
-        const cmd = { device: ev.deviceKey, item: ev.itemKey, action: ev.action };
+        const cmd = { device: ev.deviceKey, item: ev.itemKey, action: ev.action, values: ev.values };
         for (const handler of commandHandlers) {
           try {
             await handler(cmd);
@@ -142,14 +142,20 @@ const nx = Object.freeze({
 
   log: (...args) => console.log(...args),
 
-  /** Declare this plugin's devices: [{ key, name, items: [{ key, name, kind, unit, control }] }]. */
+  /**
+   * Declare this plugin's devices: [{ key, name, items: [{ key, name, kind, unit, control, features }] }].
+   * control: true (a switch), or "thermostat", "light", "climate", "cover" or "fan" with features saying what it can do.
+   */
   defineDevices: (devices) => call("PUT", "/devices", { devices }),
   /** Send one reading; readings are grouped and sent together. Resend at least every 2 minutes. */
   sendReading(device, item, value) {
     pending.push({ device, item, value });
     if (!flushTimer) flushTimer = setTimeout(flushReadings, 200);
   },
-  /** Called when someone presses one of this plugin's switches: ({ device, item, action }) */
+  /**
+   * Called when someone presses one of this plugin's switches ({ device, item, action }), or changes
+   * one of its controls ({ device, item, action: "set", values }): report the new state with sendReading.
+   */
   onCommand(handler) {
     commandHandlers.push(handler);
   },

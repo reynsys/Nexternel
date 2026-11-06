@@ -56,6 +56,16 @@ export function capabilityKindHint(kind: string | undefined): string {
       return "Pressure";
     case "switch":
       return "Switch";
+    case "thermostat":
+      return "Heating";
+    case "light":
+      return "Light";
+    case "climate":
+      return "Air conditioning";
+    case "cover":
+      return "Blinds";
+    case "fan":
+      return "Fan";
     case "binary_sensor":
       return "Binary";
     default:

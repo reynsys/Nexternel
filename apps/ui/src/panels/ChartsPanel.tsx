@@ -1,3 +1,4 @@
+import { isDeviceControlKind } from "../widgets/control/control-view";
 import { useEffect, useState } from "react";
 import { Typography } from "@mui/material";
 import type { HistoryPoint, HistoryRange, ResolvedPanelCapability } from "../api";
@@ -42,7 +43,7 @@ export function ChartsPanel({
   layout = "card",
   panelTitle,
 }: Props) {
-  const chartCaps = capabilities.filter((c) => c.kind !== "switch");
+  const chartCaps = capabilities.filter((c) => c.kind !== "switch" && !isDeviceControlKind(c.kind));
   const shown = chartCaps.slice(0, MAX_CHARTS);
   const shownIdsKey = shown.map((c) => c.id).join(",");
 

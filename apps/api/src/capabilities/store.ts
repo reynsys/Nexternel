@@ -31,6 +31,8 @@ export type CapabilityRow = {
   area_id: string | null;
   group_id: string | null;
   service_id: string | null;
+  /** What a device control can do (null for readings and plain switches). */
+  features: Record<string, unknown> | null;
 };
 
 export async function listCapabilities(): Promise<CapabilityRow[]> {
@@ -40,11 +42,13 @@ export async function listCapabilities(): Promise<CapabilityRow[]> {
             c.unit, c.source_type, c.source_id, c.is_enabled,
             c.system_id, c.area_id, c.group_id, c.service_id,
             b.state_topic, b.command_topic,
-            COALESCE(d.firmware_type, 'esphome') AS firmware_type
+            COALESCE(d.firmware_type, 'esphome') AS firmware_type,
+            dc.features
      FROM capabilities c
      JOIN devices d ON d.id = c.device_id
      LEFT JOIN rooms r ON r.id = d.room_id
      LEFT JOIN capability_bindings b ON b.capability_id = c.id
+     LEFT JOIN device_controls dc ON c.source_type = 'control' AND dc.id = c.source_id
      WHERE c.is_enabled = TRUE
        AND COALESCE(d.is_enabled, TRUE) = TRUE
      ORDER BY COALESCE(r.name, ''), d.name ASC, COALESCE(NULLIF(c.custom_name, ''), c.name) ASC`

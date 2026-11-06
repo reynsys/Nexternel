@@ -4,6 +4,8 @@ import { syncCapabilitiesFromLegacy } from "../capabilities/sync.js";
 import { writeSensorReading } from "../history/influx.js";
 import { installationMqttRoot } from "../migrate/align-mqtt-topics.js";
 import { setLiveState } from "../telemetry/state-cache.js";
+import { isControlType, parseControlFeatures, type ControlFeatures, type ControlType } from "../devices/controls.js";
+import { recordControlReport, setControlSender } from "../devices/control-commands.js";
 import { pushPluginEvent } from "./events.js";
 
 /**
@@ -15,7 +17,17 @@ export const PLUGIN_FIRMWARE = "plugin";
 
 const KEY_RE = /^[a-z0-9][a-z0-9_-]{0,39}$/;
 
-export type PluginItemDef = { key: string; name: string; kind: string; unit?: string | null; control?: boolean };
+export type PluginItemDef = {
+  key: string;
+  name: string;
+  kind: string;
+  unit?: string | null;
+  /** A switch. */
+  control?: boolean;
+  /** More than on and off: heating, a light, air conditioning, with what it can do. */
+  controlType?: ControlType;
+  features?: ControlFeatures;
+};
 export type PluginDeviceDef = { key: string; name: string; items: PluginItemDef[] };
 
 /** Plugin ids never contain "_", so "plugin_<id>_" cannot match another plugin's devices. */
@@ -54,6 +66,16 @@ export function parseDeviceDefs(raw: unknown): { ok: true; devices: PluginDevice
       }
       if (itemKeys.has(it.key)) return { ok: false, error: `item key ${it.key} is listed twice in ${d.key}` };
       itemKeys.add(it.key);
+      if (isControlType(it.control)) {
+        items.push({
+          key: it.key,
+          name: typeof it.name === "string" && it.name.trim() ? it.name.trim().slice(0, 100) : it.key,
+          kind: it.control,
+          controlType: it.control,
+          features: parseControlFeatures(it.control, it.features),
+        });
+        continue;
+      }
       const control = it.control === true;
       items.push({
         key: it.key,
@@ -90,10 +112,20 @@ export async function definePluginDevices(pluginId: string, devices: PluginDevic
         [dev.name, slug, prefix]
       );
       const deviceId = row.rows[0]!.id;
-      const sensorKeys = dev.items.filter((i) => !i.control).map((i) => i.key);
+      const sensorKeys = dev.items.filter((i) => !i.control && !i.controlType).map((i) => i.key);
       const relayKeys = dev.items.filter((i) => i.control).map((i) => i.key);
+      const controlKeys = dev.items.filter((i) => i.controlType).map((i) => i.key);
       for (const item of dev.items) {
-        if (item.control) {
+        if (item.controlType) {
+          await client.query(
+            `INSERT INTO device_controls (device_id, name, slug, control_type, features, command_topic, state_topic)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             ON CONFLICT (device_id, slug) DO UPDATE SET
+               name = EXCLUDED.name, control_type = EXCLUDED.control_type, features = EXCLUDED.features,
+               command_topic = EXCLUDED.command_topic, state_topic = EXCLUDED.state_topic, updated_at = NOW()`,
+            [deviceId, item.name, item.key, item.controlType, JSON.stringify(item.features ?? {}), `${prefix}/control/${item.key}/command`, `${prefix}/control/${item.key}/state`]
+          );
+        } else if (item.control) {
           await client.query(
             `INSERT INTO relays (device_id, name, slug, mqtt_command_topic, mqtt_state_topic, esphome_entity_id)
              VALUES ($1, $2, $3, $4, $5, $3)
@@ -126,6 +158,7 @@ export async function definePluginDevices(pluginId: string, devices: PluginDevic
         [deviceId, relayKeys]
       );
       await client.query(`DELETE FROM relays WHERE device_id = $1 AND NOT (slug = ANY($2::text[]))`, [deviceId, relayKeys]);
+      await client.query(`DELETE FROM device_controls WHERE device_id = $1 AND NOT (slug = ANY($2::text[]))`, [deviceId, controlKeys]);
     }
     // Devices the plugin no longer lists (their items and capabilities go with them).
     await client.query(
@@ -158,7 +191,7 @@ export async function setPluginDevicesOnline(pluginId: string, online: boolean):
   );
 }
 
-type ItemRef = { capabilityId: string; deviceId: string; deviceSlug: string; kind: string; control: boolean };
+type ItemRef = { capabilityId: string; deviceId: string; deviceSlug: string; kind: string; control: boolean; deviceControl: boolean };
 const itemCache = new Map<string, Map<string, ItemRef>>();
 
 async function pluginItems(pluginId: string): Promise<Map<string, ItemRef>> {
@@ -167,11 +200,12 @@ async function pluginItems(pluginId: string): Promise<Map<string, ItemRef>> {
   const res = await getPool().query<{
     id: string; device_id: string; device_slug: string; item_slug: string; kind: string; source_type: string;
   }>(
-    `SELECT c.id, c.device_id, d.slug AS device_slug, COALESCE(s.slug, r.slug) AS item_slug, c.kind, c.source_type
+    `SELECT c.id, c.device_id, d.slug AS device_slug, COALESCE(s.slug, r.slug, dc.slug) AS item_slug, c.kind, c.source_type
      FROM capabilities c
      JOIN devices d ON d.id = c.device_id
      LEFT JOIN sensors s ON c.source_type = 'sensor' AND s.id = c.source_id
      LEFT JOIN relays r ON c.source_type = 'relay' AND r.id = c.source_id
+     LEFT JOIN device_controls dc ON c.source_type = 'control' AND dc.id = c.source_id
      WHERE d.firmware_type = '${PLUGIN_FIRMWARE}' AND starts_with(d.slug, $1)`,
     [pluginSlugPrefix(pluginId)]
   );
@@ -185,6 +219,7 @@ async function pluginItems(pluginId: string): Promise<Map<string, ItemRef>> {
       deviceSlug: row.device_slug,
       kind: row.kind,
       control: row.source_type === "relay",
+      deviceControl: row.source_type === "control",
     });
   }
   itemCache.set(pluginId, map);
@@ -205,6 +240,11 @@ export async function recordPluginReadings(
     const ref = items.get(`${r.device}/${r.item}`);
     if (!ref) {
       unknown.push(`${r.device}/${r.item}`);
+      continue;
+    }
+    if (ref.deviceControl) {
+      if (recordControlReport(ref.capabilityId, r.value)) touchedDevices.add(ref.deviceId);
+      else unknown.push(`${r.device}/${r.item}`);
       continue;
     }
     let value: unknown = r.value;
@@ -256,3 +296,28 @@ export async function sendPluginSwitchCommand(capabilityId: string, on: boolean)
     action: on ? "on" : "off",
   });
 }
+
+/** Someone changed one of the plugin's device controls: hand it to the plugin. */
+setControlSender(async (capabilityId, change) => {
+  const res = await getPool().query<{ device_slug: string; control_slug: string; enabled: boolean | null; plugin_id: string | null }>(
+    `SELECT d.slug AS device_slug, dc.slug AS control_slug, p.enabled, p.id AS plugin_id
+     FROM capabilities c
+     JOIN devices d ON d.id = c.device_id
+     JOIN device_controls dc ON c.source_type = 'control' AND dc.id = c.source_id
+     LEFT JOIN installed_plugins p ON starts_with(d.slug, 'plugin_' || p.id || '_')
+     WHERE c.id = $1
+     LIMIT 1`,
+    [capabilityId]
+  );
+  const row = res.rows[0];
+  if (!row?.plugin_id) throw new Error("The plugin for this device is not installed");
+  if (!row.enabled) throw new Error("The plugin for this device is switched off");
+  pushPluginEvent(row.plugin_id, {
+    type: "command",
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    deviceKey: row.device_slug.slice(pluginSlugPrefix(row.plugin_id).length),
+    itemKey: row.control_slug,
+    action: "set",
+    values: change as Record<string, unknown>,
+  });
+});

@@ -330,6 +330,8 @@ export type Capability = {
   sourceType: string;
   sourceId?: string;
   hasCommand: boolean;
+  /** What a device control can do. */
+  features?: Record<string, unknown> | null;
   /** Status light (limits, colour); null = this reading has no light. */
   statusLight?: import("./lib/dashboard-data-runtime/status-store").CapabilityStatus | null;
   systemId?: string | null;
@@ -355,6 +357,7 @@ export type ResolvedPanelCapability = {
   sourceType: string;
   sourceEntityId?: string | null;
   hasCommand: boolean;
+  features?: Record<string, unknown> | null;
   systemId: string | null;
   areaId: string | null;
   groupId: string | null;
@@ -1130,6 +1133,11 @@ export const api = {
       { method: "DELETE" }
     ),
 
+  control: (id: string, change: Record<string, unknown>) =>
+    apiFetch<{ ok: boolean; value: unknown }>(`/api/v1/capabilities/${id}/control`, {
+      method: "POST",
+      body: JSON.stringify({ change }),
+    }),
   command: (id: string, action: "on" | "off" | "toggle") =>
     apiFetch<{ ok: boolean; value: boolean }>(`/api/v1/capabilities/${id}/command`, {
       method: "POST",

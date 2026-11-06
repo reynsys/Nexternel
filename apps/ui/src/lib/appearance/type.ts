@@ -61,3 +61,31 @@ export const PANEL_TEXT = {
   /** A picture that goes with a value (the weather icon). */
   picture: "clamp(1.4rem, min(8cqi, 22cqb), 3rem)",
 } as const;
+
+/** Text on device controls (panels/…/widgets/control): sized by the control's picture. */
+export const CONTROL_TEXT = {
+  /** The set temperature on the dial, and its ° and .5. */
+  dial: "27cqmin",
+  dialSide: "10.5cqmin",
+  /** The main number in a panel's picture. */
+  picture: "23cqmin",
+  /** The main number beside a picture (blinds). */
+  pictureBeside: "17cqmin",
+  /** A word in a corner of the picture (the fan's speed). */
+  pictureSide: "13cqmin",
+  /** What a number is ("Brightness", "Currently"). */
+  caption: "clamp(0.6875rem, 5.6cqmin, 0.875rem)",
+  /** Buttons and labels in the rows under the picture. */
+  row: "0.8125rem",
+  rowValue: "0.9375rem",
+  stat: "1rem",
+  stepSign: "1.5rem",
+  /** The value on a one-line panel. */
+  line: "1.625rem",
+  /** The temperature on a one-line panel, and its ° and .5. */
+  lineTemperature: "2rem",
+  lineTemperatureSide: "0.875rem",
+} as const;
+
+/** Thin digits read well at this size and look calm on a dial. */
+export const CONTROL_VALUE_WEIGHT = 300;

@@ -1,3 +1,6 @@
+import AcUnitRoundedIcon from "@mui/icons-material/AcUnitRounded";
+import LightbulbRoundedIcon from "@mui/icons-material/LightbulbRounded";
+import ThermostatRoundedIcon from "@mui/icons-material/ThermostatRounded";
 import type { SvgIconComponent } from "@mui/icons-material";
 import BatteryFullIcon from "@mui/icons-material/BatteryFull";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
@@ -45,6 +48,9 @@ const KIND_ICONS: Record<string, SvgIconComponent> = {
   pm10: GrainIcon,
   number: NumbersIcon,
   switch: PowerSettingsNewIcon,
+  thermostat: ThermostatRoundedIcon,
+  light: LightbulbRoundedIcon,
+  climate: AcUnitRoundedIcon,
   brightness: LightModeIcon,
   colour: PaletteIcon,
   motion: DirectionsRunIcon,

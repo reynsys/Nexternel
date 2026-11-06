@@ -112,6 +112,33 @@ export async function syncCapabilitiesFromLegacy(): Promise<{
     relayCount += 1;
   }
 
+  const controls = await pool.query<{
+    id: string; device_id: string; name: string; control_type: string; state_topic: string; command_topic: string; is_enabled: boolean;
+  }>(`SELECT id, device_id, name, control_type, state_topic, command_topic, is_enabled FROM device_controls`);
+  for (const c of controls.rows) {
+    const cap = await pool.query<{ id: string }>(
+      `INSERT INTO capabilities (device_id, kind, name, unit, source_type, source_id, is_enabled)
+       VALUES ($1, $2, $3, NULL, 'control', $4, $5)
+       ON CONFLICT (source_type, source_id) DO UPDATE SET
+         device_id = EXCLUDED.device_id,
+         kind = EXCLUDED.kind,
+         name = EXCLUDED.name,
+         is_enabled = EXCLUDED.is_enabled,
+         updated_at = NOW()
+       RETURNING id`,
+      [c.device_id, c.control_type, c.name, c.id, c.is_enabled]
+    );
+    await pool.query(
+      `INSERT INTO capability_bindings (capability_id, protocol, state_topic, command_topic)
+       VALUES ($1, 'mqtt', $2, $3)
+       ON CONFLICT (capability_id) DO UPDATE SET
+         state_topic = EXCLUDED.state_topic,
+         command_topic = EXCLUDED.command_topic,
+         updated_at = NOW()`,
+      [cap.rows[0].id, c.state_topic, c.command_topic]
+    );
+  }
+
   await pool.query(
     `DELETE FROM capabilities c
      WHERE c.source_type = 'sensor'
@@ -121,6 +148,11 @@ export async function syncCapabilitiesFromLegacy(): Promise<{
     `DELETE FROM capabilities c
      WHERE c.source_type = 'relay'
        AND NOT EXISTS (SELECT 1 FROM relays r WHERE r.id = c.source_id)`
+  );
+  await pool.query(
+    `DELETE FROM capabilities c
+     WHERE c.source_type = 'control'
+       AND NOT EXISTS (SELECT 1 FROM device_controls dc WHERE dc.id = c.source_id)`
   );
 
   const { pruneInternalRelayRows } = await import("./cleanup.js");

@@ -1,3 +1,4 @@
+import { isDeviceControlKind } from "../control/control-view";
 import { CODE_TEXT } from "../../lib/appearance/type";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { PanelEditorShell } from "../../components/panel-editor/PanelEditorShell";
@@ -154,7 +155,7 @@ export function EChartsWidgetEditor({
 
   const cap = capabilities.find((c) => c.id === capabilityId);
   const sensorCapabilities = useMemo(
-    () => capabilities.filter((c) => c.kind !== "switch"),
+    () => capabilities.filter((c) => c.kind !== "switch" && !isDeviceControlKind(c.kind)),
     [capabilities]
   );
 

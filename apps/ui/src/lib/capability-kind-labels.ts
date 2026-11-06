@@ -28,6 +28,16 @@ export function capabilityKindLabel(kind: string | undefined): string {
       return "PM10";
     case "switch":
       return "Switch";
+    case "thermostat":
+      return "Heating";
+    case "light":
+      return "Light";
+    case "climate":
+      return "Air conditioning";
+    case "cover":
+      return "Blinds";
+    case "fan":
+      return "Fan";
     case "brightness":
       return "Brightness";
     case "colour":

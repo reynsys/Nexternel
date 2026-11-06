@@ -1,3 +1,4 @@
+import { ControlNotConfirmedError, ControlRefusedError, setControl } from "../devices/control-commands.js";
 import type { FastifyPluginAsync } from "fastify";
 import { requireUser } from "../auth/plugin.js";
 import { requirePermission } from "../auth/rbac.js";
@@ -44,6 +45,7 @@ export const capabilitiesRoutes: FastifyPluginAsync = async (app) => {
           sourceType: c.source_type,
           sourceId: c.source_id,
           hasCommand: Boolean(c.command_topic),
+          features: c.features,
           statusLight: statusEngine.get(c.id),
           state: state
             ? {
@@ -164,6 +166,19 @@ export const capabilitiesRoutes: FastifyPluginAsync = async (app) => {
           message: err instanceof Error ? err.message : "Command failed",
         },
       });
+    }
+  });
+
+  /** Change a device control (temperature, mode, brightness…): answers once the device confirms it. */
+  app.post<{ Params: { id: string }; Body: { change?: unknown } }>("/api/v1/capabilities/:id/control", async (request, reply) => {
+    if (!requirePermission(request, reply, "controlRelays")) return;
+    try {
+      return { ok: true, value: await setControl(request.params.id, request.body?.change, request.user!.username) };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Command failed";
+      if (err instanceof ControlNotConfirmedError) return reply.code(504).send({ error: { code: "no_answer", message } });
+      if (err instanceof ControlRefusedError) return reply.code(400).send({ error: { code: "bad_request", message } });
+      return reply.code(400).send({ error: { code: "command_failed", message } });
     }
   });
 };

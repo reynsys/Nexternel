@@ -16,6 +16,8 @@ import { PanelItemChrome } from "../PanelItemChrome";
 import { asSwitchCapability } from "../panel-capabilities";
 import { PanelReadingValue } from "../PanelReadingValue";
 import { SwitchStyleVisual, SwitchTileFill } from "../../components/switch-styles/SwitchStyleVisual";
+import { DeviceControlBody } from "../../widgets/control/DeviceControlBody";
+import { isDeviceControlKind } from "../../widgets/control/control-view";
 import type { SemanticCapabilityView } from "./types";
 
 type Props = {
@@ -34,6 +36,16 @@ export function SemanticCapabilityTile({ item, showSecondary }: Props) {
   const showName = showItemLabel;
   const showArea = showSecondary && showItemContext;
   const itemTitle = showName ? item.label : null;
+
+  if (item.presentationClass === "control" && isDeviceControlKind(cap.kind)) {
+    return (
+      <Box sx={{ height: "100%", minHeight: 0, minWidth: 0 }} role="group" aria-label={item.label}>
+        <PanelItemChrome cap={cap} title={itemTitle} showContext={showArea} contentSx={{ p: 0, flex: 1 }}>
+          <DeviceControlBody cap={cap} />
+        </PanelItemChrome>
+      </Box>
+    );
+  }
 
   if (item.presentationClass === "control") {
     const switchCap = asSwitchCapability(cap);

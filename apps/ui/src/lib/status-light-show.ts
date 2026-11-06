@@ -3,6 +3,11 @@ import type { StatusLightSettings, StatusState } from "@nexternel/domain";
 /** Kinds of reading that are not plain numbers, so limits (and lights) make no sense for them. */
 const NON_NUMERIC_KINDS = new Set([
   "switch",
+  "thermostat",
+  "light",
+  "climate",
+  "cover",
+  "fan",
   "binary_sensor",
   "motion",
   "door",

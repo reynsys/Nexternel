@@ -80,6 +80,9 @@ apps/api/src/devices/connection-history.test.ts
 apps/api/src/devices/connection-history.ts
 apps/api/src/devices/connectivity.test.ts
 apps/api/src/devices/connectivity.ts
+apps/api/src/devices/control-commands.ts
+apps/api/src/devices/controls.test.ts
+apps/api/src/devices/controls.ts
 apps/api/src/devices/display-name.test.ts
 apps/api/src/devices/display-name.ts
 apps/api/src/devices/ensure-esphome-builder-schema.ts
@@ -371,6 +374,8 @@ apps/ui/src/lib/dashboard-tile.ts
 apps/ui/src/lib/device-utils.ts
 apps/ui/src/lib/display-mode.test.ts
 apps/ui/src/lib/display-mode.ts
+apps/ui/src/lib/dock-fit.test.ts
+apps/ui/src/lib/dock-fit.ts
 apps/ui/src/lib/edge-scroll.test.ts
 apps/ui/src/lib/edge-scroll.ts
 apps/ui/src/lib/esphome-install-guide.ts
@@ -618,6 +623,13 @@ apps/ui/src/skins/useShellAuth.ts
 apps/ui/src/skins/useSurfaceStyles.ts
 apps/ui/src/version.ts
 apps/ui/src/vite-env.d.ts
+apps/ui/src/widgets/control/ColourWheel.tsx
+apps/ui/src/widgets/control/control-style.ts
+apps/ui/src/widgets/control/control-view.test.ts
+apps/ui/src/widgets/control/control-view.ts
+apps/ui/src/widgets/control/DeviceControlBody.tsx
+apps/ui/src/widgets/control/TemperatureDial.tsx
+apps/ui/src/widgets/control/useDeviceControl.ts
 apps/ui/src/widgets/echarts/chart-theme.ts
 apps/ui/src/widgets/echarts/chart-tooltip.ts
 apps/ui/src/widgets/echarts/config.ts

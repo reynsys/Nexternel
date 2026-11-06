@@ -58,15 +58,7 @@ export function HttpsCard() {
                     <Link href={`https://${status.settings.domain}`}>https://{status.settings.domain}</Link>
                   </Typography>
                 </Box>
-              ) : (
-                <Box>
-                  <Typography variant="subtitle2">Secure address (https)</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Planned: each home will get its own secure name that every phone, tablet and browser trusts straight away. Until then, use
-                    the addresses above.
-                  </Typography>
-                </Box>
-              )}
+              ) : null}
             </>
           ) : null}
         </Stack>

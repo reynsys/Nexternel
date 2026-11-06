@@ -9,6 +9,8 @@ import { useSwitchControl } from "../../widgets/switch/useSwitchControl";
 import { useMetricAppearance } from "../../skins/useMetricAppearance";
 import { itemNameSx } from "../PanelItemChrome";
 import { asSwitchCapability } from "../panel-capabilities";
+import { controlSummary, isDeviceControlKind } from "../../widgets/control/control-view";
+import { useDeviceControl } from "../../widgets/control/useDeviceControl";
 import { parseCapabilityReading } from "../parse-capability-reading";
 import type { SemanticCapabilityView } from "./types";
 
@@ -85,6 +87,20 @@ function ReadingRow({ item }: { item: SemanticCapabilityView }) {
   );
 }
 
+/** A device control in the compact list: its state in a few characters, and on or off. */
+function DeviceControlRow({ item }: { item: SemanticCapabilityView }) {
+  const cap = item.source;
+  const { state, error, change } = useDeviceControl(cap);
+  return (
+    <RowShell item={item}>
+      <Typography variant="caption" color={error ? "error" : "text.primary"} noWrap title={error ?? undefined} sx={{ minWidth: 0 }}>
+        {error ? "No answer" : controlSummary(cap.kind, state)}
+      </Typography>
+      <Switch size="small" checked={state.on !== false} onChange={() => void change({ on: state.on === false })} inputProps={{ "aria-label": `${item.label} on or off` }} />
+    </RowShell>
+  );
+}
+
 function ControlRow({ item }: { item: SemanticCapabilityView }) {
   const cap = item.source;
   const { on, busy, error, toggle } = useSwitchControl(asSwitchCapability(cap), false);
@@ -113,7 +129,9 @@ export function SemanticCapabilityList({ items }: { items: SemanticCapabilityVie
       {/* Centred while it fits; scrolls from the first row when it does not. */}
       <Box sx={{ my: "auto" }}>
         {items.map((item) =>
-          item.presentationClass === "control" ? (
+          item.presentationClass === "control" && isDeviceControlKind(item.source.kind) ? (
+            <DeviceControlRow key={item.id} item={item} />
+          ) : item.presentationClass === "control" ? (
             <ControlRow key={item.id} item={item} />
           ) : (
             <ReadingRow key={item.id} item={item} />

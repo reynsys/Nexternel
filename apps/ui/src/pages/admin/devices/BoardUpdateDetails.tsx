@@ -5,6 +5,7 @@ import ContentCopyRoundedIcon from "@mui/icons-material/ContentCopyRounded";
 import { api, type BoardUpdateLog } from "../../../api";
 import { CODE_TEXT } from "../../../lib/appearance/type";
 import { StepIcon } from "./BoardUpdatesCard";
+import { copyTextToClipboard } from "../../../lib/copyText";
 
 /**
  * "Show details" for one board update: its outcome in plain words, when it ran, and everything
@@ -89,10 +90,7 @@ function BoardUpdateDetailsDialog({ logId, name, onClose }: { logId: string; nam
           disabled={!entry}
           onClick={() => {
             if (!entry) return;
-            void navigator.clipboard
-              ?.writeText(`${name}: ${entry.message}\n${entry.startedAt}\n\n${entry.log}`)
-              .then(() => setCopied(true))
-              .catch(() => undefined);
+            void copyTextToClipboard(`${name}: ${entry.message}\n${entry.startedAt}\n\n${entry.log}`).then((r) => setCopied(r.ok));
           }}
         >
           {copied ? "Copied" : "Copy"}

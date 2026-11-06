@@ -7,6 +7,7 @@ import type {
   ConfigManifest,
   ConfigPayload,
   ExportedCamera,
+  ExportedControl,
   ExportedDashboard,
   ExportedDevice,
   ExportedRelay,
@@ -91,6 +92,30 @@ async function loadDevices(): Promise<ExportedDevice[]> {
     [ids]
   );
 
+  const controls = await getPool().query<{
+    id: string; device_id: string; name: string; slug: string; control_type: string;
+    features: Record<string, unknown>; command_topic: string; state_topic: string; is_enabled: boolean;
+  }>(
+    `SELECT id, device_id, name, slug, control_type, features, command_topic, state_topic, is_enabled
+     FROM device_controls WHERE device_id = ANY($1::uuid[])`,
+    [ids]
+  );
+  const controlsByDev = new Map<string, ExportedControl[]>();
+  for (const c of controls.rows) {
+    const list = controlsByDev.get(c.device_id) ?? [];
+    list.push({
+      id: c.id,
+      name: c.name,
+      slug: c.slug,
+      controlType: c.control_type,
+      features: c.features,
+      commandTopic: c.command_topic,
+      stateTopic: c.state_topic,
+      isEnabled: c.is_enabled,
+    });
+    controlsByDev.set(c.device_id, list);
+  }
+
   const sensorsByDev = new Map<string, ExportedSensor[]>();
   for (const s of sensors.rows) {
     const list = sensorsByDev.get(s.device_id) ?? [];
@@ -137,6 +162,7 @@ async function loadDevices(): Promise<ExportedDevice[]> {
     isEnabled: d.is_enabled,
     sensors: sensorsByDev.get(d.id) ?? [],
     relays: relaysByDev.get(d.id) ?? [],
+      controls: controlsByDev.get(d.id) ?? [],
   }));
 }
 

@@ -1,3 +1,4 @@
+import { isDeviceControlKind } from "../widgets/control/control-view";
 import { getPanelRegistration } from "../panels/registry/store";
 import type { CameraRecord, Capability } from "../api";
 import { visiblePanelCameras } from "./panel-cameras";
@@ -197,7 +198,7 @@ function capabilitiesInPanelScope(
     list = list.filter((c) => c.groupId && scope.groupIds.includes(c.groupId));
   }
   if (kind === "panel.status" || kind === "panel.charts") {
-    list = list.filter((c) => c.kind !== "switch");
+    list = list.filter((c) => c.kind !== "switch" && !isDeviceControlKind(c.kind));
   }
   return list;
 }

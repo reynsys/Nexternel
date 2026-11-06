@@ -4,6 +4,7 @@
  */
 export type PluginEvent =
   | { type: "command"; id: string; deviceKey: string; itemKey: string; action: "on" | "off" }
+  | { type: "command"; id: string; deviceKey: string; itemKey: string; action: "set"; values: Record<string, unknown> }
   | { type: "settings-changed" }
   | {
       type: "panel-request";

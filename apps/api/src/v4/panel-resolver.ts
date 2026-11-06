@@ -22,6 +22,8 @@ export type ResolvedCapability = {
   sourceType: string;
   sourceEntityId: string | null;
   hasCommand: boolean;
+  /** What a device control can do. */
+  features?: Record<string, unknown> | null;
   systemId: string | null;
   areaId: string | null;
   groupId: string | null;
@@ -63,6 +65,7 @@ type CapabilityRow = {
   source_type: string;
   source_entity_id: string | null;
   has_command: boolean;
+  features: Record<string, unknown> | null;
   system_id: string | null;
   area_id: string | null;
   group_id: string | null;
@@ -129,12 +132,14 @@ async function loadPanelResolutionSnapshot(): Promise<PanelResolutionSnapshot> {
             c.system_id, c.area_id, c.group_id,
             r.name AS area_name,
             rel.esphome_entity_id AS source_entity_id,
-            (b.command_topic IS NOT NULL AND b.command_topic <> '') AS has_command
+            (b.command_topic IS NOT NULL AND b.command_topic <> '') AS has_command,
+            dc.features
      FROM capabilities c
      JOIN devices d ON d.id = c.device_id
      LEFT JOIN rooms r ON r.id = c.area_id
      LEFT JOIN capability_bindings b ON b.capability_id = c.id
      LEFT JOIN relays rel ON c.source_type = 'relay' AND c.source_id = rel.id
+     LEFT JOIN device_controls dc ON c.source_type = 'control' AND dc.id = c.source_id
      WHERE c.is_enabled = TRUE
        AND COALESCE(d.is_enabled, TRUE) = TRUE
      ORDER BY COALESCE(r.name, ''), d.name ASC, COALESCE(NULLIF(c.custom_name, ''), c.name) ASC`
@@ -176,6 +181,7 @@ function resolvePanelFromSnapshot(
       sourceType: row.source_type,
       sourceEntityId: row.source_entity_id,
       hasCommand: row.has_command,
+      features: row.features,
       systemId: row.system_id,
       areaId: row.area_id,
       groupId: row.group_id,
