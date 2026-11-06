@@ -2,6 +2,12 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.188
+
+- New gauges start smaller: a quarter of the width and two rows high. Gauges you already have stay as they are.
+- Pressing + or - on a heating panel now lands on a neat half degree straight away.
+- nexternel.com has a privacy page.
+
 ## V5.2.187
 
 - New Nest Heating extension: control a Google Nest thermostat from a heating panel. A guided page takes you through Google's one-time setup, step by step. Google charges a one-off US$5.

@@ -716,6 +716,7 @@ docs/images/dashboard.jpg
 docs/images/phone.jpg
 docs/index.html
 docs/install.sh
+docs/privacy.html
 .env.example
 esphome/devices/.gitkeep
 esphome/packages/nexternel-device.yaml

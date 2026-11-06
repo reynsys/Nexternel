@@ -10,7 +10,7 @@ const GAUGE_DESCRIPTOR: PanelDescriptor = {
   category: "sensors",
   source: "contribution",
   configSchemaVersion: 1,
-  sizing: sizingFromContribution({ w: 4, h: 4 }, "radial-gauge"),
+  sizing: sizingFromContribution({ w: 3, h: 2 }, "radial-gauge"),
   responsive: {
     supportedStates: ["comfortable", "compact", "summary", "insufficient"],
   },

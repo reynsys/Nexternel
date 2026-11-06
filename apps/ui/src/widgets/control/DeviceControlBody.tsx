@@ -10,7 +10,7 @@ import type { SxProps, Theme } from "@mui/material/styles";
 import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { ColourWheel } from "./ColourWheel";
 import { TemperatureDial } from "./TemperatureDial";
-import { FAN_STEPS, WHITE_LIGHT, colorCss, deviceColour, fanWord, isWhiteLight, splitTemperature, temperatureIsFixed, type ControlState } from "./control-view";
+import { FAN_STEPS, WHITE_LIGHT, clampToStep, colorCss, deviceColour, fanWord, isWhiteLight, splitTemperature, temperatureIsFixed, type ControlState } from "./control-view";
 import { CONTROL_TEXT, VALUE_WEIGHT } from "../../lib/appearance/type";
 import { choiceSx } from "../../skins/surfaceStyles";
 import { BLIND_SLATS, BLIND_VIEW, CONTROL_LINE_DESIGN, CTRL, controlFitsOneLine, controlScale } from "./control-style";
@@ -202,7 +202,7 @@ function Temperature(view: View) {
   const on = state.on !== false;
   const noTemperature = climate && state.mode === "fan";
   const bump = (d: -1 | 1) => {
-    if (state.target !== undefined) changeSoon({ target: Math.min(max, Math.max(min, state.target + d * step)) });
+    if (state.target !== undefined) changeSoon({ target: clampToStep(state.target + d * step, min, max, step) });
   };
   const stats = [
     state.heating !== undefined ? <Stat key="now" value={state.heating ? "Heating" : "Idle"} label="Right now" /> : null,
@@ -442,7 +442,7 @@ function LineMiddle({ cap, ctl }: View) {
     const max = features.max ?? 30;
     const step = features.step ?? (climate ? 1 : 0.5);
     const bump = (d: -1 | 1) => {
-      if (state.target !== undefined) changeSoon({ target: Math.min(max, Math.max(min, state.target + d * step)) });
+      if (state.target !== undefined) changeSoon({ target: clampToStep(state.target + d * step, min, max, step) });
     };
     const mode = climate && state.mode ? WORD[state.mode] ?? state.mode : "";
     return (
