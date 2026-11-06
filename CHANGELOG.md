@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.186
+
+- GPS Tracker: the Bell section is gone from the Settings tab. Bell choices stay in Settings → Notifications.
+
 ## V5.2.185
 
 - GPS is now called GPS Tracker, in the side menu and on the Extensions page.

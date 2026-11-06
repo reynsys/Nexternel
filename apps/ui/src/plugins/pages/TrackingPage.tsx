@@ -26,7 +26,7 @@ import type { MapLook } from "../../lib/map-panel-content";
 import { contentSurfaceSx } from "../../skins/surfaceStyles";
 import { useShellAuth } from "../../skins/useShellAuth";
 import { MapPanel } from "../blocks/MapPanel";
-import { PluginBellLink, PluginPageSettings } from "../PluginPageSettings";
+import { PluginPageSettings } from "../PluginPageSettings";
 import { TrackingMap, type MapCircle, type MapDot } from "./TrackingMap";
 
 type Tracker = { id: number; name: string; status: string };
@@ -549,16 +549,6 @@ function SettingsTab({
                 </Typography>
               ) : null}
             </Stack>
-          </Stack>
-        </Section>
-      ) : null}
-      {canChangeSettings ? (
-        <Section>
-          <Stack spacing={1.5}>
-            <Typography variant="subtitle2" sx={{ fontWeight: "fontWeightBold" }}>
-              Bell
-            </Typography>
-            <PluginBellLink />
           </Stack>
         </Section>
       ) : null}

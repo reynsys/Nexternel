@@ -1,5 +1,3 @@
-import { Link as RouterLink } from "react-router-dom";
-import { Button, Stack, Typography } from "@mui/material";
 import { api } from "../api";
 import { PluginSettingsForm } from "../pages/admin/settings/plugins/PluginSettingsForm";
 import { usePluginHost } from "./PluginHostContext";
@@ -21,19 +19,5 @@ export function PluginPageSettings({ pluginId, onSaved }: { pluginId: string; on
         onSaved?.();
       }}
     />
-  );
-}
-
-/** Which of an extension's messages reach the bell is chosen with everything else's, in one place. */
-export function PluginBellLink() {
-  return (
-    <Stack spacing={1} sx={{ alignItems: "flex-start" }}>
-      <Typography variant="body2" color="text.secondary">
-        The bell shows messages from all of Nexternel, so its choices are kept together on one page.
-      </Typography>
-      <Button variant="outlined" size="small" component={RouterLink} to="/admin/settings/notifications">
-        Choose what reaches the bell
-      </Button>
-    </Stack>
   );
 }
