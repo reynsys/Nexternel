@@ -1,7 +1,9 @@
+import { startPluginServices, stopPluginServices } from "./services.js";
 import { normalizePluginBell, type PluginBell } from "../notifications/service.js";
 import type {
   PluginGrants,
   PluginManifest,
+  PluginPageDef,
   PluginPanelDef,
   PluginPermissionRequests,
   PluginSettingField,
@@ -53,6 +55,8 @@ export type PluginRecord = {
   missingSettings: string[];
   /** Dashboard panels the plugin offers; type = plugin.<id>.<panel id>. */
   panels: (PluginPanelDef & { type: string })[];
+  /** Pages the plugin adds to the side menu. */
+  pages: PluginPageDef[];
   /** Which of its messages reach the bell: all, important (keep an eye on it) or none. */
   bell: PluginBell;
   installedAt: string;
@@ -138,6 +142,7 @@ function rowToRecord(row: DbRow): PluginRecord {
     settings,
     missingSettings: missingRequiredSettings(fields, row.settings),
     panels: (m.panels ?? []).map((p) => ({ ...p, type: pluginPanelType(m.id, p.id) })),
+    pages: m.pages ?? [],
     bell: normalizePluginBell(row.bell),
     installedAt: row.installed_at.toISOString(),
   };
@@ -210,6 +215,7 @@ async function installFromBytes(
     [manifest.id, source, `packages/${manifest.id}/${manifest.version}`, JSON.stringify(manifest), JSON.stringify(grants), sha256(data)]
   );
   await logPluginAction(manifest.id, existing ? "updated" : "installed", { version: manifest.version, source });
+  await startPluginServices(manifest).catch((err) => console.error("Could not start a plugin's service:", err));
   return { ok: true, plugin: rowToRecord(res.rows[0]!) };
 }
 
@@ -356,8 +362,10 @@ export function pluginSettingsForRuntime(manifest: PluginManifest, stored: Recor
 }
 
 export async function removePlugin(id: string): Promise<boolean> {
+  const manifest = (await getRow(id))?.manifest;
   const res = await getPool().query(`DELETE FROM installed_plugins WHERE id = $1`, [id]);
   if ((res.rowCount ?? 0) === 0) return false;
+  if (manifest) await stopPluginServices(manifest).catch((err) => console.error("Could not stop a plugin's service:", err));
   clearPluginEvents(id);
   logs.delete(id);
   await getPool().query(`DELETE FROM plugin_panel_content WHERE plugin_id = $1`, [id]);

@@ -235,11 +235,89 @@ services:
     depends_on:
       - api
 
+
+  # GPS tracking (optional): only runs where COMPOSE_PROFILES=gps is set in .env.
+  traccar-db:
+    image: postgres:16.15-alpine
+    container_name: nexternel-traccar-db
+    restart: unless-stopped
+    profiles: ["gps"]
+    environment:
+      POSTGRES_USER: traccar
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: traccar
+      TZ: ${TZ}
+    volumes:
+      - traccar_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U traccar -d traccar"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Traccar never deletes anything, so GPS history older than GPS_HISTORY_DAYS is removed once a day.
+  # Each tracker's latest position is kept: it is where the tracker is now.
+  traccar-cleanup:
+    image: postgres:16.15-alpine
+    container_name: nexternel-traccar-cleanup
+    restart: unless-stopped
+    profiles: ["gps"]
+    depends_on:
+      traccar-db:
+        condition: service_healthy
+    environment:
+      PGHOST: traccar-db
+      PGUSER: traccar
+      PGDATABASE: traccar
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      GPS_HISTORY_DAYS: ${GPS_HISTORY_DAYS:-31}
+    command:
+      - sh
+      - -c
+      - |
+        while true; do
+          sleep 300
+          psql -q -c "DELETE FROM tc_positions WHERE fixtime < now() - interval '$$GPS_HISTORY_DAYS days' AND id NOT IN (SELECT positionid FROM tc_devices WHERE positionid IS NOT NULL)" \
+                  -c "DELETE FROM tc_events WHERE eventtime < now() - interval '$$GPS_HISTORY_DAYS days'" \
+            || echo "GPS history clean-up did not run; trying again tomorrow"
+          sleep 86100
+        done
+
+  # Traccar receives what GPS trackers send and keeps their history. People use it through Nexternel,
+  # so its website is not opened to the network; the plugins space reaches it by name.
+  traccar:
+    image: traccar/traccar:6.17.0-alpine
+    container_name: nexternel-traccar
+    restart: unless-stopped
+    profiles: ["gps"]
+    depends_on:
+      traccar-db:
+        condition: service_healthy
+    environment:
+      CONFIG_USE_ENVIRONMENT_VARIABLES: "true"
+      DATABASE_DRIVER: org.postgresql.Driver
+      DATABASE_URL: jdbc:postgresql://traccar-db:5432/traccar
+      DATABASE_USER: traccar
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      # Work out journey details in full over the whole month of history (top speed needs it).
+      REPORT_FAST_THRESHOLD: "3000000"
+      TZ: ${TZ}
+    volumes:
+      - traccar_logs:/opt/traccar/logs
+    ports:
+      # SinoTrack and other H02 trackers.
+      - "5013:5013/tcp"
+    networks:
+      - default
+      - plugins
+
 networks:
   default:
   plugins:
 
 volumes:
+  traccar_db_data:
+  traccar_logs:
   postgres_data:
   influxdb_data:
   mosquitto_data:

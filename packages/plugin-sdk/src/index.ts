@@ -59,7 +59,7 @@ export interface PluginGrants {
 }
 
 /** Panel building blocks a plugin can offer; Nexternel draws them so they match every other panel. */
-export type PluginPanelBlock = "conversation" | "text";
+export type PluginPanelBlock = "conversation" | "text" | "map";
 
 /** A dashboard panel a plugin offers. Its panel type is plugin.<pluginId>.<id>. */
 export interface PluginPanelDef {
@@ -69,6 +69,16 @@ export interface PluginPanelDef {
   description?: string;
   /** Size when added, in grid squares. */
   defaultSize?: { w: number; h: number };
+}
+
+/** Whole pages a plugin can offer, drawn by Nexternel like its panels. */
+export type PluginPageBlock = "tracking";
+
+/** A page in the side menu, shown while the plugin is switched on. */
+export interface PluginPageDef {
+  id: string;
+  label: string;
+  block: PluginPageBlock;
 }
 
 export interface PluginManifest {
@@ -86,6 +96,10 @@ export interface PluginManifest {
   settings?: PluginSettingField[];
   /** Dashboard panels this plugin offers. */
   panels?: PluginPanelDef[];
+  /** Pages this plugin adds to the side menu. */
+  pages?: PluginPageDef[];
+  /** Optional parts of Nexternel the plugin needs running, such as "gps". */
+  services?: string[];
   contributes?: PluginContributions;
 }
 

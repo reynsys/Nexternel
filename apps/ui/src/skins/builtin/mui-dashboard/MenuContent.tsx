@@ -14,11 +14,11 @@ import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import {
   filterNav,
-  MAIN_NAV,
   navItemActive,
   SECONDARY_NAV,
   type NavItem,
 } from "../../nav";
+import { useMainNav } from "../../useMainNav";
 import type { RolePermissions } from "../../../lib/permissions";
 
 type Props = {
@@ -211,7 +211,8 @@ export function MenuContent({
   onNavigate,
 }: Props) {
   const { pathname } = useLocation();
-  const main = filterNav(MAIN_NAV, { signedIn, isAdmin, permissions, authLoading });
+  const mainNav = useMainNav();
+  const main = filterNav(mainNav, { signedIn, isAdmin, permissions, authLoading });
   const secondary = filterNav(SECONDARY_NAV, { signedIn, isAdmin, permissions, authLoading });
 
   return (

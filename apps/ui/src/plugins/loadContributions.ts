@@ -1,4 +1,4 @@
-import { createElement } from "react";
+import { createElement, lazy, Suspense } from "react";
 import { PANEL_GAUGE_TYPE } from "@nexternel/domain";
 import type { PluginInfo, PluginPanelInfo } from "../api";
 import { gaugePanelMeta, GaugeWidget } from "../widgets/gauge";
@@ -6,6 +6,9 @@ import { registerPanel } from "./registry";
 import { unregisterContributionPanel } from "../panels/registry";
 import { ConversationPanel } from "./blocks/ConversationPanel";
 import { TextPanel } from "./blocks/TextPanel";
+
+// The map library is only downloaded by people who have a map panel on screen.
+const MapPanel = lazy(() => import("./blocks/MapPanel").then((m) => ({ default: m.MapPanel })));
 
 /** Core bundled contribution panels — always available, not Plugins. */
 export function loadCoreContributions() {
@@ -30,14 +33,18 @@ function panelComponent(pluginId: string, panel: PluginPanelInfo) {
 /** A plugin panel is drawn by one of Nexternel's building blocks, fed by the plugin. */
 function makePanelComponent(pluginId: string, panel: PluginPanelInfo) {
   function PluginPanel({ widget }: { widget: { id: string } }) {
-    return panel.block === "conversation"
-      ? createElement(ConversationPanel, {
-          pluginId,
-          panelId: panel.id,
-          instanceId: widget.id,
-          placeholder: panel.description,
-        })
-      : createElement(TextPanel, { pluginId, panelId: panel.id, label: panel.label });
+    if (panel.block === "conversation") {
+      return createElement(ConversationPanel, {
+        pluginId,
+        panelId: panel.id,
+        instanceId: widget.id,
+        placeholder: panel.description,
+      });
+    }
+    if (panel.block === "map") {
+      return createElement(Suspense, { fallback: null }, createElement(MapPanel, { pluginId, panelId: panel.id }));
+    }
+    return createElement(TextPanel, { pluginId, panelId: panel.id, label: panel.label });
   }
   PluginPanel.displayName = `PluginPanel(${panel.type})`;
   return PluginPanel;

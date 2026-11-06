@@ -10,7 +10,8 @@ import {
 import { APP_VERSION } from "../../../version";
 import { NotificationBell } from "../../../components/NotificationBell";
 import { hasPermission } from "../../../lib/permissions";
-import { filterNav, MAIN_NAV, navItemActive, SECONDARY_NAV } from "../../nav";
+import { filterNav, navItemActive, SECONDARY_NAV } from "../../nav";
+import { useMainNav } from "../../useMainNav";
 import { useShellAuth } from "../../useShellAuth";
 import { MaintenanceBanner } from "../../../components/MaintenanceBanner";
 import { useSkin } from "../../SkinProvider";
@@ -23,7 +24,8 @@ export function ClassicLayout() {
   const { themePrefs } = useSkin();
   const { pathname } = useLocation();
   const hasGradient = isGradientActive(themePrefs);
-  const main = filterNav(MAIN_NAV, { signedIn, isAdmin, permissions, authLoading });
+  const mainNav = useMainNav();
+  const main = filterNav(mainNav, { signedIn, isAdmin, permissions, authLoading });
   const secondary = filterNav(SECONDARY_NAV, { signedIn, isAdmin, permissions, authLoading });
 
   return (

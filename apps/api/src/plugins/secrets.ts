@@ -12,6 +12,11 @@ function settingsKey(): Buffer {
   return Buffer.from(hkdfSync("sha256", config.jwtSecret(), "nexternel", "plugin-settings", 32));
 }
 
+/** A secret only this plugin gets, the same every time, for logins it keeps by itself. */
+export function pluginOwnSecret(pluginId: string): string {
+  return Buffer.from(hkdfSync("sha256", config.jwtSecret(), "nexternel", `plugin-own:${pluginId}`, 32)).toString("base64url");
+}
+
 export function encryptSecret(plain: string): string {
   const iv = randomBytes(12);
   const cipher = createCipheriv("aes-256-gcm", settingsKey(), iv);

@@ -208,6 +208,8 @@ export function PanelHost({
   onCapabilityState,
 }: PanelHostProps) {
   const contributionWidget = toRenderPanel(panel);
+  // Plugin panels register when the plugin list arrives; this hook redraws the panel when it does.
+  usePluginHostOptional();
   const resolved = resolvePanelRegistration(panel);
 
   if (!panelActivityIsActive(activity)) return null;

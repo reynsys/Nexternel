@@ -2,6 +2,14 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.182
+
+- New GPS tracking plugin: see your car or other tracker live on a map, on your dashboard and on a new GPS page. Installing the plugin sets everything up, with no address or login to enter.
+- GPS page: journeys for any day with a route and replay, reports for distance, driving time and top speed, areas that alert you when a tracker arrives or leaves, and alerts for speeding or moving during quiet hours.
+- GPS history is kept for one month and older history is deleted automatically.
+- Plugins can now offer map panels and pages of their own. Maps come from OpenStreetMap, so they need the internet.
+- Fixed: a plugin panel could say "Plugin unavailable" until the page was reloaded.
+
 ## V5.2.181
 
 - New control panels for heating, air conditioning, dimmable lights, colour lamps, blinds and fans. Every panel keeps all its content and shrinks or grows with the panel.

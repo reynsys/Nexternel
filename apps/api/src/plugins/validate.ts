@@ -2,11 +2,15 @@ import {
   PLUGIN_PERMISSION_KEYS,
   type PluginApiVersion,
   type PluginManifest,
+  type PluginPageDef,
   type PluginPanelDef,
   type PluginPermissionRequests,
   type PluginSettingField,
   type PluginSettingType,
 } from "@nexternel/plugin-sdk";
+
+/** Optional parts of Nexternel a plugin may ask for. */
+const PLUGIN_SERVICE_NAMES = ["gps"];
 
 export const SUPPORTED_PLUGIN_API_VERSIONS: readonly PluginApiVersion[] = [1];
 
@@ -78,7 +82,7 @@ function validateSettings(raw: unknown, errors: string[]): PluginSettingField[] 
   return fields;
 }
 
-const PANEL_BLOCKS = ["conversation", "text"] as const;
+const PANEL_BLOCKS = ["conversation", "text", "map"] as const;
 const PANEL_ID_RE = /^[a-z][a-z0-9-]{0,29}$/;
 
 function validatePanels(raw: unknown, errors: string[]): PluginPanelDef[] {
@@ -110,6 +114,31 @@ function validatePanels(raw: unknown, errors: string[]): PluginPanelDef[] {
       if (Number.isInteger(w) && Number.isInteger(h) && w >= 1 && w <= 12 && h >= 1 && h <= 12) panel.defaultSize = { w, h };
     }
     out.push(panel);
+  }
+  return out;
+}
+
+const PAGE_BLOCKS = ["tracking"] as const;
+
+function validatePages(raw: unknown, errors: string[]): PluginPageDef[] {
+  if (raw === undefined) return [];
+  if (!Array.isArray(raw) || raw.length > 3) {
+    errors.push("pages must be a list of at most 3");
+    return [];
+  }
+  const out: PluginPageDef[] = [];
+  for (const item of raw) {
+    if (!isRecord(item) || typeof item.id !== "string" || !PANEL_ID_RE.test(item.id)) {
+      errors.push("each page needs an id of lower-case letters, digits or -");
+      continue;
+    }
+    if (out.some((p) => p.id === item.id)) errors.push(`page "${item.id}" is listed twice`);
+    const label = text(item.label, 30);
+    if (!label) errors.push(`page "${item.id}" needs a label`);
+    if (!PAGE_BLOCKS.includes(item.block as (typeof PAGE_BLOCKS)[number])) {
+      errors.push(`page "${item.id}" block must be one of: ${PAGE_BLOCKS.join(", ")}`);
+    }
+    out.push({ id: item.id, label: label ?? item.id, block: item.block as PluginPageDef["block"] });
   }
   return out;
 }
@@ -174,6 +203,11 @@ export function validatePluginManifest(raw: unknown): ManifestValidationResult {
   const permissions = validatePermissions(raw.permissions, errors);
   const settings = validateSettings(raw.settings, errors);
   const panels = validatePanels(raw.panels, errors);
+  const pages = validatePages(raw.pages, errors);
+  const services = Array.isArray(raw.services) ? raw.services.filter((x): x is string => typeof x === "string") : [];
+  for (const name of services) {
+    if (!PLUGIN_SERVICE_NAMES.includes(name)) errors.push(`unknown service "${name}"`);
+  }
 
   let contributes: PluginManifest["contributes"];
   if (raw.contributes !== undefined) {
@@ -209,6 +243,8 @@ export function validatePluginManifest(raw: unknown): ManifestValidationResult {
     permissions,
     settings,
     panels,
+    pages,
+    services,
     contributes,
   };
   return { ok: true, manifest };

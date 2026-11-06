@@ -35,6 +35,7 @@ async function call(method, route, body) {
 
 const commandHandlers = [];
 const panelHandlers = [];
+const pageHandlers = [];
 
 /** Lets a plugin write its answer bit by bit; Nexternel shows it as it grows. */
 function panelAnswer(id) {
@@ -109,6 +110,20 @@ async function listen() {
             .catch((err) => answer.fail(err?.message ?? err));
           continue;
         }
+        if (ev.type === "page-call") {
+          const handler = pageHandlers.find((h) => h.page === ev.page);
+          const reply = (body) =>
+            call("POST", `/page-replies/${ev.id}`, body).catch((err) => console.error("Could not send reply:", err.message));
+          // Not awaited: a slow page must not hold up other messages (such as switch presses).
+          Promise.resolve()
+            .then(() => {
+              if (!handler) throw new Error("This plugin has no such page.");
+              return handler.fn({ action: ev.action, params: ev.params, admin: ev.admin });
+            })
+            .then((result) => reply({ result }))
+            .catch((err) => reply({ error: String(err?.message ?? err) }));
+          continue;
+        }
         if (ev.type !== "command") continue;
         const cmd = { device: ev.deviceKey, item: ev.itemKey, action: ev.action, values: ev.values };
         for (const handler of commandHandlers) {
@@ -135,6 +150,8 @@ const nx = Object.freeze({
   nexternelVersion: self.nexternelVersion,
   /** Values from the plugin's settings page (secrets included). */
   settings: Object.freeze({ ...self.settings }),
+  /** A secret of this plugin's own that stays the same, for logins it keeps by itself. */
+  secret: self.secret,
   /** What the person approved. */
   grants: Object.freeze({ ...self.grants }),
   /** A folder only this plugin can read and write. */
@@ -168,7 +185,17 @@ const nx = Object.freeze({
   onPanelRequest(panelId, handler) {
     panelHandlers.push({ panel: panelId, fn: handler });
   },
-  /** Replace what one of this plugin's text panels shows. */
+  /**
+   * Answer one of this plugin's pages: handler({ action, params, admin }) returns what to show.
+   * admin says whether the person may change things; throw an Error to show them a message.
+   */
+  onPageCall(pageId, handler) {
+    pageHandlers.push({ page: pageId, fn: handler });
+  },
+  /**
+   * Replace what one of this plugin's text or map panels shows. A map panel's body is JSON:
+   * { markers: [{ id, label, lat, lon, at, detail, heading }], trail: [[lat, lon], ...], note }.
+   */
   setPanelContent: (panelId, { title = "", body = "" }) => call("PUT", `/panels/${encodeURIComponent(panelId)}/content`, { title, body }),
 
   /** Current readings this plugin may see. */

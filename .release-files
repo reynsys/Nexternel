@@ -169,9 +169,11 @@ apps/api/src/plugins/events.ts
 apps/api/src/plugins/host-routes.ts
 apps/api/src/plugins/manifest.test.ts
 apps/api/src/plugins/packages.ts
+apps/api/src/plugins/pages.ts
 apps/api/src/plugins/panels.ts
 apps/api/src/plugins/secrets.test.ts
 apps/api/src/plugins/secrets.ts
+apps/api/src/plugins/services.ts
 apps/api/src/plugins/service.ts
 apps/api/src/plugins/validate.ts
 apps/api/src/routes/addons.ts
@@ -391,6 +393,8 @@ apps/ui/src/lib/look-choice.ts
 apps/ui/src/lib/look-font.test.ts
 apps/ui/src/lib/look-font.ts
 apps/ui/src/lib/look-roles-guard.test.ts
+apps/ui/src/lib/map-panel-content.test.ts
+apps/ui/src/lib/map-panel-content.ts
 apps/ui/src/lib/motion.test.ts
 apps/ui/src/lib/motion.ts
 apps/ui/src/lib/panel-appearance.ts
@@ -444,6 +448,8 @@ apps/ui/src/lib/status-light-show.ts
 apps/ui/src/lib/switch-labels-guard.test.ts
 apps/ui/src/lib/switch-styles.test.ts
 apps/ui/src/lib/switch-styles.ts
+apps/ui/src/lib/tracking-format.test.ts
+apps/ui/src/lib/tracking-format.ts
 apps/ui/src/lib/use-arrange-dashboards.ts
 apps/ui/src/lib/usePanelPoll.ts
 apps/ui/src/lib/user-display.ts
@@ -575,9 +581,14 @@ apps/ui/src/panels/use-resolved-panel.test.ts
 apps/ui/src/panels/useResolvedPanel.ts
 apps/ui/src/panels/WeatherPanel.tsx
 apps/ui/src/plugins/blocks/ConversationPanel.tsx
+apps/ui/src/plugins/blocks/map-base.ts
+apps/ui/src/plugins/blocks/MapPanel.tsx
 apps/ui/src/plugins/blocks/TextPanel.tsx
 apps/ui/src/plugins/loadContributions.ts
+apps/ui/src/plugins/pages/TrackingMap.tsx
+apps/ui/src/plugins/pages/TrackingPage.tsx
 apps/ui/src/plugins/PluginHostContext.tsx
+apps/ui/src/plugins/PluginPageHost.tsx
 apps/ui/src/plugins/PluginUnavailable.tsx
 apps/ui/src/plugins/registry.ts
 apps/ui/src/skins/activeSkin.ts
@@ -618,6 +629,7 @@ apps/ui/src/skins/ThemeOptionsFields.tsx
 apps/ui/src/skins/ThemeOptionsPanel.tsx
 apps/ui/src/skins/themePrefs.ts
 apps/ui/src/skins/types.ts
+apps/ui/src/skins/useMainNav.ts
 apps/ui/src/skins/useMetricAppearance.ts
 apps/ui/src/skins/useShellAuth.ts
 apps/ui/src/skins/useSurfaceStyles.ts

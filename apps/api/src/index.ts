@@ -48,6 +48,8 @@ import { ensureAddonSchema, startAddonChecks } from "./addons/service.js";
 import { ensurePluginSchema } from "./plugins/ensure-schema.js";
 import { pluginDoorwayRoutes } from "./plugins/doorway.js";
 import { pluginHostRoutes } from "./plugins/host-routes.js";
+import { pluginPageRoutes } from "./plugins/pages.js";
+import { ensurePluginServicesAtStart } from "./plugins/services.js";
 import { pluginPanelRoutes } from "./plugins/panels.js";
 import { ensureHostKey } from "./plugins/packages.js";
 import { notificationsRoutes } from "./notifications/routes.js";
@@ -136,6 +138,7 @@ await app.register(async (api) => {
   await api.register(pluginDoorwayRoutes);
   await api.register(pluginHostRoutes);
   await api.register(pluginPanelRoutes);
+  await api.register(pluginPageRoutes);
   await api.register(notificationsRoutes);
   await api.register(esphomeGateRoutes);
   await api.register(boardUpdateRoutes);
@@ -338,6 +341,7 @@ try {
   const { startOctopusPoller } = await import("./octopus/poll.js");
   startOctopusPoller();
   startUpdateChecks();
+  void ensurePluginServicesAtStart().catch((err) => app.log.error(err, "plugin services did not start"));
   startAddonChecks();
   startBackupScheduler(app.log);
   startSharedSettingsWatch();

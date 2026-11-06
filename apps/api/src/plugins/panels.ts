@@ -7,7 +7,8 @@ import { pushPluginEvent } from "./events.js";
 
 /**
  * Plugin panels on the dashboard. A "conversation" panel sends a question to its plugin and
- * shows the answer as the plugin writes it; a "text" panel shows what the plugin last wrote.
+ * shows the answer as the plugin writes it; a "text" panel shows what the plugin last wrote;
+ * a "map" panel draws the places the plugin last wrote (as JSON in the body).
  */
 type PanelRequest = {
   id: string;
@@ -88,7 +89,7 @@ export async function setPanelContent(
 ): Promise<string | null> {
   const panel = manifest.panels?.find((p) => p.id === panelId);
   if (!panel) return `This plugin has no panel "${panelId}"`;
-  if (panel.block !== "text") return `Panel "${panelId}" is not a text panel`;
+  if (panel.block === "conversation") return `Panel "${panelId}" answers questions and has no content to set`;
   await getPool().query(
     `INSERT INTO plugin_panel_content (plugin_id, panel_id, title, body, updated_at)
      VALUES ($1, $2, $3, $4, NOW())

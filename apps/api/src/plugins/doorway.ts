@@ -9,8 +9,9 @@ import { getLiveState } from "../telemetry/state-cache.js";
 import { APP_VERSION } from "../version.js";
 import { definePluginDevices, parseDeviceDefs, recordPluginReadings } from "./devices.js";
 import { waitForPluginEvents } from "./events.js";
+import { replyToPageCall } from "./pages.js";
 import { replyToPanelRequest, setPanelContent } from "./panels.js";
-import { pluginIdFromToken, tokenMatches } from "./secrets.js";
+import { pluginOwnSecret, pluginIdFromToken, tokenMatches } from "./secrets.js";
 import { logPluginAction, normalizeGrants, pluginSettingsForRuntime } from "./service.js";
 
 /**
@@ -78,6 +79,7 @@ export const pluginDoorwayRoutes: FastifyPluginAsync = async (app) => {
       version: p.manifest.version,
       nexternelVersion: APP_VERSION,
       grants: p.grants,
+      secret: pluginOwnSecret(p.id),
       settings: pluginSettingsForRuntime(p.manifest, p.settings),
     };
   });
@@ -204,6 +206,16 @@ export const pluginDoorwayRoutes: FastifyPluginAsync = async (app) => {
     async (request, reply) => {
       const ok = replyToPanelRequest(request.plugin!.id, request.params.id, request.body ?? {});
       if (!ok) return reply.code(404).send({ error: { code: "not_found", message: "Unknown, finished or expired question" } });
+      return { ok: true };
+    }
+  );
+
+  /** The reply to a question from one of this plugin's pages. */
+  app.post<{ Params: { id: string }; Body: { result?: unknown; error?: unknown } }>(
+    "/api/v1/plugin-api/page-replies/:id",
+    async (request, reply) => {
+      const ok = replyToPageCall(request.plugin!.id, request.params.id, request.body ?? {});
+      if (!ok) return reply.code(404).send({ error: { code: "not_found", message: "Unknown or expired call" } });
       return { ok: true };
     }
   );

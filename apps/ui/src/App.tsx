@@ -23,6 +23,7 @@ import {
   type PermissionKey,
 } from "./lib/permissions";
 import { PluginHostProvider } from "./plugins/PluginHostContext";
+import { PluginPageHost } from "./plugins/PluginPageHost";
 import { DisplayPage } from "./pages/DisplayPage";
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -198,6 +199,15 @@ export function App() {
               <RequirePermission permission="viewDashboards">
                 <DashboardPage />
               </RequirePermission>
+            </RequireAuth>
+          }
+        />
+
+        <Route
+          path="plugin-page/:pluginId/:pageId"
+          element={
+            <RequireAuth>
+              <PluginPageHost />
             </RequireAuth>
           }
         />

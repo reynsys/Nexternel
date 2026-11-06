@@ -11,7 +11,8 @@ import type { User } from "../../../api";
 import type { RolePermissions } from "../../../lib/permissions";
 import { barSurfaceSx } from "../../surfaceStyles";
 import { useGradientActive } from "../../useSurfaceStyles";
-import { filterNav, MAIN_NAV, navItemActive } from "../../nav";
+import { filterNav, navItemActive } from "../../nav";
+import { useMainNav } from "../../useMainNav";
 import { MenuContent } from "./MenuContent";
 
 /** Phone bottom bar: the first four main pages within thumb reach; everything else under More. */
@@ -31,9 +32,10 @@ export function BottomNav({ signedIn, isAdmin, permissions, authLoading = false 
   const [moreOpen, setMoreOpen] = useState(false);
   const navigate = useNavigate();
   const gradientActive = useGradientActive();
+  const mainNav = useMainNav();
   if (!signedIn) return null;
 
-  const items = filterNav(MAIN_NAV, { signedIn, isAdmin, permissions, authLoading });
+  const items = filterNav(mainNav, { signedIn, isAdmin, permissions, authLoading });
   const shown = items.slice(0, BOTTOM_NAV_SLOTS);
   const activeIndex = shown.findIndex((item) => navItemActive(item, pathname));
 

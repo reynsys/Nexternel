@@ -1407,6 +1407,12 @@ export const api = {
   pluginPanelAnswer: (requestId: string, since: number) =>
     apiFetch<PluginPanelAnswer>(`/api/v1/plugin-panels/requests/${encodeURIComponent(requestId)}?since=${since}`),
 
+  pluginPageCall: <T>(pluginId: string, pageId: string, action: string, params: Record<string, unknown> = {}) =>
+    apiFetch<{ result: T }>(`/api/v1/plugin-pages/${encodeURIComponent(pluginId)}/${encodeURIComponent(pageId)}/call`, {
+      method: "POST",
+      body: JSON.stringify({ action, params }),
+    }).then((r) => r.result),
+
   pluginPanelContent: (pluginId: string, panelId: string) =>
     apiFetch<{ content: { title: string; body: string; updatedAt: string } | null }>(
       `/api/v1/plugin-panels/${encodeURIComponent(pluginId)}/${encodeURIComponent(panelId)}/content`
@@ -1944,6 +1950,8 @@ export type PluginInfo = {
   missingSettings: string[];
   /** Dashboard panels the plugin offers; type is plugin.<id>.<panel id>. */
   panels: PluginPanelInfo[];
+  /** Pages the plugin adds to the side menu. */
+  pages?: PluginPageInfo[];
   /** Which of its messages reach the bell: all, important (keep an eye on it) or none. */
   bell?: "all" | "important" | "none";
   installedAt: string;
@@ -1953,10 +1961,12 @@ export type PluginPanelInfo = {
   id: string;
   type: string;
   label: string;
-  block: "conversation" | "text";
+  block: "conversation" | "text" | "map";
   description?: string;
   defaultSize?: { w: number; h: number };
 };
+
+export type PluginPageInfo = { id: string; label: string; block: "tracking" };
 
 export type PluginPanelAnswer = { text: string; done: boolean; error: string | null };
 

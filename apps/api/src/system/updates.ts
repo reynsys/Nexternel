@@ -18,7 +18,7 @@ const execFileAsync = promisify(execFile);
 const RELEASES_API = "https://api.github.com/repos/reynsys/Nexternel/releases/latest";
 /** Nexternel looks for a new version every night at this local time (and when asked). */
 export const NIGHTLY_CHECK = { hour: 1, minute: 15 };
-const UPDATER_IMAGE = "docker:27.5.1-cli";
+export const UPDATER_IMAGE = "docker:27.5.1-cli";
 const UPDATER_NAME = "nexternel-updater";
 
 function feedUrl(): string {
@@ -196,7 +196,7 @@ async function listUpdateFiles(): Promise<string[]> {
 }
 
 /** The Nexternel folder on the server, found from where this container's backups folder comes from. */
-async function hostFolder(): Promise<string> {
+export async function hostFolder(): Promise<string> {
   const { stdout } = await execFileAsync("docker", ["inspect", "nexternel-api", "--format", "{{json .Mounts}}"], { timeout: 20_000 });
   const mounts = JSON.parse(stdout) as { Source: string; Destination: string }[];
   const backups = mounts.find((m) => m.Destination === backupsDir());
