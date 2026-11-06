@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.184
+
+- GPS map: the zoom you choose now stays while the map follows the tracker.
+
 ## V5.2.183
 
 - GPS maps can be dark or light: choose under Settings → Extensions → GPS tracking → Map colours.

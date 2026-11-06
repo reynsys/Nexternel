@@ -71,7 +71,8 @@ export function MapPanel({ pluginId, panelId }: { pluginId: string; panelId: str
   const hasPlaces = content.markers.length > 0;
 
   const centre = (m: L.Map, markers: MapMarker[]) => {
-    if (markers.length === 1) m.setView([markers[0].lat, markers[0].lon], Math.max(m.getZoom() || 0, CLOSE_ZOOM));
+    // Close in the first time; after that the zoom stays where the person put it.
+    if (markers.length === 1) m.setView([markers[0].lat, markers[0].lon], shown.current.length ? m.getZoom() : CLOSE_ZOOM);
     else if (markers.length > 1) {
       m.fitBounds(L.latLngBounds(markers.map((p) => [p.lat, p.lon] as [number, number])), { padding: [40, 40] });
     }
