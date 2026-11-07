@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.195
+
+- Maps: the route a tracker took is drawn in its own bright magenta with an outline, instead of the Look's main colour, so it no longer disappears among orange or blue roads, on light and dark maps.
+
 ## V5.2.194
 
 - Phones and tablets: one menu. More in the bottom bar now shows who is signed in and has Sign out; the ☰ button at the top is gone while signed in (it stays when nobody is signed in, for Sign in).

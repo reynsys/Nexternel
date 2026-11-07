@@ -11,6 +11,9 @@ const CLOSE_ZOOM = 15;
 /** Plugins resend at least every 5 minutes, so anything older means the plugin has stopped. */
 const STOPPED_MS = 10 * 60_000;
 
+/** The route line on the map (see MapPanel). */
+const ROUTE_COLOUR = "#ff2bd6";
+
 function markerIcon(color: string, heading: number | null): L.DivIcon {
   const arrow =
     heading === null
@@ -67,7 +70,11 @@ export function MapPanel({ pluginId, panelId }: { pluginId: string; panelId: str
 
   const content = useMemo(() => parseMapContent(saved?.body ?? ""), [saved?.body]);
   const dark = mapIsDark(content.look, theme.palette.mode === "dark");
-  const color = theme.palette.primary.main;
+  // The route has its own colour, not the account's: map roads are orange, yellow and pink, water
+  // blue and parks green, so a route in an orange or blue Look disappears into them. Magenta is
+  // not used by the map; an outline (dark on a dark map, white on a light one) keeps it clear.
+  const color = ROUTE_COLOUR;
+  const casing = dark ? "#000000" : "#ffffff";
   const hasPlaces = content.markers.length > 0;
 
   const centre = (m: L.Map, markers: MapMarker[]) => {
@@ -105,14 +112,15 @@ export function MapPanel({ pluginId, panelId }: { pluginId: string; panelId: str
     if (!m || !group) return;
     group.clearLayers();
     if (content.trail.length > 1) {
-      L.polyline(content.trail, { color, weight: 3, opacity: 0.7 }).addTo(group);
+      L.polyline(content.trail, { color: casing, weight: 7, opacity: 0.6, lineJoin: "round", lineCap: "round" }).addTo(group);
+      L.polyline(content.trail, { color, weight: 4, opacity: 0.95, lineJoin: "round", lineCap: "round" }).addTo(group);
     }
     for (const place of content.markers) {
       L.marker([place.lat, place.lon], { icon: markerIcon(place.moving ? movingColor : parkedColor, place.heading), keyboard: false }).addTo(group);
     }
     if (following.current && !sameMarkers(shown.current, content.markers)) centre(m, content.markers);
     shown.current = content.markers;
-  }, [content, color, movingColor, parkedColor]);
+  }, [content, color, casing, movingColor, parkedColor]);
 
   if (!loaded) return null;
   if (!hasPlaces && !content.note) {
