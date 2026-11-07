@@ -13,6 +13,11 @@ export type EchartsBuildCtx = {
   kind: string;
   min: number;
   max: number;
+  /**
+   * The person chose this chart's range (Edit → From / To). When false, history charts fit their
+   * readings instead (min/max are then the kind's outer bounds, e.g. 0–100 % for humidity).
+   */
+  rangeSet?: boolean;
   accent?: string;
   /** From System → Appearance (accent + readable axis/detail colours). */
   palette?: EchartsThemePalette;

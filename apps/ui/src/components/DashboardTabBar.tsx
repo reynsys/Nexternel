@@ -1,6 +1,5 @@
 import { dashboardPath } from "../lib/dashboard-path";
 import { Fragment, useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Box, Button, Stack, Tooltip, Typography } from "@mui/material";
 import { LookDecor } from "../skins/looks/LookDecor";
@@ -15,7 +14,6 @@ import { useSkin } from "../skins/SkinProvider";
 import { useLiveChanges } from "../lib/live-changes";
 import { displayPath, useDisplayMode } from "../lib/display-mode";
 import type { ShownRoomNav } from "../lib/room-nav";
-import { TOP_BAR_TOOLS_ID } from "./DashboardSheet";
 import { useDashboardSwipe } from "../lib/use-dashboard-swipe";
 import { RoomMenu } from "./RoomMenu";
 import { ArrangeArrows, ArrangeGrip } from "./ArrangeControls";
@@ -151,44 +149,20 @@ export function DashboardTabBar({
       )}
     </Stack>
   );
-  // Phones: no room menu on the page. A sideways swipe moves to the next or previous dashboard;
-  // the cog sits in the top bar; Dashboards in the bottom bar opens the sheet (DashboardSheet).
-  // While editing, the dock comes back for adding and arranging dashboards.
+  // Phones: the dock in one row that slides under a finger (RoomMenu `scroll`); a sideways swipe on
+  // the dashboard also moves to the next or previous one, and Dashboards in the bottom bar opens them all.
   const phone = variant === "phone";
   useDashboardSwipe(phone && !editMode && !display.active && dashboards.length > 1, (dir) => {
     const at = dashboards.findIndex((d) => d.id === activeId);
     const next = dashboards[at + dir];
     if (at >= 0 && next) go(next);
   });
-  const [topBar, setTopBar] = useState<HTMLElement | null>(null);
-  useEffect(() => setTopBar(phone ? document.getElementById(TOP_BAR_TOOLS_ID) : null), [phone]);
-  if (phone && !editMode) {
-    const cog = canEdit ? (
-      <Tooltip title="Dashboard Options">
-        <Button
-          variant="outlined"
-          aria-label="Dashboard Options"
-          aria-pressed={false}
-          onClick={() => onDashboardOptions?.()}
-          sx={{ minWidth: 36, width: 36, height: 36, p: 0, flexShrink: 0 }}
-        >
-          <SettingsOutlinedIcon fontSize="small" />
-        </Button>
-      </Tooltip>
-    ) : null;
-    return (
-      <>
-        {topBar ? createPortal(<>{canAdd ? addButton(36) : null}{cog}</>, topBar) : null}
-        {addDialog}
-      </>
-    );
-  }
-
   if (variant !== "tabs") {
     return (
       <>
         <RoomMenu
           variant={phone ? "dock" : variant}
+          scroll={phone}
           dashboards={dashboards}
           activeId={activeId}
           loading={loading}

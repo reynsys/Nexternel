@@ -15,6 +15,7 @@ import {
   type CapabilityStatus,
 } from "../../lib/dashboard-data-runtime";
 import { useOptionalSkin } from "../../skins/SkinProvider";
+import { useDashboardTileChrome } from "../../lib/dashboard-tile-context";
 import { lightToShow } from "../../lib/status-light-show";
 import { useLook } from "../../skins/looks/useLook";
 import {
@@ -105,18 +106,24 @@ type Props = {
   placement: "inline" | "under-title" | "in-tile" | "frame" | "gap-bar";
   /** For "frame": whether the box is the whole panel (follows the Look's panel outline) or a box inside it. */
   edge?: "panel" | "box";
+  /**
+   * Show the empty "no limits set yet" light. Only while the dashboard is being edited (default: the
+   * panel's editing state), so in everyday use a reading without limits simply has no light.
+   */
+  showUnset?: boolean;
 };
 
 /**
- * One reading's status light. Draws nothing for readings without a light (no limits set,
- * switched off) and outside a dashboard.
+ * One reading's status light. Draws nothing for readings without a light (switched off, not a
+ * number) and outside a dashboard; a reading without limits shows its empty light only while editing.
  */
-export function StatusLight({ capabilityId, kind, unit, look, placement, edge = "box" }: Props) {
+export function StatusLight({ capabilityId, kind, unit, look, placement, edge = "box", showUnset }: Props) {
   const status = useCapabilityStatus(capabilityId);
   const value = useLiveValue(capabilityId ?? "");
+  const editing = useDashboardTileChrome().editing ?? false;
   const shown = capabilityId ? lightToShow(status, kind, value) : null;
   if (!shown || look.style === "off") return null;
-  if (shown === "unset") return <UnsetLight look={look} placement={placement} edge={edge} />;
+  if (shown === "unset") return (showUnset ?? editing) ? <UnsetLight look={look} placement={placement} edge={edge} /> : null;
   const state = shown;
   const colour = statusColour(state, look);
   const blinkSx =

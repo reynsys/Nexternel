@@ -8,9 +8,8 @@ import { leaveThen } from "../lib/leave-guard";
 import { useLiveChanges } from "../lib/live-changes";
 
 /**
- * Phones: the dashboards in one sheet, opened from Dashboards in the bottom bar.
- * It replaces the floating dock on phones, so the panels have the whole screen
- * (swiping left and right also moves between dashboards: lib/use-dashboard-swipe.ts).
+ * Phones: the dashboards in one sheet, opened from Dashboards in the bottom bar, beside the dock
+ * (which slides under a finger) and swiping on the dashboard (lib/use-dashboard-swipe.ts).
  */
 
 let open = false;
@@ -32,9 +31,6 @@ function useSheetOpen() {
     () => open
   );
 }
-
-/** Where the phone's top bar keeps a page's own buttons (the dashboard's cog). */
-export const TOP_BAR_TOOLS_ID = "nx-top-bar-tools";
 
 /** The id of the dashboard on screen, from the address (null when no dashboard is open). */
 export function openDashboardId(pathname: string, list: readonly DashboardSummary[]): string | null {

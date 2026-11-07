@@ -173,3 +173,17 @@ test("a longer reading comes down so it stays inside the opening", () => {
 test("demo page sizes are not copied", () => {
   assert.doesNotMatch(gaugesSource, /fontSize:\s*80|fontSize:\s*60|maxWidth:\s*160|SCORE|Pressure/);
 });
+
+test("history charts fit their readings unless a range was chosen", async () => {
+  const { fittedRange } = await import("./presets/charts.ts");
+  const points = [21.2, 22.8, 21.9].map((v, i) => ({ t: `2026-11-07T0${i}:00:00Z`, v }));
+  const base = ctx({ min: 0, max: 60, unit: "°C", points });
+  const fit = fittedRange(base);
+  assert.ok(fit.min >= 19 && fit.min <= 21, `min ${fit.min}`);
+  assert.ok(fit.max >= 23 && fit.max <= 25, `max ${fit.max}`);
+  assert.deepEqual(fittedRange({ ...base, rangeSet: true }), { min: 0, max: 60 });
+  // Humidity near the top stays at 100 % at most; bars start at zero.
+  const wet = ctx({ min: 0, max: 100, unit: "%", points: [95, 99].map((v) => ({ t: "x", v })) });
+  assert.equal(fittedRange(wet).max, 100);
+  assert.equal(fittedRange(base, true).min, 0);
+});

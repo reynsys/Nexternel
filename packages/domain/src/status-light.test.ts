@@ -37,3 +37,11 @@ test("panel light settings fall back to the defaults", () => {
     blink: false,
   });
 });
+
+test("power starts with limits in its own unit and never rings the bell by itself; energy has none", () => {
+  assert.deepEqual(defaultStatusSettings("power", "W"), { enabled: true, limits: { watchHigh: 1000, alertHigh: 3000 }, notifyAfterMin: null });
+  assert.deepEqual(defaultStatusSettings("power", "kW")?.limits, { watchHigh: 1, alertHigh: 3 });
+  assert.equal(defaultStatusSettings("power", "dBm"), null);
+  assert.equal(defaultStatusSettings("energy", "kWh"), null);
+  assert.equal(defaultStatusSettings("co2", "ppm")?.notifyAfterMin, 10);
+});

@@ -7,11 +7,15 @@ import BottomNavigationAction from "@mui/material/BottomNavigationAction";
 import Drawer from "@mui/material/Drawer";
 import Paper from "@mui/material/Paper";
 import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
+import Button from "@mui/material/Button";
+import Box from "@mui/material/Box";
+import { ButtonRow } from "../../../components/ButtonRow";
+import Typography from "@mui/material/Typography";
 import type { User } from "../../../api";
 import type { RolePermissions } from "../../../lib/permissions";
 import { barSurfaceSx } from "../../surfaceStyles";
 import { useGradientActive } from "../../useSurfaceStyles";
-import { filterNav, navItemActive } from "../../nav";
+import { filterNav, navItemActive, type NavItem } from "../../nav";
 import { useMainNav } from "../../useMainNav";
 import { MenuContent } from "./MenuContent";
 import { DashboardSheet, openDashboardSheet } from "../../../components/DashboardSheet";
@@ -31,6 +35,8 @@ type Props = {
 export function BottomNav({ signedIn, isAdmin, permissions, authLoading = false }: Props) {
   const { pathname } = useLocation();
   const [moreOpen, setMoreOpen] = useState(false);
+  // A group in the bar (Extensions) opens a sheet of its pages instead of jumping to the first one.
+  const [group, setGroup] = useState<NavItem | null>(null);
   const navigate = useNavigate();
   const gradientActive = useGradientActive();
   const mainNav = useMainNav();
@@ -89,6 +95,11 @@ export function BottomNav({ signedIn, isAdmin, permissions, authLoading = false 
                     openDashboardSheet();
                     return;
                   }
+                  if (item.children?.length) {
+                    e.preventDefault();
+                    setGroup(item);
+                    return;
+                  }
                   void guardLinkClick(e, () => navigate(item.to));
                 }}
               />
@@ -104,11 +115,48 @@ export function BottomNav({ signedIn, isAdmin, permissions, authLoading = false 
       <DashboardSheet />
       <Drawer
         anchor="bottom"
+        open={group !== null}
+        onClose={() => setGroup(null)}
+        PaperProps={{ sx: { borderTopLeftRadius: 16, borderTopRightRadius: 16, pb: "env(safe-area-inset-bottom)" } }}
+      >
+        {group ? (
+          <Box sx={{ p: 2 }}>
+            <Typography variant="subtitle1" component="h2" sx={{ mb: 1.5 }}>
+              {group.label}
+            </Typography>
+            <ButtonRow direction="column" alignItems="stretch" flexWrap="nowrap">
+            {group.children!.map((page) => {
+              const Icon = page.icon;
+              const here = pathname === page.to || pathname.startsWith(`${page.to}/`);
+              return (
+                <Button
+                  key={page.to}
+                  component={RouterLink}
+                  to={page.to}
+                  variant={here ? "contained" : "outlined"}
+                  startIcon={<Icon />}
+                  aria-current={here ? "page" : undefined}
+                  onClick={(e: MouseEvent) => {
+                    if (!guardLinkClick(e, () => (navigate(page.to), setGroup(null)))) setGroup(null);
+                  }}
+                  sx={{ justifyContent: "flex-start", py: 1.5, textTransform: "none" }}
+                >
+                  {page.label}
+                </Button>
+              );
+            })}
+            </ButtonRow>
+          </Box>
+        ) : null}
+      </Drawer>
+      <Drawer
+        anchor="bottom"
         open={moreOpen}
         onClose={() => setMoreOpen(false)}
         PaperProps={{ sx: { borderTopLeftRadius: 16, borderTopRightRadius: 16, pb: "env(safe-area-inset-bottom)" } }}
       >
         <MenuContent
+          unfold
           signedIn={signedIn}
           isAdmin={isAdmin}
           permissions={permissions}

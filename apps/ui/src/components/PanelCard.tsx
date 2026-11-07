@@ -230,6 +230,7 @@ export function PanelCard({
         placement={placement}
         // The title light's glowing border goes round the whole panel; the reading's round its tile.
         edge={edge}
+        showUnset={editMode}
       />
     ) : null;
   return (
@@ -311,6 +312,7 @@ export function PanelCard({
               itemDisplay: readPanelItemDisplay(runtimeConfigToPanelRecord(w.config)),
               statusLook,
               switchStyle,
+              editing: editMode,
             }}
           >
             <WidgetErrorBoundary widgetId={w.id} widgetType={w.type} resetKey={`${w.type}:${JSON.stringify(w.config ?? {})}`}>

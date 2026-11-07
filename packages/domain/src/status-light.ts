@@ -34,13 +34,46 @@ export const DEFAULT_STATUS_LIMITS: Record<string, StatusLimits> = {
   pm25: { watchHigh: 12, alertHigh: 35 },
   pm10: { watchHigh: 45, alertHigh: 100 },
   battery: { alertLow: 15, watchLow: 30 },
+  // A home's power use in watts: keep an eye on it above 1 kW, act now above 3 kW.
+  power: { watchHigh: 1000, alertHigh: 3000 },
 };
 
-/** Settings a reading starts with before anyone changes them (null = this kind has no light). */
-export function defaultStatusSettings(kind: string): StatusLightSettings | null {
+/**
+ * Power can be measured in W or kW: its starting limits follow the reading's own unit. (Energy has
+ * no starting limits: one reading counts today's use, another the meter's total since it was fitted.)
+ */
+const UNIT_FACTOR: Record<string, Record<string, number>> = {
+  power: { W: 1, kW: 0.001 },
+};
+
+/** Kinds whose starting limits never ring the bell by themselves (everyday ups and downs). */
+const QUIET_KINDS = new Set(["power"]);
+
+/** Starting limits for a reading of this kind and unit, or null when it has none. */
+export function defaultStatusLimits(kind: string, unit?: string | null): StatusLimits | null {
   const limits = DEFAULT_STATUS_LIMITS[kind];
   if (!limits) return null;
-  return { enabled: true, limits: { ...limits }, notifyAfterMin: DEFAULT_NOTIFY_AFTER_MIN };
+  const factors = UNIT_FACTOR[kind];
+  if (!factors) return { ...limits };
+  const factor = factors[(unit ?? "").trim()];
+  if (factor === undefined) return null;
+  const scaled: StatusLimits = {};
+  for (const [k, v] of Object.entries(limits) as [keyof StatusLimits, number | null | undefined][]) {
+    scaled[k] = typeof v === "number" ? Number((v * factor).toPrecision(6)) : v;
+  }
+  return scaled;
+}
+
+/** When a reading of this kind first rings the bell at "act now" (null = never, until someone chooses). */
+export function defaultNotifyAfterMin(kind: string): number | null {
+  return QUIET_KINDS.has(kind) ? null : DEFAULT_NOTIFY_AFTER_MIN;
+}
+
+/** Settings a reading starts with before anyone changes them (null = this kind has no light). */
+export function defaultStatusSettings(kind: string, unit?: string | null): StatusLightSettings | null {
+  const limits = defaultStatusLimits(kind, unit);
+  if (!limits) return null;
+  return { enabled: true, limits, notifyAfterMin: defaultNotifyAfterMin(kind) };
 }
 
 const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);

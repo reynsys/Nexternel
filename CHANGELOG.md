@@ -2,6 +2,13 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.192
+
+- Phones: the dock is back, in one row you slide left and right with a finger; the open dashboard sits in the middle and Dashboard Options stays at the end.
+- Phones: Extensions in the bottom bar opens a list of its pages instead of jumping to the first one. In More and the ☰ menu, Settings and Extensions open their list of pages.
+- Status lights: power readings start with limits (keep an eye on it above 1 kW, act now above 3 kW; no bell until you choose). A reading without limits shows no light, and its empty "set limits" light appears only while editing the dashboard.
+- History charts fit their readings, so a room going from 21 to 23 °C shows as a real rise. A range you set yourself is kept; bars still start at zero.
+
 ## V5.2.191
 
 - Gauges: the numbers round the dial are tidy, evenly spaced steps close to the arc, in kW once watts reach a thousand (0, 1, 2 … 5). Small gauges show fewer numbers but never skip unevenly. History charts say 1kW, 2kW instead of 1000W.

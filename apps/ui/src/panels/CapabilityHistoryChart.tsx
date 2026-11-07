@@ -86,6 +86,7 @@ function CapabilityHistoryChartCanvas({
       kind: capability.kind,
       min,
       max,
+      rangeSet: chartMin !== undefined || chartMax !== undefined,
       palette: chartPalette,
       points,
       range,

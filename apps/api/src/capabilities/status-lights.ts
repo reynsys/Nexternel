@@ -165,7 +165,7 @@ export class StatusEngine {
     const next = new Map<string, Entry>();
     for (const c of caps) {
       const own = custom.get(c.id);
-      const settings = own ?? defaultStatusSettings(c.kind);
+      const settings = own ?? defaultStatusSettings(c.kind, c.unit);
       const prev = this.entries.get(c.id);
       next.set(c.id, {
         name: c.name,

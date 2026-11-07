@@ -28,6 +28,11 @@ type Props = {
   authLoading?: boolean;
   collapsed?: boolean;
   onNavigate?: () => void;
+  /**
+   * A menu in a sheet or drawer (phones): a group's button only opens or closes its pages,
+   * so the person sees them and picks one. (The side menu goes to the group's first page.)
+   */
+  unfold?: boolean;
 };
 
 /** True when `pathname` is one of the group's own pages. */
@@ -113,11 +118,13 @@ function NavList({
   pathname,
   collapsed,
   onNavigate,
+  unfold,
 }: {
   items: NavItem[];
   pathname: string;
   collapsed?: boolean;
   onNavigate?: () => void;
+  unfold?: boolean;
 }) {
   // A group is open while one of its pages is open. Its entry goes to its first page from elsewhere,
   // and opens or closes the group while inside it (until the next page change).
@@ -175,7 +182,7 @@ function NavList({
                 open,
                 listId,
                 onClick: () => {
-                  if (active) setToggled((t) => ({ ...t, [item.to]: !open }));
+                  if (active || unfold) setToggled((t) => ({ ...t, [item.to]: !open }));
                   else
                     leaveThen(() => {
                       navigate(item.to);
@@ -209,6 +216,7 @@ export function MenuContent({
   authLoading = false,
   collapsed = false,
   onNavigate,
+  unfold,
 }: Props) {
   const { pathname } = useLocation();
   const mainNav = useMainNav();
@@ -222,12 +230,14 @@ export function MenuContent({
         pathname={pathname}
         collapsed={collapsed}
         onNavigate={onNavigate}
+        unfold={unfold}
       />
       <NavList
         items={secondary}
         pathname={pathname}
         collapsed={collapsed}
         onNavigate={onNavigate}
+        unfold={unfold}
       />
     </Stack>
   );

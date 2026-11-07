@@ -15,6 +15,7 @@ function setup() {
     [
       { id: "temp", kind: "temperature", name: "Temperature", area: "Living Room", unit: "°C" },
       { id: "power", kind: "power", name: "Power", area: null, unit: "W" },
+      { id: "energy", kind: "energy", name: "Meter total", area: null, unit: "kWh" },
     ],
     new Map()
   );
@@ -55,12 +56,19 @@ test("no recent reading turns grey at once", () => {
 
 test("readings without limits have no light", () => {
   const { engine } = setup();
-  engine.update({ capabilityId: "power", value: 900, quality: "good" });
-  assert.equal(engine.get("power")?.state, null);
+  engine.update({ capabilityId: "energy", value: 15230, quality: "good" });
+  assert.equal(engine.get("energy")?.state, null);
   assert.deepEqual(
     engine.all().map((s) => s.capabilityId),
-    ["temp"]
+    ["temp", "power"]
   );
+});
+
+test("power starts with limits in watts, and its light never rings the bell by itself", () => {
+  const { engine } = setup();
+  engine.update({ capabilityId: "power", value: 900, quality: "good" });
+  assert.equal(engine.get("power")?.state, "ok");
+  assert.equal(engine.get("power")?.settings?.notifyAfterMin, null);
 });
 
 test("a reading that stays at act now rings the bell once, then says when it is back to normal", () => {

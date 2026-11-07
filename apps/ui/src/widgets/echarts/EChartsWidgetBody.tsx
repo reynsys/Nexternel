@@ -101,6 +101,7 @@ export function EChartsWidgetBody({
       kind: cap?.kind ?? "",
       min,
       max,
+      rangeSet: config.min !== undefined || config.max !== undefined,
       accent: config.accent,
       palette: chartPalette,
       points,
@@ -109,7 +110,7 @@ export function EChartsWidgetBody({
       tileHeight: hostSize.h,
       textScale,
     }),
-    [cap, chartName, min, max, config.accent, chartPalette, points, range, live, hostSize.w, hostSize.h, textScale]
+    [cap, chartName, min, max, config.min, config.max, config.accent, chartPalette, points, range, live, hostSize.w, hostSize.h, textScale]
   );
 
   const option = useMemo(() => {

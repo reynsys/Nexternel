@@ -2,8 +2,8 @@
  * Where the room (dashboard) menu sits, per person (Settings → Appearance → Room menu):
  * dock = a floating island at the bottom (default), tabs = a row above the dashboard,
  * rail = the dock standing up on the right. (A Rooms panel can also be added to any dashboard.)
- * Phones (narrow screens) have no room menu on the page: Dashboards in the bottom bar opens a sheet of
- * them, a sideways swipe moves between them, and the cog sits in the top bar (DashboardSheet).
+ * Phones (narrow screens) show the dock in one row that slides under a finger; a sideways swipe on the
+ * dashboard and Dashboards in the bottom bar (DashboardSheet) also move between dashboards.
  */
 export type RoomNav = "dock" | "tabs" | "rail";
 export const ROOM_NAVS: { value: RoomNav; label: string; description: string }[] = [

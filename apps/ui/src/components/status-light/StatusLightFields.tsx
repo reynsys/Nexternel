@@ -2,7 +2,8 @@ import { useEffect, useState, type ChangeEvent } from "react";
 import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, FormControlLabel, InputAdornment, InputLabel, MenuItem, Paper, Select, Stack, Switch, TextField, Typography } from "@mui/material";
 import {
   DEFAULT_NOTIFY_AFTER_MIN,
-  DEFAULT_STATUS_LIMITS,
+  defaultNotifyAfterMin,
+  defaultStatusLimits,
   type PanelStatusLight,
   type StatusLightSettings,
   type StatusLimits,
@@ -250,8 +251,8 @@ export function StatusLimitsEditor({
   const [status, setStatus] = useState<CapabilityStatus | null>(live);
   const start: StatusLightSettings = status?.settings ?? {
     enabled: true,
-    limits: { ...(DEFAULT_STATUS_LIMITS[reading.kind] ?? {}) },
-    notifyAfterMin: DEFAULT_NOTIFY_AFTER_MIN,
+    limits: { ...(defaultStatusLimits(reading.kind, reading.unit) ?? {}) },
+    notifyAfterMin: defaultNotifyAfterMin(reading.kind),
   };
   const [enabled, setEnabled] = useState(start.enabled || !status?.settings);
   const [text, setText] = useState<Record<Field, string>>({

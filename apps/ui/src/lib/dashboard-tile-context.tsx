@@ -29,6 +29,8 @@ export type DashboardTileChrome = {
   statusLook?: StatusLook | null;
   /** How this panel draws its switches (absent = the classic toggle). */
   switchStyle?: SwitchStyleId;
+  /** The dashboard is being edited: readings without limits show their empty "set limits" light. */
+  editing?: boolean;
 };
 
 const defaultChrome: DashboardTileChrome = {

@@ -1,7 +1,7 @@
 import type { EchartsBuildCtx, EchartsPreset } from "../types";
 import type { HistoryRange } from "../../../api";
 import { chartFont } from "../types";
-import { scaleUnit } from "../../../lib/number-scale";
+import { scaleUnit, tidySteps } from "../../../lib/number-scale";
 
 function timeSeries(ctx: EchartsBuildCtx): [string, number][] {
   return ctx.points.map((p) => [p.t, p.v]);
@@ -70,14 +70,44 @@ function timeXAxisFor(ctx: EchartsBuildCtx): Record<string, unknown> {
  * Y-axis honours Edit Chart Min/Max (via ctx from resolveMinMax).
  * Without this, `scale: true` auto-zooms to data (e.g. 30–38) and ignores 0–100.
  */
+/**
+ * The value range a history chart shows. A range the person chose is kept. Otherwise the chart fits
+ * its readings with a little room above and below, on tidy numbers, so a room going from 21 to 23 °C
+ * shows as a real rise instead of a flat line on 0–60 °C. It stays inside the kind's bounds
+ * (no humidity above 100 % or below 0). Bars always start at zero, so their heights compare.
+ */
+export function fittedRange(ctx: EchartsBuildCtx, fromZero = false): { min: number; max: number } {
+  const values = ctx.points.map((p) => p.v).filter((v) => typeof v === "number" && Number.isFinite(v));
+  if (ctx.rangeSet || values.length === 0) return { min: ctx.min, max: ctx.max };
+  let lo = Math.min(...values);
+  let hi = Math.max(...values);
+  if (fromZero) {
+    lo = Math.min(0, lo);
+    hi = Math.max(0, hi);
+  }
+  const span = hi - lo || Math.max(Math.abs(hi) * 0.1, 1);
+  const pad = span * 0.15;
+  const from = fromZero && lo === 0 ? 0 : lo - pad;
+  const to = hi + pad;
+  const step = tidySteps(to - from).find((s) => (to - from) / s <= 5) ?? to - from;
+  let min = Math.floor(from / step) * step;
+  let max = Math.ceil(to / step) * step;
+  // Never past the kind's own bounds when the readings are inside them.
+  if (Math.min(...values) >= ctx.min && min < ctx.min) min = ctx.min;
+  if (Math.max(...values) <= ctx.max && max > ctx.max) max = ctx.max;
+  if (min >= max) max = min + step;
+  return { min: Number(min.toPrecision(8)), max: Number(max.toPrecision(8)) };
+}
+
 function valueYAxis(
   ctx: EchartsBuildCtx,
-  opts?: { flip?: boolean }
+  opts?: { flip?: boolean; fromZero?: boolean }
 ): Record<string, unknown> {
+  const range = fittedRange(ctx, opts?.fromZero);
   const base: Record<string, unknown> = {
     type: "value",
-    min: ctx.min,
-    max: ctx.max,
+    min: range.min,
+    max: range.max,
     scale: false,
     axisLabel: { fontSize: chartFont(ctx, 10), formatter: yFmt(ctx), color: ctx.palette?.textMuted },
   };
@@ -87,11 +117,12 @@ function valueYAxis(
   return base;
 }
 
-function valueXAxis(ctx: EchartsBuildCtx): Record<string, unknown> {
+function valueXAxis(ctx: EchartsBuildCtx, opts?: { fromZero?: boolean }): Record<string, unknown> {
+  const range = fittedRange(ctx, opts?.fromZero);
   return {
     type: "value",
-    min: ctx.min,
-    max: ctx.max,
+    min: range.min,
+    max: range.max,
     scale: false,
     axisLabel: { fontSize: chartFont(ctx, 10), formatter: yFmt(ctx), color: ctx.palette?.textMuted },
   };
@@ -420,7 +451,7 @@ export const CHART_PRESETS: EchartsPreset[] = [
       grid: historyGrid,
       tooltip: { trigger: "axis" },
       xAxis: timeXAxisFor(ctx),
-      yAxis: valueYAxis(ctx),
+      yAxis: valueYAxis(ctx, { fromZero: true }),
       series: [
         {
           name: ctx.title,
@@ -445,7 +476,7 @@ export const CHART_PRESETS: EchartsPreset[] = [
       grid: historyGrid,
       tooltip: { trigger: "axis" },
       xAxis: timeXAxisFor(ctx),
-      yAxis: valueYAxis(ctx),
+      yAxis: valueYAxis(ctx, { fromZero: true }),
       series: [
         {
           name: ctx.title,
@@ -478,7 +509,7 @@ export const CHART_PRESETS: EchartsPreset[] = [
           ),
           axisLabel: { fontSize: chartFont(ctx, 9) },
         },
-        xAxis: valueXAxis(ctx),
+        xAxis: valueXAxis(ctx, { fromZero: true }),
         series: [
           {
             type: "bar",
@@ -518,7 +549,7 @@ export const CHART_PRESETS: EchartsPreset[] = [
           ),
           axisLabel: { fontSize: chartFont(ctx, 9), rotate: 30 },
         },
-        yAxis: valueYAxis(ctx),
+        yAxis: valueYAxis(ctx, { fromZero: true }),
         series: [
           {
             name: ctx.title,
