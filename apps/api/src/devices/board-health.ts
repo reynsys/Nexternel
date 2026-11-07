@@ -49,11 +49,30 @@ const LOG_TOPIC = /^(.+)\/debug$/;
 const LOG_LINE = /^\[([WE])\]\[([^\]]+)\]:\s*(.+)$/;
 /** The same warning from the same board is written once every 10 minutes at most. */
 const lastWarning = new Map<string, number>();
-const fingerprints = new Map<string, string>();
+/**
+ * The software fingerprint each board last said, and when it last said it. A board with the shared
+ * settings repeats it in every health report (each minute) and on its own every 15 minutes, so it only
+ * counts while the board keeps saying it. A kept (retained) copy is what the board said at some time
+ * in the past: a board given other software (installed by USB, or a file without the shared settings)
+ * never replaces it, so on its own it must not keep counting as "runs this software".
+ */
+const fingerprints = new Map<string, { value: string; at: number }>();
+/** How long a fingerprint counts without the board repeating it (15-minute repeat, with room to spare). */
+export const FINGERPRINT_FRESH_MS = 20 * 60_000;
 
-/** Which software a board says it runs (8 hex characters), or null when it does not say (older software). */
-export function boardFingerprint(prefix: string | null): string | null {
-  return (prefix && fingerprints.get(prefix)) || null;
+function noteFingerprint(prefix: string, value: string, now = Date.now()) {
+  fingerprints.set(prefix, { value: value.toLowerCase(), at: now });
+}
+
+/**
+ * Which software a board says it runs (8 hex characters), or null when it does not say: older
+ * software, other software, or it has not repeated it lately (a kept copy counts for the same time
+ * after it arrives, so a restart of Nexternel does not make every board "not known" for a moment).
+ */
+export function boardFingerprint(prefix: string | null, now = Date.now()): string | null {
+  const f = prefix ? fingerprints.get(prefix) : undefined;
+  if (!f) return null;
+  return now - f.at <= FINGERPRINT_FRESH_MS ? f.value : null;
 }
 
 /** How good a Wi-Fi signal is, in words. */
@@ -184,9 +203,10 @@ export function applyBoardHealthTopic(topic: string, payload: string, retained: 
   if (f) {
     const prefix = prefixOf(topic);
     if (!prefix || prefix !== f[1]) return false;
-    // Kept (retained) is fine here: it is what the board said last, and only changes with new software.
+    // A kept (retained) copy arrives when Nexternel connects; it counts until the board should have
+    // repeated it (see FINGERPRINT_FRESH_MS).
     const value = payload.trim().toLowerCase();
-    if (/^[0-9a-f]{8}$/.test(value)) fingerprints.set(prefix, value);
+    if (/^[0-9a-f]{8}$/.test(value)) noteFingerprint(prefix, value);
     // Emptied: this board no longer reports (its own file left the shared settings), so it may stay quiet.
     else if (!value) fingerprints.delete(prefix);
     return true;
@@ -227,7 +247,7 @@ export function applyBoardHealthTopic(topic: string, payload: string, retained: 
       h.wifiDbm = Math.round(report.rssi);
       h.wifiAt = report.at;
     }
-    if (typeof j.fp === "string" && /^[0-9a-f]{8}$/i.test(j.fp)) fingerprints.set(prefix, j.fp.toLowerCase());
+    if (typeof j.fp === "string" && /^[0-9a-f]{8}$/i.test(j.fp)) noteFingerprint(prefix, j.fp, now);
     noteUptime(prefix, h, report.uptimeS, now, report.resetReason);
     h.report = report;
     health.set(prefix, h);

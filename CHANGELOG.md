@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.193
+
+- Tablets held upright and screens just too narrow for the whole dashboard: panels keep about the size they have on a laptop, instead of each one filling the width. A screen a little narrower loses two squares across, not half of them. Phones are unchanged.
+- Boards: a board given other software (for example installed with a USB cable) no longer keeps showing as up to date because of its last message from before. A board counts as up to date only while it keeps saying which software it runs (every minute), so Update boards no longer skips it.
+
 ## V5.2.192
 
 - Phones: the dock is back, in one row you slide left and right with a finger; the open dashboard sits in the middle and Dashboard Options stays at the end.

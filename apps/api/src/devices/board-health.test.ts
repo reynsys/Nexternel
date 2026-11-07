@@ -10,6 +10,19 @@ test("a board's software fingerprint is read from what the boards send (also kep
   assert.equal(boardFingerprint("nexternel/kids-room"), "0a0b0c0d");
 });
 
+test("a fingerprint only counts while the board keeps repeating it (other software leaves an old kept copy)", async () => {
+  const { FINGERPRINT_FRESH_MS } = await import("./board-health.js");
+  const prefixOf = (t: string) => (t.startsWith("nexternel/garden/") ? "nexternel/garden" : null);
+  // Kept copy from before the board got other software: counts at first, then no longer.
+  applyBoardHealthTopic("nexternel/garden/sensor/software_fingerprint/state", "c90f6c7f", true, prefixOf);
+  const now = Date.now();
+  assert.equal(boardFingerprint("nexternel/garden", now), "c90f6c7f");
+  assert.equal(boardFingerprint("nexternel/garden", now + FINGERPRINT_FRESH_MS + 1000), null);
+  // A board that repeats it (health report each minute) keeps counting.
+  applyBoardHealthTopic("nexternel/garden/health", JSON.stringify({ up: 60, fp: "C90F6C7F" }), false, prefixOf);
+  assert.equal(boardFingerprint("nexternel/garden"), "c90f6c7f");
+});
+
 test("the health report: alive, Wi-Fi, drops, memory, why it last restarted", async () => {
   const { boardHealth, resetWords } = await import("./board-health.js");
   const prefixOf = (t: string) => (t.startsWith("nexternel/hallway/") ? "nexternel/hallway" : null);

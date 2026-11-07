@@ -259,7 +259,8 @@ export const DESIGN_MIN_CELL_PX = 56;
  * Grid geometry for a section `widthPx` wide, `design` steps across; `cols` comes back in steps.
  * Wide enough for its squares at {@link DESIGN_MIN_CELL_PX}: the arrangement exactly
  * as made, squares grown up to {@link FLOW_CELL_MAX_PX}, left-aligned.
- * Narrower: fewer squares at a readable size, panels flowed in order, full width.
+ * Narrower: fewer squares, each still at least that size (an even number, at least 4), panels flowed
+ * in order, full width.
  * `rowHeight` is one square (heights are counted in squares).
  */
 export function flowGridForWidth(
@@ -279,7 +280,10 @@ function flowGridForWidthOnly(widthPx: number, design: number): { cols: number; 
   const k = REFERENCE_SQUARES / squares;
   const designCell = (widthPx + FLOW_CELL_GAP_PX) / squares - FLOW_CELL_GAP_PX;
   if (designCell < DESIGN_MIN_CELL_PX * k) {
-    const fit = Math.floor((widthPx + FLOW_CELL_GAP_PX) / (FLOW_CELL_TARGET_PX * k + FLOW_CELL_GAP_PX));
+    // As many squares as fit at the same readable size the arrangement itself needs, so a screen
+    // just too narrow for it loses a square or two, not half of them (an upright tablet used to get
+    // 4 squares of about 190 px: every panel the full width and huge).
+    const fit = Math.floor((widthPx + FLOW_CELL_GAP_PX) / (DESIGN_MIN_CELL_PX * k + FLOW_CELL_GAP_PX));
     const across = Math.min(Math.max(FLOW_MIN_COLS, fit - (fit % 2)), squares - 2);
     return { cols: across * STEPS, gridWidth: widthPx, rowHeight: widthPx / across };
   }

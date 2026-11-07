@@ -131,7 +131,7 @@ test("grid geometry: laptops keep their layout exactly, wide screens grow square
   const qhd = flowGridForWidth(2230, D);
   assert.equal(qhd.cols, sq(12));
   assert.equal(qhd.gridWidth, 12 * (128 + 16) - 16); // capped at 128 px squares, 16 px gaps
-  assert.equal(flowGridForWidth(847, D).cols, sq(6)); // just under (tablet landscape): flows
+  assert.equal(flowGridForWidth(847, D).cols, sq(10)); // just under (tablet landscape): flows, two squares fewer
   assert.deepEqual([flowGridForWidth(316, D).cols, flowGridForWidth(316, D).gridWidth], [sq(4), 316]); // phone
 });
 
@@ -163,6 +163,16 @@ test("a dashboard 5 across is 60 steps: one step is a sixth of a square, the squ
   assert.equal(g.cols, 60);
   assert.equal(g.rowHeight, 1278 / 10);
   assert.equal(flowGridForWidth(316).cols, sq(4)); // a phone still flows 4 squares across
+});
+
+test("an upright tablet keeps squares about the size of a laptop's, not one huge panel per row", () => {
+  const g = flowGridForWidth(752); // 800 wide tablet, inside the dashboard frame
+  assert.equal(g.cols, sq(8));
+  assert.ok(g.rowHeight < 100, `square ${g.rowHeight}`);
+  // A screen just too narrow for the arrangement loses two squares, not half of them.
+  assert.equal(flowGridForWidth(800).cols, sq(8));
+  // Phones are unchanged: 4 squares across.
+  assert.equal(flowGridForWidth(380).cols, sq(4));
 });
 
 test("panels per row: 60 steps split into 2, 3, 4, 5 or 6; 48 steps (4 across) into 2, 3, 4 or 6", () => {
