@@ -23,6 +23,21 @@ export function ProfileSection() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [elsewhereBusy, setElsewhereBusy] = useState(false);
+  const [elsewhereMsg, setElsewhereMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  async function onSignOutElsewhere() {
+    setElsewhereBusy(true);
+    setElsewhereMsg(null);
+    try {
+      await api.signOutElsewhere();
+      setElsewhereMsg({ ok: true, text: "Done. Every other screen signed in as you has to sign in again." });
+    } catch (error) {
+      setElsewhereMsg({ ok: false, text: error instanceof Error ? error.message : "Could not sign out elsewhere" });
+    } finally {
+      setElsewhereBusy(false);
+    }
+  }
 
   useEffect(() => {
     if (!user) return;
@@ -81,6 +96,22 @@ export function ProfileSection() {
             Save profile
           </Button>
         </Stack>
+        <Typography variant="subtitle1" sx={{ mt: 4, mb: 0.5 }}>
+          Sign out everywhere else
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+          Lost a phone, or signed in on someone else's screen? This signs you out on every other
+          screen. This one stays signed in. Wall screens signed in as you will need to sign in again.
+          Changing your password does this too.
+        </Typography>
+        {elsewhereMsg && (
+          <Alert severity={elsewhereMsg.ok ? "success" : "error"} sx={{ mb: 1.5 }}>
+            {elsewhereMsg.text}
+          </Alert>
+        )}
+        <Button variant="outlined" disabled={elsewhereBusy} onClick={() => void onSignOutElsewhere()}>
+          Sign out everywhere else
+        </Button>
       </CardContent>
     </Card>
   );

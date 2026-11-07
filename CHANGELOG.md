@@ -2,6 +2,12 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.196
+
+- Signing in is safer, ready for Nexternel Anywhere. After 5 wrong passwords from the same place, each new try has to wait (30 seconds, then longer each time, up to 15 minutes). Before, every screen counted as the same visitor, so one person guessing could block everyone.
+- From outside the home only: after 10 wrong passwords for one name within an hour, signing in with that name from outside pauses for 15 minutes and the bell says so. At home it always still works, so nobody outside can lock you out.
+- My profile has a new button, Sign out everywhere else: every other screen signed in as you has to sign in again, this one stays signed in. A new password does the same, and so does switching an account off in Users.
+
 ## V5.2.195
 
 - Maps: the route a tracker took is drawn in its own bright magenta with an outline, instead of the Look's main colour, so it no longer disappears among orange or blue roads, on light and dark maps.

@@ -397,6 +397,12 @@ export type PanelResolveResult = {
 /** @deprecated use ResolvedPanelCapability */
 export type ResolvedViewCapability = ResolvedPanelCapability;
 
+/** A new password or "Sign out everywhere else" sends this screen a fresh login: keep it. */
+function keepFreshLogin<T extends { accessToken?: string; refreshToken?: string }>(data: T): T {
+  if (data.accessToken && data.refreshToken) storeTokens(data.accessToken, data.refreshToken);
+  return data;
+}
+
 export function rememberAuth(data: AuthResponse, keep = true) {
   if (data.accessToken && data.refreshToken) {
     storeTokens(data.accessToken, data.refreshToken, keep);
@@ -720,10 +726,17 @@ export const api = {
     themePrefs?: UserThemePrefs;
     avatarData?: string | null;
   }) =>
-    apiFetch<{ user: User }>("/api/v1/auth/me", {
+    apiFetch<{ user: User; accessToken?: string; refreshToken?: string }>("/api/v1/auth/me", {
       method: "PATCH",
       body: JSON.stringify(body),
-    }),
+    }).then(keepFreshLogin),
+
+  /** Every other screen signed in to this account has to sign in again; this one stays signed in. */
+  signOutElsewhere: () =>
+    apiFetch<{ ok: boolean; user: User; accessToken?: string; refreshToken?: string }>(
+      "/api/v1/auth/sign-out-elsewhere",
+      { method: "POST" }
+    ).then(keepFreshLogin),
 
   rooms: () => apiFetch<{ rooms: AreaRecord[] }>("/api/v1/rooms"),
 
@@ -1675,10 +1688,10 @@ export const api = {
       avatarData?: string | null;
     }
   ) =>
-    apiFetch<{ user: AdminUser }>(`/api/v1/users/${id}`, {
+    apiFetch<{ user: AdminUser; accessToken?: string; refreshToken?: string }>(`/api/v1/users/${id}`, {
       method: "PATCH",
       body: JSON.stringify(body),
-    }),
+    }).then(keepFreshLogin),
 
   roles: () => apiFetch<{ roles: RoleDef[] }>("/api/v1/roles"),
 

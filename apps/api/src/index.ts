@@ -18,6 +18,7 @@ import { syncAllCamerasToGo2rtc } from "./cameras/service.js";
 import { ensureUsersRoleSchema } from "./auth/ensure-users-role.js";
 import { ensureUsersThemeSchema } from "./auth/ensure-users-theme.js";
 import { ensureUsersAvatarSchema } from "./auth/ensure-users-avatar.js";
+import { ensureUsersTokenVersionSchema } from "./auth/token-version.js";
 import { ensureRolesSchema } from "./auth/ensure-roles-schema.js";
 import { ensureAdminFromEnv } from "./auth/ensure-admin.js";
 import { bootstrapInstallationState, getUserCount } from "./installation-meta.js";
@@ -72,7 +73,12 @@ import { changeTopicFor, publishChange } from "./live/changes.js";
 import { APP_VERSION } from "./version.js";
 import { serializeRequestForLog } from "./system/log-redact.js";
 
-const app = Fastify({ logger: { serializers: { req: serializeRequestForLog } } });
+// Visitors come through Caddy and the page server; trust only those home/Docker hops so
+// request.ip is the visitor's own address (the login guess limits count per visitor).
+const app = Fastify({
+  trustProxy: "loopback, linklocal, uniquelocal",
+  logger: { serializers: { req: serializeRequestForLog } },
+});
 // An id in the address that is not even a valid id (the database refuses it: "invalid input syntax")
 // means there is no such thing: "not found", never a server error. Everything else as before.
 app.setErrorHandler((err, _request, reply) => {
@@ -164,6 +170,7 @@ try {
   await ensureUsersRoleSchema();
   await ensureUsersThemeSchema();
   await ensureUsersAvatarSchema();
+  await ensureUsersTokenVersionSchema();
   await ensureRolesSchema();
   await ensureDevicesSchema();
   await ensureActivitySchema();

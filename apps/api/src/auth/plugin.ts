@@ -9,6 +9,7 @@ import {
   type AuthRole,
   type TokenPayload,
 } from "./tokens.js";
+import { isLoginCurrent } from "./token-version.js";
 import type { RolePermissions } from "./permissions.js";
 
 export type RequestUser = {
@@ -64,6 +65,10 @@ export async function attachUser(request: FastifyRequest) {
   for (const { source, token } of candidates) {
     const result = await verifyTokenDetailed(token);
     if (result.ok && result.payload.tokenType === "access") {
+      if (!(await isLoginCurrent(result.payload.userId, result.payload.tokenVersion))) {
+        request.authDebugFailures.push(`${source}:signed_out`);
+        continue;
+      }
       request.user = {
         id: result.payload.userId,
         username: result.payload.username,

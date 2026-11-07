@@ -17,6 +17,8 @@ export type TokenPayload = {
   isAdmin: boolean;
   permissions: RolePermissions;
   tokenType: "access" | "refresh";
+  /** The account's sign-in number when this login was made (see auth/token-version.ts). */
+  tokenVersion?: number;
 };
 
 function secretKey() {
@@ -51,6 +53,7 @@ export async function signAccessToken(
     isAdmin: payload.isAdmin,
     permissions: payload.permissions,
     tokenType: "access",
+    tv: payload.tokenVersion ?? 0,
   })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(payload.userId)
@@ -68,6 +71,7 @@ export async function signRefreshToken(
     isAdmin: payload.isAdmin,
     permissions: payload.permissions,
     tokenType: "refresh",
+    tv: payload.tokenVersion ?? 0,
   })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(payload.userId)
@@ -123,6 +127,7 @@ export async function verifyTokenDetailed(token: string): Promise<VerifyResult> 
         isAdmin,
         permissions,
         tokenType,
+        tokenVersion: typeof payload.tv === "number" ? payload.tv : 0,
       },
     };
   } catch (err) {

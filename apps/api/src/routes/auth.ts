@@ -7,8 +7,6 @@ import {
 } from "../auth/plugin.js";
 import {
   hashPassword,
-  signAccessToken,
-  signRefreshToken,
   verifyPassword,
   verifyToken,
   verifyTokenDetailed,
@@ -21,8 +19,19 @@ import {
 } from "../auth/theme-prefs.js";
 import { parseAvatarInput } from "../auth/avatar.js";
 import { resolveRoleInfo } from "../auth/roles.js";
+import { loginGuard, waitText } from "../auth/login-guard.js";
+import { raiseTokenVersion } from "../auth/token-version.js";
+import { tokensFor } from "../auth/issue-tokens.js";
+import { addNotification } from "../notifications/service.js";
 
-type AuthUserRow = DbUser & { theme_prefs?: unknown; avatar_data?: string | null };
+/** Compared against when the name does not exist, so a wrong name takes as long as a wrong password. */
+let dummyHash: Promise<string> | null = null;
+function wrongNameHash() {
+  dummyHash ??= hashPassword("nexternel-no-such-user");
+  return dummyHash;
+}
+
+type AuthUserRow = DbUser & { theme_prefs?: unknown; avatar_data?: string | null; token_version?: number };
 
 async function mapAuthUser(user: AuthUserRow) {
   const roleInfo = await resolveRoleInfo(user.role);
@@ -61,35 +70,49 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
         });
       }
 
+      const ip = request.ip;
+      const allowed = loginGuard.check(ip, username);
+      if (!allowed.ok) {
+        reply.header("Retry-After", String(Math.ceil(allowed.retryAfterMs / 1000)));
+        return reply.code(429).send({
+          error: {
+            code: "too_many_attempts",
+            message: `Too many wrong passwords. Try again in ${waitText(allowed.retryAfterMs)}.`,
+          },
+        });
+      }
+
       const result = await getPool().query<AuthUserRow>(
-        `SELECT id, username, password_hash, display_name, is_active, role, theme_prefs, avatar_data
+        `SELECT id, username, password_hash, display_name, is_active, role, theme_prefs, avatar_data, token_version
          FROM users WHERE username = $1 LIMIT 1`,
         [username]
       );
       const user = result.rows[0];
-      if (!user || !user.is_active) {
+      const valid = user && user.is_active
+        ? await verifyPassword(password, user.password_hash)
+        : (await verifyPassword(password, await wrongNameHash()), false);
+      if (!user || !valid) {
+        const { namePaused } = loginGuard.fail(ip, username);
+        request.log.warn({ username, ip }, "login refused: wrong name or password");
+        if (namePaused) {
+          void addNotification({
+            source: "system",
+            sourceName: "Nexternel",
+            level: "warning",
+            title: `Signing in as "${username.slice(0, 60)}" from outside is paused`,
+            body:
+              "Someone outside the home typed many wrong passwords for this name. " +
+              "Signing in with it from outside is paused for 15 minutes. At home it still works. " +
+              `Last try came from ${ip}.`,
+          }).catch(() => undefined);
+        }
         return reply.code(401).send({
           error: { code: "invalid_credentials", message: "Invalid credentials" },
         });
       }
+      loginGuard.succeed(ip);
 
-      const valid = await verifyPassword(password, user.password_hash);
-      if (!valid) {
-        return reply.code(401).send({
-          error: { code: "invalid_credentials", message: "Invalid credentials" },
-        });
-      }
-
-      const roleInfo = await resolveRoleInfo(user.role);
-      const claims = {
-        userId: user.id,
-        username: user.username,
-        role: roleInfo.slug,
-        isAdmin: roleInfo.isAdmin,
-        permissions: roleInfo.permissions,
-      };
-      const accessToken = await signAccessToken(claims);
-      const refreshToken = await signRefreshToken(claims);
+      const { roleInfo, accessToken, refreshToken } = await tokensFor(user);
 
       const roundTrip = await verifyTokenDetailed(accessToken);
       if (!roundTrip.ok || roundTrip.payload.tokenType !== "access") {
@@ -149,7 +172,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
     }
 
     const result = await getPool().query<AuthUserRow>(
-      `SELECT id, username, password_hash, display_name, is_active, role, theme_prefs, avatar_data
+      `SELECT id, username, password_hash, display_name, is_active, role, theme_prefs, avatar_data, token_version
        FROM users WHERE id = $1 LIMIT 1`,
       [payload.userId]
     );
@@ -161,16 +184,14 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
       });
     }
 
-    const roleInfo = await resolveRoleInfo(user.role);
-    const claims = {
-      userId: user.id,
-      username: user.username,
-      role: roleInfo.slug,
-      isAdmin: roleInfo.isAdmin,
-      permissions: roleInfo.permissions,
-    };
-    const accessToken = await signAccessToken(claims);
-    const refreshToken = await signRefreshToken(claims);
+    if ((user.token_version ?? 0) !== (payload.tokenVersion ?? 0)) {
+      clearAuthCookies(reply);
+      return reply.code(401).send({
+        error: { code: "unauthorized", message: "Signed out" },
+      });
+    }
+
+    const { accessToken, refreshToken } = await tokensFor(user);
     setAuthCookies(reply, accessToken, refreshToken);
 
     return {
@@ -183,7 +204,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
   app.get("/api/v1/auth/me", async (request, reply) => {
     if (!requireUser(request, reply)) return;
     const result = await getPool().query<AuthUserRow>(
-      `SELECT id, username, password_hash, display_name, is_active, role, theme_prefs, avatar_data
+      `SELECT id, username, password_hash, display_name, is_active, role, theme_prefs, avatar_data, token_version
        FROM users WHERE id = $1 LIMIT 1`,
       [request.user!.id]
     );
@@ -208,7 +229,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
     if (!requireUser(request, reply)) return;
     const id = request.user!.id;
     const existing = await getPool().query<AuthUserRow>(
-      `SELECT id, username, password_hash, display_name, is_active, role, theme_prefs, avatar_data
+      `SELECT id, username, password_hash, display_name, is_active, role, theme_prefs, avatar_data, token_version
        FROM users WHERE id = $1 LIMIT 1`,
       [id]
     );
@@ -270,9 +291,37 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
        SET display_name = $2, password_hash = $3, theme_prefs = $4::jsonb,
            avatar_data = $5, updated_at = NOW()
        WHERE id = $1
-       RETURNING id, username, password_hash, display_name, is_active, role, theme_prefs, avatar_data`,
+       RETURNING id, username, password_hash, display_name, is_active, role, theme_prefs, avatar_data, token_version`,
       [id, displayName, passwordHash, JSON.stringify(themePrefs), avatarData]
     );
-    return { user: await mapAuthUser(result.rows[0]) };
+    const saved = result.rows[0];
+    if (request.body?.password) {
+      // A new password signs this account out everywhere else; this screen gets a fresh login.
+      const version = await raiseTokenVersion(id);
+      const { accessToken, refreshToken } = await tokensFor(saved, version);
+      setAuthCookies(reply, accessToken, refreshToken);
+      return { user: await mapAuthUser(saved), accessToken, refreshToken };
+    }
+    return { user: await mapAuthUser(saved) };
+  });
+
+  /** Sign out everywhere else: every other screen signed in to this account has to sign in again. */
+  app.post("/api/v1/auth/sign-out-elsewhere", async (request, reply) => {
+    if (!requireUser(request, reply)) return;
+    const version = await raiseTokenVersion(request.user!.id);
+    const res = await getPool().query<AuthUserRow>(
+      `SELECT id, username, password_hash, display_name, is_active, role, theme_prefs, avatar_data, token_version
+       FROM users WHERE id = $1 LIMIT 1`,
+      [request.user!.id]
+    );
+    const user = res.rows[0];
+    if (!user || !user.is_active) {
+      clearAuthCookies(reply);
+      return reply.code(401).send({ error: { code: "unauthorized", message: "User not found" } });
+    }
+    const { accessToken, refreshToken } = await tokensFor(user, version);
+    setAuthCookies(reply, accessToken, refreshToken);
+    request.log.info({ username: user.username }, "signed out everywhere else");
+    return { ok: true, accessToken, refreshToken, user: await mapAuthUser(user) };
   });
 };

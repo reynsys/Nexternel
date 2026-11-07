@@ -10,6 +10,9 @@ import {
 } from "../auth/theme-prefs.js";
 import { parseAvatarInput } from "../auth/avatar.js";
 import { resolveRoleInfo } from "../auth/roles.js";
+import { forgetTokenVersion, raiseTokenVersion } from "../auth/token-version.js";
+import { tokensFor } from "../auth/issue-tokens.js";
+import { setAuthCookies } from "../auth/plugin.js";
 
 type UserRow = {
   id: string;
@@ -254,6 +257,18 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
         avatarData,
       ]
     );
+    // A new password set by an administrator, or switching the account off, signs it out everywhere.
+    if (request.body?.password || (existing.rows[0].is_active && !isActive)) {
+      const version = await raiseTokenVersion(id);
+      if (id === request.user!.id) {
+        // Own password changed here: this screen stays signed in with a fresh login.
+        const { accessToken, refreshToken } = await tokensFor({ ...existing.rows[0], role }, version);
+        setAuthCookies(reply, accessToken, refreshToken);
+        return { user: await mapUser(result.rows[0]), accessToken, refreshToken };
+      }
+    } else {
+      forgetTokenVersion(id);
+    }
     return { user: await mapUser(result.rows[0]) };
   });
 };
