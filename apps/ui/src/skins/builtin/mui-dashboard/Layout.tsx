@@ -91,6 +91,7 @@ export function MuiDashboardLayout() {
         permissions={permissions}
         authLoading={authLoading}
         user={user ?? null}
+        onLogout={() => void logout()}
       />
     </Box>
   );

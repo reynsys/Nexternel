@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.194
+
+- Phones and tablets: one menu. More in the bottom bar now shows who is signed in and has Sign out; the ☰ button at the top is gone while signed in (it stays when nobody is signed in, for Sign in).
+
 ## V5.2.193
 
 - Tablets held upright and screens just too narrow for the whole dashboard: panels keep about the size they have on a laptop, instead of each one filling the width. A screen a little narrower loses two squares across, not half of them. Phones are unchanged.

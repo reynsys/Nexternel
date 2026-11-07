@@ -19,6 +19,7 @@ import { filterNav, navItemActive, type NavItem } from "../../nav";
 import { useMainNav } from "../../useMainNav";
 import { MenuContent } from "./MenuContent";
 import { DashboardSheet, openDashboardSheet } from "../../../components/DashboardSheet";
+import { APP_VERSION } from "../../../version";
 
 /** Phone bottom bar: the first four main pages within thumb reach; everything else under More. */
 export const BOTTOM_NAV_HEIGHT_PX = 64;
@@ -30,9 +31,10 @@ type Props = {
   permissions?: RolePermissions | null;
   authLoading?: boolean;
   user: User | null;
+  onLogout: () => void;
 };
 
-export function BottomNav({ signedIn, isAdmin, permissions, authLoading = false }: Props) {
+export function BottomNav({ signedIn, isAdmin, permissions, authLoading = false, user, onLogout }: Props) {
   const { pathname } = useLocation();
   const [moreOpen, setMoreOpen] = useState(false);
   // A group in the bar (Extensions) opens a sheet of its pages instead of jumping to the first one.
@@ -155,6 +157,14 @@ export function BottomNav({ signedIn, isAdmin, permissions, authLoading = false 
         onClose={() => setMoreOpen(false)}
         PaperProps={{ sx: { borderTopLeftRadius: 16, borderTopRightRadius: 16, pb: "env(safe-area-inset-bottom)" } }}
       >
+        <Box sx={{ px: 2, pt: 2 }}>
+          <Typography variant="subtitle1">Nexternel {APP_VERSION}</Typography>
+          {user ? (
+            <Typography variant="caption" color="text.secondary">
+              {user.username} · {user.role}
+            </Typography>
+          ) : null}
+        </Box>
         <MenuContent
           unfold
           signedIn={signedIn}
@@ -163,6 +173,18 @@ export function BottomNav({ signedIn, isAdmin, permissions, authLoading = false 
           authLoading={authLoading}
           onNavigate={() => setMoreOpen(false)}
         />
+        <Box sx={{ px: 2, pb: 2 }}>
+          <Button
+            fullWidth
+            variant="outlined"
+            onClick={() => {
+              setMoreOpen(false);
+              onLogout();
+            }}
+          >
+            Sign out
+          </Button>
+        </Box>
       </Drawer>
     </>
   );

@@ -82,9 +82,13 @@ export function AppNavbar({
           {signedIn ? (
             <NotificationBell canClear={hasPermission(permissions ?? null, "manageUsers", isAdmin)} />
           ) : null}
-          <IconButton aria-label="menu" onClick={() => setOpen(true)} color="inherit">
-            <MenuRoundedIcon />
-          </IconButton>
+          {/* Signed in, the bottom bar's More holds the menu and Sign out (one menu, within thumb
+              reach); signed out there is no bottom bar, so the menu (with Sign in) stays here. */}
+          {signedIn ? null : (
+            <IconButton aria-label="menu" onClick={() => setOpen(true)} color="inherit">
+              <MenuRoundedIcon />
+            </IconButton>
+          )}
         </Stack>
       </Toolbar>
       <Drawer
