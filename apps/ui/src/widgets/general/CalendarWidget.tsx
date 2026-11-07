@@ -55,7 +55,7 @@ export function CalendarWidget({ widget: _widget }: { widget: WidgetInstance }) 
           "--nx-cal-font": genericTileFitLinesSize(1 + weeks, { reservedPx: weeks * 2, widthCqi: 3.6, max: "2.25rem" }),
           display: "grid",
           gridTemplateColumns: "repeat(7, 1fr)",
-          gridTemplateRows: `auto repeat(${weeks}, minmax(min-content, 1fr))`, // rows never squeeze text; scrolls when short of room
+          gridTemplateRows: `auto repeat(${weeks}, minmax(min-content, 1fr))`, // rows share the height; the text size above makes every week fit
           gap: 0.25,
           textAlign: "center",
         })}
@@ -79,6 +79,9 @@ export function CalendarWidget({ widget: _widget }: { widget: WidgetInstance }) 
               justifyContent: "center",
               borderRadius: 0.5,
               fontSize: "var(--nx-cal-font)",
+              // The same line height as the day names, so the size from genericTileFitLinesSize
+              // (which counts 1.25 lines per row) always fits: a six-week month does not scroll.
+              lineHeight: 1.2,
               fontWeight: day === today ? 700 : 400,
               bgcolor: day === today ? "primary.main" : "transparent",
               color: day === today ? "primary.contrastText" : "text.primary",

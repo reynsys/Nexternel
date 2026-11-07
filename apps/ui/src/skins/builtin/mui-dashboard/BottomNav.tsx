@@ -14,6 +14,7 @@ import { useGradientActive } from "../../useSurfaceStyles";
 import { filterNav, navItemActive } from "../../nav";
 import { useMainNav } from "../../useMainNav";
 import { MenuContent } from "./MenuContent";
+import { DashboardSheet, openDashboardSheet } from "../../../components/DashboardSheet";
 
 /** Phone bottom bar: the first four main pages within thumb reach; everything else under More. */
 export const BOTTOM_NAV_HEIGHT_PX = 64;
@@ -81,7 +82,15 @@ export function BottomNav({ signedIn, isAdmin, permissions, authLoading = false 
                 icon={<Icon />}
                 component={RouterLink}
                 to={item.to}
-                onClick={(e: MouseEvent) => void guardLinkClick(e, () => navigate(item.to))}
+                onClick={(e: MouseEvent) => {
+                  // Dashboards opens the sheet of dashboards (phones have no dock).
+                  if (item.to === "/") {
+                    e.preventDefault();
+                    openDashboardSheet();
+                    return;
+                  }
+                  void guardLinkClick(e, () => navigate(item.to));
+                }}
               />
             );
           })}
@@ -92,6 +101,7 @@ export function BottomNav({ signedIn, isAdmin, permissions, authLoading = false 
           />
         </BottomNavigation>
       </Paper>
+      <DashboardSheet />
       <Drawer
         anchor="bottom"
         open={moreOpen}

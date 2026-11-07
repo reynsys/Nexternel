@@ -32,11 +32,23 @@ const ROW_MIN: Record<PanelItemGridRowSize, string> = {
 export function panelItemGridColumns(
   layout: PanelAppearanceLayout = "card",
   itemCount: number,
-  direction: PanelItemDirection = "across"
+  direction: PanelItemDirection = "across",
+  maxAcross?: number
 ): string {
-  if (itemCount <= 0 || direction === "down") return "minmax(0, 1fr)";
+  const cols = panelItemGridColumnCount(layout, itemCount, direction, maxAcross);
+  return cols <= 1 ? "minmax(0, 1fr)" : `repeat(${cols}, minmax(0, 1fr))`;
+}
+
+/** Items side by side: by count (capped by layout), or fewer when the screen allows fewer (`maxAcross`). */
+export function panelItemGridColumnCount(
+  layout: PanelAppearanceLayout = "card",
+  itemCount: number,
+  direction: PanelItemDirection = "across",
+  maxAcross?: number
+): number {
+  if (itemCount <= 0 || direction === "down") return 1;
   const cols = Math.min(Math.max(1, itemCount), MAX_COLS[layout]);
-  return `repeat(${cols}, minmax(0, 1fr))`;
+  return maxAcross ? Math.max(1, Math.min(cols, maxAcross)) : cols;
 }
 
 /** Gap between item tiles — the same 8px as between the title strip and the tiles. */
@@ -49,11 +61,13 @@ export function panelItemGridSx(opts: {
   direction?: PanelItemDirection;
   rowSize?: PanelItemGridRowSize;
   itemCount: number;
+  /** Fewer side by side on this screen (pictures on a narrow screen). */
+  maxAcross?: number;
 }): SxProps<Theme> {
   const layout = opts.layout ?? "card";
   const direction = opts.direction ?? "across";
   const rowSize = opts.rowSize ?? "standard";
-  const cols = direction === "down" ? 1 : Math.min(Math.max(1, opts.itemCount), MAX_COLS[layout]);
+  const cols = panelItemGridColumnCount(layout, opts.itemCount, direction, opts.maxAcross);
   // One row of items fills the panel at whatever height the panel has (half-height panels too);
   // the row minimum only matters when several rows share the panel and may need to scroll.
   const rowMin = Math.ceil(Math.max(1, opts.itemCount) / cols) <= 1 ? "0" : ROW_MIN[rowSize];
@@ -62,7 +76,7 @@ export function panelItemGridSx(opts: {
     minHeight: 0,
     minWidth: 0,
     display: "grid",
-    gridTemplateColumns: panelItemGridColumns(layout, opts.itemCount, direction),
+    gridTemplateColumns: panelItemGridColumns(layout, opts.itemCount, direction, opts.maxAcross),
     gridAutoRows: rowMin === "0" ? "minmax(0, 1fr)" : `minmax(${rowMin}, 1fr)`,
     gap: panelItemGridGap(layout),
     overflow: "auto",

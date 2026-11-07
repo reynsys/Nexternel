@@ -1,9 +1,11 @@
 import { Box } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material/styles";
-import { Children, isValidElement, type ReactNode } from "react";
+import { Children, isValidElement, useEffect, type ReactNode } from "react";
 import { panelContentContainerSx } from "./DashboardTileBody";
 import type { PanelItemDirection } from "../lib/panel-appearance";
+import { usePanelPictures } from "../lib/panel-pictures-context";
 import {
+  panelItemGridColumnCount,
   panelItemGridSx,
   type PanelAppearanceLayout,
   type PanelItemGridRowSize,
@@ -20,6 +22,11 @@ type Props = {
   children: ReactNode;
   rootSx?: SxProps<Theme>;
   gridSx?: SxProps<Theme>;
+  /**
+   * Items are pictures of this shape (width over height, 16/9 for cameras). On a narrow screen they go
+   * under each other at this shape instead of shrinking, and the panel grows to hold them.
+   */
+  pictureAspect?: number;
 };
 
 function countGridChildren(children: ReactNode): number {
@@ -37,14 +44,24 @@ export function PanelItemGrid({
   children,
   rootSx,
   gridSx,
+  pictureAspect,
 }: Props) {
   const count = itemCount ?? countGridChildren(children);
+  const pictures = usePanelPictures();
+  const report = pictures?.report;
+  const across = panelItemGridColumnCount(layout, count, direction);
+  useEffect(() => {
+    if (!report || !pictureAspect) return;
+    report({ count, across, aspect: pictureAspect });
+    return () => report(null);
+  }, [report, pictureAspect, count, across]);
+  const maxAcross = pictureAspect ? pictures?.across ?? undefined : undefined;
   return (
     <Box sx={panelContentContainerSx(rootSx)}>
       {header}
       <Box
         sx={[
-          panelItemGridSx({ layout, direction, rowSize, itemCount: count }),
+          panelItemGridSx({ layout, direction, rowSize, itemCount: count, maxAcross }),
           ...(Array.isArray(gridSx) ? gridSx : gridSx ? [gridSx] : []),
         ]}
       >

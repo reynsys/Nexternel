@@ -20,6 +20,7 @@ import { Link as RouterLink } from "react-router-dom";
 import { barSurfaceSx } from "../../surfaceStyles";
 import { useGradientActive } from "../../useSurfaceStyles";
 import { BrandMark } from "../../../components/BrandMark";
+import { TOP_BAR_TOOLS_ID } from "../../../components/DashboardSheet";
 
 const Toolbar = styled(MuiToolbar)({
   width: "100%",
@@ -79,6 +80,8 @@ export function AppNavbar({
               Nexternel
             </Typography>
           </Stack>
+          {/* A page's own buttons on phones (the dashboard's cog). */}
+          <Box id={TOP_BAR_TOOLS_ID} sx={{ display: "flex", alignItems: "center", gap: 1, "&:empty": { display: "none" } }} />
           {signedIn ? (
             <NotificationBell canClear={hasPermission(permissions ?? null, "manageUsers", isAdmin)} />
           ) : null}

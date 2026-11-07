@@ -12,6 +12,8 @@ export type EchartsThemePalette = {
   splitLine: string;
   background: string;
   isDark: boolean;
+  /** The Look's font (drawn chart text does not take the chart theme's font by itself). */
+  fontFamily: string;
 };
 
 export function echartsPaletteFromTheme(theme: Theme): EchartsThemePalette {
@@ -27,6 +29,7 @@ export function echartsPaletteFromTheme(theme: Theme): EchartsThemePalette {
     splitLine: alpha(theme.palette.text.primary, mode === "dark" ? 0.22 : 0.18),
     background: theme.palette.background.paper,
     isDark: mode === "dark",
+    fontFamily: String(theme.typography.fontFamily),
   };
 }
 

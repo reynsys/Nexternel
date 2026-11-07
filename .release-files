@@ -280,6 +280,7 @@ apps/ui/src/components/dashboard-editor/DashboardSettingsPanel.tsx
 apps/ui/src/components/dashboard-editor/SectionSettingsPanel.tsx
 apps/ui/src/components/DashboardErrorBoundary.tsx
 apps/ui/src/components/DashboardIconPicker.tsx
+apps/ui/src/components/DashboardSheet.tsx
 apps/ui/src/components/DashboardTabBar.tsx
 apps/ui/src/components/DashboardTileBody.tsx
 apps/ui/src/components/IconPicker.tsx
@@ -397,6 +398,7 @@ apps/ui/src/lib/map-panel-content.test.ts
 apps/ui/src/lib/map-panel-content.ts
 apps/ui/src/lib/motion.test.ts
 apps/ui/src/lib/motion.ts
+apps/ui/src/lib/number-scale.ts
 apps/ui/src/lib/panel-appearance.ts
 apps/ui/src/lib/panel-cameras.test.ts
 apps/ui/src/lib/panel-cameras.ts
@@ -433,6 +435,7 @@ apps/ui/src/lib/panel-kind.test.ts
 apps/ui/src/lib/panel-kind.ts
 apps/ui/src/lib/panel-migration.ts
 apps/ui/src/lib/panel-normalize.ts
+apps/ui/src/lib/panel-pictures-context.ts
 apps/ui/src/lib/panel-profile-hints.ts
 apps/ui/src/lib/panel-scope.ts
 apps/ui/src/lib/panel-size-context.tsx
@@ -451,6 +454,7 @@ apps/ui/src/lib/switch-styles.ts
 apps/ui/src/lib/tracking-format.test.ts
 apps/ui/src/lib/tracking-format.ts
 apps/ui/src/lib/use-arrange-dashboards.ts
+apps/ui/src/lib/use-dashboard-swipe.ts
 apps/ui/src/lib/usePanelPoll.ts
 apps/ui/src/lib/user-display.ts
 apps/ui/src/lib/user-events.ts

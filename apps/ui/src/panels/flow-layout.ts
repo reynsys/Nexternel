@@ -43,7 +43,34 @@ export type FlowPanel = {
   minH?: number;
   maxW?: number;
   maxH?: number;
+  /** Items shown as pictures (cameras): how many, how many side by side as arranged, their shape. */
+  pictures?: PanelPictures;
 };
+
+/** What a panel of pictures told the dashboard about its items (see PanelItemGrid). */
+export type PanelPictures = {
+  count: number;
+  /** Side by side as arranged. */
+  across: number;
+  /** Width over height of one picture (16/9 for a camera). */
+  aspect: number;
+};
+
+/** Narrowest a picture is allowed before it goes under the one beside it (px; 3 squares when the size is unknown). */
+export const PICTURE_MIN_PX = 260;
+export const PICTURE_MIN_W = 3 * STEPS;
+/** Room for a panel's title row and for each item's name line, in squares. */
+const PANEL_TITLE_SQUARES = 0.7;
+const ITEM_NAME_SQUARES = 0.45;
+
+/**
+ * How many pictures sit side by side in a panel `w` steps wide: as arranged, fewer when too narrow.
+ * `squarePx` is one square on this screen (phones and tablets have very different squares).
+ */
+export function picturesAcross(pictures: PanelPictures, w: number, squarePx?: number): number {
+  const fit = squarePx && squarePx > 0 ? Math.floor(((w / STEPS) * squarePx) / PICTURE_MIN_PX) : Math.floor(w / PICTURE_MIN_W);
+  return Math.max(1, Math.min(pictures.across, pictures.count, fit));
+}
 
 /** Panels in display order: saved rows top to bottom, then left to right. */
 export function flowOrder<T extends Pick<FlowPanel, "x" | "y">>(panels: readonly T[]): T[] {
@@ -58,17 +85,26 @@ export const FLOW_MIN_PANEL_W = 2 * STEPS;
 
 /**
  * Shape on a screen with `cols` steps across.
- * - Wider than the screen: full width, same proportions.
+ * - Wider than the screen: full width, same proportions. A panel of pictures (cameras) instead
+ *   puts its pictures under each other at their own shape, and grows to hold them.
  * - Narrow screens only: when the space left beside the panel is too narrow for any panel
  *   (a 3-wide gauge on a 4-wide phone), it takes the whole row, same proportions.
  *   Otherwise it keeps its shape, so its tiles stay the size of every other panel's.
  * Never shorter than the panel's minimum, or 2 squares.
  */
-export function flowShape(panel: FlowPanel, cols: number, design = DESIGN_COLS): { w: number; h: number } {
+export function flowShape(panel: FlowPanel, cols: number, design = DESIGN_COLS, squarePx?: number): { w: number; h: number } {
   const tooWide = panel.w > cols;
   const strandedGap = cols < design && panel.w < cols && cols - panel.w < FLOW_MIN_PANEL_W;
   if (!tooWide && !strandedGap) return { w: Math.max(1, panel.w), h: panel.h };
   const w = cols;
+  if (panel.pictures && panel.pictures.count > 0) {
+    // Pictures go under each other instead of shrinking, at their own shape: the panel grows to hold them.
+    const across = picturesAcross(panel.pictures, w, squarePx);
+    const rows = Math.ceil(panel.pictures.count / across);
+    const pictureH = w / STEPS / across / panel.pictures.aspect;
+    const needed = Math.ceil(PANEL_TITLE_SQUARES + rows * (pictureH + ITEM_NAME_SQUARES));
+    return { w, h: Math.max(needed, panel.minH ?? 1, 2) };
+  }
   const scaled = Math.round((panel.h * w) / panel.w);
   // Squeezed onto a narrow screen: never lower than it was, up to 2 squares (a half-height panel stays half height).
   return { w, h: Math.max(scaled, panel.minH ?? 1, Math.min(panel.h, 2)) };
@@ -102,7 +138,7 @@ function withLimits(panel: FlowPanel, cols: number, place: { x: number; y: numbe
 }
 
 /** Place panels in order, each at the first spot (top row first, then leftmost) where it fits. */
-function packInOrder(panels: readonly FlowPanel[], cols: number, design = DESIGN_COLS): Layout[] {
+function packInOrder(panels: readonly FlowPanel[], cols: number, design = DESIGN_COLS, squarePx?: number): Layout[] {
   const rows: boolean[][] = [];
   const free = (x: number, y: number, w: number, h: number) => {
     for (let r = y; r < y + h; r++) {
@@ -119,7 +155,7 @@ function packInOrder(panels: readonly FlowPanel[], cols: number, design = DESIGN
     }
   };
   return flowOrder(panels).map((panel) => {
-    const { w, h } = flowShape(panel, cols, design);
+    const { w, h } = flowShape(panel, cols, design, squarePx);
     let x = 0;
     let y = 0;
     search: for (y = 0; ; y++) {
@@ -133,11 +169,11 @@ function packInOrder(panels: readonly FlowPanel[], cols: number, design = DESIGN
 }
 
 /** Layout for a screen `cols` steps wide (see the module note). */
-export function flowLayout(panels: readonly FlowPanel[], cols: number, design = DESIGN_COLS): Layout[] {
+export function flowLayout(panels: readonly FlowPanel[], cols: number, design = DESIGN_COLS, squarePx?: number): Layout[] {
   if (savedArrangementFits(panels, cols, design)) {
     return panels.map((p) => withLimits(p, cols, { x: p.x, y: p.y, w: p.w, h: p.h }));
   }
-  return packInOrder(panels, cols, design);
+  return packInOrder(panels, cols, design, squarePx);
 }
 
 /**

@@ -1,6 +1,7 @@
 import type { EchartsBuildCtx, EchartsPreset } from "../types";
 import type { HistoryRange } from "../../../api";
 import { chartFont } from "../types";
+import { scaleUnit } from "../../../lib/number-scale";
 
 function timeSeries(ctx: EchartsBuildCtx): [string, number][] {
   return ctx.points.map((p) => [p.t, p.v]);
@@ -12,8 +13,13 @@ function accent(ctx: EchartsBuildCtx, fallback = "#5470c6"): string {
   return fallback;
 }
 
+/** Axis numbers: large power and energy one unit up (5000W → 5kW), like the dials (lib/number-scale). */
 function yFmt(ctx: EchartsBuildCtx) {
-  return (v: number) => (ctx.unit ? `${v}${ctx.unit}` : String(v));
+  const { factor, unit } = scaleUnit(ctx.unit, Math.max(Math.abs(ctx.min), Math.abs(ctx.max)));
+  return (v: number) => {
+    const n = Number((v / factor).toPrecision(6));
+    return unit ? `${n}${unit}` : String(n);
+  };
 }
 
 const historyGrid = { left: 48, right: 16, top: 28, bottom: 32 };

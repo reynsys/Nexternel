@@ -2,6 +2,13 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.191
+
+- Gauges: the numbers round the dial are tidy, evenly spaced steps close to the arc, in kW once watts reach a thousand (0, 1, 2 … 5). Small gauges show fewer numbers but never skip unevenly. History charts say 1kW, 2kW instead of 1000W.
+- Calendar: the whole month always fits its panel, six-week months too, with no scrolling.
+- Cameras: on a phone the cameras of a panel sit under each other at full width; on a tablet two side by side. The panel grows to hold them.
+- Phones: no floating dock any more, so panels have the whole screen. Dashboards in the bottom bar opens all your dashboards, a sideways swipe moves to the next or previous one, and the Dashboard Options cog sits in the top bar.
+
 ## V5.2.190
 
 - One word for one thing across Nexternel. Plugin, Add-on, Widget and Capability are gone from the screen: anything you add to Nexternel is an Extension.

@@ -23,7 +23,8 @@ import { PluginPanelEditor } from "./panel-editor/PluginPanelEditor";
 import { mergeRuntimePanelPatch } from "../lib/panel-compatibility/normalize-panel";
 import { PanelAreaLineContext, type PanelAreaLineChoice } from "./PanelAreaLineFields";
 import { api } from "../api";
-import { flowCommit, flowGridForWidth, flowLayout } from "../panels/flow-layout";
+import { flowCommit, flowGridForWidth, flowLayout, picturesAcross, type PanelPictures } from "../panels/flow-layout";
+import { PanelPicturesContext, type PanelPicturesLink } from "../lib/panel-pictures-context";
 import { PanelWidgetEditor, isPanelWidgetType, panelLabel } from "../widgets/panel";
 import { GAUGE_WIDGET_TYPE } from "../widgets/gauge";
 import { EChartsWidgetEditor } from "../widgets/echarts/EChartsWidgetEditor";
@@ -171,20 +172,45 @@ export function SectionGrid({
   }, []);
 
 
+  /** Panels of pictures (cameras) say how many they show, so a narrow screen can stack them (flow-layout.ts). */
+  const [pictures, setPictures] = useState<Record<string, PanelPictures>>({});
+  const pictureReporters = useRef(new Map<string, PanelPicturesLink["report"]>());
+  const reportPicturesFor = useCallback((id: string) => {
+    let report = pictureReporters.current.get(id);
+    if (!report) {
+      report = (next) =>
+        setPictures((all) => {
+          const had = all[id];
+          if (!next) {
+            if (!had) return all;
+            const { [id]: _gone, ...rest } = all;
+            return rest;
+          }
+          if (had && had.count === next.count && had.across === next.across && had.aspect === next.aspect) return all;
+          return { ...all, [id]: next };
+        });
+      pictureReporters.current.set(id, report);
+    }
+    return report;
+  }, []);
+
   /** Saved placement (full-width arrangement in steps, with each panel's size limits). */
   const savedItems = useMemo(
     () =>
       panels
         .filter((p) => typeof p.id === "string" && p.id.trim())
-        .map((p) => gridLayoutItemForPanel(p)),
-    [panels]
+        .map((p) => {
+          const item = gridLayoutItemForPanel(p);
+          return pictures[p.id] ? { ...item, pictures: pictures[p.id] } : item;
+        }),
+    [panels, pictures]
   );
   /** This screen: exactly as arranged when it fits, otherwise flowed in order (flow-layout.ts). */
   // Rows are never shorter than the Look's panel frame and title need (thick frames, e.g. HUD, on phones).
   const grid = flowGridForWidth(width, gridCols, minPanelRowPx(theme.nx?.panelInset));
   const cols = grid.cols;
   const rowHeight = Math.max(1, grid.rowHeight);
-  const flowed = useMemo(() => flowLayout(savedItems, cols, gridCols), [savedItems, cols, gridCols]);
+  const flowed = useMemo(() => flowLayout(savedItems, cols, gridCols, rowHeight), [savedItems, cols, gridCols, rowHeight]);
 
   const [gridLayout, setGridLayout] = useState<Layout[]>(flowed);
   const gridLayoutRef = useRef(gridLayout);
@@ -395,12 +421,21 @@ export function SectionGrid({
           {panels.map((w) => {
             const itemKind = dashboardItemKind(w.type);
             const tileTitle = panelHeading(w, capabilities, sectionRoomId, cameras).title;
+            const saved = savedItems.find((p) => p.i === w.id);
+            const shown = gridLayout.find((p) => p.i === w.id);
+            const shownPictures = pictures[w.id];
+            const picturesLink: PanelPicturesLink = {
+              report: reportPicturesFor(w.id),
+              // Narrower than arranged: only as many pictures side by side as fit.
+              across: shownPictures && saved && shown && shown.w < saved.w ? picturesAcross(shownPictures, shown.w, rowHeight) : null,
+            };
             return (
               <div
                 key={w.id}
                 data-nx-grid-widget={w.id}
                 data-nx-widget-title={tileTitle ?? undefined}
               >
+                <PanelPicturesContext.Provider value={picturesLink}>
                 <PanelCard
                   panel={w}
                   capabilities={capabilities}
@@ -414,6 +449,7 @@ export function SectionGrid({
                     editMode ? <PanelEditButton name={tileTitle || widgetTypeLabel(w.type)} kind={itemKind} onEdit={() => setEditPanelId(w.id)} /> : undefined
                   }
                 />
+                </PanelPicturesContext.Provider>
               </div>
             );
           })}

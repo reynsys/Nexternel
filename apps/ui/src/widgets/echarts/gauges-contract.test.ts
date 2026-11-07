@@ -45,6 +45,54 @@ test("old demo dials that are not a sensor reading stay gone", () => {
   }
 });
 
+type Drawn = { type: string; style?: { text?: string }; x?: number; y?: number };
+
+/** The numbers written round a dial, in order. */
+function numbers(id: string, extra: Partial<EchartsBuildCtx> = {}): string[] {
+  const option = GAUGE_PRESETS.find((p) => p.id === id)!.buildOption(ctx(extra)) as {
+    graphic: { elements: Drawn[] };
+  };
+  return option.graphic.elements.filter((e) => e.type === "text").map((e) => e.style!.text!);
+}
+
+test("dial numbers are tidy, even steps, in kW once watts reach a thousand", () => {
+  const big = { tileWidth: 400, tileHeight: 400 };
+  assert.deepEqual(numbers("gauge", { ...big, unit: "W", value: 1345, min: 0, max: 5000 }), ["0", "1", "2", "3", "4", "5"]);
+  // An untidy top end keeps tidy numbers (no 518, 1036 …).
+  assert.deepEqual(numbers("gauge", { ...big, unit: "W", value: 1345, min: 0, max: 5180 }), ["0", "1", "2", "3", "4", "5"]);
+  assert.deepEqual(numbers("gauge", { ...big, unit: "°C", min: 0, max: 40 }).slice(0, 3), ["0", "10", "20"]);
+  // Small dials show fewer numbers, still evenly spaced: never 2000, 4000, 5000.
+  for (const size of [110, 140, 180, 220, 300]) {
+    const shown = numbers("gauge", { tileWidth: size, tileHeight: size, unit: "W", value: 1345, min: 0, max: 5000 }).map(Number);
+    assert.ok(shown.length >= 2, `${size}: ${shown}`);
+    const steps = shown.slice(1).map((v, i) => Number((v - shown[i]).toFixed(6)));
+    assert.equal(new Set(steps).size, 1, `${size}: uneven ${shown}`);
+  }
+});
+
+test("dial numbers never touch each other", () => {
+  for (const preset of GAUGE_PRESETS) {
+    for (const size of [120, 200, 300]) {
+      const option = preset.buildOption(ctx({ tileWidth: size, tileHeight: size, unit: "W", value: 1345, min: 0, max: 5000 })) as {
+        graphic: { elements: Array<Drawn & { style: { text: string; fontSize: number } }> };
+      };
+      const labels = option.graphic.elements.filter((e) => e.type === "text");
+      for (let i = 1; i < labels.length; i++) {
+        const a = labels[i - 1];
+        const b = labels[i];
+        const font = a.style.fontSize;
+        const apart =
+          Math.abs(a.x! - b.x!) >= (a.style.text.length + b.style.text.length) * font * 0.31 ||
+          Math.abs(a.y! - b.y!) >= font;
+        assert.ok(apart, `${preset.id} at ${size}: ${a.style.text} and ${b.style.text} touch`);
+      }
+      for (const l of labels) {
+        assert.ok(l.x! >= 0 && l.x! <= size && l.y! >= 0 && l.y! <= size, `${preset.id} at ${size}: ${l.style.text} outside the tile`);
+      }
+    }
+  }
+});
+
 test("ten dials share one layout", () => {
   assert.equal(GAUGE_PRESETS.length, 10);
   const tile = { tileWidth: 300, tileHeight: 300 };
@@ -54,9 +102,7 @@ test("ten dials share one layout", () => {
         radius: number;
         center: [number, number];
         startAngle: number;
-        splitNumber: number;
         pointer: { show: boolean };
-        axisLabel: { formatter: (value: number) => string };
         detail: { fontSize: number; offsetCenter: [number, number] };
         data: Array<{ value: number }>;
       }>;
@@ -75,9 +121,6 @@ test("ten dials share one layout", () => {
   const small = series("gauge", { tileWidth: 120, tileHeight: 120 }).detail.fontSize;
   const large = series("gauge", { tileWidth: 400, tileHeight: 400 }).detail.fontSize;
   assert.ok(large > small);
-  assert.equal(series("gauge-temperature", { min: 0, max: 60 }).splitNumber, 12);
-  assert.equal(series("gauge-temperature", { min: 0, max: 100 }).splitNumber, 10);
-  assert.equal(series("gauge-barometer", { min: 0, max: 5000 }).splitNumber, 10);
   assert.equal(series("gauge").data[0].value, 21.5);
   const needleOnSquare = series("gauge");
   assert.ok(Math.abs(needleOnSquare.detail.offsetCenter[1] - needleOnSquare.radius * 0.5) < 3);
@@ -91,10 +134,11 @@ test("ten dials share one layout", () => {
   assert.equal(shortReading("gauge-progress"), shortReading("gauge-double"));
   assert.equal(shortReading("gauge-temperature"), shortReading("gauge-ring"));
   assert.ok(semi.center[1] > 180, "shallow arc is centred in the tile");
-  assert.ok(Math.abs(series("gauge").center[1] - 150) < 2);
-  const meter = series("gauge-barometer", { min: 0, max: 60 });
-  assert.equal(meter.axisLabel.formatter(0), "");
-  assert.equal(meter.axisLabel.formatter(60), "60");
+  // The whole dial (numbers and reading included) is centred: the needle hub sits mid-width.
+  assert.ok(Math.abs(series("gauge").center[0] - 150) < 2);
+  const meter = numbers("gauge-barometer", { ...tile, min: 0, max: 60 });
+  assert.equal(meter.includes("0"), false, "a full circle writes the joining number once");
+  assert.equal(meter[meter.length - 1], "60");
   const half = series("gauge-half", { tileWidth: 420, tileHeight: 220 });
   const halfBottom = half.center[1] + half.detail.offsetCenter[1] + half.detail.fontSize / 2;
   assert.ok(halfBottom <= 220);
@@ -120,7 +164,6 @@ test("a longer reading comes down so it stays inside the opening", () => {
     const kwhLong = fontFor(id, 8.5, "kWh");
     assert.ok(kwhLong <= kwhShort, `${id}: ${kwhLong} kWh should be at most ${kwhShort}`);
   }
-  assert.ok(fontFor("gauge", 1071, "W") < fontFor("gauge", 985, "W"), "four digits come down on the needle dial");
   assert.ok(
     fontFor("gauge-temperature", 8.5, "kWh") < fontFor("gauge-temperature", 8, "kWh"),
     "the decimal comes down on the semicircle"

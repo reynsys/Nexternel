@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   STEPS, arrangeInRows, currentPanelsPerRow, panelsPerRowChoices,
-  rearrangeForColumns, flowColumnsForWidth, flowCommit, flowGridForWidth, flowLayout, type FlowPanel } from "./flow-layout.ts";
+  rearrangeForColumns, flowColumnsForWidth, flowCommit, flowGridForWidth, flowLayout, flowShape, picturesAcross, type FlowPanel } from "./flow-layout.ts";
 
 // The grid counts widths in steps (six to a square). These tests are written in squares:
 // `p` and `pos` convert, and `sq(n)` is n squares across. D is the older 12-square arrangement.
@@ -183,4 +183,23 @@ test("panels per row: the live Energy dashboard, 3 to a row, fills each row exac
   const five = arrangeInRows(energy, 5, 60);
   assert.deepEqual(five.map((l) => [l.x, l.w]).slice(0, 5), [[0, 12], [12, 12], [24, 12], [36, 12], [48, 12]]);
   assert.deepEqual([five[5]!.x, five[5]!.y], [0, 3]);
+});
+
+test("a panel of cameras puts them under each other on a phone and grows to hold them", () => {
+  const cctv = { i: "cctv", x: 0, y: 0, w: 60, h: 4, pictures: { count: 3, across: 3, aspect: 16 / 9 } };
+  const phone = flowShape(cctv, 24);
+  assert.equal(phone.w, 24);
+  assert.equal(picturesAcross(cctv.pictures, phone.w), 1);
+  // Three 16:9 pictures 4 squares wide need about 2.25 squares each, plus names and the title.
+  assert.ok(phone.h >= 8 && phone.h <= 10, `h=${phone.h}`);
+  // A tablet upright: also 4 squares across, but each about 190 px: two side by side.
+  const tablet = flowShape(cctv, 24, undefined, 190);
+  assert.equal(picturesAcross(cctv.pictures, tablet.w, 190), 2);
+  assert.ok(tablet.h < phone.h, "two rows need less height than three");
+  // A phone with real square sizes (about 90 px): one at a time.
+  assert.equal(picturesAcross(cctv.pictures, 24, 90), 1);
+  // As arranged on a wide screen: unchanged.
+  assert.deepEqual(flowShape(cctv, 60), { w: 60, h: 4 });
+  // Without pictures, the old proportional rule.
+  assert.deepEqual(flowShape({ i: "x", x: 0, y: 0, w: 60, h: 4 }, 24), { w: 24, h: 2 });
 });

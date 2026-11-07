@@ -100,7 +100,7 @@ export function CameraPanel({
   }
 
   return (
-    <PanelItemGrid layout={layout} rowSize="fluid" itemCount={visible.length}>
+    <PanelItemGrid layout={layout} rowSize="fluid" itemCount={visible.length} pictureAspect={16 / 9}>
       {visible.map((cam) => {
         const name = cam.name.trim();
         return (
