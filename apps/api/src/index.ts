@@ -19,6 +19,7 @@ import { ensureUsersRoleSchema } from "./auth/ensure-users-role.js";
 import { ensureUsersThemeSchema } from "./auth/ensure-users-theme.js";
 import { ensureUsersAvatarSchema } from "./auth/ensure-users-avatar.js";
 import { ensureUsersTokenVersionSchema } from "./auth/token-version.js";
+import { ensureOutsideLockSchema } from "./auth/outside-lock.js";
 import { ensureRolesSchema } from "./auth/ensure-roles-schema.js";
 import { ensureAdminFromEnv } from "./auth/ensure-admin.js";
 import { bootstrapInstallationState, getUserCount } from "./installation-meta.js";
@@ -171,6 +172,7 @@ try {
   await ensureUsersThemeSchema();
   await ensureUsersAvatarSchema();
   await ensureUsersTokenVersionSchema();
+  await ensureOutsideLockSchema();
   await ensureRolesSchema();
   await ensureDevicesSchema();
   await ensureActivitySchema();

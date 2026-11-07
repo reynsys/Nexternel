@@ -302,6 +302,7 @@ export type User = {
   permissions?: import("./lib/permissions").RolePermissions;
   themePrefs?: UserThemePrefs;
   avatarData?: string | null;
+  email?: string | null;
 };
 
 export type Health = {
@@ -723,6 +724,7 @@ export const api = {
   patchMe: (body: {
     displayName?: string | null;
     password?: string;
+    email?: string | null;
     themePrefs?: UserThemePrefs;
     avatarData?: string | null;
   }) =>
@@ -1671,6 +1673,7 @@ export const api = {
     role: string;
     themePrefs?: UserThemePrefs;
     avatarData?: string | null;
+    email?: string | null;
   }) =>
     apiFetch<{ user: AdminUser }>("/api/v1/users", {
       method: "POST",
@@ -1686,12 +1689,17 @@ export const api = {
       password?: string;
       themePrefs?: UserThemePrefs;
       avatarData?: string | null;
+      email?: string | null;
     }
   ) =>
     apiFetch<{ user: AdminUser; accessToken?: string; refreshToken?: string }>(`/api/v1/users/${id}`, {
       method: "PATCH",
       body: JSON.stringify(body),
     }).then(keepFreshLogin),
+
+  /** Unlock an account for signing in from outside (after too many wrong passwords). */
+  unlockOutside: (id: string) =>
+    apiFetch<{ ok: boolean; changed: boolean }>(`/api/v1/users/${id}/unlock-outside`, { method: "POST" }),
 
   roles: () => apiFetch<{ roles: RoleDef[] }>("/api/v1/roles"),
 
@@ -2225,6 +2233,9 @@ export type AdminUser = {
   createdAt: string;
   themePrefs?: UserThemePrefs;
   avatarData?: string | null;
+  email?: string | null;
+  /** Locked for signing in from outside after too many wrong passwords. */
+  lockedOutside?: boolean;
 };
 
 export type RoleDef = {

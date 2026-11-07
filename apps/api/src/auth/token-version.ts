@@ -1,5 +1,7 @@
 import { EventEmitter } from "events";
 import { getPool } from "../db.js";
+import { resolveRoleInfo } from "./roles.js";
+import type { RolePermissions } from "./permissions.js";
 
 /**
  * "Sign out everywhere else": every login carries the account's sign-in number (token_version).
@@ -12,7 +14,8 @@ import { getPool } from "../db.js";
  */
 
 const CACHE_MS = 30_000;
-const cache = new Map<string, { version: number; at: number }>();
+type RoleNow = { slug: string; isAdmin: boolean; permissions: RolePermissions };
+const cache = new Map<string, { version: number; at: number; role?: RoleNow }>();
 
 /** Tells open live connections of an account to close (see telemetry/ws.ts). */
 export const signInChanges = new EventEmitter();
@@ -29,15 +32,29 @@ export async function currentTokenVersion(userId: string): Promise<number | null
   const hit = cache.get(userId);
   const now = Date.now();
   if (hit && now - hit.at < CACHE_MS) return hit.version;
-  const res = await getPool().query<{ token_version: number; is_active: boolean }>(
-    `SELECT token_version, is_active FROM users WHERE id = $1 LIMIT 1`,
+  const res = await getPool().query<{ token_version: number; is_active: boolean; role: string }>(
+    `SELECT token_version, is_active, role FROM users WHERE id = $1 LIMIT 1`,
     [userId]
   );
   const row = res.rows[0];
   const version = row && row.is_active ? row.token_version : -1;
-  cache.set(userId, { version, at: now });
+  let role: RoleNow | undefined;
+  if (row && row.is_active) {
+    const info = await resolveRoleInfo(row.role);
+    role = { slug: info.slug, isAdmin: info.isAdmin, permissions: info.permissions };
+  }
+  cache.set(userId, { version, at: now, role });
   if (cache.size > 5_000) cache.delete(cache.keys().next().value!);
   return version < 0 ? null : version;
+}
+
+/**
+ * The account's role as it is now (a login carries the role it had when it was made; a change by
+ * an administrator applies at once, other role edits within 30 s). Null when the account is gone.
+ */
+export async function currentRole(userId: string): Promise<RoleNow | null> {
+  if ((await currentTokenVersion(userId)) === null) return null;
+  return cache.get(userId)?.role ?? null;
 }
 
 /** True when a login made with `version` still counts. Old logins without a number count as 0. */
@@ -55,7 +72,7 @@ export async function raiseTokenVersion(userId: string): Promise<number> {
   );
   const row = res.rows[0];
   const version = row ? row.token_version : 0;
-  cache.set(userId, { version: row && row.is_active ? version : -1, at: Date.now() });
+  cache.delete(userId);
   signInChanges.emit("changed", userId);
   return version;
 }

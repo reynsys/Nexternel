@@ -1,7 +1,7 @@
 import type { FastifyPluginAsync } from "fastify";
 import { requirePermission } from "../auth/rbac.js";
-import { signPassToken, verifyPassToken } from "../auth/tokens.js";
-import { getPool } from "../db.js";
+import { readPassToken, signPassToken } from "../auth/tokens.js";
+import { currentTokenVersion, isLoginCurrent } from "../auth/token-version.js";
 
 /**
  * The ESPHome page (port 6052) is reached only through Caddy, which asks here first. Nexternel's
@@ -14,7 +14,8 @@ const PASS_HOURS = 12;
 export const esphomeGateRoutes: FastifyPluginAsync = async (app) => {
   app.post("/api/v1/esphome/access", async (request, reply) => {
     if (!requirePermission(request, reply, "editDevices")) return;
-    const token = await signPassToken(request.user!.id, "esphome", `${PASS_HOURS}h`);
+    const version = (await currentTokenVersion(request.user!.id)) ?? 0;
+    const token = await signPassToken(request.user!.id, "esphome", `${PASS_HOURS}h`, version);
     // Not "secure": the ESPHome page is plain http on the home network even when Nexternel is https.
     reply.setCookie(ESPHOME_PASS_COOKIE, token, { httpOnly: true, sameSite: "lax", path: "/", maxAge: PASS_HOURS * 3600 });
     return { ok: true };
@@ -23,9 +24,9 @@ export const esphomeGateRoutes: FastifyPluginAsync = async (app) => {
   /** Caddy's question for every request to the ESPHome page: 200 lets it through. */
   app.get("/api/v1/esphome/gate", async (request, reply) => {
     const token = request.cookies?.[ESPHOME_PASS_COOKIE];
-    const userId = token ? await verifyPassToken(token, "esphome") : null;
-    // The person must still exist and be active (a pass ends when the account is switched off).
-    const ok = userId ? (await getPool().query(`SELECT 1 FROM users WHERE id = $1 AND COALESCE(is_active, TRUE)`, [userId])).rowCount : 0;
+    const pass = token ? await readPassToken(token, "esphome") : null;
+    // The account must still be active and not signed out everywhere since the pass was given.
+    const ok = pass ? await isLoginCurrent(pass.userId, pass.tokenVersion) : false;
     if (ok) return reply.code(200).send("");
     const host = String(request.headers["x-forwarded-host"] ?? request.headers.host ?? "").replace(/:\d+$/, "");
     return reply

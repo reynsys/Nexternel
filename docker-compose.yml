@@ -142,7 +142,9 @@ services:
       - default
       - plugins
     ports:
-      - "${API_PORT:-4000}:4000"
+      # Only this server (update and install checks). Screens reach the API through the page
+      # server, so the login rules and the visitor's address apply to every request.
+      - "127.0.0.1:${API_PORT:-4000}:4000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -213,7 +215,9 @@ services:
     volumes:
       - ./go2rtc:/config
     ports:
-      - "${GO2RTC_PORT:-1984}:1984"
+      # Only this server. go2rtc has no login of its own; screens watch cameras through the page
+      # server (/go2rtc/), which lets only the video through and only after a login check.
+      - "127.0.0.1:${GO2RTC_PORT:-1984}:1984"
 
   # Plugins run here, each as its own user. On its own network, the only Nexternel service
   # it can reach is the API's plugin doorway (plus the home network and internet).

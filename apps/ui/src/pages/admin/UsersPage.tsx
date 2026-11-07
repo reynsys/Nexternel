@@ -4,6 +4,7 @@ import {
   Avatar,
   Button,
   Card,
+  Chip,
   CardContent,
   Dialog,
   DialogActions,
@@ -74,6 +75,7 @@ export function UsersPage() {
   const [role, setRole] = useState("viewer");
   const [isActive, setIsActive] = useState(true);
   const [editPassword, setEditPassword] = useState("");
+  const [email, setEmail] = useState("");
   const [avatarData, setAvatarData] = useState<string | null>(null);
   const [theme, setTheme] = useState<ThemePrefs>(DEFAULT_THEME_PREFS);
   const [skinId, setSkinId] = useState("mui-dashboard");
@@ -100,6 +102,7 @@ export function UsersPage() {
     setUsername("");
     setPassword("");
     setDisplayName("");
+    setEmail("");
     setRole(roles.find((r) => r.slug === "viewer")?.slug ?? roles[0]?.slug ?? "viewer");
     setAvatarData(null);
     setTheme({ ...DEFAULT_THEME_PREFS });
@@ -113,6 +116,7 @@ export function UsersPage() {
     setRole(u.role);
     setIsActive(u.isActive);
     setEditPassword("");
+    setEmail(u.email ?? "");
     setAvatarData(u.avatarData ?? null);
     const p = prefsFromUser(u);
     setTheme(p.theme);
@@ -143,6 +147,7 @@ export function UsersPage() {
         role,
         themePrefs: themePayload(),
         avatarData,
+        email: email.trim() || null,
       });
       setAddOpen(false);
       await load();
@@ -164,6 +169,7 @@ export function UsersPage() {
         isActive,
         themePrefs: themePayload(),
         avatarData,
+        email: email.trim() || null,
         ...(editPassword.trim() ? { password: editPassword.trim() } : {}),
       });
       maybeRefreshShell(editUser.id);
@@ -183,6 +189,15 @@ export function UsersPage() {
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Update failed");
+    }
+  }
+
+  async function unlock(u: AdminUser) {
+    try {
+      await api.unlockOutside(u.id);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unlock failed");
     }
   }
 
@@ -236,7 +251,12 @@ export function UsersPage() {
                       >
                         {userInitial(u)}
                       </Avatar>
-                      <Typography variant="body2">{u.username}</Typography>
+                      <Stack spacing={0.5} alignItems="flex-start">
+                        <Typography variant="body2">{u.username}</Typography>
+                        {u.lockedOutside && (
+                          <Chip size="small" color="error" variant="outlined" label="Locked from outside" />
+                        )}
+                      </Stack>
                     </Stack>
                   </TableCell>
                   <TableCell>{u.displayName ?? "—"}</TableCell>
@@ -265,9 +285,16 @@ export function UsersPage() {
                     <Switch checked={u.isActive} onChange={() => void toggleActive(u)} />
                   </TableCell>
                   <TableCell align="right">
-                    <Button size="small" onClick={() => openEdit(u)}>
-                      Edit
-                    </Button>
+                    <ButtonRow direction="row" sx={{ justifyContent: "flex-end" }}>
+                      {u.lockedOutside && (
+                        <Button size="small" color="error" variant="outlined" onClick={() => void unlock(u)}>
+                          Unlock
+                        </Button>
+                      )}
+                      <Button size="small" onClick={() => openEdit(u)}>
+                        Edit
+                      </Button>
+                    </ButtonRow>
                   </TableCell>
                 </TableRow>
               ))}
@@ -301,7 +328,15 @@ export function UsersPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 fullWidth
-                helperText="At least 6 characters"
+                helperText="At least 12 characters. A few words in a row are easy to remember."
+              />
+              <TextField
+                label="Email (optional)"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                fullWidth
+                helperText="For warnings and the unlock link, if this account gets locked from outside"
               />
               <TextField
                 label="Display name"
@@ -399,7 +434,15 @@ export function UsersPage() {
                 value={editPassword}
                 onChange={(e) => setEditPassword(e.target.value)}
                 fullWidth
-                helperText="Leave blank to keep the current password"
+                helperText="Leave blank to keep the current password. At least 12 characters."
+              />
+              <TextField
+                label="Email (optional)"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                fullWidth
+                helperText="For warnings and the unlock link, if this account gets locked from outside"
               />
               <FormControlLabel
                 control={

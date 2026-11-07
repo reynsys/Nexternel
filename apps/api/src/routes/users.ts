@@ -13,6 +13,8 @@ import { resolveRoleInfo } from "../auth/roles.js";
 import { forgetTokenVersion, raiseTokenVersion } from "../auth/token-version.js";
 import { tokensFor } from "../auth/issue-tokens.js";
 import { setAuthCookies } from "../auth/plugin.js";
+import { parseEmail, unlockOutside } from "../auth/outside-lock.js";
+import { passwordProblem } from "../auth/password-rules.js";
 
 type UserRow = {
   id: string;
@@ -23,6 +25,8 @@ type UserRow = {
   created_at: Date;
   theme_prefs?: unknown;
   avatar_data?: string | null;
+  email?: string | null;
+  outside_locked_at?: Date | null;
 };
 
 async function mapUser(u: UserRow) {
@@ -38,6 +42,8 @@ async function mapUser(u: UserRow) {
     createdAt: u.created_at.toISOString(),
     themePrefs: themePrefsFromDb(u.theme_prefs),
     avatarData: u.avatar_data ?? null,
+    email: u.email ?? null,
+    lockedOutside: Boolean(u.outside_locked_at),
   };
 }
 
@@ -45,7 +51,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
   app.get("/api/v1/users", async (request, reply) => {
     if (!requirePermission(request, reply, "manageUsers")) return;
     const result = await getPool().query<UserRow>(
-      `SELECT id, username, display_name, is_active, role, created_at, theme_prefs, avatar_data
+      `SELECT id, username, display_name, is_active, role, created_at, theme_prefs, avatar_data, email, outside_locked_at
        FROM users
        ORDER BY username ASC`
     );
@@ -61,6 +67,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       role?: string;
       themePrefs?: ThemePrefsDto;
       avatarData?: string | null;
+      email?: string | null;
     };
   }>("/api/v1/users", async (request, reply) => {
     if (!requirePermission(request, reply, "manageUsers")) return;
@@ -111,22 +118,22 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
         },
       });
     }
-    if (password.length < 6) {
-      return reply.code(400).send({
-        error: {
-          code: "bad_request",
-          message: "password must be at least 6 characters",
-        },
-      });
+    const problem = passwordProblem(password, username);
+    if (problem) {
+      return reply.code(400).send({ error: { code: "weak_password", message: problem } });
+    }
+    const email = parseEmail(request.body?.email);
+    if (email === undefined && request.body?.email !== undefined) {
+      return reply.code(400).send({ error: { code: "bad_request", message: "That email address does not look right." } });
     }
 
     const hash = await hashPassword(password);
     try {
       const result = await getPool().query<UserRow>(
-        `INSERT INTO users (username, password_hash, display_name, role, is_active, theme_prefs, avatar_data)
-         VALUES ($1, $2, $3, $4, TRUE, $5::jsonb, $6)
-         RETURNING id, username, display_name, is_active, role, created_at, theme_prefs, avatar_data`,
-        [username, hash, displayName, role, JSON.stringify(themePrefs), avatarData]
+        `INSERT INTO users (username, password_hash, display_name, role, is_active, theme_prefs, avatar_data, email)
+         VALUES ($1, $2, $3, $4, TRUE, $5::jsonb, $6, $7)
+         RETURNING id, username, display_name, is_active, role, created_at, theme_prefs, avatar_data, email, outside_locked_at`,
+        [username, hash, displayName, role, JSON.stringify(themePrefs), avatarData, email ?? null]
       );
       return { user: await mapUser(result.rows[0]) };
     } catch (err) {
@@ -149,12 +156,13 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       password?: string;
       themePrefs?: ThemePrefsDto;
       avatarData?: string | null;
+      email?: string | null;
     };
   }>("/api/v1/users/:id", async (request, reply) => {
     if (!requirePermission(request, reply, "manageUsers")) return;
     const id = request.params.id;
     const existing = await getPool().query<DbUser>(
-      `SELECT id, username, password_hash, display_name, is_active, role, theme_prefs, avatar_data
+      `SELECT id, username, password_hash, display_name, is_active, role, theme_prefs, avatar_data, email
        FROM users WHERE id = $1 LIMIT 1`,
       [id]
     );
@@ -191,13 +199,9 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       isActive = request.body.isActive;
     }
     if (request.body?.password) {
-      if (request.body.password.length < 6) {
-        return reply.code(400).send({
-          error: {
-            code: "bad_request",
-            message: "password must be at least 6 characters",
-          },
-        });
+      const problem = passwordProblem(request.body.password, existing.rows[0].username);
+      if (problem) {
+        return reply.code(400).send({ error: { code: "weak_password", message: problem } });
       }
       passwordHash = await hashPassword(request.body.password);
     }
@@ -227,6 +231,15 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       avatarData = parsed ?? null;
     }
 
+    let email = (existing.rows[0] as { email?: string | null }).email ?? null;
+    if (request.body?.email !== undefined) {
+      const parsed = parseEmail(request.body.email);
+      if (parsed === undefined) {
+        return reply.code(400).send({ error: { code: "bad_request", message: "That email address does not look right." } });
+      }
+      email = parsed;
+    }
+
     const nextRoleInfo = await resolveRoleInfo(role);
     // Prevent locking yourself out of admin privileges
     if (
@@ -244,9 +257,9 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
     const result = await getPool().query<UserRow>(
       `UPDATE users
        SET display_name = $2, role = $3, is_active = $4, password_hash = $5,
-           theme_prefs = $6::jsonb, avatar_data = $7, updated_at = NOW()
+           theme_prefs = $6::jsonb, avatar_data = $7, email = $8, updated_at = NOW()
        WHERE id = $1
-       RETURNING id, username, display_name, is_active, role, created_at, theme_prefs, avatar_data`,
+       RETURNING id, username, display_name, is_active, role, created_at, theme_prefs, avatar_data, email, outside_locked_at`,
       [
         id,
         displayName,
@@ -255,6 +268,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
         passwordHash,
         JSON.stringify(themePrefs),
         avatarData,
+        email,
       ]
     );
     // A new password set by an administrator, or switching the account off, signs it out everywhere.
@@ -270,5 +284,13 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       forgetTokenVersion(id);
     }
     return { user: await mapUser(result.rows[0]) };
+  });
+
+  /** Unlock an account for signing in from outside (after too many wrong passwords). */
+  app.post<{ Params: { id: string } }>("/api/v1/users/:id/unlock-outside", async (request, reply) => {
+    if (!requirePermission(request, reply, "manageUsers")) return;
+    const changed = await unlockOutside(request.params.id);
+    request.log.info({ userId: request.params.id, by: request.user!.username, changed }, "unlocked for outside");
+    return { ok: true, changed };
   });
 };

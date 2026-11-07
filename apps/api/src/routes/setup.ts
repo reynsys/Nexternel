@@ -1,3 +1,4 @@
+import { passwordProblem } from "../auth/password-rules.js";
 import type { FastifyPluginAsync } from "fastify";
 import { getPool } from "../db.js";
 import { hashPassword, signAccessToken, signRefreshToken } from "../auth/tokens.js";
@@ -124,10 +125,9 @@ export const setupRoutes: FastifyPluginAsync = async (app) => {
         error: { code: "bad_request", message: "Username must be at least 2 characters." },
       });
     }
-    if (!password || password.length < 8) {
-      return reply.code(400).send({
-        error: { code: "bad_request", message: "Password must be at least 8 characters." },
-      });
+    const problem = passwordProblem(password ?? "", username ?? "");
+    if (problem) {
+      return reply.code(400).send({ error: { code: "weak_password", message: problem } });
     }
     if (password !== confirmPassword) {
       return reply.code(400).send({

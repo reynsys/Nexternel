@@ -19,7 +19,9 @@ import {
 } from "../auth/theme-prefs.js";
 import { parseAvatarInput } from "../auth/avatar.js";
 import { resolveRoleInfo } from "../auth/roles.js";
-import { loginGuard, waitText } from "../auth/login-guard.js";
+import { isHomeAddress, loginGuard, waitText } from "../auth/login-guard.js";
+import { clearOutsideFails, OUTSIDE_LOCK_AFTER, OUTSIDE_WARN_AT, parseEmail, recordOutsideFail } from "../auth/outside-lock.js";
+import { isStrongPassword, passwordProblem } from "../auth/password-rules.js";
 import { raiseTokenVersion } from "../auth/token-version.js";
 import { tokensFor } from "../auth/issue-tokens.js";
 import { addNotification } from "../notifications/service.js";
@@ -31,7 +33,35 @@ function wrongNameHash() {
   return dummyHash;
 }
 
-type AuthUserRow = DbUser & { theme_prefs?: unknown; avatar_data?: string | null; token_version?: number };
+/** Count a wrong password from outside; the bell says so at the warning and when it locks. */
+async function warnOutsideFail(userId: string, username: string, ip: string) {
+  const { fails, justLocked } = await recordOutsideFail(userId);
+  const name = username.slice(0, 60);
+  if (justLocked) {
+    await addNotification({
+      source: "system",
+      sourceName: "Nexternel",
+      level: "alert",
+      title: `"${name}" is locked for signing in from outside`,
+      body:
+        `Someone outside the home typed ${OUTSIDE_LOCK_AFTER} wrong passwords for this account. ` +
+        "Nobody can sign in with it from outside until it is unlocked in Users (or with the email link). " +
+        `At home it still works. Last try came from ${ip}.`,
+    }).catch(() => undefined);
+  } else if (fails === OUTSIDE_WARN_AT) {
+    await addNotification({
+      source: "system",
+      sourceName: "Nexternel",
+      level: "warning",
+      title: `Someone outside is trying to sign in as "${name}"`,
+      body:
+        `${fails} wrong passwords from outside the home. After ${OUTSIDE_LOCK_AFTER}, the account is locked for ` +
+        `signing in from outside. Last try came from ${ip}. If this was not you, change the password.`,
+    }).catch(() => undefined);
+  }
+}
+
+type AuthUserRow = DbUser & { theme_prefs?: unknown; avatar_data?: string | null; token_version?: number; email?: string | null };
 
 async function mapAuthUser(user: AuthUserRow) {
   const roleInfo = await resolveRoleInfo(user.role);
@@ -45,6 +75,7 @@ async function mapAuthUser(user: AuthUserRow) {
     permissions: roleInfo.permissions,
     themePrefs: themePrefsFromDb(user.theme_prefs),
     avatarData: user.avatar_data ?? null,
+    email: user.email ?? null,
   };
 }
 
@@ -71,7 +102,8 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
       }
 
       const ip = request.ip;
-      const allowed = loginGuard.check(ip, username);
+      const fromOutside = !isHomeAddress(ip);
+      const allowed = loginGuard.check(ip);
       if (!allowed.ok) {
         reply.header("Retry-After", String(Math.ceil(allowed.retryAfterMs / 1000)));
         return reply.code(429).send({
@@ -82,35 +114,54 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
         });
       }
 
-      const result = await getPool().query<AuthUserRow>(
-        `SELECT id, username, password_hash, display_name, is_active, role, theme_prefs, avatar_data, token_version
+      const result = await getPool().query<AuthUserRow & { outside_locked_at: Date | null }>(
+        `SELECT id, username, password_hash, display_name, is_active, role, theme_prefs, avatar_data, token_version, email,
+                outside_locked_at
          FROM users WHERE username = $1 LIMIT 1`,
         [username]
       );
       const user = result.rows[0];
+
+      // Locked from outside: refused whether the password is right or not, so it cannot be tested.
+      if (fromOutside && user?.outside_locked_at) {
+        request.log.warn({ username, ip }, "login refused: locked from outside");
+        return reply.code(423).send({
+          error: {
+            code: "locked_outside",
+            message:
+              "This account is locked for signing in from outside, after too many wrong passwords. " +
+              "Use the unlock link in the email Nexternel sent, or ask your home's administrator to unlock it in Users.",
+          },
+        });
+      }
+
       const valid = user && user.is_active
         ? await verifyPassword(password, user.password_hash)
         : (await verifyPassword(password, await wrongNameHash()), false);
       if (!user || !valid) {
-        const { namePaused } = loginGuard.fail(ip, username);
+        loginGuard.fail(ip);
         request.log.warn({ username, ip }, "login refused: wrong name or password");
-        if (namePaused) {
-          void addNotification({
-            source: "system",
-            sourceName: "Nexternel",
-            level: "warning",
-            title: `Signing in as "${username.slice(0, 60)}" from outside is paused`,
-            body:
-              "Someone outside the home typed many wrong passwords for this name. " +
-              "Signing in with it from outside is paused for 15 minutes. At home it still works. " +
-              `Last try came from ${ip}.`,
-          }).catch(() => undefined);
-        }
+        if (fromOutside && user) await warnOutsideFail(user.id, user.username, ip);
         return reply.code(401).send({
           error: { code: "invalid_credentials", message: "Invalid credentials" },
         });
       }
       loginGuard.succeed(ip);
+
+      if (fromOutside) {
+        await clearOutsideFails(user.id);
+        // Without the second check, signing in from outside needs a strong password.
+        if (!isStrongPassword(password, user.username)) {
+          return reply.code(403).send({
+            error: {
+              code: "password_too_weak_outside",
+              message:
+                "Your password is too simple for signing in from outside the home. " +
+                "Sign in at home and choose a new one (at least 12 characters) in My profile.",
+            },
+          });
+        }
+      }
 
       const { roleInfo, accessToken, refreshToken } = await tokensFor(user);
 
@@ -172,7 +223,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
     }
 
     const result = await getPool().query<AuthUserRow>(
-      `SELECT id, username, password_hash, display_name, is_active, role, theme_prefs, avatar_data, token_version
+      `SELECT id, username, password_hash, display_name, is_active, role, theme_prefs, avatar_data, token_version, email
        FROM users WHERE id = $1 LIMIT 1`,
       [payload.userId]
     );
@@ -204,7 +255,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
   app.get("/api/v1/auth/me", async (request, reply) => {
     if (!requireUser(request, reply)) return;
     const result = await getPool().query<AuthUserRow>(
-      `SELECT id, username, password_hash, display_name, is_active, role, theme_prefs, avatar_data, token_version
+      `SELECT id, username, password_hash, display_name, is_active, role, theme_prefs, avatar_data, token_version, email
        FROM users WHERE id = $1 LIMIT 1`,
       [request.user!.id]
     );
@@ -224,12 +275,13 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
       password?: string;
       themePrefs?: ThemePrefsDto;
       avatarData?: string | null;
+      email?: string | null;
     };
   }>("/api/v1/auth/me", async (request, reply) => {
     if (!requireUser(request, reply)) return;
     const id = request.user!.id;
     const existing = await getPool().query<AuthUserRow>(
-      `SELECT id, username, password_hash, display_name, is_active, role, theme_prefs, avatar_data, token_version
+      `SELECT id, username, password_hash, display_name, is_active, role, theme_prefs, avatar_data, token_version, email
        FROM users WHERE id = $1 LIMIT 1`,
       [id]
     );
@@ -244,19 +296,23 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
     let passwordHash = user.password_hash;
     let themePrefs = themePrefsFromDb(user.theme_prefs);
     let avatarData = user.avatar_data ?? null;
+    let email = user.email ?? null;
+    if (request.body?.email !== undefined) {
+      const parsed = parseEmail(request.body.email);
+      if (parsed === undefined) {
+        return reply.code(400).send({ error: { code: "bad_request", message: "That email address does not look right." } });
+      }
+      email = parsed;
+    }
 
     if (request.body?.displayName !== undefined) {
       const v = request.body.displayName;
       displayName = typeof v === "string" ? v.trim() || null : null;
     }
     if (request.body?.password) {
-      if (request.body.password.length < 6) {
-        return reply.code(400).send({
-          error: {
-            code: "bad_request",
-            message: "password must be at least 6 characters",
-          },
-        });
+      const problem = passwordProblem(request.body.password, user.username);
+      if (problem) {
+        return reply.code(400).send({ error: { code: "weak_password", message: problem } });
       }
       passwordHash = await hashPassword(request.body.password);
     }
@@ -289,10 +345,10 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
     const result = await getPool().query<AuthUserRow>(
       `UPDATE users
        SET display_name = $2, password_hash = $3, theme_prefs = $4::jsonb,
-           avatar_data = $5, updated_at = NOW()
+           avatar_data = $5, email = $6, updated_at = NOW()
        WHERE id = $1
-       RETURNING id, username, password_hash, display_name, is_active, role, theme_prefs, avatar_data, token_version`,
-      [id, displayName, passwordHash, JSON.stringify(themePrefs), avatarData]
+       RETURNING id, username, password_hash, display_name, is_active, role, theme_prefs, avatar_data, token_version, email`,
+      [id, displayName, passwordHash, JSON.stringify(themePrefs), avatarData, email]
     );
     const saved = result.rows[0];
     if (request.body?.password) {
@@ -310,7 +366,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
     if (!requireUser(request, reply)) return;
     const version = await raiseTokenVersion(request.user!.id);
     const res = await getPool().query<AuthUserRow>(
-      `SELECT id, username, password_hash, display_name, is_active, role, theme_prefs, avatar_data, token_version
+      `SELECT id, username, password_hash, display_name, is_active, role, theme_prefs, avatar_data, token_version, email
        FROM users WHERE id = $1 LIMIT 1`,
       [request.user!.id]
     );

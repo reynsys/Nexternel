@@ -9,7 +9,7 @@ import {
   type AuthRole,
   type TokenPayload,
 } from "./tokens.js";
-import { isLoginCurrent } from "./token-version.js";
+import { currentRole, isLoginCurrent } from "./token-version.js";
 import type { RolePermissions } from "./permissions.js";
 
 export type RequestUser = {
@@ -69,12 +69,14 @@ export async function attachUser(request: FastifyRequest) {
         request.authDebugFailures.push(`${source}:signed_out`);
         continue;
       }
+      // The role as it is now, not as it was when this login was made.
+      const role = await currentRole(result.payload.userId);
       request.user = {
         id: result.payload.userId,
         username: result.payload.username,
-        role: result.payload.role,
-        isAdmin: result.payload.isAdmin,
-        permissions: result.payload.permissions,
+        role: role?.slug ?? result.payload.role,
+        isAdmin: role?.isAdmin ?? result.payload.isAdmin,
+        permissions: role?.permissions ?? result.payload.permissions,
       };
       return;
     }

@@ -10,6 +10,7 @@ apps/api/src/addons/licence.test.ts
 apps/api/src/addons/licence.ts
 apps/api/src/addons/service.ts
 apps/api/src/auth/avatar.ts
+apps/api/src/auth/common-passwords.ts
 apps/api/src/auth/ensure-admin.ts
 apps/api/src/auth/ensure-roles-schema.ts
 apps/api/src/auth/ensure-users-avatar.ts
@@ -18,6 +19,9 @@ apps/api/src/auth/ensure-users-theme.ts
 apps/api/src/auth/issue-tokens.ts
 apps/api/src/auth/login-guard.test.ts
 apps/api/src/auth/login-guard.ts
+apps/api/src/auth/outside-lock.ts
+apps/api/src/auth/password-rules.test.ts
+apps/api/src/auth/password-rules.ts
 apps/api/src/auth/permissions.ts
 apps/api/src/auth/plugin.ts
 apps/api/src/auth/rbac.ts

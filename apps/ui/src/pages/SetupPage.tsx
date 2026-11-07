@@ -100,8 +100,8 @@ export function SetupPage() {
   async function onCreateAdmin(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
+    if (password.length < 12) {
+      setError("The password must be at least 12 characters long.");
       return;
     }
     if (password !== confirmPassword) {

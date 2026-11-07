@@ -2,6 +2,18 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.197
+
+- Locked from outside: after 5 wrong passwords for an account from outside the home, nobody can sign in with it from outside until it is unlocked. Waiting does not undo it; only a right sign-in from outside starts the count again. While it is locked, even the right password is refused from outside, so it cannot be tested. At home it still works, so wall screens keep working.
+- The bell warns after 3 wrong passwords from outside ("Someone outside is trying to sign in as …") and again when the account is locked.
+- Users: a locked account shows "Locked from outside" and an Unlock button for the home's administrator. Accounts can have an email address (optional), for the warnings and an unlock link once Nexternel can send emails.
+- Stronger passwords: new passwords need at least 12 characters, and the most common passwords are refused (also with numbers or signs added, like "Password1234!"). Existing passwords keep working at home; signing in from outside needs a password that meets the new rules.
+- My profile: everyone can now change their own password and add their email address there.
+- Cameras: the video now opens only for someone signed in to Nexternel who opened that camera. Before, anyone on the home Wi‑Fi could open the camera service directly, without a password, and see the list of cameras with their own passwords; that service could also be told to run commands. Now only the video itself passes, nothing else.
+- The server's internal service ports (4000 for Nexternel's API, 1984 for cameras) are closed to the home network; only the server itself uses them. Screens reach everything through the normal address, so the sign-in rules apply to every request. Camera and doorbell apps (for example the maker's own phone app) are not affected: they talk to the cameras or recorder, not to the Nexternel server.
+- A role change in Users applies at once (before, a signed-in screen kept its old role for up to 15 minutes). "Sign out everywhere else" and a new password also end the passes for ESPHome and camera video.
+- Version numbers: the middle number now counts major updates that bring new features (it used to stand for hardware). The next one, Nexternel Anywhere, will be V5.3.0.
+
 ## V5.2.196
 
 - Signing in is safer, ready for Nexternel Anywhere. After 5 wrong passwords from the same place, each new try has to wait (30 seconds, then longer each time, up to 15 minutes). Before, every screen counted as the same visitor, so one person guessing could block everyone.

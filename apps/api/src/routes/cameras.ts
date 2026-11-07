@@ -1,3 +1,6 @@
+import { readPassToken, signPassToken } from "../auth/tokens.js";
+import { currentTokenVersion, isLoginCurrent } from "../auth/token-version.js";
+import { config } from "../config.js";
 import type { FastifyPluginAsync, FastifyRequest } from "fastify";
 import { requirePermission } from "../auth/rbac.js";
 import { VIEWER_PERMISSIONS } from "../auth/permissions.js";
@@ -41,6 +44,9 @@ function num(v: unknown): number | undefined {
   return undefined;
 }
 
+const CAMERA_PASS_COOKIE = "nx_camera";
+const CAMERA_PASS_HOURS = 12;
+
 export const camerasRoutes: FastifyPluginAsync = async (app) => {
   app.get("/api/v1/cameras/presets", async (request, reply) => {
     if (!requirePermission(request, reply, "viewDevices")) return;
@@ -79,7 +85,28 @@ export const camerasRoutes: FastifyPluginAsync = async (app) => {
         error: { code: "disabled", message: "Camera is disabled" },
       });
     }
+    // The video itself comes through the page server (/go2rtc/), which asks /cameras/gate first.
+    const version = (await currentTokenVersion(request.user!.id)) ?? 0;
+    const pass = await signPassToken(request.user!.id, "camera", `${CAMERA_PASS_HOURS}h`, version);
+    reply.setCookie(CAMERA_PASS_COOKIE, pass, {
+      httpOnly: true,
+      secure: config.cookieSecure,
+      sameSite: "lax",
+      path: "/go2rtc/",
+      maxAge: CAMERA_PASS_HOURS * 3600,
+    });
     return { play };
+  });
+
+  /**
+   * The page server's question before any camera video: 204 lets it through. Only someone who
+   * opened a camera in Nexternel (allowed to see devices, still signed in) has the pass.
+   */
+  app.get("/api/v1/cameras/gate", async (request, reply) => {
+    const token = request.cookies?.[CAMERA_PASS_COOKIE];
+    const pass = token ? await readPassToken(token, "camera") : null;
+    if (pass && (await isLoginCurrent(pass.userId, pass.tokenVersion))) return reply.code(204).send();
+    return reply.code(401).send();
   });
 
   app.post("/api/v1/cameras", async (request, reply) => {

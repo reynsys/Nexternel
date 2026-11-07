@@ -20,6 +20,9 @@ export function ProfileSection() {
   const { user } = useShellAuth();
   const [displayName, setDisplayName] = useState("");
   const [avatarData, setAvatarData] = useState<string | null>(null);
+  const [email, setEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [repeatPassword, setRepeatPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -43,6 +46,7 @@ export function ProfileSection() {
     if (!user) return;
     setDisplayName(user.displayName ?? "");
     setAvatarData(user.avatarData ?? null);
+    setEmail(user.email ?? "");
   }, [user]);
 
   async function onSave(e: FormEvent) {
@@ -50,13 +54,22 @@ export function ProfileSection() {
     setBusy(true);
     setMsg(null);
     setErr(null);
+    if (newPassword && newPassword !== repeatPassword) {
+      setErr("The two new passwords are not the same.");
+      setBusy(false);
+      return;
+    }
     try {
       await api.patchMe({
         displayName: displayName.trim() || null,
         avatarData,
+        email: email.trim() || null,
+        ...(newPassword ? { password: newPassword } : {}),
       });
       notifyUserUpdated();
-      setMsg("Profile saved.");
+      setMsg(newPassword ? "Profile and new password saved. Other screens signed in as you have to sign in again." : "Profile saved.");
+      setNewPassword("");
+      setRepeatPassword("");
     } catch (error) {
       setErr(error instanceof Error ? error.message : "Save failed");
     } finally {
@@ -90,6 +103,33 @@ export function ProfileSection() {
             fullWidth
             helperText="Shown next to your name in the side menu"
           />
+          <TextField
+            label="Email (optional)"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            fullWidth
+            helperText="For warnings and the unlock link, if your account gets locked from outside"
+          />
+          <TextField
+            label="New password"
+            type="password"
+            autoComplete="new-password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            fullWidth
+            helperText="Leave blank to keep your password. At least 12 characters; a few words in a row are easy to remember."
+          />
+          {newPassword && (
+            <TextField
+              label="New password again"
+              type="password"
+              autoComplete="new-password"
+              value={repeatPassword}
+              onChange={(e) => setRepeatPassword(e.target.value)}
+              fullWidth
+            />
+          )}
           {err && <Alert severity="error">{err}</Alert>}
           {msg && <Alert severity="success">{msg}</Alert>}
           <Button type="submit" variant="contained" disabled={busy} sx={{ alignSelf: "flex-start" }}>

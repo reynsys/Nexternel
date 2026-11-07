@@ -25,16 +25,21 @@ function secretKey() {
   return new TextEncoder().encode(config.jwtSecret());
 }
 
-/** A short-lived pass for one purpose (e.g. "esphome": opening the ESPHome page through Caddy). */
-export async function signPassToken(userId: string, scope: string, ttl: string): Promise<string> {
-  return new SignJWT({ tokenType: "pass", scope }).setProtectedHeader({ alg: "HS256" }).setSubject(userId).setIssuedAt().setExpirationTime(ttl).sign(secretKey());
+/**
+ * A short-lived pass for one purpose (e.g. "esphome": opening the ESPHome page through Caddy;
+ * "camera": watching camera video). It carries the account's sign-in number, so "Sign out
+ * everywhere else" and a new password end it too (checked with isLoginCurrent).
+ */
+export async function signPassToken(userId: string, scope: string, ttl: string, tokenVersion = 0): Promise<string> {
+  return new SignJWT({ tokenType: "pass", scope, tv: tokenVersion }).setProtectedHeader({ alg: "HS256" }).setSubject(userId).setIssuedAt().setExpirationTime(ttl).sign(secretKey());
 }
 
-/** The user id of a valid pass for `scope`, else null. */
-export async function verifyPassToken(token: string, scope: string): Promise<string | null> {
+/** The account and sign-in number of a valid pass for `scope`, else null. */
+export async function readPassToken(token: string, scope: string): Promise<{ userId: string; tokenVersion: number } | null> {
   try {
     const { payload } = await jwtVerify(token, secretKey());
-    return payload.tokenType === "pass" && payload.scope === scope && typeof payload.sub === "string" ? payload.sub : null;
+    if (payload.tokenType !== "pass" || payload.scope !== scope || typeof payload.sub !== "string") return null;
+    return { userId: payload.sub, tokenVersion: typeof payload.tv === "number" ? payload.tv : 0 };
   } catch {
     return null;
   }
