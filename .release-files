@@ -26,10 +26,13 @@ apps/api/src/auth/permissions.ts
 apps/api/src/auth/plugin.ts
 apps/api/src/auth/rbac.ts
 apps/api/src/auth/roles.ts
+apps/api/src/auth/second-check.ts
 apps/api/src/auth/theme-prefs.test.ts
 apps/api/src/auth/theme-prefs.ts
 apps/api/src/auth/tokens.ts
 apps/api/src/auth/token-version.ts
+apps/api/src/auth/totp.test.ts
+apps/api/src/auth/totp.ts
 apps/api/src/backup/collect.ts
 apps/api/src/backup/counts.test.ts
 apps/api/src/backup/counts.ts
@@ -197,6 +200,7 @@ apps/api/src/routes/octopus.ts
 apps/api/src/routes/plugins.ts
 apps/api/src/routes/roles.ts
 apps/api/src/routes/rooms.ts
+apps/api/src/routes/second-check.ts
 apps/api/src/routes/setup.ts
 apps/api/src/routes/shelly.ts
 apps/api/src/routes/system.ts
@@ -505,6 +509,7 @@ apps/ui/src/pages/admin/sections/AutomaticBackupsSection.tsx
 apps/ui/src/pages/admin/sections/BackupRestoreSection.tsx
 apps/ui/src/pages/admin/sections/DeviceFilesPackCard.tsx
 apps/ui/src/pages/admin/sections/ProfileSection.tsx
+apps/ui/src/pages/admin/sections/SecondCheckSection.tsx
 apps/ui/src/pages/admin/settings/ActivityPage.tsx
 apps/ui/src/pages/admin/settings/addon-status.ts
 apps/ui/src/pages/admin/settings/AppearanceSettingsPage.tsx

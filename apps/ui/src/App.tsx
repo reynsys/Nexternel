@@ -284,14 +284,8 @@ export function App() {
               </RequirePermission>
             }
           />
-          <Route
-            path="users"
-            element={
-              <RequirePermission permission="manageUsers">
-                <UsersPage />
-              </RequirePermission>
-            }
-          />
+          {/* Everyone: My profile and Second check; administrators also see all users (UsersPage decides). */}
+          <Route path="users" element={<UsersPage />} />
           <Route
             path="users/roles"
             element={

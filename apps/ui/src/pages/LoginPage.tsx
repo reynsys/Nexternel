@@ -46,6 +46,10 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [cleared, setCleared] = useState(false);
+  // Signing in from outside with the second check on: the password was right, now the code.
+  const [ticket, setTicket] = useState<string | null>(null);
+  const [code, setCode] = useState("");
+  const [trust, setTrust] = useState(true);
   const backdrop = isGradientActive(themePrefs);
 
   async function onSubmit(e: FormEvent) {
@@ -53,13 +57,24 @@ export function LoginPage() {
     setBusy(true);
     setError(null);
     try {
-      const data = await api.login(username.trim(), password, keep);
+      const first = ticket
+        ? await api.loginCode(ticket, code, trust, keep)
+        : await api.login(username.trim(), password, keep);
+      if ("secondCheck" in first) {
+        setTicket(first.ticket);
+        setCode("");
+        return;
+      }
+      const data = first;
       applyAccountPrefs(data.user.themePrefs);
       // Back to the page that asked for signing in (only addresses inside Nexternel).
       const from = (location.state as { from?: string } | null)?.from;
       navigate(from && from.startsWith("/") && !from.startsWith("//") && !from.startsWith("/login") ? from : "/", { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      const msg = err instanceof Error ? err.message : "Login failed";
+      setError(msg);
+      // An expired step starts again from the password.
+      if (ticket && /too long/i.test(msg)) setTicket(null);
     } finally {
       setBusy(false);
     }
@@ -158,6 +173,40 @@ export function LoginPage() {
           </Stack>
           {error && <Alert severity="error">{error}</Alert>}
           {cleared && <Alert severity="success">Saved sign-in forgotten — sign in again.</Alert>}
+          {ticket ? (
+            <>
+              <Typography variant="body2" color="text.secondary">
+                You are signing in from outside the home. Type the 6-digit code from your Authenticator app.
+              </Typography>
+              <TextField
+                label="Code"
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/[^\d ]/g, "").slice(0, 7))}
+                autoComplete="one-time-code"
+                autoFocus
+                required
+                fullWidth
+                disabled={busy}
+                slotProps={{ htmlInput: { inputMode: "numeric", style: { letterSpacing: 6, textAlign: "center" } } }}
+              />
+              <FormControlLabel
+                control={<Checkbox checked={trust} onChange={(e) => setTrust(e.target.checked)} disabled={busy} />}
+                label="Trust this phone: no code next time"
+              />
+              <ButtonRow direction="column" alignItems="stretch">
+                <Button type="submit" variant="contained" size="large" disabled={busy} fullWidth>
+                  {busy ? "Checking…" : "Sign in"}
+                </Button>
+                <Button type="button" variant="outlined" onClick={() => { setTicket(null); setError(null); }} disabled={busy}>
+                  Back to the password
+                </Button>
+              </ButtonRow>
+              <Typography variant="caption" color="text.secondary">
+                Lost your phone? Sign in at home, or ask your home's administrator to turn your second check off in Users.
+              </Typography>
+            </>
+          ) : (
+            <>
           <TextField
             label="Username"
             value={username}
@@ -200,6 +249,8 @@ export function LoginPage() {
           <Button type="submit" variant="contained" size="large" disabled={busy} fullWidth>
             {busy ? "Signing in…" : "Sign in"}
           </Button>
+            </>
+          )}
           <ButtonRow justifyContent="space-between" sx={{ pt: 1.5, borderTop: (t) => `1px solid ${t.nxScheme.line.divider}` }}>
             <Typography variant="caption" color="text.secondary">
               Nexternel {APP_VERSION}

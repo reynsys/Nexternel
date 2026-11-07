@@ -95,6 +95,11 @@ function apiUrl(path: string): string {
   return `${getApiBase()}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
+/** Signing in from outside with the second check on: the password was right, the code comes next. */
+export type SecondCheckAsk = { secondCheck: "app"; ticket: string };
+
+export type TrustedScreen = { id: string; label: string; trustedAt: string; lastUsedAt: string };
+
 type AuthResponse = {
   user: User;
   accessToken?: string;
@@ -700,9 +705,24 @@ export const api = {
   /** keep: stay signed in after the browser closes (else only until this tab is closed). */
   async login(username: string, password: string, keep = true) {
     clearStoredTokens();
-    const data = await apiFetch<AuthResponse>("/api/v1/auth/login", {
+    const data = await apiFetch<AuthResponse | SecondCheckAsk>("/api/v1/auth/login", {
       method: "POST",
       body: JSON.stringify({ username, password }),
+    });
+    // From outside with the second check on: the code comes next (loginCode).
+    if ("secondCheck" in data) return data;
+    if (!data.accessToken || !data.refreshToken) {
+      throw new Error("Login response missing tokens from API");
+    }
+    rememberAuth(data, keep);
+    return data;
+  },
+
+  /** The second step: the code from the Authenticator app. trust: this phone skips the code from now on. */
+  async loginCode(ticket: string, code: string, trust: boolean, keep = true) {
+    const data = await apiFetch<AuthResponse>("/api/v1/auth/login/code", {
+      method: "POST",
+      body: JSON.stringify({ ticket, code, trust }),
     });
     if (!data.accessToken || !data.refreshToken) {
       throw new Error("Login response missing tokens from API");
@@ -710,6 +730,28 @@ export const api = {
     rememberAuth(data, keep);
     return data;
   },
+
+  secondCheck: () =>
+    apiFetch<{ state: "off" | "on" | "broken"; trusted: TrustedScreen[] }>("/api/v1/auth/second-check"),
+
+  secondCheckStart: () =>
+    apiFetch<{ key: string; accountName: string; link: string; qrSvg: string }>("/api/v1/auth/second-check/start", {
+      method: "POST",
+      body: "{}",
+    }),
+
+  secondCheckConfirm: (code: string) =>
+    apiFetch<{ ok: boolean }>("/api/v1/auth/second-check/confirm", { method: "POST", body: JSON.stringify({ code }) }),
+
+  secondCheckOff: (password: string, code?: string) =>
+    apiFetch<{ ok: boolean }>("/api/v1/auth/second-check/off", { method: "POST", body: JSON.stringify({ password, code }) }),
+
+  removeTrustedScreen: (id: string) =>
+    apiFetch<{ ok: boolean }>(`/api/v1/auth/second-check/trusted/${id}`, { method: "DELETE" }),
+
+  /** Administrator: turn off someone's second check (they lost their phone). */
+  userSecondCheckOff: (id: string) =>
+    apiFetch<{ ok: boolean }>(`/api/v1/users/${id}/second-check-off`, { method: "POST", body: "{}" }),
 
   async logout() {
     try {
@@ -2236,6 +2278,8 @@ export type AdminUser = {
   email?: string | null;
   /** Locked for signing in from outside after too many wrong passwords. */
   lockedOutside?: boolean;
+  /** The second check (Authenticator app) is on. */
+  secondCheck?: boolean;
 };
 
 export type RoleDef = {

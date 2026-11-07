@@ -2,6 +2,15 @@
 
 Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
 
+## V5.2.198
+
+- Second check (two-step sign-in), optional, in My profile: when you sign in from outside the home, Nexternel also asks for the 6-digit code from Google or Microsoft Authenticator on your phone. Someone who guesses your password still cannot get in. At home nothing changes.
+- Setting it up on a phone: an "Add to my Authenticator app" button opens the app with Nexternel filled in, and the key can be typed in by hand (with the exact steps for Google and Microsoft, and a Copy button). On a computer, a QR code to scan.
+- "Trust this phone" when signing in: that phone skips the code until it is removed in My profile, goes 90 days unused, or you use Sign out everywhere else or set a new password. Wrong codes count like wrong passwords (5 from outside lock the account from outside). Each code works once.
+- Lost phone: the home's administrator can turn someone's second check off in Users (Edit). A code by email as a back-up comes with Nexternel Anywhere.
+- Every account can now open My profile (Settings → Users), to change their own name, email, password and second check. Before, only administrators could reach it. Other accounts see only their own profile there.
+- Safety updates of parts Nexternel is built on (the web server and two smaller parts).
+
 ## V5.2.197
 
 - Locked from outside: after 5 wrong passwords for an account from outside the home, nobody can sign in with it from outside until it is unlocked. Waiting does not undo it; only a right sign-in from outside starts the count again. While it is locked, even the right password is refused from outside, so it cannot be tested. At home it still works, so wall screens keep working.

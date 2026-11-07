@@ -20,6 +20,8 @@ import { ensureUsersThemeSchema } from "./auth/ensure-users-theme.js";
 import { ensureUsersAvatarSchema } from "./auth/ensure-users-avatar.js";
 import { ensureUsersTokenVersionSchema } from "./auth/token-version.js";
 import { ensureOutsideLockSchema } from "./auth/outside-lock.js";
+import { ensureSecondCheckSchema } from "./auth/second-check.js";
+import { secondCheckRoutes } from "./routes/second-check.js";
 import { ensureRolesSchema } from "./auth/ensure-roles-schema.js";
 import { ensureAdminFromEnv } from "./auth/ensure-admin.js";
 import { bootstrapInstallationState, getUserCount } from "./installation-meta.js";
@@ -131,6 +133,7 @@ await app.register(async (api) => {
   await api.register(healthRoutes);
   await api.register(diagnosticsRoutes);
   await api.register(authRoutes);
+  await api.register(secondCheckRoutes);
   await api.register(roomsRoutes);
   await api.register(devicesRoutes);
   await api.register(camerasRoutes);
@@ -173,6 +176,7 @@ try {
   await ensureUsersAvatarSchema();
   await ensureUsersTokenVersionSchema();
   await ensureOutsideLockSchema();
+  await ensureSecondCheckSchema();
   await ensureRolesSchema();
   await ensureDevicesSchema();
   await ensureActivitySchema();

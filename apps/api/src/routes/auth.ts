@@ -1,4 +1,4 @@
-import type { FastifyPluginAsync } from "fastify";
+import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
 import { getPool, type DbUser } from "../db.js";
 import {
   clearAuthCookies,
@@ -24,6 +24,16 @@ import { clearOutsideFails, OUTSIDE_LOCK_AFTER, OUTSIDE_WARN_AT, parseEmail, rec
 import { isStrongPassword, passwordProblem } from "../auth/password-rules.js";
 import { raiseTokenVersion } from "../auth/token-version.js";
 import { tokensFor } from "../auth/issue-tokens.js";
+import { readPassToken, signPassToken } from "../auth/tokens.js";
+import { isLoginCurrent } from "../auth/token-version.js";
+import { config } from "../config.js";
+import {
+  TRUSTED_COOKIE,
+  checkSignInCode,
+  isTrustedScreen,
+  secondCheckState,
+  trustScreen,
+} from "../auth/second-check.js";
 import { addNotification } from "../notifications/service.js";
 
 /** Compared against when the name does not exist, so a wrong name takes as long as a wrong password. */
@@ -77,6 +87,26 @@ async function mapAuthUser(user: AuthUserRow) {
     avatarData: user.avatar_data ?? null,
     email: user.email ?? null,
   };
+}
+
+/** Signed in: new tokens, cookies, and the account for the screen. */
+async function completeLogin(request: FastifyRequest, reply: FastifyReply, user: AuthUserRow) {
+  const { roleInfo, accessToken, refreshToken } = await tokensFor(user);
+  const roundTrip = await verifyTokenDetailed(accessToken);
+  if (!roundTrip.ok || roundTrip.payload.tokenType !== "access") {
+    request.log.error({ roundTrip }, "access token failed round-trip verify after login");
+    return reply.code(500).send({
+      error: {
+        code: "token_misconfigured",
+        message: "Server could not verify the token it just created. Check JWT_SECRET / NEXTAUTH_SECRET.",
+        debug: roundTrip,
+      },
+    });
+  }
+  clearAuthCookies(reply);
+  setAuthCookies(reply, accessToken, refreshToken);
+  request.log.info({ username: user.username, role: roleInfo.slug, isAdmin: roleInfo.isAdmin }, "login success");
+  return { accessToken, refreshToken, user: await mapAuthUser(user) };
 }
 
 export const authRoutes: FastifyPluginAsync = async (app) => {
@@ -149,9 +179,26 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
       loginGuard.succeed(ip);
 
       if (fromOutside) {
-        await clearOutsideFails(user.id);
-        // Without the second check, signing in from outside needs a strong password.
-        if (!isStrongPassword(password, user.username)) {
+        const check = await secondCheckState(user.id);
+        if (check === "broken") {
+          return reply.code(403).send({
+            error: {
+              code: "second_check_reset",
+              message:
+                "The second check has to be set up again (Nexternel was moved to another server). " +
+                "Sign in at home and set it up again in My profile.",
+            },
+          });
+        }
+        if (check === "on") {
+          if (!(await isTrustedScreen(user.id, request.cookies?.[TRUSTED_COOKIE]))) {
+            // Password right: now the code. The ticket proves the password step, for 5 minutes.
+            const version = user.token_version ?? 0;
+            const ticket = await signPassToken(user.id, "second-check", "5m", version);
+            return { secondCheck: "app", ticket };
+          }
+        } else if (!isStrongPassword(password, user.username)) {
+          // Without the second check, signing in from outside needs a strong password.
           return reply.code(403).send({
             error: {
               code: "password_too_weak_outside",
@@ -161,38 +208,73 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
             },
           });
         }
+        await clearOutsideFails(user.id);
       }
 
-      const { roleInfo, accessToken, refreshToken } = await tokensFor(user);
+      return completeLogin(request, reply, user);
+    }
+  );
 
-      const roundTrip = await verifyTokenDetailed(accessToken);
-      if (!roundTrip.ok || roundTrip.payload.tokenType !== "access") {
-        request.log.error(
-          { roundTrip },
-          "access token failed round-trip verify after login"
-        );
-        return reply.code(500).send({
+  /** The second step from outside: the code from the Authenticator app. */
+  app.post<{ Body: { ticket?: string; code?: string; trust?: boolean } }>(
+    "/api/v1/auth/login/code",
+    { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } },
+    async (request, reply) => {
+      const ip = request.ip;
+      const allowed = loginGuard.check(ip);
+      if (!allowed.ok) {
+        reply.header("Retry-After", String(Math.ceil(allowed.retryAfterMs / 1000)));
+        return reply.code(429).send({
+          error: { code: "too_many_attempts", message: `Too many wrong codes. Try again in ${waitText(allowed.retryAfterMs)}.` },
+        });
+      }
+      const pass = request.body?.ticket ? await readPassToken(request.body.ticket, "second-check") : null;
+      if (!pass || !(await isLoginCurrent(pass.userId, pass.tokenVersion))) {
+        return reply.code(401).send({
+          error: { code: "ticket_expired", message: "That took too long. Sign in again." },
+        });
+      }
+      const res = await getPool().query<AuthUserRow & { outside_locked_at: Date | null }>(
+        `SELECT id, username, password_hash, display_name, is_active, role, theme_prefs, avatar_data, token_version, email,
+                outside_locked_at
+         FROM users WHERE id = $1 LIMIT 1`,
+        [pass.userId]
+      );
+      const user = res.rows[0];
+      if (!user || !user.is_active) {
+        return reply.code(401).send({ error: { code: "ticket_expired", message: "That took too long. Sign in again." } });
+      }
+      if (!isHomeAddress(ip) && user.outside_locked_at) {
+        return reply.code(423).send({
           error: {
-            code: "token_misconfigured",
+            code: "locked_outside",
             message:
-              "Server could not verify the token it just created. Check JWT_SECRET / NEXTAUTH_SECRET.",
-            debug: roundTrip,
+              "This account is locked for signing in from outside, after too many wrong tries. " +
+              "Use the unlock link in the email Nexternel sent, or ask your home's administrator to unlock it in Users.",
           },
         });
       }
-
-      clearAuthCookies(reply);
-      setAuthCookies(reply, accessToken, refreshToken);
-      request.log.info(
-        { username: user.username, role: roleInfo.slug, isAdmin: roleInfo.isAdmin },
-        "login success"
-      );
-
-      return {
-        accessToken,
-        refreshToken,
-        user: await mapAuthUser(user),
-      };
+      if (!(await checkSignInCode(user.id, String(request.body?.code ?? "")))) {
+        loginGuard.fail(ip);
+        request.log.warn({ username: user.username, ip }, "login refused: wrong second-check code");
+        if (!isHomeAddress(ip)) await warnOutsideFail(user.id, user.username, ip);
+        return reply.code(401).send({
+          error: { code: "wrong_code", message: "That code is not right. Check the app and try the newest code." },
+        });
+      }
+      loginGuard.succeed(ip);
+      await clearOutsideFails(user.id);
+      if (request.body?.trust) {
+        const token = await trustScreen(user.id, request.headers["user-agent"]);
+        reply.setCookie(TRUSTED_COOKIE, token, {
+          httpOnly: true,
+          secure: config.cookieSecure,
+          sameSite: "lax",
+          path: "/api/v1/auth",
+          maxAge: 400 * 24 * 3600,
+        });
+      }
+      return completeLogin(request, reply, user);
     }
   );
 

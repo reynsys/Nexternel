@@ -19,7 +19,7 @@ const SRC = join(dirname(fileURLToPath(import.meta.url)), "..");
 const BUTTONS = new Set(["Button", "LoadingButton"]);
 const POINTING = /\b(it|its|them|they|once)\b/i;
 /** Names and short forms that keep their capitals inside a button's words. */
-const NAMES = new Set(["Nexternel", "ESPHome", "Shelly", "Octopus", "Wi-Fi", "Wi‑Fi", "MQTT", "USB", "CCTV", "HUD", "IP", "PIN", "Web"]);
+const NAMES = new Set(["Nexternel", "ESPHome", "Shelly", "Octopus", "Wi-Fi", "Wi‑Fi", "MQTT", "USB", "CCTV", "HUD", "IP", "PIN", "Web", "Authenticator", "QR"]);
 
 function files(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {

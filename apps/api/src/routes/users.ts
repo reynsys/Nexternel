@@ -27,6 +27,7 @@ type UserRow = {
   avatar_data?: string | null;
   email?: string | null;
   outside_locked_at?: Date | null;
+  totp_enabled_at?: Date | null;
 };
 
 async function mapUser(u: UserRow) {
@@ -44,6 +45,7 @@ async function mapUser(u: UserRow) {
     avatarData: u.avatar_data ?? null,
     email: u.email ?? null,
     lockedOutside: Boolean(u.outside_locked_at),
+    secondCheck: Boolean(u.totp_enabled_at),
   };
 }
 
@@ -51,7 +53,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
   app.get("/api/v1/users", async (request, reply) => {
     if (!requirePermission(request, reply, "manageUsers")) return;
     const result = await getPool().query<UserRow>(
-      `SELECT id, username, display_name, is_active, role, created_at, theme_prefs, avatar_data, email, outside_locked_at
+      `SELECT id, username, display_name, is_active, role, created_at, theme_prefs, avatar_data, email, outside_locked_at, totp_enabled_at
        FROM users
        ORDER BY username ASC`
     );
@@ -132,7 +134,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       const result = await getPool().query<UserRow>(
         `INSERT INTO users (username, password_hash, display_name, role, is_active, theme_prefs, avatar_data, email)
          VALUES ($1, $2, $3, $4, TRUE, $5::jsonb, $6, $7)
-         RETURNING id, username, display_name, is_active, role, created_at, theme_prefs, avatar_data, email, outside_locked_at`,
+         RETURNING id, username, display_name, is_active, role, created_at, theme_prefs, avatar_data, email, outside_locked_at, totp_enabled_at`,
         [username, hash, displayName, role, JSON.stringify(themePrefs), avatarData, email ?? null]
       );
       return { user: await mapUser(result.rows[0]) };
@@ -259,7 +261,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
        SET display_name = $2, role = $3, is_active = $4, password_hash = $5,
            theme_prefs = $6::jsonb, avatar_data = $7, email = $8, updated_at = NOW()
        WHERE id = $1
-       RETURNING id, username, display_name, is_active, role, created_at, theme_prefs, avatar_data, email, outside_locked_at`,
+       RETURNING id, username, display_name, is_active, role, created_at, theme_prefs, avatar_data, email, outside_locked_at, totp_enabled_at`,
       [
         id,
         displayName,

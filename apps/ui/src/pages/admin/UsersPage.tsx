@@ -47,6 +47,8 @@ import {
 import { useShellAuth } from "../../skins/useShellAuth";
 import { useContentSurfaceSx } from "../../skins/useSurfaceStyles";
 import { ProfileSection } from "./sections/ProfileSection";
+import { SecondCheckSection } from "./sections/SecondCheckSection";
+import { hasPermission } from "../../lib/permissions";
 import { ButtonRow } from "../../components/ButtonRow";
 import { useLiveChanges } from "../../lib/live-changes";
 import { WallDisplayFields } from "../../components/WallDisplayFields";
@@ -60,7 +62,25 @@ function prefsFromUser(u: AdminUser | null): { theme: ThemePrefs; skinId: string
   };
 }
 
+/**
+ * Settings → Users. Administrators see everyone; every other account sees only My profile and
+ * Second check here (their own name, email, password and sign-in safety).
+ */
 export function UsersPage() {
+  const { user: me } = useShellAuth();
+  if (!me) return null;
+  if (!hasPermission(me.permissions ?? null, "manageUsers", Boolean(me.isAdmin))) {
+    return (
+      <Stack spacing={2}>
+        <ProfileSection />
+        <SecondCheckSection />
+      </Stack>
+    );
+  }
+  return <UsersAdminPage />;
+}
+
+function UsersAdminPage() {
   const { user: me } = useShellAuth();
   const surfaceSx = useContentSurfaceSx();
   const skins = listSkins();
@@ -192,6 +212,16 @@ export function UsersPage() {
     }
   }
 
+  async function secondCheckOff(u: AdminUser) {
+    try {
+      await api.userSecondCheckOff(u.id);
+      setEditUser({ ...u, secondCheck: false });
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not turn the second check off");
+    }
+  }
+
   async function unlock(u: AdminUser) {
     try {
       await api.unlockOutside(u.id);
@@ -227,6 +257,7 @@ export function UsersPage() {
       </Stack>
       {error && <Alert severity="error">{error}</Alert>}
       <ProfileSection />
+      <SecondCheckSection />
       <Card sx={surfaceSx}>
         <CardContent sx={{ px: { xs: 1, sm: 2 }, "&:last-child": { pb: 2 } }}>
           <Table size="small">
@@ -256,6 +287,7 @@ export function UsersPage() {
                         {u.lockedOutside && (
                           <Chip size="small" color="error" variant="outlined" label="Locked from outside" />
                         )}
+                        {u.secondCheck && <Chip size="small" color="success" variant="outlined" label="Second check on" />}
                       </Stack>
                     </Stack>
                   </TableCell>
@@ -453,6 +485,16 @@ export function UsersPage() {
                 }
                 label="Account active"
               />
+              {editUser?.secondCheck && (
+                <Stack spacing={0.5}>
+                  <Button variant="outlined" color="error" onClick={() => void secondCheckOff(editUser)} sx={{ alignSelf: "flex-start" }}>
+                    Turn off second check
+                  </Button>
+                  <Typography variant="caption" color="text.secondary">
+                    For someone who lost their phone. They can then sign in from outside with a strong password, and set it up again.
+                  </Typography>
+                </Stack>
+              )}
               <Divider />
               <Typography variant="subtitle1">Default theme</Typography>
               <ThemeOptionsFields

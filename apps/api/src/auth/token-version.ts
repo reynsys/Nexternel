@@ -1,13 +1,14 @@
 import { EventEmitter } from "events";
 import { getPool } from "../db.js";
 import { resolveRoleInfo } from "./roles.js";
+import { forgetTrustedScreens } from "./second-check.js";
 import type { RolePermissions } from "./permissions.js";
 
 /**
  * "Sign out everywhere else": every login carries the account's sign-in number (token_version).
  * Raising the number makes every earlier login stop working; the screen that asked gets a fresh one.
  * The number also goes up when the password changes, when an administrator sets a new password,
- * and when an account is switched off.
+ * and when an account is switched off. It also forgets the account's trusted phones (second check).
  *
  * Logins checked on every request read the number from a short memory (30 s), so the database is
  * not asked each time; raising it here updates that memory at once.
@@ -73,6 +74,8 @@ export async function raiseTokenVersion(userId: string): Promise<number> {
   const row = res.rows[0];
   const version = row ? row.token_version : 0;
   cache.delete(userId);
+  // Signed out everywhere: trusted phones have to give the code again too.
+  await forgetTrustedScreens(userId);
   signInChanges.emit("changed", userId);
   return version;
 }
