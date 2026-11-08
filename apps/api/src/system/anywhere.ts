@@ -1,5 +1,6 @@
 import { mkdir, readFile, rename, writeFile } from "fs/promises";
 import tls from "tls";
+import dns from "dns";
 import { readFileSync } from "fs";
 import { licenceTokenFor } from "../addons/service.js";
 import path from "path";
@@ -128,6 +129,8 @@ export type AnywhereView = {
   certificateValidTo: string | null;
   /** QR code of the address, for the phone's camera (SVG). */
   qrSvg: string | null;
+  /** Where GPS trackers send their positions (this home's own door number), when open. */
+  gps: { host: string; ip: string | null; port: number } | null;
 };
 
 const LINK_SILENT_MS = 90_000; // the link writes its state every 30 s
@@ -166,8 +169,23 @@ export function anywhereLight(
   return { light: "green", text: "Open from anywhere." };
 }
 
+/** The door's IPv4 address: many trackers only take a number, not a name. Looked up once an hour. */
+let doorIp: { host: string; ip: string | null; at: number } | null = null;
+async function doorIpv4(host: string): Promise<string | null> {
+  if (doorIp && doorIp.host === host && Date.now() - doorIp.at < 3_600_000) return doorIp.ip;
+  let ip: string | null = null;
+  try {
+    ip = (await dns.promises.lookup(host, { family: 4 })).address;
+  } catch {
+    ip = null;
+  }
+  doorIp = { host, ip, at: Date.now() };
+  return ip;
+}
+
 export async function anywhereView(): Promise<AnywhereView> {
   const settings = await readAnywhereSettings();
+  const status = await readAnywhereStatus();
   const setUp = Boolean(settings.name && settings.key);
   const host = setUp ? `${settings.name}.${settings.doorDomain}` : null;
   const cert = host ? await outsideCertificate(host) : null;
@@ -179,10 +197,19 @@ export async function anywhereView(): Promise<AnywhereView> {
     domain: `.${settings.doorDomain}`,
     enabled: settings.enabled && setUp,
     address,
-    ...anywhereLight(settings, await readAnywhereStatus(), Boolean(cert)),
+    ...anywhereLight(settings, status, Boolean(cert)),
     certificateValidTo: cert?.validTo ?? null,
     qrSvg: address ? await QRCode.toString(address, { type: "svg", margin: 1, errorCorrectionLevel: "M" }) : null,
+    gps: await gpsTarget(settings, status),
   };
+}
+
+async function gpsTarget(settings: AnywhereSettings, status: AnywhereStatus | null): Promise<AnywhereView["gps"]> {
+  if (!settings.enabled || !settings.name || !settings.key) return null;
+  if (!status || status.state !== "open" || status.name !== settings.name) return null;
+  if (typeof status.gpsPort !== "number" || !status.gpsPort) return null;
+  const host = process.env.ANYWHERE_DOOR_HOST || `door.${settings.doorDomain}`;
+  return { host, ip: await doorIpv4(host), port: status.gpsPort };
 }
 
 // ---------- The name office (on the door server) ----------

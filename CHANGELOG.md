@@ -2,6 +2,12 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.3
+
+- Nexternel Anywhere → GPS trackers: the card now shows where your tracker should send its positions (server and your own port number), with the exact text message for a SinoTrack tracker and a Copy button.
+- Nexternel Anywhere: names with swear words, slurs or hate words are no longer accepted.
+- Nexternel Anywhere: the phone hint now says how to add the Nexternel shortcut to your home screen, on iPhone and on Android.
+
 ## V5.3.2
 
 - Already signed in? Opening the sign-in page (from a shortcut, a bookmark or a link) now takes you straight to your dashboard instead of asking for your password again.

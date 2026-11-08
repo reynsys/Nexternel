@@ -2114,6 +2114,7 @@ export type AnywhereView = {
   text: string;
   certificateValidTo: string | null;
   qrSvg: string | null;
+  gps: { host: string; ip: string | null; port: number } | null;
 };
 
 export type HttpsStatus = {

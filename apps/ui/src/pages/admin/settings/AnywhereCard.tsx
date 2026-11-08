@@ -17,6 +17,7 @@ import { api, type AnywhereView } from "../../../api";
 import { ButtonRow } from "../../../components/ButtonRow";
 import { copyTextToClipboard } from "../../../lib/copyText";
 import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
+import { CODE_TEXT } from "../../../lib/appearance/type";
 
 /** A phone or tablet: the QR code would be on the same screen as the camera, so it is not shown. */
 function onPhone(): boolean {
@@ -135,6 +136,54 @@ function NameChooser({
         ) : null}
       </ButtonRow>
     </Stack>
+  );
+}
+
+/** Where this home's GPS trackers send their positions, and the text message that sets a SinoTrack tracker. */
+function GpsTarget({ gps }: { gps: NonNullable<AnywhereView["gps"]> }) {
+  const [copied, setCopied] = useState(false);
+  const server = gps.ip ?? gps.host;
+  const sms = `8040000 ${server} ${gps.port}`;
+  async function copy() {
+    const r = await copyTextToClipboard(sms);
+    setCopied(r.ok);
+    if (r.ok) setTimeout(() => setCopied(false), 2_000);
+  }
+  return (
+    <Box>
+      <Typography variant="subtitle2">GPS trackers</Typography>
+      <Typography variant="body2" color="text.secondary">
+        Set your tracker to send its positions to:
+      </Typography>
+      <Box component="dl" sx={{ display: "grid", gridTemplateColumns: "auto 1fr", columnGap: 2, rowGap: 0.25, my: 1 }}>
+        <Typography component="dt" variant="body2" color="text.secondary">
+          Server
+        </Typography>
+        <Typography component="dd" variant="body2" sx={{ m: 0, wordBreak: "break-all" }}>
+          {server}
+        </Typography>
+        <Typography component="dt" variant="body2" color="text.secondary">
+          Port
+        </Typography>
+        <Typography component="dd" variant="body2" sx={{ m: 0 }}>
+          {gps.port}
+        </Typography>
+      </Box>
+      <Typography variant="body2" color="text.secondary">
+        SinoTrack tracker: send this text message to the tracker's phone number.
+      </Typography>
+      <ButtonRow>
+        <Typography variant="body1" sx={{ ...CODE_TEXT, wordBreak: "break-all" }}>
+          {sms}
+        </Typography>
+        <Button size="small" variant="outlined" onClick={() => void copy()}>
+          {copied ? "Copied" : "Copy"}
+        </Button>
+      </ButtonRow>
+      <Typography variant="body2" color="text.secondary">
+        0000 is the tracker's password from the factory. If you changed it, use yours instead of 0000.
+      </Typography>
+    </Box>
   );
 }
 
@@ -269,8 +318,8 @@ export function AnywhereCard() {
           {ready && view?.qrSvg ? (
             phone ? (
               <Typography variant="body2" color="text.secondary">
-                Open the address on this phone, then use Add to Home screen in the browser menu, so Nexternel opens like an
-                app.
+                Open the address on this phone, then add a shortcut to your home screen from the browser menu. iPhone:
+                Share → Add to Home Screen. Android: ⋮ → Add to Home screen.
               </Typography>
             ) : (
               <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems={{ xs: "flex-start", sm: "center" }}>
@@ -281,12 +330,14 @@ export function AnywhereCard() {
                   sx={{ width: 160, height: 160, bgcolor: "common.white", borderRadius: 2, p: 1, flexShrink: 0 }}
                 />
                 <Typography variant="body2" color="text.secondary">
-                  Point your phone's camera at the code to open your address. Then use Add to Home screen in the browser
-                  menu, so Nexternel opens like an app.
+                  Point your phone's camera at the code to open your address. Then add a shortcut to your home screen from
+                  the browser menu. iPhone: Share → Add to Home Screen. Android: ⋮ → Add to Home screen.
                 </Typography>
               </Stack>
             )
           ) : null}
+
+          {view?.gps ? <GpsTarget gps={view.gps} /> : null}
 
           {view?.enabled ? (
             <Typography variant="caption" color="text.secondary">
