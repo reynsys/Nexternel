@@ -1483,6 +1483,15 @@ export const api = {
   dismissUpdate: () => apiFetch<UpdateStatus>("/api/v1/system/update/dismiss", { method: "POST" }),
 
   httpsStatus: () => apiFetch<HttpsStatus>("/api/v1/system/https"),
+  anywhere: () => apiFetch<AnywhereView>("/api/v1/system/anywhere"),
+  checkAnywhereName: (name: string) =>
+    apiFetch<{ name: string; free: boolean; problem: string | null; suggestions: string[] }>(
+      `/api/v1/system/anywhere/name?name=${encodeURIComponent(name)}`
+    ),
+  claimAnywhereName: (name: string) =>
+    apiFetch<AnywhereView>("/api/v1/system/anywhere/name", { method: "POST", body: JSON.stringify({ name }) }),
+  setAnywhere: (enabled: boolean) =>
+    apiFetch<AnywhereView>("/api/v1/system/anywhere", { method: "PUT", body: JSON.stringify({ enabled }) }),
   saveHttps: (body: { enabled?: boolean; extraNames?: string[] }) =>
     apiFetch<HttpsStatus>("/api/v1/system/https", { method: "PUT", body: JSON.stringify(body) }),
   setHttpsDomain: (domain: string, certificate: File, key: File) => {
@@ -2065,6 +2074,20 @@ export type PluginManifestInfo = {
 export type PluginActivity = {
   logs: { t: string; stream: "stdout" | "stderr"; line: string }[];
   actions: { action: string; detail: Record<string, unknown>; at: string }[];
+};
+
+/** Settings → System → Nexternel Anywhere (see apps/api/src/system/anywhere.ts). */
+export type AnywhereView = {
+  licensed: boolean;
+  setUp: boolean;
+  name: string | null;
+  domain: string;
+  enabled: boolean;
+  address: string | null;
+  light: "off" | "green" | "orange" | "red";
+  text: string;
+  certificateValidTo: string | null;
+  qrSvg: string | null;
 };
 
 export type HttpsStatus = {

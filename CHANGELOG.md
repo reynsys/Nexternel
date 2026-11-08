@@ -1,6 +1,20 @@
 # Changelog
 
-Versions are numbered **V{generation}.{hardware}.{release}**. Newest first.
+Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
+
+## V5.3.0
+
+**Nexternel Anywhere**: open Nexternel away from home, on mobile data or any Wi-Fi, with the padlock, and with nothing to change on your router. It is a paid service (with its own licence, in Settings → Extensions); without it Nexternel works at home exactly as before.
+
+- Settings → System has a new card, Nexternel Anywhere: choose your name (it says straight away whether it is free, and offers free ones when it is not), and your address becomes https://yourname.nexternel.net. One switch turns it on and off; a light says how it is (green: open from anywhere), and a QR code opens the address on your phone. On the phone, Add to Home screen makes Nexternel open like an app.
+- The padlock ends at your home: Nexternel Anywhere passes the sealed connection on and cannot read it. Your home gets its own padlock certificate (Let's Encrypt), renewed by itself.
+- Switches, readings and everything at home never depend on Nexternel Anywhere; if the internet is down, home works as always.
+- Everyone coming in from outside counts as outside: the second check, the outside lock and the stronger password rules always apply, and the sign-in is only ever sent over the padlock.
+- GPS trackers can reach your home through Nexternel Anywhere too, so no router changes are needed for them (each home gets its own tracker port).
+- Changing your name: the old address stops at once; GPS trackers keep working without any change.
+- Backups now include your Nexternel Anywhere name and key. After a restore it is switched off; one click turns it on again (so two servers never share one address).
+- If Nexternel Anywhere ever loses track of your home, Nexternel sets it up again by itself within a few minutes.
+- Help & troubleshooting → Restart now also restarts the Nexternel Anywhere link.
 
 ## V5.2.198
 

@@ -16,6 +16,8 @@ import {
 } from "../migrate/adopt-config.js";
 import type { DomainExport } from "./domain-export.js";
 import { sanitizeDomainForRestore } from "./domain-sanitize.js";
+import { readAnywhereSettings, validAnywhereName, writeAnywhereSettings } from "../system/anywhere.js";
+import { applyHttps } from "../system/https.js";
 
 function pgErrMessage(err: unknown): string {
   if (err && typeof err === "object" && "message" in err) {
@@ -473,6 +475,26 @@ export async function restoreDomain(
     throw err;
   } finally {
     client.release();
+  }
+
+  // Nexternel Anywhere comes back with its name and key, switched OFF: one click turns it on.
+  // (Restoring the same backup on a second server must not make two servers share one address.)
+  const aw = domain.anywhere;
+  if (aw && typeof aw.name === "string" && validAnywhereName(aw.name) && typeof aw.key === "string" && aw.key.length >= 32) {
+    try {
+      const current = await readAnywhereSettings();
+      if (current.name !== aw.name || current.key !== aw.key) {
+        await writeAnywhereSettings({
+          enabled: false,
+          name: aw.name,
+          key: aw.key,
+          doorDomain: typeof aw.doorDomain === "string" && aw.doorDomain ? aw.doorDomain.toLowerCase() : current.doorDomain,
+        });
+        await applyHttps();
+      }
+    } catch {
+      /* the rest of the restore stands; the name can be chosen again on the card */
+    }
   }
 
   try {

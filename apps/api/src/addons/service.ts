@@ -366,3 +366,21 @@ export function startAddonChecks(): void {
   setTimeout(run, 60_000);
   timer = setInterval(run, 24 * 60 * 60 * 1000);
 }
+
+/**
+ * A licence on this server that includes the given paid service (e.g. "anywhere") and has not
+ * ended, as the signed text the service checks itself. The owner's licence ("*") includes all.
+ */
+export async function licenceTokenFor(service: string): Promise<string | null> {
+  if (!addonsAvailable()) return null;
+  const sid = await serverId();
+  const now = Math.floor(Date.now() / 1000);
+  let best: { token: string; exp: number } | null = null;
+  for (const r of await rows()) {
+    if (r.status === "revoked") continue;
+    const licence = readLicence(r.licence_token, keys());
+    if (!licence || licenceState(licence, sid, now) !== "active" || !licenceCovers(licence, service)) continue;
+    if (!best || licence.exp > best.exp) best = { token: r.licence_token, exp: licence.exp };
+  }
+  return best?.token ?? null;
+}

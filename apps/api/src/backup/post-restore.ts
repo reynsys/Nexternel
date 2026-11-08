@@ -41,6 +41,8 @@ const SERVICE_CONTAINERS: Record<Exclude<RestartableService, "all" | "restored-s
 
 /** Restarted only when already running: `docker restart` would switch a stopped one on. */
 const ESPHOME_CONTAINER = "nexternel-esphome";
+/** Nexternel Anywhere's home link: restarted with the rest when it exists (also when it has stopped). */
+const DOOR_LINK_CONTAINER = "nexternel-door-link";
 
 function containersForService(service: RestartableService): string[] {
   if (service === "restored-services") {
@@ -48,7 +50,8 @@ function containersForService(service: RestartableService): string[] {
     return [SERVICE_CONTAINERS.mqtt, ESPHOME_CONTAINER];
   }
   if (service === "all") {
-    return [SERVICE_CONTAINERS.mqtt, SERVICE_CONTAINERS.api];
+    // The API last: it restarts itself.
+    return [SERVICE_CONTAINERS.mqtt, DOOR_LINK_CONTAINER, SERVICE_CONTAINERS.api];
   }
   return [SERVICE_CONTAINERS[service]];
 }
@@ -64,6 +67,15 @@ async function isContainerRunning(name: string): Promise<boolean> {
   }
 }
 
+async function containerExists(name: string): Promise<boolean> {
+  try {
+    await execFileAsync("docker", ["inspect", "-f", "{{.Id}}", name], { timeout: 15_000 });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function restartNexternelServices(
   service: RestartableService = "all"
 ): Promise<{ ok: boolean; message: string }> {
@@ -76,7 +88,9 @@ export async function restartNexternelServices(
   }
   const containers: string[] = [];
   for (const name of containersForService(service)) {
-    if (name !== ESPHOME_CONTAINER || (await isContainerRunning(name))) containers.push(name);
+    if (name === ESPHOME_CONTAINER ? await isContainerRunning(name) : name === DOOR_LINK_CONTAINER ? await containerExists(name) : true) {
+      containers.push(name);
+    }
   }
   try {
     await execFileAsync("docker", ["restart", ...containers], {

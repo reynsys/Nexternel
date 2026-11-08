@@ -44,6 +44,31 @@ export function isHomeAddress(ip: string): boolean {
   return false;
 }
 
+/**
+ * Set by Caddy's outside entrance (Nexternel Anywhere) on every request that came in through the
+ * door. Those visitors reach home through the home link, which has a Docker address, so the
+ * address alone could make them look like home. The mark can only make a request count as
+ * outside, never as home, so a visitor sending it themselves gains nothing.
+ */
+export const ENTRANCE_HEADER = "x-nexternel-entrance";
+
+/** True only for a visitor at home: a home address, and not through the outside entrance. */
+export function isFromHome(request: { ip: string; headers: Record<string, string | string[] | undefined> }): boolean {
+  if (request.headers[ENTRANCE_HEADER] !== undefined) return false;
+  return isHomeAddress(request.ip);
+}
+
+/**
+ * Cookies for a visitor through the outside entrance are always sent over the padlock only
+ * ("Secure"): a phone opening the plain http address on public Wi-Fi must never send its sign-in.
+ * At home there is no padlock, so cookies there stay as they are.
+ */
+export function secureCookieHeader(value: string | string[] | number | undefined): string | string[] | undefined {
+  if (value === undefined || typeof value === "number") return undefined;
+  const add = (c: string) => (/;\s*secure\b/i.test(c) ? c : `${c}; Secure`);
+  return Array.isArray(value) ? value.map(add) : add(value);
+}
+
 function trim<T extends { last: number }>(map: Map<string, T>, now: number) {
   for (const [k, v] of map) if (now - v.last > FORGET_MS) map.delete(k);
   while (map.size > MAX_ENTRIES) {

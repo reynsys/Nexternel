@@ -138,6 +138,8 @@ services:
       # Secure connection: Nexternel writes Caddy's settings and reads the home certificate
       - ./caddy:/caddy
       - caddy_data:/caddy-data:ro
+      # Nexternel Anywhere: settings shared with the home link (door-link) and its state
+      - ./anywhere:/anywhere
     networks:
       - default
       - plugins
@@ -204,6 +206,28 @@ services:
     depends_on:
       - ui
       - esphome
+
+  # Nexternel Anywhere: reaching this home from outside with no router changes. Calls out to
+  # Reynsys' door and brings visitors in to Caddy's outside entrance. Does nothing until it is
+  # switched on in Settings → System → Nexternel Anywhere. Opens no port on the server.
+  door-link:
+    build:
+      context: .
+      dockerfile: apps/door-link/Dockerfile
+    container_name: nexternel-door-link
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ}
+      LINK_SETTINGS_FILE: /anywhere/anywhere.json
+      LINK_STATUS_FILE: /anywhere/status.json
+    volumes:
+      - ./anywhere:/anywhere
+    read_only: true
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      - caddy
 
   # RTSP → browser-friendly live streams (HLS / MSE / WebRTC)
   go2rtc:

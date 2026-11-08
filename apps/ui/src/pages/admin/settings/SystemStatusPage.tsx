@@ -9,6 +9,7 @@ import { SystemDiagnosticsSection } from "./SystemDiagnosticsSection";
 import { DiagnosticReportCard } from "./DiagnosticReportCard";
 import { UpdatesCard } from "./UpdatesCard";
 import { HttpsCard } from "./HttpsCard";
+import { AnywhereCard } from "./AnywhereCard";
 import { ButtonRow } from "../../../components/ButtonRow";
 
 function formatUptime(sec: number): string {
@@ -73,6 +74,7 @@ export function SystemStatusPage() {
     <Stack spacing={2}>
       <UpdatesCard />
       <HttpsCard />
+      <AnywhereCard />
 
       <Card sx={surfaceSx}>
         <CardContent>

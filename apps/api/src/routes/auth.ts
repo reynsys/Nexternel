@@ -19,7 +19,7 @@ import {
 } from "../auth/theme-prefs.js";
 import { parseAvatarInput } from "../auth/avatar.js";
 import { resolveRoleInfo } from "../auth/roles.js";
-import { isHomeAddress, loginGuard, waitText } from "../auth/login-guard.js";
+import { isFromHome, loginGuard, waitText } from "../auth/login-guard.js";
 import { clearOutsideFails, OUTSIDE_LOCK_AFTER, OUTSIDE_WARN_AT, parseEmail, recordOutsideFail } from "../auth/outside-lock.js";
 import { isStrongPassword, passwordProblem } from "../auth/password-rules.js";
 import { raiseTokenVersion } from "../auth/token-version.js";
@@ -132,7 +132,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
       }
 
       const ip = request.ip;
-      const fromOutside = !isHomeAddress(ip);
+      const fromOutside = !isFromHome(request);
       const allowed = loginGuard.check(ip);
       if (!allowed.ok) {
         reply.header("Retry-After", String(Math.ceil(allowed.retryAfterMs / 1000)));
@@ -244,7 +244,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
       if (!user || !user.is_active) {
         return reply.code(401).send({ error: { code: "ticket_expired", message: "That took too long. Sign in again." } });
       }
-      if (!isHomeAddress(ip) && user.outside_locked_at) {
+      if (!isFromHome(request) && user.outside_locked_at) {
         return reply.code(423).send({
           error: {
             code: "locked_outside",
@@ -257,7 +257,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
       if (!(await checkSignInCode(user.id, String(request.body?.code ?? "")))) {
         loginGuard.fail(ip);
         request.log.warn({ username: user.username, ip }, "login refused: wrong second-check code");
-        if (!isHomeAddress(ip)) await warnOutsideFail(user.id, user.username, ip);
+        if (!isFromHome(request)) await warnOutsideFail(user.id, user.username, ip);
         return reply.code(401).send({
           error: { code: "wrong_code", message: "That code is not right. Check the app and try the newest code." },
         });

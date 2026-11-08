@@ -4,7 +4,7 @@ import { getPool } from "../db.js";
 import { requireUser } from "../auth/plugin.js";
 import { requirePermission } from "../auth/rbac.js";
 import { verifyPassword } from "../auth/tokens.js";
-import { isHomeAddress } from "../auth/login-guard.js";
+import { isFromHome } from "../auth/login-guard.js";
 import {
   checkSignInCode,
   confirmSetup,
@@ -61,7 +61,7 @@ export const secondCheckRoutes: FastifyPluginAsync = async (app) => {
       if (!hash || !(await verifyPassword(String(request.body?.password ?? ""), hash))) {
         return reply.code(400).send({ error: { code: "wrong_password", message: "That password is not right." } });
       }
-      if (!isHomeAddress(request.ip) && (await secondCheckState(id)) === "on") {
+      if (!isFromHome(request) && (await secondCheckState(id)) === "on") {
         if (!(await checkSignInCode(id, String(request.body?.code ?? "")))) {
           return reply.code(400).send({
             error: { code: "wrong_code", message: "From outside the home, also type the code from the app." },

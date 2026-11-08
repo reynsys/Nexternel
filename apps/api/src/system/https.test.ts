@@ -45,3 +45,16 @@ test("names are checked", () => {
   assert.equal(validName("bad name"), false);
   assert.equal(validName("x}\nimport /etc/passwd"), false);
 });
+
+test("Nexternel Anywhere: outside entrance with its own padlock, real visitor address, marked outside", () => {
+  const c = buildCaddyfile(base, "192.0.2.10", false, "smith.nexternel.net");
+  assert.match(c, /servers :8443 \{\n\t\tlistener_wrappers \{\n\t\t\tproxy_protocol \{[\s\S]*?\t\t\ttls\n/);
+  assert.match(c, /https:\/\/smith\.nexternel\.net:8443 \{\n\trequest_header x-nexternel-entrance outside\n/);
+  // Its certificate is a public one Caddy gets itself, not the home certificate.
+  const site = c.slice(c.indexOf("https://smith.nexternel.net:8443"));
+  assert.doesNotMatch(site.slice(0, site.indexOf("}")), /tls internal/);
+  // Still there with the home padlock switched off.
+  assert.match(buildCaddyfile({ ...base, enabled: false }, "192.0.2.10", false, "smith.nexternel.net"), /https:\/\/smith\.nexternel\.net:8443/);
+  // Not there when Anywhere is off.
+  assert.doesNotMatch(buildCaddyfile(base, "192.0.2.10", false), /8443|proxy_protocol/);
+});

@@ -59,7 +59,10 @@ import { ensureHostKey } from "./plugins/packages.js";
 import { notificationsRoutes } from "./notifications/routes.js";
 import { updateRoutes } from "./system/update-routes.js";
 import { httpsRoutes } from "./system/https-routes.js";
+import { anywhereRoutes } from "./system/anywhere-routes.js";
+import { startAnywhereRenewal } from "./system/anywhere.js";
 import { applyHttps } from "./system/https.js";
+import { ENTRANCE_HEADER, secureCookieHeader } from "./auth/login-guard.js";
 import { ensureUpdateSchema, startUpdateChecks } from "./system/updates.js";
 import { startSelfCheck } from "./system/self-check.js";
 import { startSharedSettingsWatch } from "./esphome/shared-settings.js";
@@ -119,6 +122,17 @@ await app.register(async (api) => {
   });
   // While Nexternel is updating or restoring, changes are refused (reading and switching still work).
   api.addHook("preHandler", maintenanceGuard);
+  // From outside (Nexternel Anywhere), every cookie is sent over the padlock only.
+  api.addHook("onSend", async (request, reply, payload) => {
+    if (request.headers[ENTRANCE_HEADER] === undefined) return payload;
+    const secured = secureCookieHeader(reply.getHeader("set-cookie") as string | string[] | undefined);
+    if (secured !== undefined) {
+      // Replace, not add: Fastify adds to set-cookie, which would send each cookie twice.
+      reply.removeHeader("set-cookie");
+      reply.header("set-cookie", secured);
+    }
+    return payload;
+  });
   // Every successful change is announced to all open screens, which then show it straight away.
   api.addHook("onResponse", async (request, reply) => {
     if (reply.statusCode >= 400) return;
@@ -155,6 +169,7 @@ await app.register(async (api) => {
   await api.register(activityRoutes);
   await api.register(updateRoutes);
   await api.register(httpsRoutes);
+  await api.register(anywhereRoutes);
   await api.register(migrateRoutes);
   await api.register(backupRoutes);
   await api.register(setupRoutes);
@@ -356,6 +371,7 @@ try {
   startUpdateChecks();
   void ensurePluginServicesAtStart().catch((err) => app.log.error(err, "plugin services did not start"));
   startAddonChecks();
+  startAnywhereRenewal();
   startBackupScheduler(app.log);
   startSharedSettingsWatch();
   startSelfCheck(app.log);

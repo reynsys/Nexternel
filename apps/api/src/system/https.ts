@@ -3,7 +3,9 @@ import { createPrivateKey, X509Certificate } from "crypto";
 import { mkdir, readFile, rm, writeFile } from "fs/promises";
 import path from "path";
 import { promisify } from "util";
+import { anywhereAddress, OUTSIDE_ENTRANCE_PORT, readAnywhereSettings } from "./anywhere.js";
 import { detectedHostIp } from "./host-ip.js";
+import { ENTRANCE_HEADER } from "../auth/login-guard.js";
 
 /**
  * Secure connection (https). Caddy (service "caddy") is Nexternel's front door: it encrypts
@@ -84,8 +86,48 @@ export const ESPHOME_SITE = [
   "",
 ];
 
+/**
+ * Nexternel Anywhere's outside entrance. Visitors come through the door and the home link, which
+ * first tells Caddy the visitor's real address (PROXY protocol line), so the login guard counts
+ * each phone on its own. Every request is marked as coming from outside, so the second check and
+ * the outside lock always apply. The padlock is a public certificate for the outside address,
+ * which Caddy gets and renews itself (the door passes the certificate check through to home).
+ * The port is only inside Nexternel: it is not opened on the server, so only the home link reaches it.
+ */
+export function outsideEntrance(address: string): string[] {
+  return [
+    `# Nexternel Anywhere: visitors from outside, through the door (Settings → System → Nexternel Anywhere).`,
+    `https://${address}:${OUTSIDE_ENTRANCE_PORT} {`,
+    `\trequest_header ${ENTRANCE_HEADER} outside`,
+    '\theader Strict-Transport-Security "max-age=31536000"',
+    "\tencode gzip",
+    "\treverse_proxy ui:80",
+    "}",
+    "",
+  ];
+}
+
+/** Global part for the outside entrance: read the real visitor address the home link sends first. */
+const OUTSIDE_SERVER_OPTIONS = [
+  `\t# Outside entrance: only the home link connects here (from Nexternel's own network).`,
+  `\tservers :${OUTSIDE_ENTRANCE_PORT} {`,
+  "\t\tlistener_wrappers {",
+  "\t\t\tproxy_protocol {",
+  "\t\t\t\ttimeout 5s",
+  "\t\t\t\tallow 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 fc00::/7",
+  "\t\t\t}",
+  "\t\t\ttls",
+  "\t\t}",
+  "\t}",
+];
+
 /** Caddy's configuration (a "Caddyfile") for these settings. */
-export function buildCaddyfile(settings: HttpsSettings, serverIp: string | null, hasDomainCert: boolean): string {
+export function buildCaddyfile(
+  settings: HttpsSettings,
+  serverIp: string | null,
+  hasDomainCert: boolean,
+  outside: string | null = null
+): string {
   const httpsPort = ports().https;
   const portSuffix = httpsPort === 443 ? "" : `:${httpsPort}`;
   const lines: string[] = [
@@ -96,6 +138,7 @@ export function buildCaddyfile(settings: HttpsSettings, serverIp: string | null,
     "\tauto_https disable_redirects",
   ];
   if (serverIp) lines.push(`\t# Connections made to the bare address name no site; use the server's.`, `\tdefault_sni ${serverIp}`);
+  if (outside) lines.push(...OUTSIDE_SERVER_OPTIONS);
   lines.push(
     "\tpki {",
     "\t\tca local {",
@@ -118,6 +161,8 @@ export function buildCaddyfile(settings: HttpsSettings, serverIp: string | null,
     "\t}",
   ];
   if (!settings.enabled) {
+    // The outside entrance has its own padlock, so it stays open when the home one is off.
+    if (outside) lines.push(...outsideEntrance(outside));
     lines.push("http://:80, http://:8080 {", ...certHandle, "\thandle {", "\t\treverse_proxy ui:80", "\t}", "}", "", ...ESPHOME_SITE);
     return lines.join("\n");
   }
@@ -133,6 +178,7 @@ export function buildCaddyfile(settings: HttpsSettings, serverIp: string | null,
       ""
     );
   }
+  if (outside) lines.push(...outsideEntrance(outside));
   // Plain http stays the normal address: it only forwards once a name with a certificate every
   // device trusts exists. The home certificate is never forced on anyone (it needs installing on
   // each device), but keeps working for those who already trusted it.
@@ -183,7 +229,8 @@ async function reloadCaddy(): Promise<string | null> {
 export async function applyHttps(force = false): Promise<string | null> {
   const settings = await readHttpsSettings();
   const domainCert = await readDomainCert(settings.domain);
-  const text = buildCaddyfile(settings, detectedHostIp() ?? process.env.SERVER_IP ?? null, Boolean(domainCert));
+  const outside = anywhereAddress(await readAnywhereSettings());
+  const text = buildCaddyfile(settings, detectedHostIp() ?? process.env.SERVER_IP ?? null, Boolean(domainCert), outside);
   const file = path.join(caddyDir(), "Caddyfile");
   let current = "";
   try {
