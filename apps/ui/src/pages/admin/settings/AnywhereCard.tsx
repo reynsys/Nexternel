@@ -142,8 +142,7 @@ function NameChooser({
 /** Where this home's GPS trackers send their positions, and the text message that sets a SinoTrack tracker. */
 function GpsTarget({ gps }: { gps: NonNullable<AnywhereView["gps"]> }) {
   const [copied, setCopied] = useState(false);
-  const server = gps.ip ?? gps.host;
-  const sms = `8040000 ${server} ${gps.port}`;
+  const sms = `8040000 ${gps.host} ${gps.port}`;
   async function copy() {
     const r = await copyTextToClipboard(sms);
     setCopied(r.ok);
@@ -153,14 +152,15 @@ function GpsTarget({ gps }: { gps: NonNullable<AnywhereView["gps"]> }) {
     <Box>
       <Typography variant="subtitle2">GPS trackers</Typography>
       <Typography variant="body2" color="text.secondary">
-        Set your tracker to send its positions to:
+        Works with most trackers (SinoTrack, Concox, Teltonika, Coban, TK103, GPS watches) and with tracker apps on
+        a phone. Set your tracker to send its positions to:
       </Typography>
       <Box component="dl" sx={{ display: "grid", gridTemplateColumns: "auto 1fr", columnGap: 2, rowGap: 0.25, my: 1 }}>
         <Typography component="dt" variant="body2" color="text.secondary">
           Server
         </Typography>
         <Typography component="dd" variant="body2" sx={{ m: 0, wordBreak: "break-all" }}>
-          {server}
+          {gps.host}
         </Typography>
         <Typography component="dt" variant="body2" color="text.secondary">
           Port
@@ -183,6 +183,11 @@ function GpsTarget({ gps }: { gps: NonNullable<AnywhereView["gps"]> }) {
       <Typography variant="body2" color="text.secondary">
         0000 is the tracker's password from the factory. If you changed it, use yours instead of 0000.
       </Typography>
+      {gps.ip ? (
+        <Typography variant="body2" color="text.secondary">
+          If your tracker does not accept a name, use {gps.ip} instead of {gps.host}.
+        </Typography>
+      ) : null}
     </Box>
   );
 }

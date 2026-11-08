@@ -60,6 +60,14 @@ const TARGETS = {
   http: target(env.LINK_HTTP_TARGET, "caddy:80"),
   gps: target(env.LINK_GPS_TARGET, "traccar:5013"),
 };
+// Each make of tracker has its own receiver in the GPS service (the door says which make it is).
+const TRACKER_PORTS = { h02: 5013, gt06: 5023, teltonika: 5027, osmand: 5055, watch: 5093, tk103: 5002, gps103: 5001 };
+function targetFor(msg) {
+  const t = TARGETS[msg.kind];
+  if (!t || msg.kind !== "gps" || env.LINK_GPS_TARGET) return t;
+  const port = TRACKER_PORTS[msg.tracker];
+  return port ? { host: t.host, port } : t;
+}
 
 const log = (...a) => console.log(new Date().toISOString(), ...a);
 
@@ -142,7 +150,7 @@ function answer(msg) {
     });
     return;
   }
-  const t = TARGETS[msg.kind];
+  const t = targetFor(msg);
   if (!t) return;
   const door = connectDoor();
   const home = net.connect(t.port, t.host);

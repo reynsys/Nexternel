@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.4
+
+- Nexternel Anywhere → GPS trackers: most makes of tracker now work through Nexternel Anywhere, not only SinoTrack: Concox, Teltonika, Coban, TK103, GPS watches and tracker apps on a phone. They all use your same port number; Nexternel tells them apart by itself.
+- Nexternel Anywhere → GPS trackers: the card now gives the server as a name (door.nexternel.net), so trackers keep working if the server ever moves. The number is still shown for trackers that do not accept a name.
+
 ## V5.3.3
 
 - Nexternel Anywhere → GPS trackers: the card now shows where your tracker should send its positions (server and your own port number), with the exact text message for a SinoTrack tracker and a Copy button.
