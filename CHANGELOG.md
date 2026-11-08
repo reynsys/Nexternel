@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.2
+
+- Already signed in? Opening the sign-in page (from a shortcut, a bookmark or a link) now takes you straight to your dashboard instead of asking for your password again.
+
 ## V5.3.1
 
 - Users → Edit user is tidy again: a wider window with four tabs (Account, Appearance, Wall display, Notification bell) and one Save. The appearance settings get their full width with the preview beside them, instead of squeezed into a narrow window. On phones it fills the screen.

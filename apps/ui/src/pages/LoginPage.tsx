@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Alert,
@@ -15,7 +15,7 @@ import {
 import { alpha, type Theme } from "@mui/material/styles";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
-import { api, clearStoredTokens } from "../api";
+import { api, clearStoredTokens, getStoredAccessToken } from "../api";
 import { useSkin } from "../skins/SkinProvider";
 import { isGradientActive } from "../skins/surfaceStyles";
 import { ButtonRow } from "../components/ButtonRow";
@@ -52,6 +52,33 @@ export function LoginPage() {
   const [trust, setTrust] = useState(true);
   const backdrop = isGradientActive(themePrefs);
 
+  /** Back to the page that asked for signing in (only addresses inside Nexternel), else the start. */
+  function goOn() {
+    const from = (location.state as { from?: string } | null)?.from;
+    navigate(from && from.startsWith("/") && !from.startsWith("//") && !from.startsWith("/login") ? from : "/", { replace: true });
+  }
+
+  // Already signed in (a shortcut or bookmark to this page): go straight in, no form to fill.
+  // Only when the server confirms it; a sign-in it refuses is dropped and the form stays.
+  useEffect(() => {
+    if (!getStoredAccessToken()) return;
+    let cancelled = false;
+    api
+      .me()
+      .then((r) => {
+        if (cancelled) return;
+        applyAccountPrefs(r.user.themePrefs);
+        goOn();
+      })
+      .catch(() => {
+        /* not signed in after all, or no answer: the form stays */
+      });
+    return () => {
+      cancelled = true;
+    };
+    // Once, when the page opens.
+  }, []);
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -67,9 +94,7 @@ export function LoginPage() {
       }
       const data = first;
       applyAccountPrefs(data.user.themePrefs);
-      // Back to the page that asked for signing in (only addresses inside Nexternel).
-      const from = (location.state as { from?: string } | null)?.from;
-      navigate(from && from.startsWith("/") && !from.startsWith("//") && !from.startsWith("/login") ? from : "/", { replace: true });
+      goOn();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Login failed";
       setError(msg);
