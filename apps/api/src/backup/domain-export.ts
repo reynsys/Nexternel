@@ -96,7 +96,7 @@ export type DomainExport = {
   /** Minutes a device must be offline before the bell hears of it (V5.2.147+). */
   bellOfflineMinutes?: number;
   /** Nexternel Anywhere: the home's name and door key (V5.3.0+). The backup itself is encrypted. */
-  anywhere?: { name: string; key: string; doorDomain: string };
+  anywhere?: { name: string; key: string; doorDomain: string; gpsPort?: number | null };
   integrations: {
     octopus: ExportedOctopus | null;
     /** Installed plugins (V5.2.86+). Secret settings are stored readable here — the backup itself is encrypted. */
@@ -330,5 +330,5 @@ export async function exportDomain(): Promise<DomainExport> {
 
 async function anywhereForBackup(): Promise<Pick<DomainExport, "anywhere">> {
   const s = await readAnywhereSettings();
-  return s.name && s.key ? { anywhere: { name: s.name, key: s.key, doorDomain: s.doorDomain } } : {};
+  return s.name && s.key ? { anywhere: { name: s.name, key: s.key, doorDomain: s.doorDomain, gpsPort: s.gpsPort ?? null } } : {};
 }

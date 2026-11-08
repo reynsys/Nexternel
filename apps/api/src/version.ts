@@ -2,7 +2,7 @@
 export const VERSION_GENERATION = 5;
 /** Major update (named "hardware" for history; since 07/11/2026 it counts major updates with new features). */
 export const VERSION_HARDWARE = 3;
-export const VERSION_SOFTWARE = 4;
+export const VERSION_SOFTWARE = 5;
 
 export function formatVersion(
   gen = VERSION_GENERATION,

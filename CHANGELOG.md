@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.5
+
+- Nexternel Anywhere: your home now remembers its GPS port number (also in backups). If Nexternel Anywhere ever has to set your home up again, it asks for the same number back, so your GPS trackers keep working without a new text message.
+
 ## V5.3.4
 
 - Nexternel Anywhere → GPS trackers: most makes of tracker now work through Nexternel Anywhere, not only SinoTrack: Concox, Teltonika, Coban, TK103, GPS watches and tracker apps on a phone. They all use your same port number; Nexternel tells them apart by itself.

@@ -33,6 +33,8 @@ export type AnywhereSettings = {
   /** The home's door key (secret; the door only keeps its fingerprint). */
   key: string | null;
   doorDomain: string;
+  /** This home's GPS port at the door, kept so it can be asked for again if the door ever loses it. */
+  gpsPort?: number | null;
 };
 
 export type AnywhereStatus = {
@@ -63,7 +65,8 @@ export async function readAnywhereSettings(): Promise<AnywhereSettings> {
       typeof raw.doorDomain === "string" && DOMAIN_RE.test(raw.doorDomain.toLowerCase())
         ? raw.doorDomain.toLowerCase()
         : DEFAULT_DOOR_DOMAIN;
-    return { enabled: raw.enabled === true, name, key, doorDomain };
+    const gpsPort = Number.isInteger(raw.gpsPort) && Number(raw.gpsPort) > 1024 ? Number(raw.gpsPort) : null;
+    return { enabled: raw.enabled === true, name, key, doorDomain, gpsPort };
   } catch {
     return { enabled: false, name: null, key: null, doorDomain: DEFAULT_DOOR_DOMAIN };
   }
@@ -272,12 +275,16 @@ export async function claimAnywhereName(raw: string): Promise<string> {
   const licence = await licenceTokenFor("anywhere");
   if (!licence) throw new AnywhereError("This server has no Nexternel Anywhere licence.");
   const settings = await readAnywhereSettings();
-  const r = await askDoor(settings.doorDomain, { claim: name, licence });
+  // Ask for this home's old GPS port back, so trackers keep working if the door has to set it up again.
+  const status = await readAnywhereStatus();
+  const gpsPort = typeof status?.gpsPort === "number" ? status.gpsPort : settings.gpsPort ?? undefined;
+  const r = await askDoor(settings.doorDomain, { claim: name, licence, ...(gpsPort ? { gpsPort } : {}) });
   if (typeof r.claimed !== "string" || typeof r.key !== "string") {
     const extra = Array.isArray(r.suggestions) && r.suggestions.length ? ` Free: ${r.suggestions.join(", ")}.` : "";
     throw new AnywhereError(`${typeof r.refused === "string" ? r.refused : "The name could not be taken."}${extra}`);
   }
-  await writeAnywhereSettings({ ...settings, enabled: true, name: r.claimed, key: r.key });
+  const newPort = Number.isInteger(r.gpsPort) ? Number(r.gpsPort) : gpsPort ?? null;
+  await writeAnywhereSettings({ ...settings, enabled: true, name: r.claimed, key: r.key, gpsPort: newPort });
   return r.claimed;
 }
 
@@ -312,6 +319,15 @@ export async function waitForLink(name: string, ms = 20_000): Promise<boolean> {
  * only to the licence that held it, so nobody else can get a name this way. At most once in 30 min.
  */
 let lastRepair = 0;
+/** Note down this home's GPS port from the link, so it can be asked for again (see claimAnywhereName). */
+export async function rememberGpsPort(): Promise<void> {
+  const settings = await readAnywhereSettings();
+  const st = await readAnywhereStatus();
+  if (!settings.name || st?.state !== "open" || st.name !== settings.name) return;
+  if (typeof st.gpsPort !== "number" || st.gpsPort === settings.gpsPort) return;
+  await writeAnywhereSettings({ ...settings, gpsPort: st.gpsPort });
+}
+
 export async function repairAnywhere(now = Date.now()): Promise<boolean> {
   const settings = await readAnywhereSettings();
   if (!settings.enabled || !settings.name || !settings.key) return false;
@@ -334,5 +350,10 @@ export function startAnywhereRenewal(): void {
   const run = () => void renewAnywhere().catch(() => undefined);
   setTimeout(run, 5 * 60_000);
   renewTimer = setInterval(run, 24 * 60 * 60 * 1000);
-  setInterval(() => void repairAnywhere().catch(() => undefined), 5 * 60_000).unref();
+  setInterval(() => {
+    void rememberGpsPort()
+      .catch(() => undefined)
+      .then(() => repairAnywhere())
+      .catch(() => undefined);
+  }, 5 * 60_000).unref();
 }

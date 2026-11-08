@@ -489,6 +489,7 @@ export async function restoreDomain(
           name: aw.name,
           key: aw.key,
           doorDomain: typeof aw.doorDomain === "string" && aw.doorDomain ? aw.doorDomain.toLowerCase() : current.doorDomain,
+          gpsPort: Number.isInteger(aw.gpsPort) ? Number(aw.gpsPort) : null,
         });
         await applyHttps();
       }
