@@ -277,6 +277,8 @@ apps/ui/public/favicon-32.png
 apps/ui/public/favicon.svg
 apps/ui/public/icon-192.png
 apps/ui/public/icon-512.png
+apps/ui/public/manifest.json
+apps/ui/public/sw.js
 apps/ui/scripts/stage2-test-loader.mjs
 apps/ui/scripts/stage2-test-resolver.mjs
 apps/ui/src/api.ts

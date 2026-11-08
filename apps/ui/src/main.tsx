@@ -14,6 +14,14 @@ installErrorRing();
 bootstrapV5PanelRegistry();
 loadCoreContributions();
 
+// Shortcut helper (public/sw.js): lets Nexternel be installed as a full-screen shortcut.
+// Browsers allow it only on a padlock address (Nexternel Anywhere), so skip it elsewhere.
+if ("serviceWorker" in navigator && window.isSecureContext) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+  });
+}
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <AppErrorBoundary>

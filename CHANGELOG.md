@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.6
+
+- Nexternel can now be installed on your phone or computer from your Nexternel Anywhere address: the browser offers Install (or Add to Home screen). The Nexternel logo goes on your home screen, and one tap opens Nexternel full screen, without the address bar. Already added a shortcut before? Remove it and install again to get the full screen.
+- When Nexternel cannot be reached (for example, no internet on the phone), you now see a page with the Nexternel logo and a Try again button instead of the browser's error page.
+
 ## V5.3.5
 
 - Nexternel Anywhere: your home now remembers its GPS port number (also in backups). If Nexternel Anywhere ever has to set your home up again, it asks for the same number back, so your GPS trackers keep working without a new text message.
