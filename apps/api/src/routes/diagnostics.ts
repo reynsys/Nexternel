@@ -1,6 +1,7 @@
 import type { FastifyPluginAsync } from "fastify";
 import { CAPABILITY_KINDS } from "@nexternel/domain";
-import { requirePermission } from "../auth/rbac.js";
+import { requireAdmin, requirePermission } from "../auth/rbac.js";
+import { signInRecord } from "../auth/sign-in-record.js";
 import { checkDatabase, getPool } from "../db.js";
 import { listDevicesDetailed } from "../devices/service.js";
 import {
@@ -68,6 +69,12 @@ export const diagnosticsRoutes: FastifyPluginAsync = async (app) => {
         nodeVersion: process.version,
       },
     };
+  });
+
+  /** The sign-in record: recent sign-in steps and refusals with their reasons (see auth/sign-in-record.ts). */
+  app.get("/api/v1/diagnostics/sign-ins", async (request, reply) => {
+    if (!requireAdmin(request, reply)) return;
+    return { entries: signInRecord() };
   });
 
   app.get("/api/v1/diagnostics/mqtt", async (request, reply) => {

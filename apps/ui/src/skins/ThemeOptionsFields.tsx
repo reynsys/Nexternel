@@ -55,6 +55,8 @@ const TABS = [
 
 // The tab last open, so coming back to the page opens it again (this browser only).
 const TAB_KEY = "nexternel.appearance.tab";
+/** Width of the editor's own space from which the preview sits beside the settings. */
+const WIDE_PX = 880;
 function readStored(key: string): string | null {
   try {
     return localStorage.getItem(key);
@@ -187,7 +189,6 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
   const [fontGroup, setFontGroup] = useState("all");
   const effectOptions = useEffectOptions(themePrefs);
   const deviceDark = useMediaQuery("(prefers-color-scheme: dark)");
-  const wide = useMediaQuery("(min-width: 1200px)");
   const look = resolveLook(themePrefs.lookId);
   const effectId = themePrefs.effectId ?? "off";
   const set = (patch: Partial<ThemePrefs>) => onThemeChange({ ...themePrefs, ...patch });
@@ -440,6 +441,53 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
       <Stack spacing={3.5} divider={<Divider flexItem />}>
         {modeTiles}
 
+      <Section title="Background" hint={BACKGROUND_HINT[kind]}>
+        <Segmented
+          label="Background type"
+          value={kind}
+          onChange={chooseKind}
+          options={[
+            { value: "plain", label: "Plain" },
+            { value: "mine", label: "From my colours" },
+            { value: "glow", label: "Soft glow" },
+            { value: "gradient", label: "Gradient" },
+          ]}
+        />
+        {kind === "mine" ? (
+          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 1, mt: 1.5 }}>
+            {[
+              [MINE_GLOW_ID, "Glow", "Soft pools of your three colours."],
+              [MINE_GRADIENT_ID, "Gradient", "Your main and second colour blending."],
+            ].map(([id, label, text]) => (
+              <ChoiceTile key={id} selected={themePrefs.gradientId === id} onClick={() => set({ gradientId: id })} title={label} text={text}>
+                <Box aria-hidden sx={[insetSx(), { width: "100%", height: 40, mb: 0.5, backgroundImage: mineBackground(scheme, id).css }]} />
+              </ChoiceTile>
+            ))}
+          </Box>
+        ) : null}
+        {swatches.length > 0 && (
+          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(96px, 1fr))", gap: 1, mt: 1.5 }}>
+            {swatches.map((g) => {
+              const selected = themePrefs.gradientId === g.id;
+              return (
+                <ButtonBase
+                  key={g.id}
+                  onClick={() => set({ gradientId: g.id })}
+                  aria-pressed={selected}
+                  aria-label={g.label}
+                  sx={{ width: "100%", display: "grid", gridTemplateColumns: "minmax(0, 1fr)", justifyItems: "stretch", alignContent: "start", gap: 0.5, p: 0.5, borderRadius: 1.5, textAlign: "left", border: "2px solid", borderColor: selected ? "text.primary" : "transparent" }}
+                >
+                  <Box sx={[insetSx(), { width: "100%", height: 40, backgroundImage: gradientCss(g.id, mode) ?? undefined }]} />
+                  <Typography variant="caption" color={selected ? "text.primary" : "text.secondary"} sx={{ lineHeight: 1.2, px: 0.25 }}>
+                    {g.label}
+                  </Typography>
+                </ButtonBase>
+              );
+            })}
+          </Box>
+        )}
+      </Section>
+
       <Section title="Colours" hint="Three colours that work together. Nexternel keeps every text readable: a colour is made a little lighter or darker where needed, never changed.">
         <Row label="Main colour" hint="buttons, chosen items, the switch when on">
           <ButtonRow direction="row" flexWrap="wrap" useFlexGap>
@@ -503,56 +551,9 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
         </Row>
       </Section>
 
-      <Section title="Background" hint={BACKGROUND_HINT[kind]}>
-        <Segmented
-          label="Background type"
-          value={kind}
-          onChange={chooseKind}
-          options={[
-            { value: "plain", label: "Plain" },
-            { value: "mine", label: "From my colours" },
-            { value: "glow", label: "Soft glow" },
-            { value: "gradient", label: "Gradient" },
-          ]}
-        />
-        {kind === "mine" ? (
-          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 1, mt: 1.5 }}>
-            {[
-              [MINE_GLOW_ID, "Glow", "Soft pools of your three colours."],
-              [MINE_GRADIENT_ID, "Gradient", "Your main and second colour blending."],
-            ].map(([id, label, text]) => (
-              <ChoiceTile key={id} selected={themePrefs.gradientId === id} onClick={() => set({ gradientId: id })} title={label} text={text}>
-                <Box aria-hidden sx={[insetSx(), { width: "100%", height: 40, mb: 0.5, backgroundImage: mineBackground(scheme, id).css }]} />
-              </ChoiceTile>
-            ))}
-          </Box>
-        ) : null}
-        {swatches.length > 0 && (
-          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(96px, 1fr))", gap: 1, mt: 1.5 }}>
-            {swatches.map((g) => {
-              const selected = themePrefs.gradientId === g.id;
-              return (
-                <ButtonBase
-                  key={g.id}
-                  onClick={() => set({ gradientId: g.id })}
-                  aria-pressed={selected}
-                  aria-label={g.label}
-                  sx={{ width: "100%", display: "grid", gridTemplateColumns: "minmax(0, 1fr)", justifyItems: "stretch", alignContent: "start", gap: 0.5, p: 0.5, borderRadius: 1.5, textAlign: "left", border: "2px solid", borderColor: selected ? "text.primary" : "transparent" }}
-                >
-                  <Box sx={[insetSx(), { width: "100%", height: 40, backgroundImage: gradientCss(g.id, mode) ?? undefined }]} />
-                  <Typography variant="caption" color={selected ? "text.primary" : "text.secondary"} sx={{ lineHeight: 1.2, px: 0.25 }}>
-                    {g.label}
-                  </Typography>
-                </ButtonBase>
-              );
-            })}
-          </Box>
-        )}
-      </Section>
-
       <Section
         title="Background effect colour"
-        hint={effectId === "off" ? "No background effect is on. Choose one on the Style tab first." : "White, your main colour, or the colours of your background."}
+        hint={effectId === "off" ? "No background effect is on. Choose one on the Look tab first." : "White, your main colour, or the colours of your background."}
       >
         {effectId !== "off" ? (
           <Segmented<EffectColour> label="Effect colour" value={themePrefs.effectColour ?? "white"} options={EFFECT_COLOURS} onChange={(v) => set({ effectColour: v })} />
@@ -612,24 +613,30 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
     </Box>
   );
 
-  // Wide screens: settings on the left, the preview beside them staying in view; else preview first.
-  return wide ? (
-    <Box sx={{ display: "grid", gridTemplateColumns: "minmax(0, 1.3fr) minmax(360px, 0.8fr)", gap: 3, alignItems: "start" }}>
-      {settings}
-      <Box sx={{ position: "sticky", top: 80 }}>
-        <Typography variant="subtitle1" sx={{ mb: 1 }}>
-          Preview
-        </Typography>
-        <AppearancePreview prefs={themePrefs} deviceDark={deviceDark} />
-        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5, fontFamily: fontFamilyFor(look, themePrefs.lookFont) }}>
-          Font: {CORE_FONTS.find((f) => f.id === fontId)?.label ?? look.fonts?.find((f) => f.id === fontId)?.label ?? "Inter"}
-        </Typography>
+  // Room enough (measured on the space this editor has, not the screen: it also sits inside the
+  // Edit user popup): settings on the left, the preview beside them staying in view; else preview first.
+  return (
+    <Box sx={{ containerType: "inline-size" }}>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr)",
+          gap: 3,
+          alignItems: "start",
+          [`@container (min-width: ${WIDE_PX}px)`]: { gridTemplateColumns: "minmax(0, 1.3fr) minmax(360px, 0.8fr)" },
+        }}
+      >
+        <Box sx={{ order: 1, minWidth: 0 }}>{settings}</Box>
+        <Box sx={{ order: 0, [`@container (min-width: ${WIDE_PX}px)`]: { order: 2, position: "sticky", top: 80 } }}>
+          <Typography variant="subtitle1" sx={{ mb: 1 }}>
+            Preview
+          </Typography>
+          <AppearancePreview prefs={themePrefs} deviceDark={deviceDark} />
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5, fontFamily: fontFamilyFor(look, themePrefs.lookFont) }}>
+            Font: {CORE_FONTS.find((f) => f.id === fontId)?.label ?? look.fonts?.find((f) => f.id === fontId)?.label ?? "Inter"}
+          </Typography>
+        </Box>
       </Box>
     </Box>
-  ) : (
-    <Stack spacing={3}>
-      <AppearancePreview prefs={themePrefs} deviceDark={deviceDark} />
-      {settings}
-    </Stack>
   );
 }

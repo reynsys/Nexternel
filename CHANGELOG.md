@@ -2,6 +2,15 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.1
+
+- Users → Edit user is tidy again: a wider window with four tabs (Account, Appearance, Wall display, Notification bell) and one Save. The appearance settings get their full width with the preview beside them, instead of squeezed into a narrow window. On phones it fills the screen.
+- Buttons all look alike: choice buttons (like Plain / From my colours / Soft glow / Gradient) and red buttons (Delete, Unlock…) are now drawn by your Look like every other button, also in Glass, 3D and HUD.
+- Appearance → Colours: Background now comes right after Mode, above Main colour.
+- Appearance: the background effect hint names the Look tab (it said Style).
+- Notifications: the "Report a device after" choice no longer presses against the line above it.
+- Sign-in record (for finding faults): Nexternel keeps a short list of recent sign-ins and of sign-ins it turned away, with the reason, so we can see why a phone is asked to sign in again. In memory only, never any password, readable by an administrator.
+
 ## V5.3.0
 
 **Nexternel Anywhere**: open Nexternel away from home, on mobile data or any Wi-Fi, with the padlock, and with nothing to change on your router. It is a paid service (with its own licence, in Settings → Extensions); without it Nexternel works at home exactly as before.

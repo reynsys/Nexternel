@@ -165,6 +165,12 @@ export function lookThemeOptions(
                   }
                 : {}),
               ...(ownerState.variant === "text" && tinted ? set("color", t.quietInk) : {}),
+              // Red (and other coloured) buttons keep their colour, but take the Look's fill and
+              // shadow, so in Glass, 3D or HUD they are drawn like the buttons next to them.
+              ...(ownerState.variant === "outlined" && !tinted
+                ? { ...set("backgroundColor", t.secondaryFill), ...set("boxShadow", t.secondaryShadow), ...pressable(t.secondaryShadow) }
+                : {}),
+              ...(ownerState.variant === "contained" && !tinted ? { ...set("boxShadow", t.primaryShadow), ...pressable(t.primaryShadow) } : {}),
             };
           },
         },
@@ -254,8 +260,35 @@ export function lookThemeOptions(
           },
         },
       },
-      // Choice buttons (5 / 4, Full / Half…) write their words like every other button.
-      MuiToggleButton: { styleOverrides: { root: { textTransform: t.buttonCase } } },
+      // Choice buttons (Plain / Glow…, 5 / 4…) are drawn like every other button in this Look: the
+      // outlined button's edge, fill and ink; the chosen one like the main button.
+      MuiToggleButton: {
+        styleOverrides: {
+          root: {
+            textTransform: t.buttonCase,
+            minHeight: 36,
+            color: primary.main,
+            border: buttonEdge,
+            ...set("backgroundColor", t.secondaryFill),
+            ...set("color", t.secondaryInk),
+            "&:hover": { ...set("backgroundColor", t.secondaryFill), filter: "brightness(1.15)" },
+            "&.Mui-selected, &.Mui-selected:hover": {
+              backgroundColor: primary.main,
+              color: primary.contrastText,
+              ...set("backgroundColor", t.primaryFill),
+              ...set("color", t.primaryInk),
+              ...set("boxShadow", t.primaryShadow),
+            },
+          },
+        },
+      },
+      // In a joined row, neighbours share one edge (no doubled line between them).
+      MuiToggleButtonGroup: {
+        styleOverrides: {
+          grouped: { "&:not(:first-of-type)": { borderLeftColor: "transparent" } },
+          root: { borderRadius: t.radiusControl },
+        },
+      },
       MuiSwitch: {
         styleOverrides: {
           switchBase: { "&.Mui-checked": { color: primary.main }, "&.Mui-checked + .MuiSwitch-track": { backgroundColor: primary.main } },

@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useState } from "react";
-import { Alert, Card, CardContent, FormControl, FormControlLabel, InputLabel, MenuItem, Select, Stack, Switch, Typography } from "@mui/material";
+import { Alert, Box, Card, CardContent, FormControl, FormControlLabel, InputLabel, MenuItem, Select, Stack, Switch, Typography } from "@mui/material";
 import { api, type BellTopics, type PluginInfo } from "../../../api";
 import { BellFields } from "../../../components/BellFields";
 import { useSkin } from "../../../skins/SkinProvider";
@@ -112,7 +112,9 @@ export function NotificationsSettingsPage() {
                   }
                 />
                 {t.key === "devices" ? (
-                  <FormControl size="small" sx={{ ml: 7, maxWidth: 320 }} disabled={!topics?.devices}>
+                  // In its own box: the list around it resets margins, which squeezed it against the text above.
+                  <Box sx={{ pl: 7, pt: 1.5, pb: 0.5 }}>
+                  <FormControl size="small" fullWidth sx={{ maxWidth: 320 }} disabled={!topics?.devices}>
                     <InputLabel id="bell-offline-minutes">Report a device after</InputLabel>
                     <Select
                       labelId="bell-offline-minutes"
@@ -127,6 +129,7 @@ export function NotificationsSettingsPage() {
                       ))}
                     </Select>
                   </FormControl>
+                  </Box>
                 ) : null}
                 </Fragment>
               ))}

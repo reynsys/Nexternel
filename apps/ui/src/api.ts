@@ -41,7 +41,32 @@ export function storeTokens(accessToken: string, refreshToken: string, keep = ke
   store.setItem(REFRESH_KEY, refreshToken);
 }
 
-export function clearStoredTokens() {
+/*
+ * For the sign-in record (server: auth/sign-in-record.ts): what this page found saved when it opened,
+ * and why a saved sign-in was last dropped. Sent with the next sign-in, so the record shows whether
+ * the screen lost its saved sign-in by itself or the server turned it away.
+ */
+const PAGE_OPENED_AT = Date.now();
+const SAVED_AT_OPEN = (() => {
+  try {
+    if (localStorage.getItem(ACCESS_KEY)) return "kept";
+    if (sessionStorage.getItem(ACCESS_KEY)) return "this-tab";
+    return "none";
+  } catch {
+    return "unreadable";
+  }
+})();
+let lastDropReason: string | null = null;
+
+function signInStartHeader(): string {
+  const secs = Math.round((Date.now() - PAGE_OPENED_AT) / 1000);
+  return `saved-at-open=${SAVED_AT_OPEN}; dropped=${lastDropReason ?? "-"}; page-open=${secs}s`;
+}
+
+/** reason: why the saved sign-in is dropped, for the sign-in record (none when signing in or out). */
+export function clearStoredTokens(reason?: string) {
+  // Only when something was saved: a later check finding it already gone keeps the first reason.
+  if (reason && (readToken(ACCESS_KEY) || readToken(REFRESH_KEY))) lastDropReason = reason;
   for (const store of [localStorage, sessionStorage]) {
     store.removeItem(ACCESS_KEY);
     store.removeItem(REFRESH_KEY);
@@ -117,7 +142,7 @@ async function tryRefreshSession(): Promise<RefreshOutcome> {
   refreshInFlight = (async (): Promise<RefreshOutcome> => {
     const refreshToken = getStoredRefreshToken();
     if (!refreshToken) {
-      clearStoredTokens();
+      clearStoredTokens("no-saved-renewal");
       return "rejected";
     }
     try {
@@ -128,13 +153,13 @@ async function tryRefreshSession(): Promise<RefreshOutcome> {
         body: JSON.stringify({ refreshToken }),
       });
       if (res.status === 401 || res.status === 403) {
-        clearStoredTokens();
+        clearStoredTokens(`renewal-refused-${res.status}`);
         return "rejected";
       }
       if (!res.ok) return "unreachable";
       const data = (await res.json()) as AuthResponse;
       if (!data.accessToken || !data.refreshToken) {
-        clearStoredTokens();
+        clearStoredTokens("renewal-answer-empty");
         return "rejected";
       }
       storeTokens(data.accessToken, data.refreshToken);
@@ -707,6 +732,7 @@ export const api = {
     clearStoredTokens();
     const data = await apiFetch<AuthResponse | SecondCheckAsk>("/api/v1/auth/login", {
       method: "POST",
+      headers: { "X-Nexternel-Sign-In-Start": signInStartHeader() },
       body: JSON.stringify({ username, password }),
     });
     // From outside with the second check on: the code comes next (loginCode).

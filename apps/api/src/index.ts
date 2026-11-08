@@ -63,6 +63,7 @@ import { anywhereRoutes } from "./system/anywhere-routes.js";
 import { startAnywhereRenewal } from "./system/anywhere.js";
 import { applyHttps } from "./system/https.js";
 import { ENTRANCE_HEADER, secureCookieHeader } from "./auth/login-guard.js";
+import { recordSignInStep } from "./auth/sign-in-record.js";
 import { ensureUpdateSchema, startUpdateChecks } from "./system/updates.js";
 import { startSelfCheck } from "./system/self-check.js";
 import { startSharedSettingsWatch } from "./esphome/shared-settings.js";
@@ -124,6 +125,8 @@ await app.register(async (api) => {
   api.addHook("preHandler", maintenanceGuard);
   // From outside (Nexternel Anywhere), every cookie is sent over the padlock only.
   api.addHook("onSend", async (request, reply, payload) => {
+    // Sign-in record (Settings → System diagnostics): why a screen is asked to sign in again.
+    recordSignInStep(request, reply, payload);
     if (request.headers[ENTRANCE_HEADER] === undefined) return payload;
     const secured = secureCookieHeader(reply.getHeader("set-cookie") as string | string[] | undefined);
     if (secured !== undefined) {

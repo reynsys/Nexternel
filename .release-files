@@ -27,6 +27,7 @@ apps/api/src/auth/plugin.ts
 apps/api/src/auth/rbac.ts
 apps/api/src/auth/roles.ts
 apps/api/src/auth/second-check.ts
+apps/api/src/auth/sign-in-record.ts
 apps/api/src/auth/theme-prefs.test.ts
 apps/api/src/auth/theme-prefs.ts
 apps/api/src/auth/tokens.ts

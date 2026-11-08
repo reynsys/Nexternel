@@ -18,13 +18,17 @@ import {
   Select,
   Stack,
   Switch,
+  Tab,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
+  Tabs,
   TextField,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import {
@@ -89,6 +93,9 @@ function UsersAdminPage() {
   const [error, setError] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [editUser, setEditUser] = useState<AdminUser | null>(null);
+  const [editTab, setEditTab] = useState<"account" | "appearance" | "wall" | "bell">("account");
+  const muiTheme = useTheme();
+  const phoneDialog = useMediaQuery(muiTheme.breakpoints.down("sm"));
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -132,6 +139,7 @@ function UsersAdminPage() {
 
   function openEdit(u: AdminUser) {
     setEditUser(u);
+    setEditTab("account");
     setDisplayName(u.displayName ?? "");
     setRole(u.role);
     setIsActive(u.isActive);
@@ -150,10 +158,6 @@ function UsersAdminPage() {
 
   function maybeRefreshShell(userId: string) {
     if (me?.id === userId) notifyUserUpdated();
-  }
-
-  function roleName(slug: string): string {
-    return roles.find((r) => r.slug === slug)?.name ?? slug;
   }
 
   async function onCreate(e: FormEvent) {
@@ -421,97 +425,111 @@ function UsersAdminPage() {
         open={Boolean(editUser)}
         onClose={() => setEditUser(null)}
         fullWidth
-        maxWidth="sm"
+        maxWidth="lg"
+        fullScreen={phoneDialog}
+        PaperProps={{ sx: phoneDialog ? undefined : { height: "min(920px, calc(100% - 64px))" } }}
       >
-        <form onSubmit={onSaveEdit}>
-          <DialogTitle>
+        <form onSubmit={onSaveEdit} style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
+          <DialogTitle sx={{ pb: 0 }}>
             Edit user{editUser ? ` — ${editUser.username}` : ""}
           </DialogTitle>
-          <DialogContent>
-            <Stack spacing={2} sx={{ mt: 1 }}>
-              <UserAvatarField
-                avatarData={avatarData}
-                displayName={displayName}
-                username={editUser?.username}
-                onChange={setAvatarData}
-              />
-              <TextField
-                label="Display name"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                fullWidth
-                helperText="Shown in the side menu"
-              />
-              <FormControl fullWidth>
-                <InputLabel id="edit-role">Role</InputLabel>
-                <Select
-                  labelId="edit-role"
-                  label="Role"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                >
-                  {roles.map((r) => (
-                    <MenuItem key={r.id} value={r.slug}>
-                      {r.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <Typography variant="caption" color="text.secondary">
-                Current role: {editUser ? roleName(editUser.role) : ""}
-              </Typography>
-              <TextField
-                label="New password"
-                type="password"
-                value={editPassword}
-                onChange={(e) => setEditPassword(e.target.value)}
-                fullWidth
-                helperText="Leave blank to keep the current password. At least 12 characters."
-              />
-              <TextField
-                label="Email (optional)"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                fullWidth
-                helperText="For warnings and the unlock link, if this account gets locked from outside"
-              />
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={isActive}
-                    onChange={(_, checked) => setIsActive(checked)}
-                  />
-                }
-                label="Account active"
-              />
-              {editUser?.secondCheck && (
-                <Stack spacing={0.5}>
-                  <Button variant="outlined" color="error" onClick={() => void secondCheckOff(editUser)} sx={{ alignSelf: "flex-start" }}>
-                    Turn off second check
-                  </Button>
-                  <Typography variant="caption" color="text.secondary">
-                    For someone who lost their phone. They can then sign in from outside with a strong password, and set it up again.
-                  </Typography>
-                </Stack>
-              )}
-              <Divider />
-              <Typography variant="subtitle1">Default theme</Typography>
-              <ThemeOptionsFields
-                themePrefs={theme}
-                skinId={skinId}
-                skins={skins}
-                onThemeChange={setTheme}
-                onSkinChange={setSkinId}
-              />
-              <Divider />
-              <Typography variant="subtitle1">Wall display</Typography>
-              <WallDisplayFields value={theme.wall} onChange={(wall) => setTheme((t) => ({ ...t, wall }))} />
-              <Typography variant="subtitle1">Notification bell</Typography>
-              <BellFields value={theme.bell} onChange={(bell) => setTheme((t) => ({ ...t, bell }))} />
-            </Stack>
+          <Tabs
+            value={editTab}
+            onChange={(_, v) => setEditTab(v)}
+            variant="scrollable"
+            allowScrollButtonsMobile
+            aria-label="Edit user"
+            sx={{ px: 3, borderBottom: 1, borderColor: "divider" }}
+          >
+            <Tab value="account" label="Account" />
+            <Tab value="appearance" label="Appearance" />
+            <Tab value="wall" label="Wall display" />
+            <Tab value="bell" label="Notification bell" />
+          </Tabs>
+          <DialogContent sx={{ flex: 1, minHeight: 0 }}>
+            {editTab === "account" ? (
+              <Stack spacing={2} sx={{ mt: 1, maxWidth: 560 }}>
+                <UserAvatarField
+                  avatarData={avatarData}
+                  displayName={displayName}
+                  username={editUser?.username}
+                  onChange={setAvatarData}
+                />
+                <TextField
+                  label="Display name"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  fullWidth
+                  helperText="Shown in the side menu"
+                />
+                <FormControl fullWidth>
+                  <InputLabel id="edit-role">Role</InputLabel>
+                  <Select labelId="edit-role" label="Role" value={role} onChange={(e) => setRole(e.target.value)}>
+                    {roles.map((r) => (
+                      <MenuItem key={r.id} value={r.slug}>
+                        {r.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <TextField
+                  label="New password"
+                  type="password"
+                  value={editPassword}
+                  onChange={(e) => setEditPassword(e.target.value)}
+                  fullWidth
+                  helperText="Leave blank to keep the current password. At least 12 characters."
+                />
+                <TextField
+                  label="Email (optional)"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  fullWidth
+                  helperText="For warnings and the unlock link, if this account gets locked from outside"
+                />
+                <FormControlLabel
+                  control={<Switch checked={isActive} onChange={(_, checked) => setIsActive(checked)} />}
+                  label="Account active"
+                />
+                {editUser?.secondCheck && (
+                  <Stack spacing={0.5}>
+                    <Button variant="outlined" color="error" onClick={() => void secondCheckOff(editUser)} sx={{ alignSelf: "flex-start" }}>
+                      Turn off second check
+                    </Button>
+                    <Typography variant="caption" color="text.secondary">
+                      For someone who lost their phone. They can then sign in from outside with a strong password, and set it up again.
+                    </Typography>
+                  </Stack>
+                )}
+              </Stack>
+            ) : null}
+            {editTab === "appearance" ? (
+              <Stack spacing={2} sx={{ mt: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  How Nexternel looks for this account. They can also change it themselves in Appearance.
+                </Typography>
+                <ThemeOptionsFields
+                  themePrefs={theme}
+                  skinId={skinId}
+                  skins={skins}
+                  onThemeChange={setTheme}
+                  onSkinChange={setSkinId}
+                />
+              </Stack>
+            ) : null}
+            {editTab === "wall" ? (
+              <Stack sx={{ mt: 1, maxWidth: 640 }}>
+                <WallDisplayFields value={theme.wall} onChange={(wall) => setTheme((t) => ({ ...t, wall }))} />
+              </Stack>
+            ) : null}
+            {editTab === "bell" ? (
+              <Stack sx={{ mt: 1, maxWidth: 640 }}>
+                <BellFields value={theme.bell} onChange={(bell) => setTheme((t) => ({ ...t, bell }))} />
+              </Stack>
+            ) : null}
           </DialogContent>
-          <DialogActions>
+          <DialogActions sx={{ borderTop: 1, borderColor: "divider" }}>
             <Button onClick={() => setEditUser(null)}>Cancel</Button>
             <Button type="submit" variant="contained" disabled={busy}>
               Save
