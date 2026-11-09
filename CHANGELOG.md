@@ -2,6 +2,14 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.23
+
+- Settings → System is in tabs instead of one long page: Overview (whether everything is running, version and updates), Addresses (how to open Nexternel at home, and Nexternel Anywhere), Activity, and Help & troubleshooting.
+- Activity is now a tab of System, so the Settings menu is shorter: Appearance, System, Users, Notifications, Backup & Restore. Old links to Activity open the new tab.
+- Devices → a device's Overview no longer repeats its drop-outs and updates (they are on Troubleshooting). Instead, only when something needs doing, a "What to do" box says what is wrong and what to do — for a board that is not answering, including how to set it up again with a USB cable after moving Nexternel to a new computer.
+- The Devices list is drawn as a list: each area is one box with its name above it and a thin line between its devices.
+- Backup & Restore no longer has "Device files for USB flashing": Install with USB on the board's own page does the same, and more simply (Nexternel builds the board's software for this server itself).
+
 ## V5.3.22
 
 - Readings no longer show 0 or "—" for a while after an update. Nexternel now keeps the latest readings (every half minute, and when it stops) and puts them back when it starts, each with the time it really arrived; when a board's last message comes back from the message service, a reading Nexternel already holds stays current instead of being hidden until the board sends again. A reading older than 3 minutes still shows as "no recent reading", as before.

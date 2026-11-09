@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
 import { Alert, Box, Button, Stack, Typography } from "@mui/material";
-import { api, type Capability, type DeviceConnection, type DeviceRecord } from "../../../api";
+import { type Capability, type DeviceConnection, type DeviceRecord } from "../../../api";
 import { deviceConnectivityState } from "../../../lib/device-utils";
 import { BoardSoftware } from "./BoardSoftware";
 import { InfoCard, durationWords, shortWhen, wifiSignalWords } from "./DeviceBits";
@@ -19,7 +18,7 @@ type Props = {
 
 /**
  * A device's Overview: three equal boxes — Connection, Software (boards) and its readings or
- * switches with their values — and, under them, what happened recently (updates, drop-outs).
+ * switches with their values — and, only when something needs doing, what to do.
  */
 export function DeviceOverviewTab({ device, isAdmin, busy, connection, values, onUsb, onShowReadings }: Props) {
   const isBoard = (device.firmwareType || "esphome") === "esphome";
@@ -79,7 +78,7 @@ export function DeviceOverviewTab({ device, isAdmin, busy, connection, values, o
           <InfoCard title="Device">
             <Typography variant="h6">{device.firmwareType === "shelly" ? "Shelly switch" : "Device"}</Typography>
             <Typography variant="body2" color="text.secondary">
-              Its readings and switches come straight from the device over MQTT.
+              Its readings and switches come straight from the device over your home network.
             </Typography>
           </InfoCard>
         )}
@@ -109,49 +108,45 @@ export function DeviceOverviewTab({ device, isAdmin, busy, connection, values, o
         </InfoCard>
       </Box>
 
-      <RecentActivity device={device} connection={connection} isBoard={isBoard} />
+      <WhatToDo device={device} isBoard={isBoard} isAdmin={isAdmin} busy={busy} values={values} onUsb={onUsb} />
     </Stack>
   );
 }
 
-/** Updates from Nexternel and drop-outs, newest first. */
-function RecentActivity({ device, connection, isBoard }: { device: DeviceRecord; connection: DeviceConnection | null; isBoard: boolean }) {
-  const [updates, setUpdates] = useState<{ id: string; finishedAt: string; outcome: string; message: string }[]>([]);
-  useEffect(() => {
-    if (!isBoard) return;
-    void api
-      .boardUpdateHistory(device.id)
-      .then((r) => setUpdates(r.updates))
-      .catch(() => setUpdates([]));
-  }, [device.id, isBoard]);
-  const events = [
-    ...updates.map((u) => ({ at: u.finishedAt, text: u.message, bad: u.outcome === "failed" })),
-    ...(connection?.outages ?? []).map((o) => ({
-      at: o.from,
-      text: o.to ? `Offline for ${durationWords(o.minutes)}` : "Went offline",
-      bad: true,
-    })),
-  ]
-    .sort((a, b) => Date.parse(b.at) - Date.parse(a.at))
-    .slice(0, 6);
+/**
+ * Only when something needs doing: what is wrong in plain words and what to do. (What happened is on
+ * the Troubleshooting tab; it is not repeated here.)
+ */
+function WhatToDo({ device, isBoard, isAdmin, busy, values, onUsb }: { device: DeviceRecord; isBoard: boolean; isAdmin: boolean; busy: boolean; values: Map<string, Capability>; onUsb: () => void }) {
+  const offline = device.isEnabled && deviceConnectivityState(device) === "offline";
+  const notAnswering = device.sensors.filter((s) => s.isEnabled && s.capabilityId && values.get(s.capabilityId)?.state?.quality === "error");
+  if (!offline && notAnswering.length === 0) return null;
   return (
-    <InfoCard title="Recent activity">
-      {events.length ? (
-        events.map((e) => (
-          <Box key={`${e.at}-${e.text}`} sx={{ display: "flex", gap: 2 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ width: 150, flexShrink: 0 }}>
-              {shortWhen(e.at)}
+    <InfoCard title="What to do">
+      {offline ? (
+        <Stack spacing={1}>
+          <Typography variant="body2">
+            {isBoard ? "This board is not answering." : "This device is not answering."} Check that it has power and that your Wi-Fi is working; it comes back by itself once it can reach Nexternel.
+          </Typography>
+          {isBoard ? (
+            <Typography variant="body2" color="text.secondary">
+              Moved Nexternel to a new computer? A board set up for the old one cannot find this one. Plug the board into this computer with a USB cable and press Install with USB: Nexternel puts this server's address and your Wi-Fi on it, once.
             </Typography>
-            <Typography variant="body2" color={e.bad ? "warning.main" : "text.primary"}>
-              {e.text}
-            </Typography>
-          </Box>
-        ))
-      ) : (
-        <Typography variant="body2" color="text.secondary">
-          Nothing in the last 24 hours.
+          ) : null}
+          {isBoard && isAdmin ? (
+            <Box>
+              <Button {...devicesOutlinedButton} disabled={busy} onClick={onUsb}>
+                Install with USB
+              </Button>
+            </Box>
+          ) : null}
+        </Stack>
+      ) : null}
+      {notAnswering.length ? (
+        <Typography variant="body2" sx={{ mt: offline ? 1.5 : 0 }}>
+          {notAnswering.length === 1 ? `${notAnswering[0].customName ?? notAnswering[0].name} says "Sensor not answering"` : `${notAnswering.length} readings say "Sensor not answering"`}: the board is working, but it cannot read the sensor. Check the sensor's wires and plug.
         </Typography>
-      )}
+      ) : null}
     </InfoCard>
   );
 }

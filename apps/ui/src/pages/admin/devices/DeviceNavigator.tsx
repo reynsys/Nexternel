@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Box, Chip, List, Stack, TextField, Typography, useTheme } from "@mui/material";
+import { Box, Chip, List, Stack, TextField, Typography, useTheme, Paper } from "@mui/material";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import type { BoardStatus, CameraRecord, Capability, DeviceRecord } from "../../../api";
 import { deviceConnectivityState } from "../../../lib/device-utils";
@@ -163,11 +163,13 @@ export function DeviceNavigator({
 
       <Box sx={{ flex: 1, minHeight: 0, overflow: "auto", px: 1, py: 0.5 }}>
         {groups.map((g) => (
-          <Box key={g.key} sx={{ mb: 0.5 }}>
-            <Typography variant="overline" color="text.secondary" sx={{ display: "block", px: 1, pt: 1, lineHeight: 1.6 }}>
+          // Each area is one box: its name above it, a thin line between its devices.
+          <Box key={g.key} sx={{ mb: 1.5 }}>
+            <Typography variant="overline" color="text.secondary" sx={{ display: "block", px: 1, pt: 1, pb: 0.25, lineHeight: 1.6 }}>
               {g.label}
             </Typography>
-            <List disablePadding sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+            <Paper variant="inset" sx={{ borderRadius: 1.5, overflow: "hidden" }}>
+            <List disablePadding sx={{ display: "flex", flexDirection: "column", "& > * + *": { borderTop: 1, borderColor: "divider" } }}>
               {g.rows.map((e) => (
                 <DeviceRow
                   key={e.key}
@@ -180,6 +182,7 @@ export function DeviceNavigator({
                 />
               ))}
             </List>
+            </Paper>
           </Box>
         ))}
         {groups.length === 0 ? (

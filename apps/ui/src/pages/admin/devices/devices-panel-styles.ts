@@ -43,17 +43,19 @@ export function devicesNavItemSx(theme: Theme, selected: boolean): SxProps<Theme
   const n = theme.nx;
   const chosen = {
     backgroundColor: n.choiceSelectedFill,
-    border: n.choiceSelectedBorder,
     boxShadow: n.choiceSelectedShadow,
   };
+  // A row of the area's list box (DeviceNavigator): edge to edge, the list draws the lines between rows;
+  // the chosen row keeps its own outline, drawn inside the row so it never covers a line.
   return {
-    mx: 1,
-    my: 0.35,
+    mx: 0,
+    my: 0,
     px: 1.5,
-    py: 1,
-    borderRadius: 1.5,
+    py: 1.1,
+    borderRadius: 0,
     alignItems: "flex-start",
-    border: "1px solid transparent",
+    border: 0,
+    ...(selected ? { outline: n.choiceSelectedBorder || `1px solid ${theme.palette.primary.main}`, outlineOffset: -1 } : {}),
     transition: theme.transitions.create(["background-color", "border-color"], {
       duration: theme.transitions.duration.shorter,
     }),

@@ -520,10 +520,8 @@ apps/ui/src/pages/admin/OctopusSettingsCard.tsx
 apps/ui/src/pages/admin/RolesPage.tsx
 apps/ui/src/pages/admin/sections/AutomaticBackupsSection.tsx
 apps/ui/src/pages/admin/sections/BackupRestoreSection.tsx
-apps/ui/src/pages/admin/sections/DeviceFilesPackCard.tsx
 apps/ui/src/pages/admin/sections/ProfileSection.tsx
 apps/ui/src/pages/admin/sections/SecondCheckSection.tsx
-apps/ui/src/pages/admin/settings/ActivityPage.tsx
 apps/ui/src/pages/admin/settings/addon-status.ts
 apps/ui/src/pages/admin/settings/AnywhereCard.tsx
 apps/ui/src/pages/admin/settings/AppearanceSettingsPage.tsx

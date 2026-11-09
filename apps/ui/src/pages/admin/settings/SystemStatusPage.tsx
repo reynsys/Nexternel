@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { Alert, Box, Button, Card, CardContent, Collapse, Divider, Stack, Typography } from "@mui/material";
+import { useSearchParams } from "react-router-dom";
+import { Alert, Box, Button, Card, CardContent, Divider, Stack, Tab, Tabs, Typography } from "@mui/material";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import ErrorRoundedIcon from "@mui/icons-material/ErrorRounded";
-import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import { api, type SystemInfo } from "../../../api";
 import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
 import { SystemDiagnosticsSection } from "./SystemDiagnosticsSection";
@@ -11,6 +11,18 @@ import { UpdatesCard } from "./UpdatesCard";
 import { HttpsCard } from "./HttpsCard";
 import { AnywhereCard } from "./AnywhereCard";
 import { ButtonRow } from "../../../components/ButtonRow";
+import { ActivityList } from "../../../components/ActivityList";
+import { hasPermission } from "../../../lib/permissions";
+import { useShellAuth } from "../../../skins/useShellAuth";
+
+/** The System page's tabs; the open one is in the address (?tab=…), so links and Back work. */
+const TABS = [
+  { id: "overview", label: "Overview" },
+  { id: "addresses", label: "Addresses" },
+  { id: "activity", label: "Activity" },
+  { id: "help", label: "Help & troubleshooting" },
+] as const;
+type SystemTab = (typeof TABS)[number]["id"];
 
 function formatUptime(sec: number): string {
   const d = Math.floor(sec / 86400);
@@ -34,15 +46,26 @@ function healthLine(info: SystemInfo): { ok: boolean; title: string; text: strin
   return {
     ok: false,
     title: "Something needs attention",
-    text: `${problems.join("; ")}${info.mqttError ? ` (${info.mqttError})` : ""}. Try Restart under Help & troubleshooting below.`,
+    text: `${problems.join("; ")}${info.mqttError ? ` (${info.mqttError})` : ""}. Try Restart on the Help & troubleshooting tab.`,
   };
 }
 
-/** Settings → System: General (version, updates, addresses), Health, and Help & troubleshooting (folded). */
+/**
+ * Settings → System, in tabs so it is not one long page: Overview (health, version and updates),
+ * Addresses (how to open Nexternel, at home and with Nexternel Anywhere), Activity (what happened),
+ * Help & troubleshooting.
+ */
 export function SystemStatusPage() {
   const [info, setInfo] = useState<SystemInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [helpOpen, setHelpOpen] = useState(false);
+  const [params, setParams] = useSearchParams();
+  const { permissions, isAdmin } = useShellAuth();
+  const canSeeActivity = hasPermission(permissions ?? null, "viewDevices", Boolean(isAdmin));
+  const tabs = TABS.filter((t) => t.id !== "activity" || canSeeActivity);
+  // Old links to the Anywhere card (…/system#nexternel-anywhere) open the Addresses tab.
+  const asked = (params.get("tab") ?? (window.location.hash === "#nexternel-anywhere" ? "addresses" : "overview")) as SystemTab;
+  const tab: SystemTab = tabs.some((t) => t.id === asked) ? asked : "overview";
+  const openTab = (id: SystemTab) => setParams(id === "overview" ? {} : { tab: id }, { replace: true });
   const [restartBusy, setRestartBusy] = useState<"all" | "mqtt" | null>(null);
   const [restartMsg, setRestartMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const surfaceSx = useContentSurfaceSx();
@@ -72,10 +95,29 @@ export function SystemStatusPage() {
 
   return (
     <Stack spacing={2}>
-      <UpdatesCard />
-      <HttpsCard />
-      <AnywhereCard />
+      <Tabs value={tab} onChange={(_, v: SystemTab) => openTab(v)} variant="scrollable" allowScrollButtonsMobile aria-label="System">
+        {tabs.map((t) => (
+          <Tab key={t.id} value={t.id} label={t.label} />
+        ))}
+      </Tabs>
 
+      {tab === "addresses" ? (
+        <>
+          <HttpsCard />
+          <AnywhereCard />
+        </>
+      ) : null}
+
+      {tab === "activity" ? (
+        <Card sx={surfaceSx}>
+          <CardContent>
+            <ActivityList />
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {tab === "overview" ? (
+      <>
       <Card sx={surfaceSx}>
         <CardContent>
           <Typography variant="h6" gutterBottom>
@@ -89,7 +131,7 @@ export function SystemStatusPage() {
                 icon={health.ok ? <CheckCircleRoundedIcon /> : <ErrorRoundedIcon />}
                 action={
                   !health.ok ? (
-                    <Button color="inherit" size="small" onClick={() => setHelpOpen(true)}>
+                    <Button color="inherit" size="small" onClick={() => openTab("help")}>
                       Help
                     </Button>
                   ) : undefined
@@ -131,22 +173,17 @@ export function SystemStatusPage() {
         </CardContent>
       </Card>
 
+      <UpdatesCard />
+      </>
+      ) : null}
+
+      {tab === "help" ? (
       <Card sx={surfaceSx}>
         <CardContent>
           <Typography variant="h6">Help &amp; troubleshooting</Typography>
           <Typography variant="body2" color="text.secondary">
             Tools for when something is not working, or when someone is helping you.
           </Typography>
-          <Button
-            variant={helpOpen ? "contained" : "outlined"}
-            aria-expanded={helpOpen}
-            endIcon={<ExpandMoreRoundedIcon sx={{ transition: "transform 150ms", transform: helpOpen ? "rotate(180deg)" : "none" }} />}
-            onClick={() => setHelpOpen((o) => !o)}
-            sx={{ mt: 1.5 }}
-          >
-            {helpOpen ? "Hide troubleshooting tools" : "Show troubleshooting tools"}
-          </Button>
-          <Collapse in={helpOpen} unmountOnExit>
             <Stack spacing={3} divider={<Divider flexItem />} sx={{ pt: 3 }}>
               <DiagnosticReportCard />
               <SystemDiagnosticsSection />
@@ -173,9 +210,9 @@ export function SystemStatusPage() {
                 ) : null}
               </Box>
             </Stack>
-          </Collapse>
         </CardContent>
       </Card>
+      ) : null}
     </Stack>
   );
 }
