@@ -151,7 +151,7 @@ export function DashboardTabBar({
   );
   // Phones, their own choice: the dock in one row that slides under a finger (RoomMenu `scroll`), or the
   // row of dashboards at the top that stays on screen while scrolling. A sideways swipe on the dashboard
-  // also moves to the next or previous one, and Dashboards in the bottom bar opens them all.
+  // also moves to the next or previous one.
   const phone = variant === "phone" || variant === "phone-row";
   useDashboardSwipe(phone && !editMode && !display.active && dashboards.length > 1, (dir) => {
     const at = dashboards.findIndex((d) => d.id === activeId);

@@ -2,6 +2,12 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.11
+
+- Phones: one row at the bottom of the screen, your dashboards (the dock, or the row at the top if you chose it). The menu with every page, This phone and Sign out is now behind the menu button at the top right, beside the bell.
+- Tapping the Nexternel logo or name at the top takes you to the start dashboard.
+- Change home (Nexternel for Android) now sits apart from the update button, beside Sign out, and asks first.
+
 ## V5.3.10
 
 - Phones have their own Dashboard menu choice (Settings → Appearance → Dashboards, kept on the phone): the Dock at the bottom, as before V5.3.8 (and the starting choice), or a Row at the top that now stays under the Nexternel bar while you scroll, so you can change dashboard from anywhere on the page.

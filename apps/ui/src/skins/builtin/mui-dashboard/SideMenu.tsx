@@ -29,7 +29,7 @@ import {
 import { chromeSurfaceSx } from "../../surfaceStyles";
 import { useGradientActive } from "../../useSurfaceStyles";
 import { ButtonRow } from "../../../components/ButtonRow";
-import { AndroidUpdate } from "../../../components/AndroidUpdate";
+import { AndroidUpdate, ChangeHomeButton } from "../../../components/AndroidUpdate";
 
 type Props = {
   signedIn: boolean;
@@ -208,6 +208,7 @@ export function SideMenu({
                 <NotificationBell place="menu-bottom" canClear={hasPermission(permissions ?? null, "manageUsers", isAdmin)} />
               </Stack>
               <AndroidUpdate px={0} pb={0} />
+              <ChangeHomeButton />
               <ButtonRow direction="row">
                 <Button variant="outlined" size="small" startIcon={<LogoutIcon fontSize="small" />} onClick={onLogout} sx={{ flex: 1 }}>
                   Sign out

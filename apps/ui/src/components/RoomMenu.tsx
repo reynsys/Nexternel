@@ -4,7 +4,6 @@ import type { DashboardSummary } from "../api";
 import { getDashboardIcon } from "../lib/dashboard-icons";
 import { DOCK_TILE, dockFit } from "../lib/dock-fit";
 import type { RoomNav } from "../lib/room-nav";
-import { BOTTOM_NAV_HEIGHT_PX } from "../skins/builtin/mui-dashboard/BottomNav";
 import { ARRANGE_ATTR, type ArrangeDashboards } from "../lib/use-arrange-dashboards";
 import { ArrangeArrows, ArrangeGrip } from "./ArrangeControls";
 
@@ -211,8 +210,8 @@ function Dock({ dashboards, activeId, onGo, tools, loading, error, arrange, scro
       sx={(t) => ({
         position: "fixed",
         zIndex: t.zIndex.appBar,
-        // On phones it sits just above the phone's own menu bar.
-        bottom: { xs: `calc(${BOTTOM_NAV_HEIGHT_PX}px + env(safe-area-inset-bottom) + 8px)`, md: DOCK_GAP },
+        // On phones it sits at the bottom of the screen (the menu is behind the button at the top).
+        bottom: { xs: "calc(env(safe-area-inset-bottom) + 8px)", md: DOCK_GAP },
         left: { xs: 8, md: centre === null ? "50%" : `${centre}px` },
         right: { xs: 8, md: "auto" },
         transform: { xs: "none", md: "translateX(-50%)" },

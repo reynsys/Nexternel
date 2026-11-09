@@ -4,7 +4,7 @@
  * rail = the dock standing up on the right. (A Rooms panel can also be added to any dashboard.)
  * Phones (narrow screens) have their own choice, kept on the phone (its own Appearance): the dock in one
  * row that slides under a finger (default), or a row at the top that stays on screen while you scroll.
- * A sideways swipe on the dashboard and Dashboards in the bottom bar (DashboardSheet) also move between them.
+ * A sideways swipe on the dashboard also moves between them.
  */
 export type RoomNav = "dock" | "tabs" | "rail";
 export const ROOM_NAVS: { value: RoomNav; label: string; description: string }[] = [

@@ -2,11 +2,15 @@ import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 import { isPhoneScreen } from "../lib/phone-screen";
 
 /**
  * "This phone" / "This tablet" (More on a phone, the menu on a tablet): Nexternel for Android's version, its own
- * "Check for update" / "Update to …" button and, from 1.0.2, "Change home".
+ * "Check for update" / "Update to …" button. Change home is its own button (ChangeHomeButton).
  * Shown only inside Nexternel for Android 1.0.1 or newer (the frame offers window.NexternelPhone).
  * The frame does the work (GitHub check, download, Android's "Install update?") and answers with
  * the "nexternel-phone-update" event.
@@ -83,11 +87,45 @@ export function AndroidUpdate({ px = 2, pb = 1 }: { px?: number; pb?: number }) 
           {note}
         </Typography>
       ) : null}
-      {typeof p.changeHome === "function" ? (
-        <Button fullWidth size="small" variant="outlined" sx={{ mt: 0.5 }} onClick={() => p.changeHome?.()}>
-          Change home
-        </Button>
-      ) : null}
     </Box>
+  );
+}
+
+/**
+ * Change home (Nexternel for Android 1.0.2 or newer): kept apart from the update buttons, at the end of
+ * the menu beside Sign out, and it asks first, so it is not pressed by mistake.
+ */
+export function ChangeHomeButton() {
+  const p = phone();
+  const [asking, setAsking] = useState(false);
+  if (!p || typeof p.changeHome !== "function") return null;
+  return (
+    <>
+      <Button fullWidth variant="outlined" onClick={() => setAsking(true)}>
+        Change home
+      </Button>
+      <Dialog open={asking} onClose={() => setAsking(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Change home?</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            This phone will ask for another home name or address. Your home and its settings stay as they are.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" onClick={() => setAsking(false)}>
+            Stay here
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              setAsking(false);
+              p.changeHome?.();
+            }}
+          >
+            Change home
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }

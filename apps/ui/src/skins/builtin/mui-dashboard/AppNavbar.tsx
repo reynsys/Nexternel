@@ -7,7 +7,6 @@ import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import MuiToolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
-import IconButton from "@mui/material/IconButton";
 import Drawer from "@mui/material/Drawer";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import { APP_VERSION } from "../../../version";
@@ -20,6 +19,7 @@ import { Link as RouterLink } from "react-router-dom";
 import { barSurfaceSx } from "../../surfaceStyles";
 import { useGradientActive } from "../../useSurfaceStyles";
 import { BrandMark } from "../../../components/BrandMark";
+import { AndroidUpdate, ChangeHomeButton } from "../../../components/AndroidUpdate";
 
 const Toolbar = styled(MuiToolbar)({
   width: "100%",
@@ -73,7 +73,15 @@ export function AppNavbar({
             gap: 1,
           }}
         >
-          <Stack direction="row" spacing={1} sx={{ mr: "auto", alignItems: "center" }}>
+          {/* The logo and name lead to the start dashboard (as on most websites). */}
+          <Stack
+            direction="row"
+            spacing={1}
+            component={RouterLink}
+            to="/"
+            aria-label="Nexternel, start dashboard"
+            sx={{ mr: "auto", alignItems: "center", textDecoration: "none", color: "inherit" }}
+          >
             <BrandMark size={24} />
             <Typography variant="h6" component="h1" sx={{ color: "text.primary" }}>
               Nexternel
@@ -82,13 +90,11 @@ export function AppNavbar({
           {signedIn ? (
             <NotificationBell canClear={hasPermission(permissions ?? null, "manageUsers", isAdmin)} />
           ) : null}
-          {/* Signed in, the bottom bar's More holds the menu and Sign out (one menu, within thumb
-              reach); signed out there is no bottom bar, so the menu (with Sign in) stays here. */}
-          {signedIn ? null : (
-            <IconButton aria-label="menu" onClick={() => setOpen(true)} color="inherit">
-              <MenuRoundedIcon />
-            </IconButton>
-          )}
+          {/* The menu: every page, This phone and Sign out. The bottom of a phone's screen is left to
+              the dashboards (the dock), so there is one row there, not two. */}
+          <Button variant="outlined" aria-label="Menu" onClick={() => setOpen(true)} sx={{ minWidth: 40, width: 40, height: 40, p: 0 }}>
+            <MenuRoundedIcon />
+          </Button>
         </Stack>
       </Toolbar>
       <Drawer
@@ -97,7 +103,8 @@ export function AppNavbar({
         onClose={() => setOpen(false)}
         PaperProps={{
           sx: {
-            width: "min(280px, 90vw)",
+            width: "min(320px, 90vw)",
+            pb: "env(safe-area-inset-bottom)",
             ...barSurfaceSx(gradientActive),
           },
         }}
@@ -112,6 +119,7 @@ export function AppNavbar({
             </Typography>
           )}
         </Box>
+        {signedIn ? <AndroidUpdate /> : null}
         <Divider />
         <MenuContent
           unfold
@@ -123,9 +131,19 @@ export function AppNavbar({
         />
         <Box sx={{ p: 2 }}>
           {signedIn ? (
-            <Button fullWidth variant="outlined" onClick={onLogout}>
-              Sign out
-            </Button>
+            <Stack spacing={1.5}>
+              <ChangeHomeButton />
+              <Button
+                fullWidth
+                variant="outlined"
+                onClick={() => {
+                  setOpen(false);
+                  onLogout();
+                }}
+              >
+                Sign out
+              </Button>
+            </Stack>
           ) : (
             <Button
               fullWidth

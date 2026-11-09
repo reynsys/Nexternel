@@ -301,7 +301,6 @@ apps/ui/src/components/dashboard-editor/DashboardSettingsPanel.tsx
 apps/ui/src/components/dashboard-editor/SectionSettingsPanel.tsx
 apps/ui/src/components/DashboardErrorBoundary.tsx
 apps/ui/src/components/DashboardIconPicker.tsx
-apps/ui/src/components/DashboardSheet.tsx
 apps/ui/src/components/DashboardTabBar.tsx
 apps/ui/src/components/DashboardTileBody.tsx
 apps/ui/src/components/IconPicker.tsx
@@ -628,7 +627,6 @@ apps/ui/src/skins/builtin/classic/Layout.tsx
 apps/ui/src/skins/builtin/classic/skin.ts
 apps/ui/src/skins/builtin/classic/theme.ts
 apps/ui/src/skins/builtin/mui-dashboard/AppNavbar.tsx
-apps/ui/src/skins/builtin/mui-dashboard/BottomNav.tsx
 apps/ui/src/skins/builtin/mui-dashboard/Layout.tsx
 apps/ui/src/skins/builtin/mui-dashboard/MenuContent.tsx
 apps/ui/src/skins/builtin/mui-dashboard/SideMenu.tsx

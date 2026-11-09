@@ -7,7 +7,6 @@ import { useSkin } from "../../SkinProvider";
 import { isGradientActive } from "../../surfaceStyles";
 import { SideMenu, useSideMenuCollapsed } from "./SideMenu";
 import { AppNavbar } from "./AppNavbar";
-import { BottomNav, BOTTOM_NAV_HEIGHT_PX } from "./BottomNav";
 import { PAGE_BAR_SLOT_ID } from "../../../components/PageBar";
 
 /** Free MUI dashboard-style shell: permanent side menu + mobile app bar. */
@@ -70,10 +69,10 @@ export function MuiDashboardLayout() {
           spacing={2}
           sx={{
             mx: { xs: 2, md: 3 },
-            // Room at the end of the page: the phone's bottom bar, and a dock menu when one is shown
-            // (it sets --nx-dock-space), so nothing at the end is ever covered.
+            // Room at the end of the page for a dock menu when one is shown (it sets --nx-dock-space),
+            // so nothing at the end is ever covered.
             pb: {
-              xs: `calc(${BOTTOM_NAV_HEIGHT_PX + 24}px + var(--nx-dock-space, 0px))`,
+              xs: "calc(24px + var(--nx-dock-space, 0px))",
               md: "max(40px, var(--nx-dock-space, 0px))",
             },
             // The page starts just below the phone's top bar; on wide screens its first row lines
@@ -85,14 +84,6 @@ export function MuiDashboardLayout() {
           <Outlet />
         </Stack>
       </Box>
-      <BottomNav
-        signedIn={signedIn}
-        isAdmin={isAdmin}
-        permissions={permissions}
-        authLoading={authLoading}
-        user={user ?? null}
-        onLogout={() => void logout()}
-      />
     </Box>
   );
 }
