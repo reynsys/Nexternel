@@ -7,7 +7,9 @@ import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import MuiToolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
-import Drawer from "@mui/material/Drawer";
+import SwipeableDrawer from "@mui/material/SwipeableDrawer";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import type { Theme } from "@mui/material/styles";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import { APP_VERSION } from "../../../version";
 import { MenuContent } from "./MenuContent";
@@ -19,7 +21,7 @@ import { Link as RouterLink } from "react-router-dom";
 import { barSurfaceSx } from "../../surfaceStyles";
 import { useGradientActive } from "../../useSurfaceStyles";
 import { BrandMark } from "../../../components/BrandMark";
-import { AndroidUpdate, ChangeHomeButton } from "../../../components/AndroidUpdate";
+import { AndroidUpdate } from "../../../components/AndroidUpdate";
 
 const Toolbar = styled(MuiToolbar)({
   width: "100%",
@@ -97,28 +99,41 @@ export function AppNavbar({
           </Button>
         </Stack>
       </Toolbar>
-      <Drawer
+      <SwipeableDrawer
         anchor="right"
         open={open}
+        onOpen={() => setOpen(true)}
         onClose={() => setOpen(false)}
+        // Opened by the menu button only; a swipe to the right closes it.
+        disableSwipeToOpen
+        slotProps={{ backdrop: { sx: { bgcolor: "rgba(0, 0, 0, 0.6)" } } }}
         PaperProps={{
           sx: {
-            width: "min(320px, 90vw)",
+            width: "min(320px, 85vw)",
             pb: "env(safe-area-inset-bottom)",
-            ...barSurfaceSx(gradientActive),
+            // Solid, so the dashboard does not show through the menu: the frame colour laid over the page colour.
+            backgroundColor: "background.default",
+            backgroundImage: (t: Theme) => `linear-gradient(${t.nxScheme.surface.frame}, ${t.nxScheme.surface.frame})`,
+            borderLeft: "1px solid",
+            borderColor: "divider",
           },
         }}
       >
-        <Box sx={{ p: 2 }}>
-          <Typography variant="subtitle1">
-            Nexternel {APP_VERSION}
-          </Typography>
-          {signedIn && (
-            <Typography variant="caption" color="text.secondary">
-              {user?.username} · {user?.role}
+        <Stack direction="row" sx={{ p: 2, alignItems: "flex-start", gap: 1 }}>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="subtitle1">
+              Nexternel {APP_VERSION}
             </Typography>
-          )}
-        </Box>
+            {signedIn && (
+              <Typography variant="caption" color="text.secondary">
+                {user?.username} · {user?.role}
+              </Typography>
+            )}
+          </Box>
+          <Button variant="outlined" aria-label="Close menu" onClick={() => setOpen(false)} sx={{ minWidth: 40, width: 40, height: 40, p: 0, flexShrink: 0 }}>
+            <CloseRoundedIcon />
+          </Button>
+        </Stack>
         {signedIn ? <AndroidUpdate /> : null}
         <Divider />
         <MenuContent
@@ -131,19 +146,16 @@ export function AppNavbar({
         />
         <Box sx={{ p: 2 }}>
           {signedIn ? (
-            <Stack spacing={1.5}>
-              <ChangeHomeButton />
-              <Button
-                fullWidth
-                variant="outlined"
-                onClick={() => {
-                  setOpen(false);
-                  onLogout();
-                }}
-              >
-                Sign out
-              </Button>
-            </Stack>
+            <Button
+              fullWidth
+              variant="outlined"
+              onClick={() => {
+                setOpen(false);
+                onLogout();
+              }}
+            >
+              Sign out
+            </Button>
           ) : (
             <Button
               fullWidth
@@ -156,7 +168,7 @@ export function AppNavbar({
             </Button>
           )}
         </Box>
-      </Drawer>
+      </SwipeableDrawer>
     </AppBar>
   );
 }

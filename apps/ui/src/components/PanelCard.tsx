@@ -77,7 +77,8 @@ function PanelTitleTile({
         gap: "6px",
         minWidth: 0,
         px: "var(--nx-title-inset, 8px)",
-        overflow: "hidden",
+        // Not clipped: a lit status light's glow reaches a little below the title (the name cuts itself short).
+        overflow: "visible",
         position: "relative",
         // Status lights get smaller in a narrow title (container queries in StatusLight).
         containerType: "inline-size",

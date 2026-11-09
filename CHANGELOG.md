@@ -2,6 +2,13 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.13
+
+- Phones: the menu (button at the top right) is now solid, so the dashboard no longer shows through it, and has a close button at its top right. A swipe to the right also closes it, as does a tap beside it.
+- This phone (in the menu, inside Nexternel for Android): shows which home the phone opens ("Home: …") with a small Change button on that line. Change home no longer sits beside Sign out; it still asks first.
+- Inside Nexternel for Android the page no longer zooms with two fingers, so the dock always stays on screen. For bigger text use Settings → Appearance → Text size, or the phone's own text size.
+- The glow round a lit status light is no longer cut off under the panel name.
+
 ## V5.3.12
 
 - Panel names get the whole first line of the title: a status light now sits at the end of the line under the name (the area), slightly smaller on phones and in narrow panels so it is never cut off, so names like "Kids Room Temperature" are no longer cut to a few letters. While editing a dashboard, the move grip and the pencil have a line of their own above the name.

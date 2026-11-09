@@ -10,6 +10,12 @@ import { installErrorRing } from "./diagnostics/errorRing";
 import { bootstrapV5PanelRegistry } from "./panels/registry";
 import { loadCoreContributions } from "./plugins/loadContributions";
 
+// Inside Nexternel for Android the page does not pinch-zoom (like other phone apps), so the dock stays
+// on screen; bigger text comes from Settings → Appearance → Text size and the phone's own text size.
+if ((window as unknown as { NexternelPhone?: unknown }).NexternelPhone) {
+  document.querySelector('meta[name="viewport"]')?.setAttribute("content", "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no");
+}
+
 installErrorRing();
 bootstrapV5PanelRegistry();
 loadCoreContributions();

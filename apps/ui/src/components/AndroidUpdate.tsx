@@ -10,7 +10,7 @@ import { isPhoneScreen } from "../lib/phone-screen";
 
 /**
  * "This phone" / "This tablet" (More on a phone, the menu on a tablet): Nexternel for Android's version, its own
- * "Check for update" / "Update to …" button. Change home is its own button (ChangeHomeButton).
+ * "Check for update" / "Update to …" button, and the home it opens with a small Change button (HomeLine).
  * Shown only inside Nexternel for Android 1.0.1 or newer (the frame offers window.NexternelPhone).
  * The frame does the work (GitHub check, download, Android's "Install update?") and answers with
  * the "nexternel-phone-update" event.
@@ -87,23 +87,29 @@ export function AndroidUpdate({ px = 2, pb = 1 }: { px?: number; pb?: number }) 
           {note}
         </Typography>
       ) : null}
+      <HomeLine />
     </Box>
   );
 }
 
 /**
- * Change home (Nexternel for Android 1.0.2 or newer): kept apart from the update buttons, at the end of
- * the menu beside Sign out, and it asks first, so it is not pressed by mistake.
+ * The home this phone opens (its address, e.g. damn.nexternel.net), with a small Change button
+ * (Nexternel for Android 1.0.2 or newer). Changing asks first, so it is not pressed by mistake.
  */
-export function ChangeHomeButton() {
+function HomeLine() {
   const p = phone();
   const [asking, setAsking] = useState(false);
   if (!p || typeof p.changeHome !== "function") return null;
   return (
     <>
-      <Button fullWidth variant="outlined" onClick={() => setAsking(true)}>
-        Change home
-      </Button>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}>
+        <Typography variant="caption" color="text.secondary" noWrap sx={{ flex: 1, minWidth: 0 }} title={window.location.host}>
+          Home: {window.location.host}
+        </Typography>
+        <Button size="small" variant="outlined" onClick={() => setAsking(true)} sx={{ flexShrink: 0 }}>
+          Change
+        </Button>
+      </Box>
       <Dialog open={asking} onClose={() => setAsking(false)} maxWidth="xs" fullWidth>
         <DialogTitle>Change home?</DialogTitle>
         <DialogContent>
