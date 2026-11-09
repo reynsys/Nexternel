@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   Alert,
   Box,
@@ -13,11 +13,13 @@ import {
   Tabs,
   TextField,
   Typography,
+  useMediaQuery,
 } from "@mui/material";
 import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
 import PauseRoundedIcon from "@mui/icons-material/PauseRounded";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { useSearchParams } from "react-router-dom";
+import type { Theme } from "@mui/material/styles";
 import { api } from "../../api";
 import { ButtonRow } from "../../components/ButtonRow";
 import { hasPermission } from "../../lib/permissions";
@@ -602,9 +604,9 @@ export function TrackingPage({ pluginId, pageId, title, mapPanelId }: PageProps)
       </Tabs>
       {shownTab === 0 && mapPanelId ? (
         <Section>
-          <Box sx={{ height: { xs: 420, md: 560 } }}>
+          <FillingMapBox>
             <MapPanel pluginId={pluginId} panelId={mapPanelId} />
-          </Box>
+          </FillingMapBox>
         </Section>
       ) : null}
       {shownTab === 1 && overview ? <Journeys call={call} overview={overview} /> : null}
@@ -620,5 +622,34 @@ export function TrackingPage({ pluginId, pageId, title, mapPanelId }: PageProps)
         />
       ) : null}
     </Stack>
+  );
+}
+
+
+/**
+ * The Live map: on phones and tablets it reaches down to the bottom of the screen (less the page's own
+ * padding), so there is no empty space under it; on wide screens it keeps its fixed height.
+ */
+function FillingMapBox({ children }: { children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const wide = useMediaQuery((t: Theme) => t.breakpoints.up("md"));
+  const [height, setHeight] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    if (wide) return;
+    const measure = () => {
+      const el = ref.current;
+      if (!el) return;
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      // Room for the section's padding and border under the map.
+      setHeight(Math.max(320, Math.round(window.innerHeight - top - 40)));
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [wide]);
+  return (
+    <Box ref={ref} sx={{ height: wide ? 560 : height ?? 420 }}>
+      {children}
+    </Box>
   );
 }

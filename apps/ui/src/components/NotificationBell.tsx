@@ -55,7 +55,8 @@ export function NotificationBell({
   tip,
 }: {
   canClear?: boolean;
-  place?: "menu" | "menu-bottom" | "dashboard" | "bar";
+  /** "phone-menu": a Messages button inside the phone's menu, for people whose bell is off (Never). */
+  place?: "menu" | "menu-bottom" | "dashboard" | "bar" | "phone-menu";
   /** Where its name shows when pointed at (left in the rail, so it never covers the next button). */
   tip?: "left";
 }) {
@@ -65,7 +66,9 @@ export function NotificationBell({
   const { pathname } = useLocation();
   const onDashboard = isDashboardRoute(pathname);
   const here =
-    prefs.show !== "never" &&
+    place === "phone-menu"
+      ? prefs.show === "never"
+      : prefs.show !== "never" &&
     (place === "bar" ||
       (place === "dashboard" && prefs.position === "top") ||
       (place === "menu" && (prefs.position === "menu" || (prefs.position === "top" && !onDashboard))) ||
@@ -124,10 +127,29 @@ export function NotificationBell({
 
   if (!here) return null;
   // "Only when there are new messages": hidden while there is nothing new, unless the list is open.
-  if (prefs.show === "new" && unread === 0 && !anchor) return null;
+  if (place !== "phone-menu" && prefs.show === "new" && unread === 0 && !anchor) return null;
 
   return (
     <>
+      {place === "phone-menu" ? (
+        // The bell is off: the messages are still one tap away in the menu, with their count.
+        <Button
+          fullWidth
+          variant="outlined"
+          startIcon={<NotificationsNoneRoundedIcon />}
+          onClick={(e) => void open(e.currentTarget)}
+          endIcon={
+            unread ? (
+              <Typography component="span" variant="caption" sx={{ minWidth: 20, height: 20, px: 0.75, borderRadius: 10, bgcolor: badgeColour, color: "#fff", fontWeight: "fontWeightBold", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                {unread > 99 ? "99+" : unread}
+              </Typography>
+            ) : undefined
+          }
+          sx={{ justifyContent: "flex-start", "& .MuiButton-endIcon": { ml: "auto" } }}
+        >
+          Messages
+        </Button>
+      ) : (
       <Tooltip title={unread ? `${unread} new notification${unread === 1 ? "" : "s"}` : "Notifications"} placement={tip}>
         <IconButton size="small" aria-label="Notifications" onClick={(e) => void open(e.currentTarget)} color="inherit">
           <Badge
@@ -139,6 +161,7 @@ export function NotificationBell({
           </Badge>
         </IconButton>
       </Tooltip>
+      )}
       <Popover
         open={Boolean(anchor)}
         anchorEl={anchor}
@@ -154,6 +177,7 @@ export function NotificationBell({
           {canClear && items.length > 0 ? (
             <Button
               size="small"
+              variant="outlined"
               onClick={async () => {
                 await api.clearNotifications().catch(() => {});
                 await load().catch(() => {});
@@ -198,4 +222,32 @@ export function NotificationBell({
       </Popover>
     </>
   );
+}
+
+
+/**
+ * The colour of the dot on the phone's menu button: shown only while the bell is off (Never) and there are
+ * new messages, so new messages are never missed. Null when there is no dot.
+ */
+export function useMenuDot(): string | null {
+  const skin = useOptionalSkin();
+  const prefs = normalizeBellPrefs(skin?.themePrefs.bell);
+  const lights = useStatusLightPrefs();
+  const watching = prefs.show === "never";
+  const [state, setState] = useState<{ unread: number; level: NotificationItem["level"] | null }>({ unread: 0, level: null });
+  const load = useCallback(async () => {
+    const res = await api.notifications(1);
+    setState({ unread: res.unreadCount, level: res.unreadLevel ?? (res.unreadCount ? "info" : null) });
+  }, []);
+  useLiveChanges(["notifications"], () => void load().catch(() => {}), watching);
+  useEffect(() => {
+    if (!watching) return;
+    void load().catch(() => {});
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible") void load().catch(() => {});
+    }, POLL_MS);
+    return () => clearInterval(timer);
+  }, [load, watching]);
+  if (!watching || state.unread === 0) return null;
+  return state.level === "alert" ? lights.colours.alert : state.level === "warning" ? lights.colours.watch : "primary.main";
 }

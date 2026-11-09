@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Box, IconButton, Stack, Tooltip, Typography, useTheme } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import MyLocationIcon from "@mui/icons-material/MyLocation";
 import L from "leaflet";
 import { api } from "../../api";
@@ -164,22 +165,24 @@ export function MapPanel({ pluginId, panelId }: { pluginId: string; panelId: str
           </IconButton>
         </Tooltip>
       ) : null}
+      {/* One slim line per tracker along the bottom edge, so the map stays in view even on a small panel. */}
       <Stack
-        spacing={0.25}
-        sx={{ position: "absolute", left: 8, bottom: 8, zIndex: 1000, maxWidth: "calc(100% - 16px)", pointerEvents: "none" }}
+        sx={{ position: "absolute", left: 0, right: 0, bottom: 0, zIndex: 1000, pointerEvents: "none" }}
       >
         {content.markers.map((place) => (
-          <Box key={place.id} sx={{ px: 1, py: 0.5, borderRadius: 1, bgcolor: "background.paper", boxShadow: 2 }}>
-            <Typography variant="caption" component="div" sx={{ fontWeight: "fontWeightBold" }} noWrap>
-              {place.label}
-            </Typography>
-            <Typography variant="caption" component="div" color="text.secondary">
-              {[place.detail, place.at ? `Last report ${timeAgo(place.at, now)}` : ""].filter(Boolean).join(" · ")}
+          <Box key={place.id} sx={{ px: 1, py: 0.25, bgcolor: (t) => alpha(t.palette.background.paper, 0.85), borderTop: 1, borderColor: "divider" }}>
+            <Typography variant="caption" component="div" noWrap title={[place.label, place.detail, place.at ? `Last report ${timeAgo(place.at, now)}` : ""].filter(Boolean).join(" · ")}>
+              <Box component="span" sx={{ fontWeight: "fontWeightBold" }}>
+                {place.label}
+              </Box>
+              <Box component="span" sx={{ color: "text.secondary" }}>
+                {[place.detail, place.at ? timeAgo(place.at, now) : ""].filter(Boolean).map((part) => ` · ${part}`).join("")}
+              </Box>
             </Typography>
           </Box>
         ))}
         {warning ? (
-          <Box sx={{ px: 1, py: 0.5, borderRadius: 1, bgcolor: "warning.main", color: "warning.contrastText" }}>
+          <Box sx={{ px: 1, py: 0.5, bgcolor: "warning.main", color: "warning.contrastText" }}>
             <Typography variant="caption" component="div">
               {warning}
             </Typography>

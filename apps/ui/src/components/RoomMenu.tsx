@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { Box, Button, Tooltip, Typography, type Theme } from "@mui/material";
 import type { DashboardSummary } from "../api";
 import { getDashboardIcon } from "../lib/dashboard-icons";
@@ -194,6 +194,26 @@ function Dock({ dashboards, activeId, onGo, tools, loading, error, arrange, scro
     window.addEventListener("resize", measure);
     return () => window.removeEventListener("resize", measure);
   }, [centre, dashboards.length, fit.size, scroll]);
+  // A sliding row fades out at an end where more dashboards are hidden, instead of showing half a button.
+  const [more, setMore] = useState({ left: false, right: false });
+  const readMore = useCallback(() => {
+    const row = rooms.current;
+    if (!row || !scroll) return;
+    const left = row.scrollLeft > 2;
+    const right = row.scrollLeft + row.clientWidth < row.scrollWidth - 2;
+    setMore((m) => (m.left === left && m.right === right ? m : { left, right }));
+  }, [scroll]);
+  useEffect(() => {
+    if (!scroll) return;
+    readMore();
+    const row = rooms.current;
+    if (!row) return;
+    const ro = new ResizeObserver(readMore);
+    ro.observe(row);
+    return () => ro.disconnect();
+  }, [scroll, readMore, dashboards.length]);
+  const FADE = 28;
+  const fadeMask = `linear-gradient(to right, ${more.left ? `transparent 0, #000 ${FADE}px` : "#000 0"}, ${more.right ? `#000 calc(100% - ${FADE}px), transparent 100%` : "#000 100%"})`;
   // A sliding row: the open room is brought into view (also after changing dashboards by swiping).
   useEffect(() => {
     if (!scroll) return;
@@ -232,6 +252,7 @@ function Dock({ dashboards, activeId, onGo, tools, loading, error, arrange, scro
         onMouseLeave={scroll ? undefined : () => magnify(null)}
         // Swiping the row must not also count as a swipe to another dashboard.
         data-nx-no-swipe={scroll ? "" : undefined}
+        onScroll={scroll ? readMore : undefined}
         sx={
           scroll
             ? {
@@ -248,6 +269,8 @@ function Dock({ dashboards, activeId, onGo, tools, loading, error, arrange, scro
                 scrollbarWidth: "none",
                 "&::-webkit-scrollbar": { display: "none" },
                 "& > *": { scrollSnapAlign: "center", flexShrink: 0 },
+                maskImage: fadeMask,
+                WebkitMaskImage: fadeMask,
               }
             : {
                 display: "grid",

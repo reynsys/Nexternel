@@ -1,4 +1,4 @@
-import { NotificationBell } from "../../../components/NotificationBell";
+import { NotificationBell, useMenuDot } from "../../../components/NotificationBell";
 import { hasPermission } from "../../../lib/permissions";
 import { useState } from "react";
 import { styled } from "@mui/material/styles";
@@ -53,6 +53,7 @@ export function AppNavbar({
 }: Props) {
   const [open, setOpen] = useState(false);
   const gradientActive = useGradientActive();
+  const dot = useMenuDot();
 
   return (
     <AppBar
@@ -94,8 +95,12 @@ export function AppNavbar({
           ) : null}
           {/* The menu: every page, This phone and Sign out. The bottom of a phone's screen is left to
               the dashboards (the dock), so there is one row there, not two. */}
-          <Button variant="outlined" aria-label="Menu" onClick={() => setOpen(true)} sx={{ minWidth: 40, width: 40, height: 40, p: 0 }}>
+          <Button variant="outlined" aria-label={dot ? "Menu, new messages" : "Menu"} onClick={() => setOpen(true)} sx={{ minWidth: 40, width: 40, height: 40, p: 0, position: "relative" }}>
             <MenuRoundedIcon />
+            {/* New messages while the bell is off. */}
+            {dot ? (
+              <Box component="span" sx={{ position: "absolute", top: -4, right: -4, width: 12, height: 12, borderRadius: "50%", bgcolor: dot, border: "2px solid", borderColor: "background.default" }} />
+            ) : null}
           </Button>
         </Stack>
       </Toolbar>
@@ -135,6 +140,11 @@ export function AppNavbar({
           </Button>
         </Stack>
         {signedIn ? <AndroidUpdate /> : null}
+        {signedIn ? (
+          <Box sx={{ px: 2, pb: 1.5 }}>
+            <NotificationBell place="phone-menu" canClear={hasPermission(permissions ?? null, "manageUsers", isAdmin)} />
+          </Box>
+        ) : null}
         <Divider />
         <MenuContent
           unfold

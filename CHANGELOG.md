@@ -2,6 +2,20 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.19
+
+- Phones with the bell switched off (Settings → Notifications → When the bell shows → Never): new messages put a small dot on the menu button at the top right, in the colour of the most important one, and the menu has a Messages button with their number that opens the list.
+- The list's Clear all looks like a button.
+
+## V5.3.18
+
+- Phones: the dashboards row at the bottom fades softly at an end where more dashboards are hidden, instead of showing half a button, so it is clear you can slide it.
+
+## V5.3.17
+
+- GPS map panel: the tracker's name, state and last report are one slim line along the bottom edge of the map (for example "DAMN GPS · Parked · 5 min ago"), so the label no longer covers most of a small map.
+- GPS Tracker page on phones and tablets: the Live map fills the screen down to the bottom, with no empty space under it.
+
 ## V5.3.16
 
 - Phones: the menu at the top right is narrower, so more of the page stays in view.
