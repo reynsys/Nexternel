@@ -28,7 +28,8 @@ function onPhone(): boolean {
   }
 }
 
-const LIGHT_COLOUR: Record<AnywhereView["light"], string> = {
+/** The light's colour, the same here and in the menu (components/AnywhereStatus.tsx). */
+export const LIGHT_COLOUR: Record<AnywhereView["light"], string> = {
   green: "success.main",
   orange: "warning.main",
   red: "error.main",
@@ -203,6 +204,11 @@ export function AnywhereCard() {
   const [err, setErr] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [changing, setChanging] = useState(false);
+  // Opened from the menu's Nexternel Anywhere line: bring this card into view once it has loaded.
+  const loaded = Boolean(view);
+  useEffect(() => {
+    if (loaded && window.location.hash === "#nexternel-anywhere") document.getElementById("nexternel-anywhere")?.scrollIntoView({ block: "start" });
+  }, [loaded]);
   const phone = onPhone();
 
   async function load() {
@@ -247,7 +253,7 @@ export function AnywhereCard() {
   const ready = view?.enabled && view.light === "green";
 
   return (
-    <Card sx={surfaceSx}>
+    <Card id="nexternel-anywhere" sx={{ ...surfaceSx, scrollMarginTop: 80 }}>
       <CardContent>
         <Stack spacing={2}>
           <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="space-between">

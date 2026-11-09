@@ -30,6 +30,7 @@ import { chromeSurfaceSx } from "../../surfaceStyles";
 import { useGradientActive } from "../../useSurfaceStyles";
 import { ButtonRow } from "../../../components/ButtonRow";
 import { AndroidUpdate } from "../../../components/AndroidUpdate";
+import { AnywhereStatus } from "../../../components/AnywhereStatus";
 
 type Props = {
   signedIn: boolean;
@@ -207,6 +208,7 @@ export function SideMenu({
                 </Box>
                 <NotificationBell place="menu-bottom" canClear={hasPermission(permissions ?? null, "manageUsers", isAdmin)} />
               </Stack>
+              <AnywhereStatus permissions={permissions} isAdmin={isAdmin} />
               <AndroidUpdate px={0} pb={0} />
               <ButtonRow direction="row">
                 <Button variant="outlined" size="small" startIcon={<LogoutIcon fontSize="small" />} onClick={onLogout} sx={{ flex: 1 }}>

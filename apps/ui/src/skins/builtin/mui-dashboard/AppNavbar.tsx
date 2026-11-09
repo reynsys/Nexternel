@@ -22,6 +22,7 @@ import { barSurfaceSx } from "../../surfaceStyles";
 import { useGradientActive } from "../../useSurfaceStyles";
 import { BrandMark } from "../../../components/BrandMark";
 import { AndroidUpdate } from "../../../components/AndroidUpdate";
+import { AnywhereStatus } from "../../../components/AnywhereStatus";
 
 const Toolbar = styled(MuiToolbar)({
   width: "100%",
@@ -141,9 +142,10 @@ export function AppNavbar({
         </Stack>
         {signedIn ? <AndroidUpdate /> : null}
         {signedIn ? (
-          <Box sx={{ px: 2, pb: 1.5 }}>
+          <Stack spacing={1} sx={{ px: 2, pb: 1.5, "&:empty": { display: "none" } }}>
+            <AnywhereStatus permissions={permissions} isAdmin={isAdmin} onNavigate={() => setOpen(false)} />
             <NotificationBell place="phone-menu" canClear={hasPermission(permissions ?? null, "manageUsers", isAdmin)} />
-          </Box>
+          </Stack>
         ) : null}
         <Divider />
         <MenuContent

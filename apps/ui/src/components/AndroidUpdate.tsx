@@ -7,6 +7,8 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import { isPhoneScreen } from "../lib/phone-screen";
+import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
+import { ICON_SIZE } from "../lib/appearance/type";
 
 /**
  * "This phone" / "This tablet" (More on a phone, the menu on a tablet): Nexternel for Android's version, its own
@@ -103,8 +105,9 @@ function HomeLine() {
   return (
     <>
       <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}>
+        <HomeOutlinedIcon aria-label="Home" sx={{ fontSize: ICON_SIZE.inline, color: "text.secondary", flexShrink: 0 }} />
         <Typography variant="caption" color="text.secondary" noWrap sx={{ flex: 1, minWidth: 0 }} title={window.location.host}>
-          Home: {window.location.host}
+          {window.location.host}
         </Typography>
         <Button size="small" variant="outlined" onClick={() => setAsking(true)} sx={{ flexShrink: 0 }}>
           Change

@@ -2,6 +2,12 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.20
+
+- Charts: the pop-up when you touch or point at a moment on a chart stays inside that chart, at its top beside your finger. It no longer lands on other panels below, or out of sight under the dashboards row on a phone. It shows the time (with the day when it is not today) and the value with its unit, written as the chart's axis writes it.
+- The menu shows Nexternel Anywhere with its light (green working, orange connecting, red needs a look, grey off), for people who may see system settings, once Anywhere is set up. Pressing it opens Nexternel Anywhere in Settings → System.
+- This phone (in the menu): the home address has a small house in front instead of the word "Home:", so the address fits beside Change.
+
 ## V5.3.19
 
 - Phones with the bell switched off (Settings → Notifications → When the bell shows → Never): new messages put a small dot on the menu button at the top right, in the colour of the most important one, and the menu has a Messages button with their number that opens the list.
