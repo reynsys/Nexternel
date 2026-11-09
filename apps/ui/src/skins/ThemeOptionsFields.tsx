@@ -26,7 +26,7 @@ import { EffectPicture, useEffectOptions, useReducedMotion } from "./effects/Bac
 import type { UiSkin } from "./types";
 import { choiceSx, insetSx } from "./surfaceStyles";
 import { ButtonRow } from "../components/ButtonRow";
-import { ROOM_NAVS } from "../lib/room-nav";
+import { PHONE_ROOM_NAVS, ROOM_NAVS } from "../lib/room-nav";
 import { Segmented } from "../components/Segmented";
 import { AppearancePreview } from "../components/appearance/AppearancePreview";
 import { HARMONIES } from "../lib/appearance/scale";
@@ -43,7 +43,7 @@ type Props = {
   onSkinChange: (skinId: string) => void;
   /** Optional footnote under the controls */
   footnote?: string;
-  /** Shown on a phone: phones always use their own dashboard row, so the Dashboard menu choice is left out. */
+  /** Shown on a phone: the Dashboard menu offers the phone's own choices (lib/room-nav.ts). */
   onPhone?: boolean;
 };
 
@@ -371,8 +371,16 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
   const dashboardsTab = (
     <Stack spacing={3.5} divider={<Divider flexItem />}>
       <Section title="Dashboards" hint="How you move between dashboards, and moving decorations.">
-        {onPhone ? null : (
-          <Row label="Dashboard menu" hint="where your dashboards are listed on bigger screens; phones always show them in a row at the top">
+        {onPhone ? (
+          <Row label="Dashboard menu" hint="where your dashboards are listed on this phone">
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 1 }}>
+              {PHONE_ROOM_NAVS.map((n) => (
+                <ChoiceTile key={n.value} selected={(themePrefs.phoneRoomNav ?? "dock") === n.value} onClick={() => set({ phoneRoomNav: n.value })} title={n.label} text={n.description} />
+              ))}
+            </Box>
+          </Row>
+        ) : (
+          <Row label="Dashboard menu" hint="where your dashboards are listed; phones have their own choice">
             <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 1 }}>
               {ROOM_NAVS.map((n) => (
                 <ChoiceTile key={n.value} selected={(themePrefs.roomNav ?? "dock") === n.value} onClick={() => set({ roomNav: n.value })} title={n.label} text={n.description} />

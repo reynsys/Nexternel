@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.10
+
+- Phones have their own Dashboard menu choice (Settings → Appearance → Dashboards, kept on the phone): the Dock at the bottom, as before V5.3.8 (and the starting choice), or a Row at the top that now stays under the Nexternel bar while you scroll, so you can change dashboard from anywhere on the page.
+
 ## V5.3.9
 
 - Phones keep their own Appearance: what you change in Settings → Appearance on a phone stays on that phone, and your computer and tablet keep theirs. The page says so on a phone, with a button to use the same as your other screens again. The Dashboard menu choice (Dock, Top tabs, Right rail) is not shown on a phone, which always uses its row at the top.

@@ -149,20 +149,21 @@ export function DashboardTabBar({
       )}
     </Stack>
   );
-  // Phones: the row of dashboards above the dashboard (it slides under a finger), so the bottom of the
-  // screen keeps only the bottom bar; a sideways swipe on the dashboard also moves to the next or previous
-  // one, and Dashboards in the bottom bar opens them all.
-  const phone = variant === "phone";
+  // Phones, their own choice: the dock in one row that slides under a finger (RoomMenu `scroll`), or the
+  // row of dashboards at the top that stays on screen while scrolling. A sideways swipe on the dashboard
+  // also moves to the next or previous one, and Dashboards in the bottom bar opens them all.
+  const phone = variant === "phone" || variant === "phone-row";
   useDashboardSwipe(phone && !editMode && !display.active && dashboards.length > 1, (dir) => {
     const at = dashboards.findIndex((d) => d.id === activeId);
     const next = dashboards[at + dir];
     if (at >= 0 && next) go(next);
   });
-  if (variant === "dock" || variant === "rail") {
+  if (variant === "dock" || variant === "rail" || variant === "phone") {
     return (
       <>
         <RoomMenu
-          variant={variant}
+          variant={variant === "phone" ? "dock" : variant}
+          scroll={variant === "phone"}
           dashboards={dashboards}
           activeId={activeId}
           loading={loading}
@@ -185,6 +186,10 @@ export function DashboardTabBar({
       sx={(t) => ({
         minWidth: 0,
         position: "relative",
+        // The phone's row stays under the Nexternel bar while the dashboard scrolls.
+        ...(variant === "phone-row"
+          ? { position: "sticky", top: "var(--nx-top-bar, 0px)", zIndex: t.zIndex.appBar - 1, bgcolor: t.nxScheme.surfaceSolid.panel, mx: -1, px: 1, pt: 0.5 }
+          : {}),
         // Room for the Look's own line drawing under the tabs (core space rule).
         pb: `calc(4px + ${t.nx.barEdgeSpace})`,
         // The Look's room bar: its bottom line.

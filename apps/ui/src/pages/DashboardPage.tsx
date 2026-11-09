@@ -117,7 +117,7 @@ import { ButtonRow } from "../components/ButtonRow";
 import { useLiveChanges } from "../lib/live-changes";
 import { displayPath, useDisplayMode } from "../lib/display-mode";
 import { useSkin } from "../skins/SkinProvider";
-import { normalizeRoomNav, roomNavAtTop, shownRoomNav } from "../lib/room-nav";
+import { normalizePhoneRoomNav, normalizeRoomNav, roomNavAtTop, shownRoomNav } from "../lib/room-nav";
 import { arrangeInRows, currentPanelsPerRow, panelsPerRowChoices, rearrangeForColumns } from "../panels/flow-layout";
 
 function sectionContentSummary(panels: RuntimePanelInstance[]): string {
@@ -136,7 +136,7 @@ function DashboardPageContent() {
   const { permissions, isAdmin } = useShellAuth();
   const display = useDisplayMode();
   const { themePrefs: navPrefs } = useSkin();
-  const roomNav = shownRoomNav(normalizeRoomNav(navPrefs.roomNav), useMediaQuery(useTheme().breakpoints.down("md")));
+  const roomNav = shownRoomNav(normalizeRoomNav(navPrefs.roomNav), useMediaQuery(useTheme().breakpoints.down("md")), normalizePhoneRoomNav(navPrefs.phoneRoomNav));
   // Display mode only shows: no editing there.
   const canEditDashboards = !display.active && hasPermission(
     permissions,

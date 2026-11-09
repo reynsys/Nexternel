@@ -16,7 +16,7 @@ import {
 import { lookIdFromPrefs } from "../lib/look-choice";
 import { resolveLook } from "./looks/registry";
 import { normalizeWallPrefs, type WallPrefs } from "../lib/display-mode";
-import { normalizeRoomNav, type RoomNav } from "../lib/room-nav";
+import { normalizeRoomNav, type PhoneRoomNav, type RoomNav } from "../lib/room-nav";
 import { HARMONIES, type Harmony } from "../lib/appearance/scale";
 
 export function normalizeHarmony(raw: unknown): Harmony {
@@ -51,6 +51,8 @@ export type ThemePrefs = {
   lookButtons?: string;
   /** Where the room menu sits (lib/room-nav.ts). */
   roomNav?: RoomNav;
+  /** A phone's own room menu (lib/room-nav.ts); kept on the phone only, with its own Appearance. */
+  phoneRoomNav?: PhoneRoomNav;
   /** Size of all text in per cent (see TEXT_SIZES). */
   textSize?: number;
   /**
@@ -238,6 +240,7 @@ export function normalizeThemePrefs(raw: unknown): ThemePrefs {
     motion: parsed.motion !== false,
     textSize: normalizeTextSize(parsed.textSize),
     roomNav: normalizeRoomNav(parsed.roomNav),
+    ...(parsed.phoneRoomNav === "row" ? { phoneRoomNav: "row" as const } : {}),
     ...(typeof parsed.lookFont === "string" && /^[a-z0-9][a-z0-9-]{0,39}$/.test(parsed.lookFont) ? { lookFont: parsed.lookFont } : {}),
     ...(typeof parsed.lookButtons === "string" && /^[a-z0-9][a-z0-9-]{0,39}$/.test(parsed.lookButtons) ? { lookButtons: parsed.lookButtons } : {}),
     gradientId,
