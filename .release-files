@@ -464,6 +464,7 @@ apps/ui/src/lib/panel-size.test.ts
 apps/ui/src/lib/panel-size.ts
 apps/ui/src/lib/panel-title-icon.ts
 apps/ui/src/lib/permissions.ts
+apps/ui/src/lib/phone-screen.ts
 apps/ui/src/lib/room-nav.test.ts
 apps/ui/src/lib/room-nav.ts
 apps/ui/src/lib/slot-bindings.ts

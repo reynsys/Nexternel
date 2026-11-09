@@ -43,6 +43,8 @@ type Props = {
   onSkinChange: (skinId: string) => void;
   /** Optional footnote under the controls */
   footnote?: string;
+  /** Shown on a phone: phones always use their own dashboard row, so the Dashboard menu choice is left out. */
+  onPhone?: boolean;
 };
 
 const TABS = [
@@ -177,7 +179,7 @@ function Swatch({ colour, label, selected, onClick }: { colour: string; label: s
  * Appearance engine (lib/appearance), which keeps all text readable. Every colour choice is on the
  * Colours tab; Style is how things are drawn and what moves.
  */
-export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, onSkinChange, footnote }: Props) {
+export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, onSkinChange, footnote, onPhone = false }: Props) {
   const [customHex, setCustomHex] = useState(themePrefs.primary);
   const [kind, setKind] = useState<BackgroundKind>(() => kindOf(themePrefs.gradientId));
   const reducedMotion = useReducedMotion();
@@ -369,13 +371,15 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
   const dashboardsTab = (
     <Stack spacing={3.5} divider={<Divider flexItem />}>
       <Section title="Dashboards" hint="How you move between dashboards, and moving decorations.">
-        <Row label="Dashboard menu" hint="where your dashboards are listed; phones always use the dock">
-          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 1 }}>
-            {ROOM_NAVS.map((n) => (
-              <ChoiceTile key={n.value} selected={(themePrefs.roomNav ?? "dock") === n.value} onClick={() => set({ roomNav: n.value })} title={n.label} text={n.description} />
-            ))}
-          </Box>
-        </Row>
+        {onPhone ? null : (
+          <Row label="Dashboard menu" hint="where your dashboards are listed on bigger screens; phones always show them in a row at the top">
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 1 }}>
+              {ROOM_NAVS.map((n) => (
+                <ChoiceTile key={n.value} selected={(themePrefs.roomNav ?? "dock") === n.value} onClick={() => set({ roomNav: n.value })} title={n.label} text={n.description} />
+              ))}
+            </Box>
+          </Row>
+        )}
         <FormControlLabel
           sx={{ mt: 1.5 }}
           control={<Switch checked={themePrefs.motion !== false} onChange={(e) => set({ motion: e.target.checked })} />}

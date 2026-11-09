@@ -18,6 +18,8 @@ import { getSkin, listSkins } from "./registry";
 import { gradientBaseColour, gradientCss } from "./gradientPalettes";
 import {
   getThemePrefs,
+  getPhoneLook,
+  setPhoneLook,
   setThemePrefs as persistThemePrefsLocal,
   toAccountThemePrefs,
   normalizeThemePrefs,
@@ -37,6 +39,7 @@ import { LIGHT_CSS, useDisplayMode } from "../lib/display-mode";
 import { isMineBackground, mineBackground, schemeForPrefs, shownMode } from "./appearance-scheme";
 import type { Scheme } from "../lib/appearance/scheme";
 import { coreFont } from "../lib/appearance/fonts";
+import { isPhoneScreen } from "../lib/phone-screen";
 
 /** The device's light / dark setting, followed when Appearance → Mode is Automatic. */
 function useDeviceDark(): boolean {
@@ -78,13 +81,22 @@ type SkinContextValue = {
   textScale: number;
   /** Every colour by role, from the Appearance engine (lib/appearance). */
   scheme: Scheme;
+  /** This is a phone (lib/phone-screen.ts): Appearance changes stay on this phone. */
+  onPhone: boolean;
+  /** The phone has its own Appearance (it was changed here); false = it shows the account's. */
+  phoneOwnLook: boolean;
+  /** Drop the phone's own Appearance and show the account's again (your other screens'). */
+  dropPhoneLook: () => void;
 };
 
 const SkinContext = createContext<SkinContextValue | null>(null);
 
 export function SkinProvider({ children }: { children: ReactNode }) {
-  const [skinId, setSkinIdState] = useState(() => getActiveSkinId());
-  const [themePrefs, setThemePrefsState] = useState<ThemePrefs>(() => getThemePrefs());
+  // A phone keeps its own Appearance once it is changed there; until then it shows the account's.
+  const [onPhone] = useState(() => isPhoneScreen());
+  const [phoneOwnLook, setPhoneOwnLook] = useState(() => onPhone && getPhoneLook() !== null);
+  const [skinId, setSkinIdState] = useState(() => (onPhone ? getPhoneLook()?.skinId : undefined) ?? getActiveSkinId());
+  const [themePrefs, setThemePrefsState] = useState<ThemePrefs>(() => (onPhone ? getPhoneLook() : null) ?? getThemePrefs());
   const skins = useMemo(() => listSkins(), []);
   const skin = useMemo(() => getSkin(skinId), [skinId]);
   const lookVer = useSyncExternalStore(subscribeLooks, looksVersion, looksVersion);
@@ -134,6 +146,12 @@ export function SkinProvider({ children }: { children: ReactNode }) {
 
   const pushAccountPrefs = useCallback(
     (prefs: ThemePrefs, nextSkinId: string) => {
+      // On a phone the change stays on the phone; your other screens keep their own.
+      if (onPhone) {
+        setPhoneLook({ ...prefs, skinId: nextSkinId });
+        setPhoneOwnLook(true);
+        return;
+      }
       if (!getStoredAccessToken()) return;
       const body = {
         themePrefs: toAccountThemePrefs(prefs, nextSkinId),
@@ -142,11 +160,16 @@ export function SkinProvider({ children }: { children: ReactNode }) {
         /* keep local prefs if save fails */
       });
     },
-    []
+    [onPhone]
   );
 
   const applyAccountPrefs = useCallback((prefs: UserThemePrefs | null | undefined) => {
     if (!prefs) return;
+    // A phone with its own Appearance keeps it (changes made on other screens are theirs).
+    if (onPhone && getPhoneLook()) {
+      void loadAddons();
+      return;
+    }
     persistServerRef.current = false;
     const next = normalizeThemePrefs(prefs);
     const nextSkin = prefs.skinId?.trim() || next.skinId || getActiveSkinId();
@@ -158,7 +181,19 @@ export function SkinProvider({ children }: { children: ReactNode }) {
       persistServerRef.current = true;
     });
     void loadAddons();
-  }, []);
+  }, [onPhone]);
+
+  const dropPhoneLook = useCallback(() => {
+    setPhoneLook(null);
+    setPhoneOwnLook(false);
+    if (!getStoredAccessToken()) return;
+    void api
+      .me()
+      .then((r) => applyAccountPrefs(r.user.themePrefs))
+      .catch(() => {
+        /* shows the account's next time */
+      });
+  }, [applyAccountPrefs]);
 
   useEffect(() => {
     if (hydratedRef.current) return;
@@ -290,8 +325,11 @@ export function SkinProvider({ children }: { children: ReactNode }) {
       looksVersion: lookVer,
       textScale,
       scheme,
+      onPhone,
+      phoneOwnLook,
+      dropPhoneLook,
     }),
-    [skin, skins, setSkinId, themePrefs, setThemePrefs, tryThemePrefs, trySkinId, trial, applyTrial, cancelTrial, applyAccountPrefs, lookVer, textScale, scheme]
+    [skin, skins, setSkinId, themePrefs, setThemePrefs, tryThemePrefs, trySkinId, trial, applyTrial, cancelTrial, applyAccountPrefs, lookVer, textScale, scheme, onPhone, phoneOwnLook, dropPhoneLook]
   );
 
   return (

@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.9
+
+- Phones keep their own Appearance: what you change in Settings → Appearance on a phone stays on that phone, and your computer and tablet keep theirs. The page says so on a phone, with a button to use the same as your other screens again. The Dashboard menu choice (Dock, Top tabs, Right rail) is not shown on a phone, which always uses its row at the top.
+- More → This phone (inside Nexternel for Android): the version, Check for update and, with Nexternel for Android 1.0.2, Change home.
+
 ## V5.3.8
 
 - Phones: the row of dashboards now sits at the top of the dashboard, so the bottom of the screen has only one row (Dashboards, Areas, Devices, Extensions, More). Slide the row to see all dashboards, or swipe sideways on the dashboard to move to the next one. The Dock, Top tabs or Right rail choice in Appearance is for bigger screens; phones always use this row.

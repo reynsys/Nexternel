@@ -294,6 +294,27 @@ export function setThemePrefs(prefs: ThemePrefs): void {
   localStorage.setItem(THEME_PREFS_KEY, JSON.stringify(prefs));
 }
 
+/** A phone's own Appearance (lib/phone-screen.ts): kept on the phone only, never sent to the account. */
+const PHONE_LOOK_KEY = "nexternel_phone_look";
+
+export function getPhoneLook(): ThemePrefs | null {
+  try {
+    const raw = localStorage.getItem(PHONE_LOOK_KEY);
+    return raw ? normalizeThemePrefs(JSON.parse(raw) as unknown) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setPhoneLook(prefs: ThemePrefs | null): void {
+  try {
+    if (prefs) localStorage.setItem(PHONE_LOOK_KEY, JSON.stringify(prefs));
+    else localStorage.removeItem(PHONE_LOOK_KEY);
+  } catch {
+    /* private window: the phone simply follows the account */
+  }
+}
+
 /** Shape stored on the user account / sent to API. */
 export function toAccountThemePrefs(prefs: ThemePrefs, skinId: string) {
   return {
