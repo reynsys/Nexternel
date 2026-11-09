@@ -737,6 +737,7 @@ db/migrations/015_v4_system_labels.sql
 db/migrations/016_esphome_device_builder.sql
 db/migrations/017_device_mqtt_availability.sql
 docker-compose.yml
+docs/android/Nexternel.apk
 docs/CNAME
 docs/images/appearance.jpg
 docs/images/dashboard.jpg
