@@ -18,13 +18,14 @@ const N = "M29.1 35.44V28.56L34.9 35.44V28.56";
 /**
  * The Nexternel logo at the top of the menu, the phone bar and the sign-in page. The ring and core
  * take the Look's main colour, the outer hexagon its quiet text colour, so it suits every Look.
+ * With `colour` the whole logo is drawn in that one colour (Nexternel Anywhere's light).
  */
-export function BrandMark({ size = 28 }: { size?: number }) {
+export function BrandMark({ size = 28, colour }: { size?: number; colour?: string }) {
   const t = useTheme();
   // Two logos on one page need their own mask names (and no ":" in a url(#…) reference).
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, "");
-  const main = t.palette.primary.main;
-  const quiet = t.palette.text.secondary;
+  const main = colour ?? t.palette.primary.main;
+  const quiet = colour ?? t.palette.text.secondary;
   return (
     <Box component="svg" viewBox="0 0 64 64" width={size} height={size} aria-hidden sx={{ flexShrink: 0, display: "block" }}>
       <defs>

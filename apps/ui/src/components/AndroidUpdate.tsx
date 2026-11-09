@@ -7,12 +7,11 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import { isPhoneScreen } from "../lib/phone-screen";
-import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
-import { ICON_SIZE } from "../lib/appearance/type";
+import { ButtonRow } from "./ButtonRow";
 
 /**
- * "This phone" / "This tablet" (More on a phone, the menu on a tablet): Nexternel for Android's version, its own
- * "Check for update" / "Update to …" button, and the home it opens with a small Change button (HomeLine).
+ * "This phone" / "This tablet" (at the bottom of the menu): Nexternel for Android's version, its own
+ * "Check for update" / "Update to …" button and Change home, side by side (rarely needed, so low down).
  * Shown only inside Nexternel for Android 1.0.1 or newer (the frame offers window.NexternelPhone).
  * The frame does the work (GitHub check, download, Android's "Install update?") and answers with
  * the "nexternel-phone-update" event.
@@ -57,62 +56,53 @@ export function AndroidUpdate({ px = 2, pb = 1 }: { px?: number; pb?: number }) 
   let note: string | null = null;
   if (!busy && state.checked && !latest) note = state.failed ? "Could not check. Check the internet connection." : "This is the newest version.";
 
+  const changeHome = typeof p.changeHome === "function";
   return (
     <Box sx={{ px, pb }}>
-      <Typography variant="body2" sx={{ fontWeight: "fontWeightBold" }}>
-        {isPhoneScreen() ? "This phone" : "This tablet"}
+      <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.75 }}>
+        {isPhoneScreen() ? "This phone" : "This tablet"} · Nexternel for Android {state.current ?? ""}
       </Typography>
-      <Typography variant="caption" color="text.secondary" display="block">
-        Nexternel for Android {state.current ?? ""}
-      </Typography>
-      {latest ? (
-        <Button fullWidth size="small" variant="contained" sx={{ mt: 0.5 }} onClick={() => p.installUpdate()}>
-          Update to {latest}
-        </Button>
-      ) : (
-        <Button
-          fullWidth
-          size="small"
-          variant="outlined"
-          sx={{ mt: 0.5 }}
-          disabled={busy}
-          onClick={() => {
-            setChecking(true);
-            p.checkForUpdate();
-          }}
-        >
-          {busy ? "Checking…" : "Check for update"}
-        </Button>
-      )}
+      <ButtonRow direction="row" flexWrap="wrap">
+        {latest ? (
+          <Button size="small" variant="contained" sx={{ flex: "1 1 auto", whiteSpace: "nowrap" }} onClick={() => p.installUpdate()}>
+            Update to {latest}
+          </Button>
+        ) : (
+          <Button
+            size="small"
+            variant="outlined"
+            sx={{ flex: "1 1 auto", whiteSpace: "nowrap" }}
+            disabled={busy}
+            onClick={() => {
+              setChecking(true);
+              p.checkForUpdate();
+            }}
+          >
+            {busy ? "Checking…" : "Check for update"}
+          </Button>
+        )}
+        {changeHome ? <ChangeHome p={p} /> : null}
+      </ButtonRow>
       {note ? (
         <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
           {note}
         </Typography>
       ) : null}
-      <HomeLine />
     </Box>
   );
 }
 
 /**
- * The home this phone opens (its address, e.g. damn.nexternel.net), with a small Change button
- * (Nexternel for Android 1.0.2 or newer). Changing asks first, so it is not pressed by mistake.
+ * Change home: this phone asks for another home (Nexternel for Android 1.0.2 or newer). It asks
+ * first, so it is not pressed by mistake. (The home's address is at the top of the menu.)
  */
-function HomeLine() {
-  const p = phone();
+function ChangeHome({ p }: { p: Phone }) {
   const [asking, setAsking] = useState(false);
-  if (!p || typeof p.changeHome !== "function") return null;
   return (
     <>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}>
-        <HomeOutlinedIcon aria-label="Home" sx={{ fontSize: ICON_SIZE.inline, color: "text.secondary", flexShrink: 0 }} />
-        <Typography variant="caption" color="text.secondary" noWrap sx={{ flex: 1, minWidth: 0 }} title={window.location.host}>
-          {window.location.host}
-        </Typography>
-        <Button size="small" variant="outlined" onClick={() => setAsking(true)} sx={{ flexShrink: 0 }}>
-          Change
-        </Button>
-      </Box>
+      <Button size="small" variant="outlined" sx={{ flex: "1 1 auto", whiteSpace: "nowrap" }} onClick={() => setAsking(true)}>
+        Change home
+      </Button>
       <Dialog open={asking} onClose={() => setAsking(false)} maxWidth="xs" fullWidth>
         <DialogTitle>Change home?</DialogTitle>
         <DialogContent>
@@ -137,4 +127,9 @@ function HomeLine() {
       </Dialog>
     </>
   );
+}
+
+/** Inside Nexternel for Android (the frame offers window.NexternelPhone). */
+export function inPhoneFrame(): boolean {
+  return phone() !== null;
 }

@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.24
+
+- The menu (phones, and the side menu): Nexternel Anywhere shows the Nexternel logo in its light's colour — green working, orange connecting, red needs a look, grey off — with "Nexternel Anywhere" and the word beside it. In Nexternel for Android the home's address is under it on its own line, never cut short.
+- Nexternel for Android: "This phone", Check for update and Change home moved to the bottom of the menu, above Sign out (they are rarely needed).
+
 ## V5.3.23
 
 - Settings → System is in tabs instead of one long page: Overview (whether everything is running, version and updates), Addresses (how to open Nexternel at home, and Nexternel Anywhere), Activity, and Help & troubleshooting.

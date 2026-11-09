@@ -21,7 +21,7 @@ import { Link as RouterLink } from "react-router-dom";
 import { barSurfaceSx } from "../../surfaceStyles";
 import { useGradientActive } from "../../useSurfaceStyles";
 import { BrandMark } from "../../../components/BrandMark";
-import { AndroidUpdate } from "../../../components/AndroidUpdate";
+import { AndroidUpdate, inPhoneFrame } from "../../../components/AndroidUpdate";
 import { AnywhereStatus } from "../../../components/AnywhereStatus";
 
 const Toolbar = styled(MuiToolbar)({
@@ -140,10 +140,11 @@ export function AppNavbar({
             <CloseRoundedIcon />
           </Button>
         </Stack>
-        {signedIn ? <AndroidUpdate /> : null}
         {signedIn ? (
-          <Stack spacing={1} sx={{ px: 2, pb: 1.5, "&:empty": { display: "none" } }}>
-            <AnywhereStatus permissions={permissions} isAdmin={isAdmin} onNavigate={() => setOpen(false)} />
+          <Stack spacing={1.5} sx={{ px: 2, pb: 1.5, "&:empty": { display: "none" } }}>
+            {/* What you look at each time: Nexternel Anywhere (logo in its light's colour) and the home
+                this phone opens. Check for update and Change home are at the bottom. */}
+            <AnywhereStatus permissions={permissions} isAdmin={isAdmin} homeLine={inPhoneFrame()} />
             <NotificationBell place="phone-menu" canClear={hasPermission(permissions ?? null, "manageUsers", isAdmin)} />
           </Stack>
         ) : null}
@@ -156,6 +157,7 @@ export function AppNavbar({
           authLoading={authLoading}
           onNavigate={() => setOpen(false)}
         />
+        {signedIn ? <AndroidUpdate pb={0} /> : null}
         <Box sx={{ p: 2 }}>
           {signedIn ? (
             <Button
