@@ -18,11 +18,6 @@ type Props = {
   tools: (dir: "row" | "column", size?: number) => ReactNode;
   /** Arranging the dashboards while editing (grip on each, arrows on the open one). */
   arrange: ArrangeDashboards;
-  /**
-   * Phones: the dock keeps one row and the rooms slide left and right under a finger,
-   * so every room stays full size; Dashboard Options stays fixed at the end.
-   */
-  scroll?: boolean;
 };
 
 /**
@@ -138,7 +133,7 @@ const islandFrame = (t: Theme) => ({
 });
 
 /** Centred under the dashboard at the bottom of the screen. */
-function Dock({ dashboards, activeId, onGo, tools, loading, error, arrange, scroll = false }: Props) {
+function Dock({ dashboards, activeId, onGo, tools, loading, error, arrange }: Props) {
   const dock = useRef<HTMLDivElement>(null);
   const rooms = useRef<HTMLDivElement>(null);
   const [centre, setCentre] = useState<number | null>(null);
@@ -188,22 +183,13 @@ function Dock({ dashboards, activeId, onGo, tools, loading, error, arrange, scro
       // The dock's own edges, the rooms' side space and the line between rooms and buttons.
       const available = limit - parseFloat(css.paddingLeft) - parseFloat(css.paddingRight) - 16 - 28;
       const toolTiles = Math.max(1, Math.round(tools.offsetWidth / (fit.size + 8)));
-      const next = scroll ? { size: TILE, columns: dashboards.length } : dockFit(available, dashboards.length, toolTiles, 8);
+      const next = dockFit(available, dashboards.length, toolTiles, 8);
       setFit((f) => (f.size === next.size && f.columns === next.columns ? f : next));
     };
     measure();
     window.addEventListener("resize", measure);
     return () => window.removeEventListener("resize", measure);
-  }, [centre, dashboards.length, fit.size, scroll]);
-  // A sliding row: the open room is brought into view (also after changing dashboards by swiping).
-  useEffect(() => {
-    if (!scroll) return;
-    const row = rooms.current;
-    const open = row?.querySelector<HTMLElement>("[data-nx-active-tab]");
-    if (!row || !open) return;
-    const left = open.offsetLeft - (row.clientWidth - open.offsetWidth) / 2;
-    row.scrollTo({ left: Math.max(0, left), behavior: "smooth" });
-  }, [scroll, activeId, dashboards.length]);
+  }, [centre, dashboards.length, fit.size]);
   return (
     <Box
       ref={dock}
@@ -229,37 +215,17 @@ function Dock({ dashboards, activeId, onGo, tools, loading, error, arrange, scro
     >
       <Box
         ref={rooms}
-        onMouseMove={scroll ? undefined : (e) => magnify(e.clientX)}
-        onMouseLeave={scroll ? undefined : () => magnify(null)}
-        // Swiping the row must not also count as a swipe to another dashboard.
-        data-nx-no-swipe={scroll ? "" : undefined}
-        sx={
-          scroll
-            ? {
-                display: "flex",
-                gap: "8px",
-                alignItems: "end",
-                minWidth: 0,
-                flex: 1,
-                px: 1,
-                pt: "10px",
-                overflowX: "auto",
-                overscrollBehaviorX: "contain",
-                scrollSnapType: "x proximity",
-                scrollbarWidth: "none",
-                "&::-webkit-scrollbar": { display: "none" },
-                "& > *": { scrollSnapAlign: "center", flexShrink: 0 },
-              }
-            : {
-                display: "grid",
-                gridTemplateColumns: `repeat(${fit.columns}, ${fit.size}px)`,
-                gap: "8px",
-                alignItems: "end",
-                px: 1,
-                // Room above the rooms so a growing room stays inside the dock.
-                pt: `${Math.ceil(TILE * GROW) + 10}px`,
-              }
-        }
+        onMouseMove={(e) => magnify(e.clientX)}
+        onMouseLeave={() => magnify(null)}
+        sx={{
+          display: "grid",
+          gridTemplateColumns: `repeat(${fit.columns}, ${fit.size}px)`,
+          gap: "8px",
+          alignItems: "end",
+          px: 1,
+          // Room above the rooms so a growing room stays inside the dock.
+          pt: `${Math.ceil(TILE * GROW) + 10}px`,
+        }}
       >
         {loading ? <Typography variant="caption">Loading dashboards…</Typography> : null}
         {error ? <Typography variant="caption" color="error">{error}</Typography> : null}

@@ -149,20 +149,20 @@ export function DashboardTabBar({
       )}
     </Stack>
   );
-  // Phones: the dock in one row that slides under a finger (RoomMenu `scroll`); a sideways swipe on
-  // the dashboard also moves to the next or previous one, and Dashboards in the bottom bar opens them all.
+  // Phones: the row of dashboards above the dashboard (it slides under a finger), so the bottom of the
+  // screen keeps only the bottom bar; a sideways swipe on the dashboard also moves to the next or previous
+  // one, and Dashboards in the bottom bar opens them all.
   const phone = variant === "phone";
   useDashboardSwipe(phone && !editMode && !display.active && dashboards.length > 1, (dir) => {
     const at = dashboards.findIndex((d) => d.id === activeId);
     const next = dashboards[at + dir];
     if (at >= 0 && next) go(next);
   });
-  if (variant !== "tabs") {
+  if (variant === "dock" || variant === "rail") {
     return (
       <>
         <RoomMenu
-          variant={phone ? "dock" : variant}
-          scroll={phone}
+          variant={variant}
           dashboards={dashboards}
           activeId={activeId}
           loading={loading}
@@ -194,6 +194,8 @@ export function DashboardTabBar({
 
       <Box
         ref={tabsRef}
+        // Sliding the row must not also count as a swipe to another dashboard.
+        data-nx-no-swipe=""
         sx={(t) => ({
           display: "flex",
           alignItems: "center",

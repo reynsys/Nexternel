@@ -117,7 +117,7 @@ import { ButtonRow } from "../components/ButtonRow";
 import { useLiveChanges } from "../lib/live-changes";
 import { displayPath, useDisplayMode } from "../lib/display-mode";
 import { useSkin } from "../skins/SkinProvider";
-import { normalizeRoomNav, shownRoomNav } from "../lib/room-nav";
+import { normalizeRoomNav, roomNavAtTop, shownRoomNav } from "../lib/room-nav";
 import { arrangeInRows, currentPanelsPerRow, panelsPerRowChoices, rearrangeForColumns } from "../panels/flow-layout";
 
 function sectionContentSummary(panels: RuntimePanelInstance[]): string {
@@ -1008,7 +1008,7 @@ function DashboardPageContent() {
       )}
       {!pageLoading && !bootError && (
       <>
-      {(display.active && !display.tabs) || roomNav !== "tabs" ? null : (
+      {(display.active && !display.tabs) || !roomNavAtTop(roomNav) ? null : (
       <DashboardTabBar
         variant={roomNav}
         activeId={dashboardId ?? undefined}
@@ -1347,7 +1347,7 @@ function DashboardPageContent() {
 
       {/* Dock and rail are fixed on screen; drawn last so they take no room above the dashboard.
           They stay while editing: moving to another dashboard asks first when there are unsaved changes. */}
-      {roomNav !== "tabs" && !(display.active && !display.tabs) ? (
+      {!roomNavAtTop(roomNav) && !(display.active && !display.tabs) ? (
         <DashboardTabBar
           variant={roomNav}
           activeId={dashboardId ?? undefined}

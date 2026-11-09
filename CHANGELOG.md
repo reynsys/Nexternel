@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.8
+
+- Phones: the row of dashboards now sits at the top of the dashboard, so the bottom of the screen has only one row (Dashboards, Areas, Devices, Extensions, More). Slide the row to see all dashboards, or swipe sideways on the dashboard to move to the next one. The Dock, Top tabs or Right rail choice in Appearance is for bigger screens; phones always use this row.
+- Only one dashboard can be the start dashboard. Restoring a backup onto a Nexternel that already had dashboards could leave two marked, and then one of them could not be opened from the dashboard row; Nexternel now repairs this by itself.
+
 ## V5.3.7
 
 - Nexternel for Android: More (on a phone) or the menu (on a tablet) now shows which version of Nexternel for Android you have, with a Check for update button. When a newer version is ready, the button says Update to … and one tap updates it. Shown only inside Nexternel for Android 1.0.1 or newer; get it from www.nexternel.com.

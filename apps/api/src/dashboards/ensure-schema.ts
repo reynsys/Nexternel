@@ -28,6 +28,15 @@ export async function ensureDashboardSchema(): Promise<void> {
   // with "New dashboard" used to be kept for their maker only, without saying so; the column is added
   // once, "everyone" for every dashboard — a later "only me" choice can set it false.
   await getPool().query(`ALTER TABLE v3_dashboards ADD COLUMN IF NOT EXISTS visible_to_all BOOLEAN NOT NULL DEFAULT TRUE`);
+  // Exactly one start dashboard (address "/"). A restore onto a Nexternel that already had dashboards
+  // used to leave two marked, and the second could then never be opened from the room menu or a swipe.
+  // Keep the first in the room menu, then let the database refuse a second mark.
+  await getPool().query(`
+    UPDATE v3_dashboards SET is_default = FALSE
+    WHERE is_default = TRUE
+      AND id <> (SELECT id FROM v3_dashboards WHERE is_default = TRUE ORDER BY tab_order ASC, created_at ASC LIMIT 1)
+  `);
+  await getPool().query(`CREATE UNIQUE INDEX IF NOT EXISTS v3_dashboards_one_default ON v3_dashboards ((TRUE)) WHERE is_default`);
   // One-time style backfill: rows still at 0 get creation order (default first).
   await getPool().query(`
     WITH numbered AS (

@@ -263,6 +263,11 @@ export async function upsertDevice(
 }
 
 export async function upsertDashboards(client: PoolClient, payload: ConfigPayload) {
+  // The restored start dashboard replaces this Nexternel's own (only one may be marked).
+  const restoredStart = payload.dashboards.find((d) => d.isDefault);
+  if (restoredStart) {
+    await client.query(`UPDATE v3_dashboards SET is_default = FALSE WHERE is_default = TRUE AND id <> $1::uuid`, [restoredStart.id]);
+  }
   for (const dash of payload.dashboards) {
     // Shared dashboards — do not bind to a user from the old server
     await client.query(
@@ -274,7 +279,7 @@ export async function upsertDashboards(client: PoolClient, payload: ConfigPayloa
          is_default = EXCLUDED.is_default,
          owner_user_id = NULL,
          updated_at = NOW()`,
-      [dash.id, dash.name, JSON.stringify(dash.document ?? {}), dash.isDefault]
+      [dash.id, dash.name, JSON.stringify(dash.document ?? {}), dash.id === restoredStart?.id]
     );
   }
 }
