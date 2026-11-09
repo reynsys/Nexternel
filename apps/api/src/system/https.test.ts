@@ -39,6 +39,16 @@ test("own domain is served only once its certificate is there", () => {
   assert.match(buildCaddyfile(withDomain, "10.0.0.2", true), /tls \/etc\/caddy\/certs\/home\.example\.com\.crt/);
 });
 
+test("browser-safety headers are on the pages Nexternel serves", () => {
+  const home = buildCaddyfile(base, "192.0.2.10", false);
+  for (const h of ["X-Content-Type-Options nosniff", "X-Frame-Options SAMEORIGIN", "Referrer-Policy strict-origin-when-cross-origin", "frame-ancestors 'self'", "-Server"]) {
+    assert.ok(home.includes(h), `home config missing ${h}`);
+  }
+  // Also on the outside entrance and when the padlock is off.
+  assert.match(buildCaddyfile(base, "192.0.2.10", false, "smith.nexternel.net"), /X-Frame-Options SAMEORIGIN/);
+  assert.match(buildCaddyfile({ ...base, enabled: false }, "192.0.2.10", false), /X-Frame-Options SAMEORIGIN/);
+});
+
 test("names are checked", () => {
   assert.equal(validName("damn-server"), true);
   assert.equal(validName("192.168.1.20"), true);

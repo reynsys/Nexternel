@@ -87,6 +87,23 @@ export const ESPHOME_SITE = [
 ];
 
 /**
+ * Standard browser-safety headers, added to every page Nexternel serves. They tell the browser not
+ * to guess a file's type (nosniff), not to let the dashboard be hidden inside another site
+ * (clickjacking: X-Frame-Options and the frame-ancestors rule), to pass on less of the address when
+ * leaving (Referrer-Policy), and they drop the server's name. They do not restrict Nexternel's own
+ * pages (no full content policy here), so they cannot break the dashboard.
+ */
+export const SECURITY_HEADERS = [
+  "\theader {",
+  "\t\tX-Content-Type-Options nosniff",
+  "\t\tX-Frame-Options SAMEORIGIN",
+  "\t\tReferrer-Policy strict-origin-when-cross-origin",
+  "\t\tContent-Security-Policy \"frame-ancestors 'self'\"",
+  "\t\t-Server",
+  "\t}",
+];
+
+/**
  * Nexternel Anywhere's outside entrance. Visitors come through the door and the home link, which
  * first tells Caddy the visitor's real address (PROXY protocol line), so the login guard counts
  * each phone on its own. Every request is marked as coming from outside, so the second check and
@@ -100,6 +117,7 @@ export function outsideEntrance(address: string): string[] {
     `https://${address}:${OUTSIDE_ENTRANCE_PORT} {`,
     `\trequest_header ${ENTRANCE_HEADER} outside`,
     '\theader Strict-Transport-Security "max-age=31536000"',
+    ...SECURITY_HEADERS,
     "\tencode gzip",
     "\treverse_proxy ui:80",
     "}",
@@ -163,16 +181,17 @@ export function buildCaddyfile(
   if (!settings.enabled) {
     // The outside entrance has its own padlock, so it stays open when the home one is off.
     if (outside) lines.push(...outsideEntrance(outside));
-    lines.push("http://:80, http://:8080 {", ...certHandle, "\thandle {", "\t\treverse_proxy ui:80", "\t}", "}", "", ...ESPHOME_SITE);
+    lines.push("http://:80, http://:8080 {", ...certHandle, ...SECURITY_HEADERS, "\thandle {", "\t\treverse_proxy ui:80", "\t}", "}", "", ...ESPHOME_SITE);
     return lines.join("\n");
   }
   const names = homeNames(settings, serverIp);
-  lines.push(`${names.map((n) => `https://${n}`).join(", ")} {`, "\ttls internal", "\tencode gzip", "\treverse_proxy ui:80", "}", "");
+  lines.push(`${names.map((n) => `https://${n}`).join(", ")} {`, "\ttls internal", "\tencode gzip", ...SECURITY_HEADERS, "\treverse_proxy ui:80", "}", "");
   if (settings.domain && hasDomainCert) {
     lines.push(
       `https://${settings.domain} {`,
       `\ttls /etc/caddy/certs/${settings.domain}.crt /etc/caddy/certs/${settings.domain}.key`,
       "\tencode gzip",
+      ...SECURITY_HEADERS,
       "\treverse_proxy ui:80",
       "}",
       ""
@@ -186,6 +205,7 @@ export function buildCaddyfile(
   lines.push(
     "http://:80, http://:8080 {",
     ...certHandle,
+    ...SECURITY_HEADERS,
     "\thandle {",
     trusted ? `\t\tredir https://${trusted}${portSuffix}{uri} permanent` : "\t\treverse_proxy ui:80",
     "\t}",

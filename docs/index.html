@@ -78,6 +78,11 @@ h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -.01em; text-wrap: bal
 .android .steps { margin: 0; }
 .download { justify-self: start; background: var(--accent); color: #fff; text-decoration: none; font-weight: 600; padding: 13px 22px; border-radius: 12px; }
 .download:hover { background: #2a82f0; }
+.genuine { border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; }
+.genuine summary { cursor: pointer; font-weight: 600; }
+.genuine .hint { margin: 10px 0 0; }
+.fingerprint { margin: 10px 0 0; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8rem; line-height: 1.6; word-break: break-all; color: var(--soft); }
+.genuine code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8rem; }
 
 footer { border-top: 1px solid var(--line); padding-block: 26px 40px; color: var(--soft); font-size: .9rem; display: flex; gap: 16px; flex-wrap: wrap; justify-content: space-between; }
 </style>
@@ -144,6 +149,13 @@ footer { border-top: 1px solid var(--line); padding-block: 26px 40px; color: var
       <li><div><strong>Type your home name</strong><p>The name you picked for Nexternel Anywhere. Without Nexternel Anywhere, type your home address instead; that works on your home Wi-Fi.</p></div></li>
     </ol>
     <p class="hint">It checks for a newer version once a day and asks before updating; you can also check any time under More → Check for update. iPhone: open Nexternel in Safari, then Share → Add to Home Screen.</p>
+    <details class="genuine">
+      <summary>Is it the genuine app?</summary>
+      <p class="hint">Every genuine Nexternel app is signed by Reynsys, and the signature is the same in every version. Once the app is on your phone, Android only lets an update replace it if it carries this same signature — so a fake cannot install over the real one.</p>
+      <p class="hint">If you want to check a download yourself before installing, its signature should read:</p>
+      <p class="fingerprint">Signed by: CN=Nexternel, O=Reynsys, C=GB<br>SHA-256: 14:7F:C3:15:0D:FF:43:46:8A:B6:D9:01:90:85:A2:C1:73:45:66:84:44:9B:10:10:AC:D8:69:53:9E:0F:5C:BE</p>
+      <p class="hint">(On a computer with the Android tools: <code>apksigner verify --print-certs Nexternel.apk</code>.)</p>
+    </details>
   </section>
 
   <footer>

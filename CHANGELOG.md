@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.25
+
+- The secure connection now sends the standard browser-safety instructions on every page, at home and through Nexternel Anywhere: they stop the dashboard being hidden inside another site, stop the browser guessing a file's type, pass on less of the address when you leave, and drop the server's name from replies. Nothing on the dashboard changes. (From a security review of the whole setup.)
+
 ## V5.3.24
 
 - The menu (phones, and the side menu): Nexternel Anywhere shows the Nexternel logo in its light's colour — green working, orange connecting, red needs a look, grey off — with "Nexternel Anywhere" and the word beside it. In Nexternel for Android the home's address is under it on its own line, never cut short.
