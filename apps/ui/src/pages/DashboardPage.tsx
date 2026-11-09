@@ -1033,15 +1033,15 @@ function DashboardPageContent() {
               flex: 1,
               minWidth: 0,
               containerType: "inline-size",
-              // A narrow screen shows Add section and Dashboard settings as icons (names on pointing).
+              // A narrow screen (phone): name with Save and Cancel on the first line, Add section and
+              // Dashboard settings with their words on a line of their own under it.
               "@container (max-width: 560px)": {
-                "& [data-nx-label]": { display: "none" },
-                "& [data-nx-icon-button] .MuiButton-startIcon": { m: 0 },
-                "& [data-nx-icon-button]": { minWidth: 40, px: 1 },
+                "& [data-nx-edit-tools]": { order: 3, flexBasis: "100%", "& > *": { flex: "1 1 0", minWidth: 0 } },
+                "& [data-nx-edit-name]": { flexBasis: 0 },
               },
             }}
           >
-            <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0, flex: "1 1 160px" }}>
+            <Stack data-nx-edit-name="" direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0, flex: "1 1 160px", order: 1 }}>
               <DashIcon color="primary" sx={{ flexShrink: 0 }} />
               <Typography variant="body1" color="text.secondary" noWrap sx={{ minWidth: 0 }}>
                 Editing dashboard:{" "}
@@ -1050,23 +1050,20 @@ function DashboardPageContent() {
                 </Typography>
               </Typography>
             </Stack>
-            <ButtonRow direction="row">
-              <Tooltip title="Add section">
-                <Button variant="outlined" data-nx-icon-button="" aria-label="Add section" startIcon={<AddIcon />} onClick={addSection}>
-                  <span data-nx-label="">Add section</span>
-                </Button>
-              </Tooltip>
-              <Tooltip title="Dashboard settings">
-                <Button
-                  data-nx-icon-button=""
-                  aria-label="Dashboard settings"
-                  variant={settingsPanel?.type === "dashboard" ? "contained" : "outlined"}
-                  startIcon={<SettingsOutlinedIcon />}
-                  onClick={() => setSettingsPanel({ type: "dashboard", page: "this" })}
-                >
-                  <span data-nx-label="">Dashboard settings</span>
-                </Button>
-              </Tooltip>
+            <ButtonRow data-nx-edit-tools="" direction="row" flexWrap="nowrap" sx={{ order: 2 }}>
+              <Button variant="outlined" startIcon={<AddIcon />} onClick={addSection} sx={{ whiteSpace: "nowrap" }}>
+                Add section
+              </Button>
+              <Button
+                variant={settingsPanel?.type === "dashboard" ? "contained" : "outlined"}
+                startIcon={<SettingsOutlinedIcon />}
+                onClick={() => setSettingsPanel({ type: "dashboard", page: "this" })}
+                sx={{ whiteSpace: "nowrap" }}
+              >
+                Dashboard settings
+              </Button>
+            </ButtonRow>
+            <ButtonRow direction="row" flexWrap="nowrap" sx={{ order: 2 }}>
               <Button variant="contained" disabled={saving} onClick={() => void save()}>
                 {saving ? "Saving…" : "Save"}
               </Button>
@@ -1248,15 +1245,25 @@ function DashboardPageContent() {
               ]}
             >
               {/* The section's header (the Accordion's first child): name, panel count, and its buttons. */}
-              <Box sx={{ display: titleHidden ? "none" : "block", px: 2, py: 1.25 }}>
+              <Box sx={{ display: titleHidden ? "none" : "block", px: 2, py: 1.25, containerType: "inline-size" }}>
                 <Stack
                   direction="row"
                   alignItems="center"
+                  useFlexGap
                   spacing={1.25}
-                  sx={{ width: "100%", minWidth: 0, containerType: "inline-size" }}
+                  sx={{
+                    width: "100%",
+                    minWidth: 0,
+                    // A narrow section (phone): Add panel and Section settings, with their words, on a line of their own.
+                    "@container (max-width: 520px)": {
+                      flexWrap: "wrap",
+                      "& [data-nx-section-name]": { flex: "1 1 0" },
+                      "& [data-nx-section-tools]": { order: 10, flexBasis: "100%", "& > *": { flex: "1 1 0", minWidth: 0 } },
+                    },
+                  }}
                 >
                   <SecIcon color="primary" fontSize="small" />
-                  <Typography variant="h6" noWrap sx={{ minWidth: 0 }}>
+                  <Typography data-nx-section-name="" variant="h6" noWrap sx={{ minWidth: 0 }}>
                     {section.title || (editMode ? "Untitled section" : "")}
                   </Typography>
                   <Typography variant="caption" sx={{ flexShrink: 0, color: "text.secondary" }}>
@@ -1265,32 +1272,25 @@ function DashboardPageContent() {
                   <Box sx={{ flex: 1 }} />
                   {editMode && (
                     <ButtonRow
+                      data-nx-section-tools=""
                       direction="row"
                       flexWrap="nowrap"
-                      sx={{
-                        flexShrink: 0,
-                        // A narrow section shows the buttons' icons only (their names show on pointing).
-                        "@container (max-width: 520px)": {
-                          "& [data-nx-label]": { display: "none" },
-                          "& .MuiButton-startIcon": { m: 0 },
-                          "& .MuiButton-root": { minWidth: 40, px: 1 },
-                        },
-                      }}
+                      sx={{ flexShrink: 0 }}
                       onClick={(e) => e.stopPropagation()}
                     >
                       <Tooltip title="Add a panel to this section">
-                        <Button variant="outlined" aria-label="Add panel" startIcon={<AddIcon />} onClick={() => openAddPanel(section.id)}>
-                          <span data-nx-label="">Add panel</span>
+                        <Button variant="outlined" startIcon={<AddIcon />} onClick={() => openAddPanel(section.id)} sx={{ whiteSpace: "nowrap" }}>
+                          Add panel
                         </Button>
                       </Tooltip>
                       <Tooltip title="Name, icon, width, position, delete">
                         <Button
-                          aria-label="Section settings"
                           variant={settingsPanel?.type === "section" && settingsPanel.id === section.id ? "contained" : "outlined"}
                           startIcon={<SettingsOutlinedIcon />}
                           onClick={() => setSettingsPanel({ type: "section", id: section.id })}
+                          sx={{ whiteSpace: "nowrap" }}
                         >
-                          <span data-nx-label="">Section settings</span>
+                          Section settings
                         </Button>
                       </Tooltip>
                     </ButtonRow>

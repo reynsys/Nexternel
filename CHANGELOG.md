@@ -2,6 +2,13 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.14
+
+- Editing a dashboard on a phone: every button has its words. At the top, the dashboard's name with Save and Cancel, and under it Add section and Dashboard settings; in each section, Add panel and Section settings on a line of their own.
+- Editing on a phone, the dashboards row at the bottom stays a plain row (no grips, arrows, + or cog). Add dashboards and put them in order in Dashboard settings → All dashboards.
+- Phones no longer show a panel's resize corner (it sat on top of switches, and a size changed on a phone also changed the computer's layout). Panel sizes are set on a computer or a wall screen.
+- Short panels (one square high) keep their move grip and pencil on the name's line while editing, so their content still shows.
+
 ## V5.3.13
 
 - Phones: the menu (button at the top right) is now solid, so the dashboard no longer shows through it, and has a close button at its top right. A swipe to the right also closes it, as does a tap beside it.

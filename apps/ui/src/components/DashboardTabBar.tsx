@@ -92,14 +92,18 @@ export function DashboardTabBar({
     leaveThen(() => navigate(display.active ? displayPath(path) + window.location.search : path));
   };
   const [adding, setAdding] = useState(false);
+  // On a phone the dashboards row stays a plain row while editing: adding and putting dashboards in order
+  // happen in a list (Dashboard settings → All dashboards), where every button has room and a name.
+  const phone = variant === "phone" || variant === "phone-row";
+  const phoneEditing = phone && editMode;
   // Adding and reordering are part of editing (or the only way forward when there is no dashboard yet).
-  const canAdd = canEdit && !display.active && (editMode || (!loading && dashboards.length === 0));
+  const canAdd = canEdit && !display.active && !phoneEditing && (editMode || (!loading && dashboards.length === 0));
 
   // While editing: a grip on every dashboard and arrows on the open one (lib/use-arrange-dashboards.ts).
   const arrange = useArrangeDashboards({
     dashboards,
     setDashboards,
-    enabled: editMode && canEdit && !display.active,
+    enabled: editMode && canEdit && !display.active && !phone,
     onError: setError,
   });
   // In a standing column (the rail) names show on the left, so they never cover the next button.
@@ -133,7 +137,7 @@ export function DashboardTabBar({
     <Stack direction={dir} alignItems="center" sx={{ flexShrink: 0, gap: "var(--nx-control-gap)" }}>
       {canAdd ? addButton(size, dir === "column" ? "left" : undefined) : null}
       {skin.id === "mui-dashboard" && !display.active ? <NotificationBell place="dashboard" canClear={canClearNotifications} tip={dir === "column" ? "left" : undefined} /> : null}
-      {canEdit && (
+      {canEdit && !phoneEditing && (
         <Tooltip title="Dashboard Options" placement={dir === "column" ? "left" : undefined}>
           <Button
             variant={editMode ? "contained" : "outlined"}
@@ -152,7 +156,6 @@ export function DashboardTabBar({
   // Phones, their own choice: the dock in one row that slides under a finger (RoomMenu `scroll`), or the
   // row of dashboards at the top that stays on screen while scrolling. A sideways swipe on the dashboard
   // also moves to the next or previous one.
-  const phone = variant === "phone" || variant === "phone-row";
   useDashboardSwipe(phone && !editMode && !display.active && dashboards.length > 1, (dir) => {
     const at = dashboards.findIndex((d) => d.id === activeId);
     const next = dashboards[at + dir];
@@ -303,7 +306,7 @@ export function DashboardTabBar({
           <NotificationBell place="dashboard" canClear={canClearNotifications} />
         </Box>
       ) : null}
-      {canEdit && (
+      {canEdit && !phoneEditing && (
         <Tooltip title="Dashboard Options">
           <Button
             size="small"

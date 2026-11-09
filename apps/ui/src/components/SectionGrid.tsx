@@ -407,7 +407,9 @@ export function SectionGrid({
           margin={[DASHBOARD_GRID_MARGIN_X, DASHBOARD_GRID_MARGIN_Y]}
           containerPadding={[0, 0]}
           isDraggable={editMode}
-          isResizable={editMode}
+          // Not on narrow screens (phones): there panels flow in order, and a corner on top of the panel's
+          // content changed the laptop arrangement too. Sizes are set on a wider screen.
+          isResizable={editMode && cols >= gridCols}
           compactType="vertical"
           preventCollision={false}
           draggableHandle={`.${PANEL_DRAG_HANDLE}`}

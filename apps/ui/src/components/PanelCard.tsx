@@ -1,5 +1,5 @@
 import { ICON_SIZE } from "../lib/appearance/type";
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Box, Paper, Tooltip } from "@mui/material";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import { readPanelStatusLight } from "@nexternel/domain";
@@ -31,6 +31,9 @@ import { readPanelMotion } from "../lib/motion";
 import type { PanelActivity } from "../lib/dashboard-data-runtime";
 import { StatusLight, lightPlacement, resolveStatusLook, useGlowEdgeSx, useStatusLightPrefs } from "./status-light/StatusLight";
 
+/** Panels lower than this (px) have no room for an edit line of their own while arranging. */
+const SHORT_PANEL_PX = 130;
+
 /** Grabbing a panel's title moves it while the dashboard is being arranged. */
 export const PANEL_DRAG_HANDLE = "nx-panel-drag-handle";
 /** Parts of the title that are buttons, not a place to grab. */
@@ -45,7 +48,10 @@ function PanelTitleTile({
   icon,
   light,
   actions,
+  toolsInline = false,
 }: {
+  /** A short panel while arranging: grip and buttons on the name's line (no room for a line of their own). */
+  toolsInline?: boolean;
   /** Status light for the panel's only reading (inline at the right, or a bar along the bottom). */
   light?: ReactNode;
   /** While arranging the dashboard: the panel's Edit / More buttons; the title itself is the drag handle. */
@@ -60,8 +66,20 @@ function PanelTitleTile({
   const titleLine = tileTitle?.trim() || null;
   const areaLine = areaLabel?.trim() || null;
   const showAreaRow = Boolean(areaLine || (isChartsPanel && rangeNote));
+  const inline = Boolean(actions && toolsInline);
   // The name gets the whole first line: a status light sits at the end of the area line when there is one.
-  const lightOnAreaRow = Boolean(light && showAreaRow);
+  // A short panel while arranging leaves its light out, so the name has room between grip and pencil.
+  const lightOnAreaRow = Boolean(light && showAreaRow && !inline);
+  const grip = (
+    <Tooltip title="Drag to move this panel">
+      <DragIndicatorIcon aria-label="Drag to move this panel" sx={{ fontSize: ICON_SIZE.title, flexShrink: 0, color: "text.secondary", ml: -0.5 }} />
+    </Tooltip>
+  );
+  const tools = (
+    <Box className={PANEL_NO_DRAG} sx={{ display: "flex", gap: "var(--nx-control-gap)", flexShrink: 0, cursor: "default" }}>
+      {actions}
+    </Box>
+  );
 
   const titleRow = (
     <Box
@@ -85,7 +103,8 @@ function PanelTitleTile({
         containerName: "nx-title",
       }}
     >
-      {icon.iconId !== null ? (
+      {inline ? grip : null}
+      {icon.iconId !== null && !inline ? (
         <ItemIcon iconId={icon.iconId} kind={icon.kind} sx={{ fontSize: ICON_SIZE.title, flexShrink: 0, color: "primary.main" }} />
       ) : null}
       <Box
@@ -153,7 +172,8 @@ function PanelTitleTile({
         </Box>
       ) : null}
       </Box>
-      {lightOnAreaRow ? null : light}
+      {lightOnAreaRow || inline ? null : light}
+      {inline ? tools : null}
     </Box>
   );
 
@@ -167,15 +187,13 @@ function PanelTitleTile({
       className={PANEL_DRAG_HANDLE}
       sx={{ flexShrink: 0, minWidth: 0, display: "flex", flexDirection: "column", gap: "2px", cursor: "grab", touchAction: "none", "&:active": { cursor: "grabbing" } }}
     >
-      <Box data-nx-edit-tools sx={{ display: "flex", alignItems: "center", gap: "var(--nx-control-gap)", px: "var(--nx-title-inset, 8px)", minWidth: 0 }}>
-        <Tooltip title="Drag to move this panel">
-          <DragIndicatorIcon aria-label="Drag to move this panel" sx={{ fontSize: ICON_SIZE.title, flexShrink: 0, color: "text.secondary", ml: -0.5 }} />
-        </Tooltip>
-        <Box sx={{ flex: 1 }} />
-        <Box className={PANEL_NO_DRAG} sx={{ display: "flex", gap: "var(--nx-control-gap)", flexShrink: 0, cursor: "default" }}>
-          {actions}
+      {inline ? null : (
+        <Box data-nx-edit-tools sx={{ display: "flex", alignItems: "center", gap: "var(--nx-control-gap)", px: "var(--nx-title-inset, 8px)", minWidth: 0 }}>
+          {grip}
+          <Box sx={{ flex: 1 }} />
+          {tools}
         </Box>
-      </Box>
+      )}
       {titleRow}
     </Box>
   );
@@ -212,6 +230,18 @@ export function PanelCard({
 }: PanelCardProps) {
   const gradientActive = useGradientActive();
   const solidContentPanels = useSolidContentPanels();
+  // While arranging, a short panel (one square high) keeps its grip and pencil on the name's line.
+  const frameRef = useRef<HTMLDivElement>(null);
+  const [short, setShort] = useState(false);
+  useEffect(() => {
+    const el = frameRef.current;
+    if (!el || !editActions) return;
+    const measure = () => setShort(el.clientHeight < SHORT_PANEL_PX);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [Boolean(editActions)]);
   const switchStyle = readPanelSwitchStyle(runtimeConfigToPanelRecord(w.config));
   const motion = readPanelMotion(runtimeConfigToPanelRecord(w.config));
   const statusPrefs = useStatusLightPrefs();
@@ -252,6 +282,7 @@ export function PanelCard({
     ) : null;
   return (
     <Paper
+      ref={frameRef}
       // This panel's own Animations choice (absent = follows Settings → Appearance).
       data-nx-panel-motion={motion === "follow" ? undefined : motion}
       elevation={0}
@@ -303,6 +334,7 @@ export function PanelCard({
             icon={titleIcon}
             light={titlePlacement === "inline" ? lightAt("inline") : null}
             actions={editActions}
+            toolsInline={short}
           />
         ) : null}
         {titlePlacement === "under-title" ? lightAt("gap-bar") : null}
