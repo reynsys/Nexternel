@@ -20,6 +20,7 @@ import { useMainNav } from "../../useMainNav";
 import { MenuContent } from "./MenuContent";
 import { DashboardSheet, openDashboardSheet } from "../../../components/DashboardSheet";
 import { APP_VERSION } from "../../../version";
+import { AndroidUpdate } from "../../../components/AndroidUpdate";
 
 /** Phone bottom bar: the first four main pages within thumb reach; everything else under More. */
 export const BOTTOM_NAV_HEIGHT_PX = 64;
@@ -164,6 +165,9 @@ export function BottomNav({ signedIn, isAdmin, permissions, authLoading = false,
               {user.username} · {user.role}
             </Typography>
           ) : null}
+        </Box>
+        <Box sx={{ pt: 1 }}>
+          <AndroidUpdate />
         </Box>
         <MenuContent
           unfold

@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.7
+
+- Nexternel for Android: More (on a phone) or the menu (on a tablet) now shows which version of Nexternel for Android you have, with a Check for update button. When a newer version is ready, the button says Update to … and one tap updates it. Shown only inside Nexternel for Android 1.0.1 or newer; get it from www.nexternel.com.
+
 ## V5.3.6
 
 - Nexternel can now be installed on your phone or computer from your Nexternel Anywhere address: the browser offers Install (or Add to Home screen). The Nexternel logo goes on your home screen, and one tap opens Nexternel full screen, without the address bar. Already added a shortcut before? Remove it and install again to get the full screen.
