@@ -94,6 +94,10 @@ test("on a phone, gauges take half the row (two side by side) instead of the who
   assert.deepEqual(laid.g2, [2, 0, 2, 2]);
   assert.deepEqual(laid.g3, [0, 2, 2, 2]);
   assert.deepEqual(laid.c1, [0, 4, 4, 3]); // charts still take the whole row
+  // A gauge exactly as wide as the phone (the live Kids Bedroom ring, 4 squares) is half width too.
+  const kids = [{ ...p("ring", 3, 0, 4, 3), compact: true }, p("chart", 0, 3, 4, 3)];
+  assert.deepEqual(pos(flowLayout(kids, sq(4), D)).ring, [0, 0, 2, 2]);
+  assert.deepEqual(pos(flowLayout(kids, sq(4), D)).chart, [0, 2, 4, 3]);
   // Wide screens are unchanged: the arrangement is shown exactly as made.
   assert.deepEqual(pos(flowLayout(gauges, D, D)).g1, [0, 0, 3, 3]);
 });

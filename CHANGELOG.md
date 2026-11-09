@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.15
+
+- Phones: every gauge is at most half the screen wide, so gauges sit two side by side, also those made 4 squares wide on a computer (which used to fill the whole phone screen). Computers and wall screens keep their layout exactly as arranged.
+
 ## V5.3.14
 
 - Editing a dashboard on a phone: every button has its words. At the top, the dashboard's name with Save and Cancel, and under it Add section and Dashboard settings; in each section, Add panel and Section settings on a line of their own.
