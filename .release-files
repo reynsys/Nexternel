@@ -243,6 +243,8 @@ apps/api/src/telemetry/mqtt-subscriptions.ts
 apps/api/src/telemetry/mqtt.ts
 apps/api/src/telemetry/state-cache.test.ts
 apps/api/src/telemetry/state-cache.ts
+apps/api/src/telemetry/state-keep.test.ts
+apps/api/src/telemetry/state-keep.ts
 apps/api/src/telemetry/topic-resolver.test.ts
 apps/api/src/telemetry/topic-resolver.ts
 apps/api/src/telemetry/unanswered-presses.test.ts

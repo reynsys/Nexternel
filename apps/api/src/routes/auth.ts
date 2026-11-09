@@ -408,7 +408,9 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
           },
         });
       }
-      themePrefs = parsed;
+      // Wall display settings are set by an administrator (Users → Edit), never by the screen itself:
+      // a wall screen saving its own look must not undo them (an older page there did exactly that).
+      themePrefs = { ...parsed, wall: themePrefs.wall };
     }
     if (request.body?.avatarData !== undefined) {
       const parsed = parseAvatarInput(request.body.avatarData);

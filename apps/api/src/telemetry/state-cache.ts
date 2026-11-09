@@ -61,6 +61,34 @@ export function setLiveState(
 }
 
 /**
+ * Put back a reading kept from before a restart (telemetry/state-keep.ts), with the time it really
+ * arrived. Only when nothing newer is held; nobody is told (no screen is connected yet).
+ */
+export function seedLiveState(state: LiveCapabilityState): void {
+  if (cache.has(state.capabilityId)) return;
+  cache.set(state.capabilityId, state);
+}
+
+/** The same value (numbers, words, on/off, or a thermostat's set of values). */
+export function sameLiveValue(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (typeof a === "object" && typeof b === "object" && a !== null && b !== null) return stableText(a) === stableText(b);
+  return false;
+}
+
+/** A value as text with its names in order (the database may hand back a set in another order). */
+function stableText(v: unknown): string {
+  if (Array.isArray(v)) return `[${v.map(stableText).join(",")}]`;
+  if (v && typeof v === "object") {
+    return `{${Object.keys(v as Record<string, unknown>)
+      .sort()
+      .map((k) => `${JSON.stringify(k)}:${stableText((v as Record<string, unknown>)[k])}`)
+      .join(",")}}`;
+  }
+  return JSON.stringify(v);
+}
+
+/**
  * A board's way of saying it could not read its sensor: ESPHome sends "nan" (and "inf" from a failed
  * calculation). Such a reading is kept as no value, quality "error" — the board is fine, its sensor is not.
  */

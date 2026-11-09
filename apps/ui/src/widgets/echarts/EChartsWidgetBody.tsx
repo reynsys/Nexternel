@@ -95,7 +95,9 @@ export function EChartsWidgetBody({
   const { textScale } = useSkin();
   const ctx: EchartsBuildCtx = useMemo(
     () => ({
-      value: live ?? 0,
+      // No reading yet: the needle rests at the start and the dial says "—" (never a made-up 0).
+      value: live ?? min,
+      noReading: live === null,
       unit: cap?.unit ?? "",
       title: chartName,
       kind: cap?.kind ?? "",
@@ -135,7 +137,7 @@ export function EChartsWidgetBody({
   if (preset.needsCapability && capabilityId && !cap) {
     return (
       <Typography variant="body2" color="text.secondary">
-        Capability missing — edit widget and re-select
+        The reading for this panel is missing. Edit the panel and choose it again.
       </Typography>
     );
   }

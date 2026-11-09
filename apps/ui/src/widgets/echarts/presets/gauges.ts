@@ -185,6 +185,7 @@ const SHAPES: Shape[] = [
 ];
 
 function readingText(ctx: EchartsBuildCtx, v: number): string {
+  if (ctx.noReading) return "—";
   const n = Number.isInteger(v) ? String(v) : v.toFixed(1);
   return ctx.unit ? `${n} ${ctx.unit}` : n;
 }

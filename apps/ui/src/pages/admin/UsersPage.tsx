@@ -130,8 +130,9 @@ function UsersAdminPage() {
   }, []);
 
   const isScreen = theme.wall?.screen === true;
-  // A person's account has no Appearance or Wall display tab (people set their own look).
-  const shownTab = !isScreen && (editTab === "appearance" || editTab === "wall") ? "account" : editTab;
+  // A person's account is only its account details: people set their own look and bell in Settings
+  // (Appearance, Notifications). A wall screen, where nobody signs in to change them, has them here.
+  const shownTab = isScreen ? editTab : "account";
   function closeUserDialog() {
     setAddOpen(false);
     setEditUser(null);
@@ -282,7 +283,7 @@ function UsersAdminPage() {
               People
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Everyone who can sign in, and the wall screens. Edit changes their name, role, password and bell.
+              Everyone who can sign in, and the wall screens. Edit changes their name, role and password; for a wall screen also its look.
             </Typography>
           </Box>
           {/* Phones: one card per person instead of the table (which ran off the screen). */}
@@ -415,13 +416,14 @@ function UsersAdminPage() {
         open={addOpen || Boolean(editUser)}
         onClose={closeUserDialog}
         fullWidth
-        maxWidth={isScreen ? "lg" : "md"}
+        maxWidth={isScreen ? "lg" : "sm"}
         fullScreen={phoneDialog}
-        PaperProps={{ sx: phoneDialog ? undefined : { height: isScreen ? "min(920px, calc(100% - 64px))" : "min(720px, calc(100% - 64px))" } }}
+        PaperProps={{ sx: phoneDialog || !isScreen ? undefined : { height: "min(920px, calc(100% - 64px))" } }}
       >
         <form onSubmit={addOpen ? onCreate : onSaveEdit} style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
           <DialogTitle>{addOpen ? "Add user" : `Edit user — ${editUser?.username ?? ""}`}</DialogTitle>
-          <Box sx={{ display: "flex", flexDirection: phoneDialog ? "column" : "row", flex: 1, minHeight: 0, gap: phoneDialog ? 0 : 1, px: phoneDialog ? 0 : 3 }}>
+          <Box sx={{ display: "flex", flexDirection: phoneDialog ? "column" : "row", flex: 1, minHeight: 0, gap: phoneDialog ? 0 : 1, px: phoneDialog || !isScreen ? 0 : 3 }}>
+            {isScreen ? (
             <Tabs
               value={shownTab}
               onChange={(_, v) => setEditTab(v)}
@@ -432,10 +434,11 @@ function UsersAdminPage() {
               sx={phoneDialog ? { mx: 2, mb: 1 } : { flexShrink: 0, minWidth: 190 }}
             >
               <Tab value="account" label="Account" />
+              <Tab value="appearance" label="Appearance" />
+              <Tab value="wall" label="Wall display" />
               <Tab value="bell" label="Notification bell" />
-              {isScreen ? <Tab value="appearance" label="Appearance" /> : null}
-              {isScreen ? <Tab value="wall" label="Wall display" /> : null}
             </Tabs>
+            ) : null}
             <DialogContent sx={{ flex: 1, minHeight: 0, pt: phoneDialog ? 1 : 0 }}>
               {shownTab === "account" ? (
                 <Stack spacing={2} sx={{ mt: 0.5, maxWidth: 560 }}>
@@ -499,7 +502,7 @@ function UsersAdminPage() {
                       <Box>
                         <Typography>This account is for a wall screen</Typography>
                         <Typography variant="caption" color="text.secondary" display="block">
-                          A screen or tablet on the wall that stays signed in with this account. Its look and how it shows dashboards are set here, under Appearance and Wall display. People choose their own look in Settings → Appearance.
+                          A screen or tablet on the wall that stays signed in with this account. Its look, how it shows dashboards and its bell are set here (Appearance, Wall display, Notification bell). People set their own in Settings → Appearance and Settings → Notifications.
                         </Typography>
                       </Box>
                     }

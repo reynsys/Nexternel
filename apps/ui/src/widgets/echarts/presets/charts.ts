@@ -618,9 +618,11 @@ export const CHART_PRESETS: EchartsPreset[] = [
               show: true,
               position: "center",
               formatter: () =>
-                ctx.unit
-                  ? `${Number.isInteger(ctx.value) ? ctx.value : ctx.value.toFixed(1)}\n${ctx.unit}`
-                  : String(Number.isInteger(ctx.value) ? ctx.value : ctx.value.toFixed(1)),
+                ctx.noReading
+                  ? "—"
+                  : ctx.unit
+                    ? `${Number.isInteger(ctx.value) ? ctx.value : ctx.value.toFixed(1)}\n${ctx.unit}`
+                    : String(Number.isInteger(ctx.value) ? ctx.value : ctx.value.toFixed(1)),
               fontSize: chartFont(ctx, 14),
             },
             data: [

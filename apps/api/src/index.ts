@@ -27,6 +27,7 @@ import { ensureAdminFromEnv } from "./auth/ensure-admin.js";
 import { bootstrapInstallationState, getUserCount } from "./installation-meta.js";
 import { syncCapabilitiesFromLegacy } from "./capabilities/sync.js";
 import { startTelemetry } from "./telemetry/mqtt.js";
+import { ensureLiveStateSchema, restoreKeptStates, startKeepingStates } from "./telemetry/state-keep.js";
 import { ensureBrokerLogTopic } from "./telemetry/broker-log.js";
 import { healthRoutes } from "./routes/health.js";
 import { diagnosticsRoutes } from "./routes/diagnostics.js";
@@ -204,6 +205,7 @@ try {
   await ensureEsphomeBuilderSchema();
   await ensureCapabilitySchema();
   await ensureStatusLightSchema();
+  await ensureLiveStateSchema();
   const v4Domain = await ensureV4DomainSchema();
   app.log.info(v4Domain, "V4 domain schema ensured");
   await ensureDashboardSchema();
@@ -362,6 +364,14 @@ try {
   }
   // The message service's notices of dropped connections (once: a line in mosquitto.conf).
   await ensureBrokerLogTopic().catch((err) => app.log.warn({ err }, "Could not turn on the message service notices"));
+  // The latest readings from before the restart, put back before the message service replays.
+  try {
+    const kept = await restoreKeptStates();
+    app.log.info({ kept }, "latest readings put back");
+  } catch (err) {
+    app.log.warn({ err }, "latest readings not put back");
+  }
+  startKeepingStates(app.log);
   await startTelemetry();
   app.log.info(getMqttLogSafe(), "telemetry started");
   try {

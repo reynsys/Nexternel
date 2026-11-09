@@ -2,6 +2,14 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.22
+
+- Readings no longer show 0 or "—" for a while after an update. Nexternel now keeps the latest readings (every half minute, and when it stops) and puts them back when it starts, each with the time it really arrived; when a board's last message comes back from the message service, a reading Nexternel already holds stays current instead of being hidden until the board sends again. A reading older than 3 minutes still shows as "no recent reading", as before.
+- A gauge with no reading shows "—" with the needle at rest, like every other panel, never a made-up 0.
+- Users → Edit: a person's account shows only its account details (name, role, password, email). Each person sets their own look and bell in Settings → Appearance and Settings → Notifications. A wall screen account has Appearance, Wall display and Notification bell.
+- The wall screen switch now stays on: a wall screen saving its own look no longer undoes the wall settings an administrator set (an older page left open on the screen did that).
+- The menu's Nexternel Anywhere line is a plain line, not a button: the Nexternel logo, "Anywhere", its light and a short word.
+
 ## V5.3.21
 
 A tidy-up of every page on the computer, so the same kind of thing looks the same everywhere.

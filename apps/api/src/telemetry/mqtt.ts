@@ -7,7 +7,7 @@ import {
   listStateTopicBindings,
   getCapabilityById,
 } from "../capabilities/store.js";
-import { getLiveState, isNoReading, parseMqttPayload, setLiveState, getAllLiveStates } from "./state-cache.js";
+import { getLiveState, isNoReading, parseMqttPayload, setLiveState, getAllLiveStates, sameLiveValue } from "./state-cache.js";
 import { LIVE_CAPABILITY_PRESENCE_MS } from "../devices/presence.js";
 import { getPool } from "../db.js";
 import { applyBoardHealthTopic, boardFingerprint } from "../devices/board-health.js";
@@ -368,6 +368,10 @@ function applyLiveCapability(
   if (!retained || kind === "switch") {
     touchDeviceOnlineByCapability(capabilityId);
   }
+  // On connecting, the message service replays each board's last message. When Nexternel already
+  // holds that same reading (kept over a restart), the replay tells nothing new: keep the held one with
+  // its own time, so a current reading does not turn into "no recent reading" on every update.
+  if (retained && sensorLike && previous && sameLiveValue(previous.value, value)) return;
   // A board that cannot read its sensor sends "nan": no value, and the reading says so.
   const noReading = sensorLike && isNoReading(value);
   setLiveState(capabilityId, noReading ? null : value, {

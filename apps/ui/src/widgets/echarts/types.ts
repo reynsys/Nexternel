@@ -7,7 +7,10 @@ export type EchartsDataMode = "live" | "history" | "none";
 export type HistoryPoint = { t: string; v: number };
 
 export type EchartsBuildCtx = {
+  /** The reading; when there is none yet (noReading) it is the dial's lowest value, only for drawing. */
   value: number;
+  /** No reading yet (e.g. just after a restart): the dial shows "—", never a made-up 0. */
+  noReading?: boolean;
   unit: string;
   title: string;
   kind: string;
