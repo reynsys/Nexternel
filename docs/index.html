@@ -73,6 +73,12 @@ h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -.01em; text-wrap: bal
 .steps p { margin: 4px 0 0; color: var(--soft); }
 .steps strong { color: var(--ink); }
 
+.android { max-width: 760px; margin-bottom: 64px; display: grid; gap: 16px; }
+.android h2 { margin: 0; }
+.android .steps { margin: 0; }
+.download { justify-self: start; background: var(--accent); color: #fff; text-decoration: none; font-weight: 600; padding: 13px 22px; border-radius: 12px; }
+.download:hover { background: #2a82f0; }
+
 footer { border-top: 1px solid var(--line); padding-block: 26px 40px; color: var(--soft); font-size: .9rem; display: flex; gap: 16px; flex-wrap: wrap; justify-content: space-between; }
 </style>
 </head>
@@ -82,6 +88,7 @@ footer { border-top: 1px solid var(--line); padding-block: 26px 40px; color: var
     <span class="logo" aria-hidden="true"></span><span class="brand">Nexternel</span>
     <nav>
       <a href="https://github.com/reynsys/nexternel/blob/main/INSTALL.md">Install guide</a>
+      <a href="#android">Android</a>
       <a href="https://github.com/reynsys/nexternel/blob/main/CHANGELOG.md">What's new</a>
       <a href="https://github.com/reynsys/nexternel">Source code</a>
     </nav>
@@ -126,6 +133,18 @@ footer { border-top: 1px solid var(--line); padding-block: 26px 40px; color: var
     <li><div><strong>Open the address it shows</strong><p>Choose <em>Start fresh</em> and create your account, or <em>Restore from backup</em> to bring over a home you already have.</p></div></li>
     <li><div><strong>Reserve the address in your router</strong><p>Your devices find Nexternel by its address, so keep it fixed. The <a href="https://github.com/reynsys/nexternel/blob/main/INSTALL.md">install guide</a> shows how.</p></div></li>
   </ol>
+
+  <section id="android" class="android">
+    <h2>Nexternel for Android</h2>
+    <p class="hint">Your home full screen, with its own icon, and you stay signed in. Android 10 or newer.</p>
+    <a class="download" href="https://github.com/reynsys/Nexternel-android/releases/latest/download/Nexternel.apk">Download for Android</a>
+    <ol class="steps">
+      <li><div><strong>Tap Download on your phone</strong><p>Then open the downloaded file.</p></div></li>
+      <li><div><strong>Allow the install</strong><p>Android asks whether to allow installing from this source, because Nexternel is not in the Play Store yet. Allow it once.</p></div></li>
+      <li><div><strong>Type your home name</strong><p>The name you picked for Nexternel Anywhere. Without Nexternel Anywhere, type your home address instead; that works on your home Wi-Fi.</p></div></li>
+    </ol>
+    <p class="hint">It checks for a newer version once a day and asks before updating. iPhone: open Nexternel in Safari, then Share → Add to Home Screen.</p>
+  </section>
 
   <footer>
     <span>Nexternel · free software under the GNU GPL v3 · © 2026 Rey Osman</span>
