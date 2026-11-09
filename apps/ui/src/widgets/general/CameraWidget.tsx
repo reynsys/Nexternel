@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { Alert, Box, Button, Stack, Typography } from "@mui/material";
+import { Alert, Box, Button, IconButton, Stack, Typography } from "@mui/material";
+import FullscreenRoundedIcon from "@mui/icons-material/FullscreenRounded";
+import VolumeOffRoundedIcon from "@mui/icons-material/VolumeOffRounded";
+import VolumeUpRoundedIcon from "@mui/icons-material/VolumeUpRounded";
 import Hls from "hls.js";
 import { api, type WidgetInstance } from "../../api";
+import { ButtonRow } from "../../components/ButtonRow";
 import { generalWidgetHeading, parseCameraConfig } from "./config";
 import { useDashboardTileChrome } from "../../lib/dashboard-tile-context";
 
@@ -66,6 +70,7 @@ export function CameraWidget({ widget }: { widget: WidgetInstance }) {
   const [title, setTitle] = useState(generalWidgetHeading(widget, "Camera"));
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [muted, setMuted] = useState(true);
   const [retryToken, setRetryToken] = useState(0);
   const [statusHint, setStatusHint] = useState("Connecting…");
 
@@ -88,7 +93,7 @@ export function CameraWidget({ widget }: { widget: WidgetInstance }) {
 
     setLoading(true);
     setError(null);
-    setStatusHint("Waiting for camera slot…");
+    setStatusHint("Waiting for the camera…");
 
     function clearMedia() {
       if (hls) {
@@ -119,7 +124,7 @@ export function CameraWidget({ widget }: { widget: WidgetInstance }) {
 
     async function attachMse(play: PlayUrls): Promise<boolean> {
       if (!video || cancelled) return false;
-      setStatusHint("Starting live stream…");
+      setStatusHint("Starting the camera…");
       video.src = play.mseUrl;
       void video.play().catch(() => {
         /* muted autoplay */
@@ -134,7 +139,7 @@ export function CameraWidget({ widget }: { widget: WidgetInstance }) {
 
     async function attachHls(play: PlayUrls): Promise<boolean> {
       if (!video || cancelled) return false;
-      setStatusHint("Starting HLS…");
+      setStatusHint("Starting the camera…");
 
       if (video.canPlayType("application/vnd.apple.mpegurl")) {
         video.src = play.hlsUrl;
@@ -191,7 +196,7 @@ export function CameraWidget({ widget }: { widget: WidgetInstance }) {
 
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
           if (cancelled) return;
-          setStatusHint("Buffering video…");
+          setStatusHint("Loading the picture…");
           void video.play().catch(() => {
             /* muted autoplay */
           });
@@ -242,7 +247,7 @@ export function CameraWidget({ widget }: { widget: WidgetInstance }) {
       try {
         await enqueueClientPlay(async () => {
           if (cancelled) return;
-          setStatusHint("Opening stream…");
+          setStatusHint("Opening the camera…");
           const { play } = await api.cameraPlay(cameraId);
           if (cancelled) return;
           setTitle(generalWidgetHeading(widget, play.name));
@@ -342,10 +347,9 @@ export function CameraWidget({ widget }: { widget: WidgetInstance }) {
         <Box
           component="video"
           ref={videoRef}
-          muted
+          muted={muted}
           autoPlay
           playsInline
-          controls
           sx={{
             width: "100%",
             height: "100%",
@@ -353,6 +357,27 @@ export function CameraWidget({ widget }: { widget: WidgetInstance }) {
             display: error ? "none" : "block",
           }}
         />
+        {/* Our own two buttons instead of the browser's video bar (a live picture has no time to show). */}
+        {!error && !loading ? (
+          <ButtonRow direction="row" sx={{ position: "absolute", right: 6, bottom: 6, zIndex: 2 }}>
+            <IconButton
+              size="small"
+              aria-label={muted ? "Sound on" : "Sound off"}
+              onClick={() => setMuted((m) => !m)}
+              sx={{ bgcolor: "rgba(0,0,0,.55)", color: "common.white", "&:hover": { bgcolor: "rgba(0,0,0,.75)" } }}
+            >
+              {muted ? <VolumeOffRoundedIcon fontSize="small" /> : <VolumeUpRoundedIcon fontSize="small" />}
+            </IconButton>
+            <IconButton
+              size="small"
+              aria-label="Full screen"
+              onClick={() => void videoRef.current?.requestFullscreen?.().catch(() => {})}
+              sx={{ bgcolor: "rgba(0,0,0,.55)", color: "common.white", "&:hover": { bgcolor: "rgba(0,0,0,.75)" } }}
+            >
+              <FullscreenRoundedIcon fontSize="small" />
+            </IconButton>
+          </ButtonRow>
+        ) : null}
       </Box>
     </Box>
   );

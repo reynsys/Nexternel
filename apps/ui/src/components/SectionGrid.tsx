@@ -111,7 +111,7 @@ function dashboardItemKind(type: string): "panel" | "plugin" {
 function PanelEditButton({ name, kind, onEdit }: { name: string; kind: "panel" | "plugin"; onEdit: () => void }) {
   return (
     <Tooltip title={`Edit this ${kind}`}>
-      <Button variant="outlined" size="small" aria-label={`Edit ${name}`} onClick={onEdit} sx={{ minWidth: 32, width: 32, height: 32, p: 0 }}>
+      <Button variant="outlined" size="small" aria-label={`Edit ${name}`} onClick={onEdit} sx={{ minWidth: 36, width: 36, minHeight: 36, height: 36, p: 0 }}>
         <EditOutlinedIcon fontSize="small" />
       </Button>
     </Tooltip>
@@ -337,10 +337,10 @@ export function SectionGrid({
         // panel (its content layer is raised above the Look's panel frame), so it is easy to find and grab.
         "& .react-grid-item > .react-resizable-handle.react-resizable-handle-se": (t) => ({
           zIndex: 20,
-          width: 28,
-          height: 28,
-          right: 5,
-          bottom: 5,
+          width: 22,
+          height: 22,
+          right: 3,
+          bottom: 3,
           padding: 0,
           boxSizing: "border-box",
           backgroundImage: "none",

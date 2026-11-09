@@ -311,6 +311,7 @@ apps/ui/src/components/ManageDashboardsPanel.tsx
 apps/ui/src/components/NewDashboardDialog.tsx
 apps/ui/src/components/NotificationBell.tsx
 apps/ui/src/components/PageBar.tsx
+apps/ui/src/components/PageHeader.tsx
 apps/ui/src/components/PanelAreaLineFields.tsx
 apps/ui/src/components/PanelCameraContentFields.tsx
 apps/ui/src/components/PanelCameraOrderList.tsx

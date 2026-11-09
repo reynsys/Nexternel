@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FormControl, FormControlLabel, InputLabel, MenuItem, Select, Stack, Switch, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
+import { Box, FormControl, FormControlLabel, InputLabel, MenuItem, Select, Stack, Switch, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import { api, type DashboardSummary } from "../api";
 import { normalizeWallPrefs, type WallPrefs } from "../lib/display-mode";
 
@@ -36,12 +36,14 @@ export function WallDisplayFields({ value, onChange }: { value: WallPrefs | unde
   return (
     <Stack spacing={1.5}>
       <Typography variant="body2" color="text.secondary">
-        For a wall screen or tablet signed in with this account, opened at <b>/display</b>. Changes show on the screen
-        within seconds.
+        For the wall screen or tablet signed in with this account, opened at its wall display address (Settings →
+        System → Addresses). Changes show on the screen within seconds.
       </Typography>
       <FormControl size="small" fullWidth>
-        <InputLabel id="wall-start">Start on</InputLabel>
-        <Select labelId="wall-start" label="Start on" value={wall.start ?? ""} onChange={(e) => set({ start: e.target.value || null })}>
+        <InputLabel id="wall-start" shrink>
+          Start on
+        </InputLabel>
+        <Select labelId="wall-start" label="Start on" notched displayEmpty value={wall.start ?? ""} onChange={(e) => set({ start: e.target.value || null })}>
           <MenuItem value="">The home dashboard</MenuItem>
           {dashboards.map((d) => (
             <MenuItem key={d.id} value={d.id}>
@@ -76,24 +78,26 @@ export function WallDisplayFields({ value, onChange }: { value: WallPrefs | unde
       <FormControlLabel
         control={<Switch checked={wall.autoscroll} onChange={(e) => set({ autoscroll: e.target.checked })} />}
         label={
-          <Typography variant="body2">
-            Autoscroll{" "}
-            <Typography component="span" variant="caption" color="text.secondary">
-              — panels with more than fits slowly scroll down, pause and return to the top
+          <Box>
+            <Typography>Autoscroll</Typography>
+            <Typography variant="caption" color="text.secondary" display="block">
+              Panels with more than fits slowly scroll down, pause and return to the top.
             </Typography>
-          </Typography>
+          </Box>
         }
+        sx={{ alignItems: "flex-start", "& .MuiSwitch-root": { mt: -0.5 } }}
       />
       <FormControlLabel
         control={<Switch checked={wall.light} onChange={(e) => set({ light: e.target.checked })} />}
         label={
-          <Typography variant="body2">
-            Light effects{" "}
-            <Typography component="span" variant="caption" color="text.secondary">
-              — no blur, glows or background effects; smooth on small computers such as a Raspberry Pi
+          <Box>
+            <Typography>Light effects</Typography>
+            <Typography variant="caption" color="text.secondary" display="block">
+              No blur, glows or background effects; smooth on small computers such as a Raspberry Pi.
             </Typography>
-          </Typography>
+          </Box>
         }
+        sx={{ alignItems: "flex-start", "& .MuiSwitch-root": { mt: -0.5 } }}
       />
     </Stack>
   );

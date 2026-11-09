@@ -2,6 +2,28 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.21
+
+A tidy-up of every page on the computer, so the same kind of thing looks the same everywhere.
+
+- Tabs sit together in one shaded bar with a thin line between them; the open tab is filled softly in your main colour. They no longer look like loose words.
+- Buttons: one size everywhere, Cancel always before Save, every Add button has a +, every Delete or Remove has a bin. A button you cannot press yet keeps its look, only faded (not a grey block).
+- Choice boxes (Panels across, Panels per row, Text size…) are the same size as the buttons beside them.
+- Every page starts the same way: the title and one line about the page on the left, its main buttons on the right.
+- Users: Add user and Edit user are one window with the same tabs (down the side) and the same fields in the same order. New switch "This account is for a wall screen": only those accounts show Appearance and Wall display; people set their own look in Settings → Appearance. If you have a wall screen account, turn the switch on once under Users → Edit. The list of people has a heading and shows Person or Wall screen instead of colour codes. My profile fields are a comfortable width.
+- Roles: no more "Slug": the name used inside is made from the role name. Plain words for every permission.
+- Edit area opens in the middle of the screen like Device settings (side panels are only used while editing a dashboard).
+- Editing a dashboard: the resize corner is a little smaller, so it covers less of the panel's buttons. The dashboards menu keeps its normal look; dashboards are put in order under Dashboard settings → All dashboards, as on phones.
+- Backup & Restore: backups are a short list, one line each. "Include sensor history" is a switch in both places. "Back up to a file" and "Restore from a file" have their own headings.
+- Cameras on dashboards show two small buttons (sound, full screen) instead of the browser's video bar, and plain messages while they start.
+- Devices: the list and the details fill the screen, without a second half-hidden scroll. Cameras say "In use". The not-yet-added files count readings and switches.
+- Manage extensions: the All / Features / Looks filter uses round pills like Activity, and Free / From a file are quiet grey labels instead of orange.
+- Add a panel: extension panels each have their own picture (conversation, text, map).
+- GPS Tracker: its page title and headings match the other pages. The Areas tab is now called Places (the places that give an alert when a tracker arrives or leaves), so it is not mixed up with the Areas of your home. Update GPS Tracker to 1.0.4 in Extensions → Manage extensions for the same word in its own texts.
+- Notifications: all choice boxes are the same width.
+- Fixed directions that still pointed to "Settings → Extensions" (now Extensions → Manage extensions).
+- Appearance → Colours: "Background effect colour" only shows while a background effect is on.
+
 ## V5.3.20
 
 - Charts: the pop-up when you touch or point at a moment on a chart stays inside that chart, at its top beside your finger. It no longer lands on other panels below, or out of sight under the dashboards row on a phone. It shows the time (with the day when it is not today) and the value with its unit, written as the chart's axis writes it.

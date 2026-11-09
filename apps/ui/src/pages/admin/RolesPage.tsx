@@ -1,4 +1,6 @@
-import { CODE_TEXT } from "../../lib/appearance/type";
+import { PageActions } from "../../components/PageHeader";
+import AddIcon from "@mui/icons-material/Add";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   Alert,
@@ -123,7 +125,6 @@ export function RolesPage() {
   const [error, setError] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [editRole, setEditRole] = useState<RoleDef | null>(null);
-  const [slug, setSlug] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [permissions, setPermissions] = useState<RolePermissions>({
@@ -148,7 +149,6 @@ export function RolesPage() {
   }, []);
 
   function openAdd() {
-    setSlug("");
     setName("");
     setDescription("");
     setPermissions({ ...VIEWER_PERMISSIONS });
@@ -167,7 +167,8 @@ export function RolesPage() {
     setBusy(true);
     try {
       await api.createRole({
-        slug: slug.trim().toLowerCase(),
+        // The short name Nexternel uses inside is made from the role name (never shown).
+        slug: roleSlugFromName(name),
         name: name.trim(),
         description: description.trim() || null,
         permissions,
@@ -230,10 +231,12 @@ export function RolesPage() {
           </Button>
           <Typography variant="h5">Roles</Typography>
         </Stack>
-        <Button variant="contained" onClick={openAdd}>
+      </Stack>
+      <PageActions>
+        <Button startIcon={<AddIcon />} variant="contained" onClick={openAdd}>
           Add role
         </Button>
-      </Stack>
+      </PageActions>
       <Typography variant="body2" color="text.secondary">
         Set what each role can view or change. A person's role is chosen on the Users page.
       </Typography>
@@ -244,7 +247,6 @@ export function RolesPage() {
             <TableHead>
               <TableRow>
                 <TableCell>Name</TableCell>
-                <TableCell>Slug</TableCell>
                 <TableCell>Permissions</TableCell>
                 <TableCell>Description</TableCell>
                 <TableCell align="right">Actions</TableCell>
@@ -260,16 +262,10 @@ export function RolesPage() {
                     </Stack>
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2" fontFamily={CODE_TEXT.fontFamily}>
-                      {r.slug}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
                     <Chip
                       size="small"
-                      color={r.isAdmin ? "primary" : "default"}
                       label={`${enabledCount(r)} enabled`}
-                      variant={r.isAdmin ? "filled" : "outlined"}
+                      variant="outlined"
                     />
                   </TableCell>
                   <TableCell>{r.description ?? "—"}</TableCell>
@@ -278,7 +274,7 @@ export function RolesPage() {
                       Edit
                     </Button>
                     {!r.isSystem && (
-                      <Button size="small" color="error" onClick={() => void onDelete(r)}>
+                      <Button startIcon={<DeleteOutlineIcon />} size="small" color="error" onClick={() => void onDelete(r)}>
                         Delete
                       </Button>
                     )}
@@ -303,14 +299,6 @@ export function RolesPage() {
                 fullWidth
               />
               <TextField
-                label="Slug"
-                value={slug}
-                onChange={(e) => setSlug(e.target.value.toLowerCase())}
-                required
-                fullWidth
-                helperText="Short id used internally (e.g. installer, guest)"
-              />
-              <TextField
                 label="Description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -325,7 +313,7 @@ export function RolesPage() {
           <DialogActions>
             <Button onClick={() => setAddOpen(false)}>Cancel</Button>
             <Button type="submit" variant="contained" disabled={busy}>
-              Create
+              Add role
             </Button>
           </DialogActions>
         </form>
@@ -349,13 +337,6 @@ export function RolesPage() {
                 onChange={(e) => setName(e.target.value)}
                 required
                 fullWidth
-              />
-              <TextField
-                label="Slug"
-                value={editRole?.slug ?? ""}
-                fullWidth
-                disabled
-                helperText="Cannot be changed later"
               />
               <TextField
                 label="Description"
@@ -387,4 +368,10 @@ export function RolesPage() {
       </Dialog>
     </Stack>
   );
+}
+
+/** A role's inside name from what people call it: "Guest room" → "guest-room" (starts with a letter). */
+function roleSlugFromName(name: string): string {
+  const base = name.trim().toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
+  return /^[a-z]/.test(base) ? base : `role-${base || "new"}`;
 }

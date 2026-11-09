@@ -253,7 +253,7 @@ function CamerasPage({ pane }: { pane: CameraPaneProps }) {
                 {cam.areaName ?? `No ${AREA.singular.toLowerCase()}`} · Camera
               </Typography>
             </Box>
-            <StatusWord word={cam.enabled ? "On" : "Switched off"} tone={cam.enabled ? "ok" : "off"} emphasis />
+            <StatusWord word={cam.enabled ? "In use" : "Switched off"} tone={cam.enabled ? "ok" : "off"} emphasis />
             {canEdit ? (
               <Button variant="outlined" startIcon={<TuneRoundedIcon />} onClick={() => openEdit(cam)}>
                 Camera settings

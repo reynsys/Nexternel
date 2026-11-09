@@ -134,15 +134,26 @@ export function lookThemeOptions(
         // Every button looks like a button: no bare text that might or might not be clickable.
         defaultProps: { variant: "outlined" },
         styleOverrides: {
-          // Comfortable sizes for touch and wall screens (40 / 36 / 48 px).
-          sizeMedium: { minHeight: 40 },
-          sizeSmall: { minHeight: 36 },
-          sizeLarge: { minHeight: 48 },
+          // One button size everywhere (40 px, the same letters): a "small" or "large" button is drawn
+          // like every other, so buttons side by side always match.
           root: ({ ownerState }) => {
             const tinted = !ownerState.color || ownerState.color === "primary" || ownerState.color === "inherit";
+            const own = ownerState.color && ownerState.color !== "inherit" ? (base.palette as unknown as Record<string, { main?: string; contrastText?: string }>)[ownerState.color] : undefined;
+            const main = own?.main ?? primary.main;
+            const padding = ownerState.variant === "outlined" ? "5px 15px" : ownerState.variant === "text" ? "6px 10px" : "6px 16px";
             return {
+              minHeight: 40,
+              padding,
+              fontSize: TYPE_SCALE.button.fontSize,
               textTransform: t.buttonCase,
               borderRadius: t.radiusControl,
+              // A button that cannot be pressed yet keeps its own look, only faded (not a grey block).
+              "&.Mui-disabled": {
+                opacity: 0.5,
+                color: ownerState.variant === "contained" ? (t.primaryInk && tinted ? t.primaryInk : own?.contrastText ?? primary.contrastText) : main,
+                ...(ownerState.variant === "contained" ? { backgroundColor: tinted && t.primaryFill ? t.primaryFill : main } : {}),
+                ...(ownerState.variant === "outlined" ? { borderColor: main } : {}),
+              },
               ...(t.buttonShape && t.buttonShape !== "none" ? { clipPath: t.buttonShape } : {}),
               ...(ownerState.variant === "contained" && tinted
                 ? {
@@ -234,28 +245,69 @@ export function lookThemeOptions(
           colorDefault: { backgroundColor: t.avatarFill, color: t.avatarInk, ...set("border", t.avatarBorder) },
         },
       },
-      // Tabs are drawn as a row of buttons: outlined, the chosen one filled.
-      // Tabs never look like buttons: words on a thin line, the chosen one in the main colour with a
-      // bar under it — no box, no fill. Buttons (boxed) do things; tabs switch what is shown.
+      // Tabs sit together in one shaded bar, with a thin line between them; the open tab is raised
+      // like a chosen option (its own fill and edge, main-colour words) and slides when you switch.
+      // Buttons do things; tabs switch what is shown — the bar is what tells them apart.
       MuiTabs: {
         styleOverrides: {
-          root: { minHeight: 0, borderBottom: `1px solid ${t.line || base.palette.divider}` },
-          indicator: { height: 3, borderRadius: "3px 3px 0 0", backgroundColor: primary.main },
-          flexContainer: { gap: 4 },
+          root: ({ ownerState }) => ({
+            minHeight: 0,
+            padding: 4,
+            width: ownerState.variant === "fullWidth" ? "100%" : "fit-content",
+            maxWidth: "100%",
+            borderRadius: `calc(${t.radiusControl} + 4px)`,
+            backgroundColor: t.insetFill || alpha(base.palette.text.primary, 0.06),
+            border: t.insetBorder || `1px solid ${t.line || base.palette.divider}`,
+            ...set("boxShadow", t.insetShadow),
+            // Tabs down the side of a window: the same bar standing up, lines across between them.
+            ...(ownerState.orientation === "vertical"
+              ? {
+                  width: "auto",
+                  alignSelf: "flex-start",
+                  "& .MuiTab-root": { alignItems: "flex-start", textAlign: "left" },
+                  "& .MuiTab-root + .MuiTab-root::before": { left: "12%", top: 0, width: "76%", height: 1 },
+                }
+              : {}),
+          }),
+          indicator: ({ ownerState }) => ({
+            height: "100%",
+            bottom: 0,
+            zIndex: 0,
+            ...(ownerState.orientation === "vertical" ? { width: "100%", left: 0, right: "auto" } : {}),
+            borderRadius: t.radiusControl,
+            // A soft fill of the main colour (an outline would look like a button).
+            backgroundColor: alpha(primary.main, 0.2),
+            ...set("boxShadow", t.choiceSelectedShadow),
+          }),
+          scrollButtons: { borderRadius: t.radiusControl, "&.Mui-disabled": { opacity: 0.3 } },
         },
       },
       MuiTab: {
         styleOverrides: {
           root: {
-            minHeight: 44,
-            padding: "8px 14px",
+            position: "relative",
+            zIndex: 1,
+            minHeight: 38,
+            padding: "6px 16px",
             textTransform: "none",
             fontWeight: 600,
             color: "inherit",
-            opacity: 0.72,
-            borderRadius: `${t.radiusControl} ${t.radiusControl} 0 0`,
-            "&:hover": { opacity: 1, backgroundColor: "rgba(128,128,128,.08)" },
-            "&.Mui-selected": { opacity: 1, color: primary.main },
+            opacity: 0.78,
+            borderRadius: t.radiusControl,
+            transition: "opacity .15s, color .15s",
+            // The thin line between two tabs; none next to the open one.
+            "& + &::before": {
+              content: '""',
+              position: "absolute",
+              left: 0,
+              top: "25%",
+              height: "50%",
+              width: 1,
+              backgroundColor: t.line || base.palette.divider,
+            },
+            "&.Mui-selected::before, &.Mui-selected + &::before": { opacity: 0 },
+            "&:hover": { opacity: 1 },
+            "&.Mui-selected": { opacity: 1, color: primary.main, fontWeight: 700 },
             "&.Mui-focusVisible": { outline: `2px solid ${primary.main}`, outlineOffset: -2 },
           },
         },
@@ -264,9 +316,13 @@ export function lookThemeOptions(
       // outlined button's edge, fill and ink; the chosen one like the main button.
       MuiToggleButton: {
         styleOverrides: {
+          // One size for every choice box (also the "small" ones), like the buttons beside them.
           root: {
             textTransform: t.buttonCase,
-            minHeight: 36,
+            minHeight: 40,
+            minWidth: 44,
+            padding: "6px 14px",
+            fontSize: TYPE_SCALE.button.fontSize,
             color: primary.main,
             border: buttonEdge,
             ...set("backgroundColor", t.secondaryFill),

@@ -1,4 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { PageActions } from "../../components/PageHeader";
+import AddIcon from "@mui/icons-material/Add";
 import {
   Alert,
   Avatar,
@@ -10,7 +12,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Divider,
   FormControl,
   FormControlLabel,
   InputLabel,
@@ -59,6 +60,7 @@ import { ButtonRow } from "../../components/ButtonRow";
 import { useLiveChanges } from "../../lib/live-changes";
 import { WallDisplayFields } from "../../components/WallDisplayFields";
 import { BellFields } from "../../components/BellFields";
+import { normalizeWallPrefs } from "../../lib/display-mode";
 
 function prefsFromUser(u: AdminUser | null): { theme: ThemePrefs; skinId: string } {
   const n = normalizeThemePrefs(u?.themePrefs ?? DEFAULT_THEME_PREFS);
@@ -127,7 +129,17 @@ function UsersAdminPage() {
     void load();
   }, []);
 
+  const isScreen = theme.wall?.screen === true;
+  // A person's account has no Appearance or Wall display tab (people set their own look).
+  const shownTab = !isScreen && (editTab === "appearance" || editTab === "wall") ? "account" : editTab;
+  function closeUserDialog() {
+    setAddOpen(false);
+    setEditUser(null);
+  }
+
   function openAdd() {
+    setEditUser(null);
+    setEditTab("account");
     setUsername("");
     setPassword("");
     setDisplayName("");
@@ -140,6 +152,7 @@ function UsersAdminPage() {
   }
 
   function openEdit(u: AdminUser) {
+    setAddOpen(false);
     setEditUser(u);
     setEditTab("account");
     setDisplayName(u.displayName ?? "");
@@ -250,22 +263,28 @@ function UsersAdminPage() {
 
   return (
     <Stack spacing={2}>
-      {/* The page title and its one-line hint come from Settings. */}
-      <Stack direction="row" justifyContent="flex-end" alignItems="center" flexWrap="wrap" useFlexGap spacing={1}>
-        <ButtonRow direction="row">
-          <Button component={RouterLink} to="/admin/settings/users/roles" variant="outlined">
-            Roles
-          </Button>
-          <Button variant="contained" onClick={openAdd}>
-            Add user
-          </Button>
-        </ButtonRow>
-      </Stack>
+      {/* The page title and its one-line hint come from Settings; these sit on its right. */}
+      <PageActions>
+        <Button component={RouterLink} to="/admin/settings/users/roles" variant="outlined">
+          Roles
+        </Button>
+        <Button startIcon={<AddIcon />} variant="contained" onClick={openAdd}>
+          Add user
+        </Button>
+      </PageActions>
       {error && <Alert severity="error">{error}</Alert>}
       <ProfileSection />
       <SecondCheckSection />
       <Card sx={surfaceSx}>
         <CardContent sx={{ px: { xs: 1, sm: 2 }, "&:last-child": { pb: 2 } }}>
+          <Box sx={{ px: { xs: 1, sm: 1 }, mb: 1.5 }}>
+            <Typography variant="h6" component="h2">
+              People
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Everyone who can sign in, and the wall screens. Edit changes their name, role, password and bell.
+            </Typography>
+          </Box>
           {/* Phones: one card per person instead of the table (which ran off the screen). */}
           <Stack spacing={1.5} sx={{ display: { xs: "flex", sm: "none" } }}>
             {users.map((u) => (
@@ -324,7 +343,7 @@ function UsersAdminPage() {
                 <TableCell>User</TableCell>
                 <TableCell>Display name</TableCell>
                 <TableCell sx={{ minWidth: 200 }}>Role</TableCell>
-                <TableCell>Theme</TableCell>
+                <TableCell>Kind</TableCell>
                 <TableCell>Active</TableCell>
                 <TableCell align="right">Actions</TableCell>
               </TableRow>
@@ -367,9 +386,7 @@ function UsersAdminPage() {
                     </Select>
                   </TableCell>
                   <TableCell>
-                    {u.themePrefs
-                      ? `${u.themePrefs.mode} · ${u.themePrefs.primary}`
-                      : "—"}
+                    {u.themePrefs?.wall?.screen ? "Wall screen" : "Person"}
                   </TableCell>
                   <TableCell>
                     <Switch checked={u.isActive} onChange={() => void toggleActive(u)} />
@@ -381,7 +398,7 @@ function UsersAdminPage() {
                           Unlock
                         </Button>
                       )}
-                      <Button size="small" onClick={() => openEdit(u)}>
+                      <Button variant="outlined" onClick={() => openEdit(u)}>
                         Edit
                       </Button>
                     </ButtonRow>
@@ -393,200 +410,140 @@ function UsersAdminPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={addOpen} onClose={() => setAddOpen(false)} fullWidth maxWidth="sm">
-        <form onSubmit={onCreate}>
-          <DialogTitle>Add user</DialogTitle>
-          <DialogContent>
-            <Stack spacing={2} sx={{ mt: 1 }}>
-              <UserAvatarField
-                avatarData={avatarData}
-                displayName={displayName}
-                username={username}
-                onChange={setAvatarData}
-              />
-              <TextField
-                label="Username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-                fullWidth
-              />
-              <TextField
-                label="Password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                fullWidth
-                helperText="At least 12 characters. A few words in a row are easy to remember."
-              />
-              <TextField
-                label="Email (optional)"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                fullWidth
-                helperText="For warnings and the unlock link, if this account gets locked from outside"
-              />
-              <TextField
-                label="Display name"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                fullWidth
-                helperText="Shown in the side menu instead of the username"
-              />
-              <FormControl fullWidth>
-                <InputLabel id="add-role">Role</InputLabel>
-                <Select
-                  labelId="add-role"
-                  label="Role"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                >
-                  {roles.map((r) => (
-                    <MenuItem key={r.id} value={r.slug}>
-                      {r.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <Divider />
-              <Typography variant="subtitle1">Default theme</Typography>
-              <ThemeOptionsFields
-                themePrefs={theme}
-                skinId={skinId}
-                skins={skins}
-                onThemeChange={setTheme}
-                onSkinChange={setSkinId}
-              />
-              <Divider />
-              <Typography variant="subtitle1">Wall display</Typography>
-              <WallDisplayFields value={theme.wall} onChange={(wall) => setTheme((t) => ({ ...t, wall }))} />
-              <Typography variant="subtitle1">Notification bell</Typography>
-              <BellFields value={theme.bell} onChange={(bell) => setTheme((t) => ({ ...t, bell }))} />
-            </Stack>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setAddOpen(false)}>Cancel</Button>
-            <Button type="submit" variant="contained" disabled={busy}>
-              Create
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
-
+      {/* Add user and Edit user: one window, the same tabs and the same order of fields. */}
       <Dialog
-        open={Boolean(editUser)}
-        onClose={() => setEditUser(null)}
+        open={addOpen || Boolean(editUser)}
+        onClose={closeUserDialog}
         fullWidth
-        maxWidth="lg"
+        maxWidth={isScreen ? "lg" : "md"}
         fullScreen={phoneDialog}
-        PaperProps={{ sx: phoneDialog ? undefined : { height: "min(920px, calc(100% - 64px))" } }}
+        PaperProps={{ sx: phoneDialog ? undefined : { height: isScreen ? "min(920px, calc(100% - 64px))" : "min(720px, calc(100% - 64px))" } }}
       >
-        <form onSubmit={onSaveEdit} style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
-          <DialogTitle sx={{ pb: 0 }}>
-            Edit user{editUser ? ` — ${editUser.username}` : ""}
-          </DialogTitle>
-          <Tabs
-            value={editTab}
-            onChange={(_, v) => setEditTab(v)}
-            variant="scrollable"
-            allowScrollButtonsMobile
-            aria-label="Edit user"
-            sx={{ px: 3, borderBottom: 1, borderColor: "divider" }}
-          >
-            <Tab value="account" label="Account" />
-            <Tab value="appearance" label="Appearance" />
-            <Tab value="wall" label="Wall display" />
-            <Tab value="bell" label="Notification bell" />
-          </Tabs>
-          <DialogContent sx={{ flex: 1, minHeight: 0 }}>
-            {editTab === "account" ? (
-              <Stack spacing={2} sx={{ mt: 1, maxWidth: 560 }}>
-                <UserAvatarField
-                  avatarData={avatarData}
-                  displayName={displayName}
-                  username={editUser?.username}
-                  onChange={setAvatarData}
-                />
-                <TextField
-                  label="Display name"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  fullWidth
-                  helperText="Shown in the side menu"
-                />
-                <FormControl fullWidth>
-                  <InputLabel id="edit-role">Role</InputLabel>
-                  <Select labelId="edit-role" label="Role" value={role} onChange={(e) => setRole(e.target.value)}>
-                    {roles.map((r) => (
-                      <MenuItem key={r.id} value={r.slug}>
-                        {r.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                <TextField
-                  label="New password"
-                  type="password"
-                  value={editPassword}
-                  onChange={(e) => setEditPassword(e.target.value)}
-                  fullWidth
-                  helperText="Leave blank to keep the current password. At least 12 characters."
-                />
-                <TextField
-                  label="Email (optional)"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  fullWidth
-                  helperText="For warnings and the unlock link, if this account gets locked from outside"
-                />
-                <FormControlLabel
-                  control={<Switch checked={isActive} onChange={(_, checked) => setIsActive(checked)} />}
-                  label="Account active"
-                />
-                {editUser?.secondCheck && (
-                  <Stack spacing={0.5}>
-                    <Button variant="outlined" color="error" onClick={() => void secondCheckOff(editUser)} sx={{ alignSelf: "flex-start" }}>
-                      Turn off second check
-                    </Button>
-                    <Typography variant="caption" color="text.secondary">
-                      For someone who lost their phone. They can then sign in from outside with a strong password, and set it up again.
-                    </Typography>
-                  </Stack>
-                )}
-              </Stack>
-            ) : null}
-            {editTab === "appearance" ? (
-              <Stack spacing={2} sx={{ mt: 1 }}>
-                <Typography variant="body2" color="text.secondary">
-                  How Nexternel looks for this account. They can also change it themselves in Appearance.
-                </Typography>
-                <ThemeOptionsFields
-                  themePrefs={theme}
-                  skinId={skinId}
-                  skins={skins}
-                  onThemeChange={setTheme}
-                  onSkinChange={setSkinId}
-                />
-              </Stack>
-            ) : null}
-            {editTab === "wall" ? (
-              <Stack sx={{ mt: 1, maxWidth: 640 }}>
-                <WallDisplayFields value={theme.wall} onChange={(wall) => setTheme((t) => ({ ...t, wall }))} />
-              </Stack>
-            ) : null}
-            {editTab === "bell" ? (
-              <Stack sx={{ mt: 1, maxWidth: 640 }}>
-                <BellFields value={theme.bell} onChange={(bell) => setTheme((t) => ({ ...t, bell }))} />
-              </Stack>
-            ) : null}
-          </DialogContent>
+        <form onSubmit={addOpen ? onCreate : onSaveEdit} style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
+          <DialogTitle>{addOpen ? "Add user" : `Edit user — ${editUser?.username ?? ""}`}</DialogTitle>
+          <Box sx={{ display: "flex", flexDirection: phoneDialog ? "column" : "row", flex: 1, minHeight: 0, gap: phoneDialog ? 0 : 1, px: phoneDialog ? 0 : 3 }}>
+            <Tabs
+              value={shownTab}
+              onChange={(_, v) => setEditTab(v)}
+              orientation={phoneDialog ? "horizontal" : "vertical"}
+              variant="scrollable"
+              allowScrollButtonsMobile
+              aria-label={addOpen ? "Add user" : "Edit user"}
+              sx={phoneDialog ? { mx: 2, mb: 1 } : { flexShrink: 0, minWidth: 190 }}
+            >
+              <Tab value="account" label="Account" />
+              <Tab value="bell" label="Notification bell" />
+              {isScreen ? <Tab value="appearance" label="Appearance" /> : null}
+              {isScreen ? <Tab value="wall" label="Wall display" /> : null}
+            </Tabs>
+            <DialogContent sx={{ flex: 1, minHeight: 0, pt: phoneDialog ? 1 : 0 }}>
+              {shownTab === "account" ? (
+                <Stack spacing={2} sx={{ mt: 0.5, maxWidth: 560 }}>
+                  <UserAvatarField
+                    avatarData={avatarData}
+                    displayName={displayName}
+                    username={addOpen ? username : editUser?.username}
+                    onChange={setAvatarData}
+                  />
+                  {addOpen ? (
+                    <TextField label="Username" value={username} onChange={(e) => setUsername(e.target.value)} required fullWidth helperText="Used to sign in" />
+                  ) : null}
+                  <TextField
+                    label="Display name"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    fullWidth
+                    helperText="Shown in the side menu instead of the username"
+                  />
+                  <FormControl fullWidth>
+                    <InputLabel id="user-role">Role</InputLabel>
+                    <Select labelId="user-role" label="Role" value={role} onChange={(e) => setRole(e.target.value)}>
+                      {roles.map((r) => (
+                        <MenuItem key={r.id} value={r.slug}>
+                          {r.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  {addOpen ? (
+                    <TextField
+                      label="Password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      fullWidth
+                      helperText="At least 12 characters. A few words in a row are easy to remember."
+                    />
+                  ) : (
+                    <TextField
+                      label="New password"
+                      type="password"
+                      value={editPassword}
+                      onChange={(e) => setEditPassword(e.target.value)}
+                      fullWidth
+                      helperText="Leave blank to keep the current password. At least 12 characters."
+                    />
+                  )}
+                  <TextField
+                    label="Email (optional)"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    fullWidth
+                    helperText="For warnings and the unlock link, if this account gets locked from outside"
+                  />
+                  <FormControlLabel
+                    control={<Switch checked={isScreen} onChange={(_, on) => setTheme((t) => ({ ...t, wall: { ...normalizeWallPrefs(t.wall), screen: on } }))} />}
+                    label={
+                      <Box>
+                        <Typography>This account is for a wall screen</Typography>
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          A screen or tablet on the wall that stays signed in with this account. Its look and how it shows dashboards are set here, under Appearance and Wall display. People choose their own look in Settings → Appearance.
+                        </Typography>
+                      </Box>
+                    }
+                    sx={{ alignItems: "flex-start", "& .MuiSwitch-root": { mt: -0.5 } }}
+                  />
+                  {addOpen ? null : (
+                    <FormControlLabel control={<Switch checked={isActive} onChange={(_, checked) => setIsActive(checked)} />} label="Account active" />
+                  )}
+                  {editUser?.secondCheck && (
+                    <Stack spacing={0.5}>
+                      <Button variant="outlined" color="error" onClick={() => void secondCheckOff(editUser)} sx={{ alignSelf: "flex-start" }}>
+                        Turn off second check
+                      </Button>
+                      <Typography variant="caption" color="text.secondary">
+                        For someone who lost their phone. They can then sign in from outside with a strong password, and set it up again.
+                      </Typography>
+                    </Stack>
+                  )}
+                </Stack>
+              ) : null}
+              {shownTab === "appearance" ? (
+                <Stack spacing={2} sx={{ mt: 0.5 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    How Nexternel looks on this wall screen.
+                  </Typography>
+                  <ThemeOptionsFields themePrefs={theme} skinId={skinId} skins={skins} onThemeChange={setTheme} onSkinChange={setSkinId} />
+                </Stack>
+              ) : null}
+              {shownTab === "wall" ? (
+                <Stack sx={{ mt: 0.5, maxWidth: 640 }}>
+                  <WallDisplayFields value={theme.wall} onChange={(wall) => setTheme((t) => ({ ...t, wall: { ...wall, screen: t.wall?.screen === true } }))} />
+                </Stack>
+              ) : null}
+              {shownTab === "bell" ? (
+                <Stack sx={{ mt: 0.5, maxWidth: 640 }}>
+                  <BellFields value={theme.bell} onChange={(bell) => setTheme((t) => ({ ...t, bell }))} />
+                </Stack>
+              ) : null}
+            </DialogContent>
+          </Box>
           <DialogActions sx={{ borderTop: 1, borderColor: "divider" }}>
-            <Button onClick={() => setEditUser(null)}>Cancel</Button>
+            <Button onClick={closeUserDialog}>Cancel</Button>
             <Button type="submit" variant="contained" disabled={busy}>
-              Save
+              {addOpen ? "Add user" : "Save"}
             </Button>
           </DialogActions>
         </form>

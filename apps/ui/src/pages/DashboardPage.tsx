@@ -1064,11 +1064,11 @@ function DashboardPageContent() {
               </Button>
             </ButtonRow>
             <ButtonRow direction="row" flexWrap="nowrap" sx={{ order: 2 }}>
-              <Button variant="contained" disabled={saving} onClick={() => void save()}>
-                {saving ? "Saving…" : "Save"}
-              </Button>
               <Button variant="outlined" disabled={saving} onClick={cancelEdit}>
                 Cancel
+              </Button>
+              <Button variant="contained" disabled={saving} onClick={() => void save()}>
+                {saving ? "Saving…" : "Save"}
               </Button>
             </ButtonRow>
           </ButtonRow>
@@ -1386,7 +1386,7 @@ function DashboardPageContent() {
                 Next
               </Button>
             ) : (
-              <Button
+              <Button startIcon={<AddIcon />}
                 variant="contained"
                 fullWidth
                 disabled={!addPanelValidation.ok}

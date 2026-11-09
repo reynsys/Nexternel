@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { PageHeader } from "../../components/PageHeader";
+import AddIcon from "@mui/icons-material/Add";
 import {
   Alert,
   Box,
@@ -98,7 +100,7 @@ function AddTracker({ call, onAdded }: { call: Call; onAdded: () => void }) {
   return (
     <Section>
       <Stack spacing={1.5} sx={{ maxWidth: 420 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: "fontWeightBold" }}>
+        <Typography variant="h6" component="h2">
           Add your first tracker
         </Typography>
         <Typography variant="body2" color="text.secondary">
@@ -108,7 +110,7 @@ function AddTracker({ call, onAdded }: { call: Call; onAdded: () => void }) {
         <TextField size="small" label="Name" value={name} onChange={(e) => setName(e.target.value)} />
         <TextField size="small" label="ID number" value={uniqueId} onChange={(e) => setUniqueId(e.target.value)} />
         <Box>
-          <Button
+          <Button startIcon={<AddIcon />}
             variant="contained"
             onClick={async () => {
               if ((await guard(call("addTracker", { name, uniqueId }))) !== null) onAdded();
@@ -369,7 +371,7 @@ function Areas({ call, overview }: { call: Call; overview: Overview }) {
   useEffect(() => void load(), [load]);
 
   const circles = useMemo<MapCircle[]>(
-    () => [...areas, ...(picked ? [{ ...picked, radius, label: name || "New area" }] : [])],
+    () => [...areas, ...(picked ? [{ ...picked, radius, label: name || "New place" }] : [])],
     [areas, picked, radius, name]
   );
 
@@ -380,11 +382,11 @@ function Areas({ call, overview }: { call: Call; overview: Overview }) {
       <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", md: "minmax(280px, 1fr) 2fr" } }}>
         <Section>
           <Stack spacing={1.5}>
-            <Typography variant="subtitle2" sx={{ fontWeight: "fontWeightBold" }}>
-              Areas
+            <Typography variant="h6" component="h2">
+              Places
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              You get an alert when a tracker arrives at or leaves an area.
+              You get an alert when a tracker arrives at or leaves a place.
             </Typography>
             {areas.map((a) => (
               <Stack key={a.id} direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
@@ -412,11 +414,11 @@ function Areas({ call, overview }: { call: Call; overview: Overview }) {
                 </Typography>
                 {picked ? (
                   <>
-                    <TextField size="small" label="Area name" value={name} onChange={(e) => setName(e.target.value)} />
+                    <TextField size="small" label="Place name" value={name} onChange={(e) => setName(e.target.value)} />
                     <Typography variant="caption" color="text.secondary">
                       Size: {radius} m around the point
                     </Typography>
-                    <Slider aria-label="Area size" min={50} max={2000} step={50} value={radius} onChange={(_, v) => setRadius(v as number)} />
+                    <Slider aria-label="Place size" min={50} max={2000} step={50} value={radius} onChange={(_, v) => setRadius(v as number)} />
                     <ButtonRow>
                       <Button
                         variant="contained"
@@ -427,7 +429,7 @@ function Areas({ call, overview }: { call: Call; overview: Overview }) {
                           void load();
                         }}
                       >
-                        Save area
+                        Save place
                       </Button>
                       <Button variant="outlined" onClick={() => setPicked(null)}>
                         Cancel
@@ -491,7 +493,7 @@ function SettingsTab({
       {canChangeSettings ? (
         <Section>
           <Stack spacing={1.5}>
-            <Typography variant="subtitle2" sx={{ fontWeight: "fontWeightBold" }}>
+            <Typography variant="h6" component="h2">
               Map and units
             </Typography>
             <PluginPageSettings pluginId={pluginId} onSaved={onSaved} />
@@ -501,7 +503,7 @@ function SettingsTab({
       {alerts && overview.admin ? (
         <Section>
           <Stack spacing={1.5} sx={{ maxWidth: 420 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: "fontWeightBold" }}>
+            <Typography variant="h6" component="h2">
               Alerts
             </Typography>
             {!canNotify ? <AlertsBlocked /> : null}
@@ -558,7 +560,7 @@ function SettingsTab({
   );
 }
 
-/** The GPS Tracker page: live map, journeys, reports, areas and settings. Everything comes from the plugin. */
+/** The GPS Tracker page: live map, journeys, reports, places and settings. Everything comes from the plugin. */
 export function TrackingPage({ pluginId, pageId, title, mapPanelId }: PageProps) {
   const [searchParams] = useSearchParams();
   const [tab, setTab] = useState(() => (searchParams.get("tab") === "settings" ? SETTINGS_TAB : 0));
@@ -590,16 +592,14 @@ export function TrackingPage({ pluginId, pageId, title, mapPanelId }: PageProps)
 
   return (
     <Stack spacing={2} sx={{ width: "100%" }}>
-      <Typography variant="h5" component="h1">
-        {title}
-      </Typography>
+      <PageHeader title={title} hint="Where your trackers are now, the journeys they made and reports of time and distance." />
       {message ? <Alert severity="error">{message}</Alert> : null}
       {overview && overview.trackers.length === 0 && overview.admin ? <AddTracker call={call} onAdded={load} /> : null}
       <Tabs value={shownTab} onChange={(_, v) => setTab(v as number)} variant="scrollable" allowScrollButtonsMobile>
         <Tab label="Live" />
         <Tab label="Journeys" />
         <Tab label="Reports" />
-        <Tab label="Areas" />
+        <Tab label="Places" />
         {showSettings ? <Tab label="Settings" /> : null}
       </Tabs>
       {shownTab === 0 && mapPanelId ? (

@@ -5,7 +5,7 @@ import {
   Button,
   Card,
   CardContent,
-  Checkbox,
+  Switch,
   FormControlLabel,
   LinearProgress,
   Stack,
@@ -246,16 +246,10 @@ export function BackupRestoreSection() {
       <Card sx={surfaceSx}>
         <CardContent>
           <Typography variant="h6" gutterBottom>
-            Back up to a file · Restore from a file
+            Back up to a file
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            A one-off backup with a password you choose, downloaded to this computer — or restore a
-            backup file from another server. A backup the server made itself (Back up now or the
-            daily backup) opens with that server's backup key from its emergency kit.
-          </Typography>
-
-          <Typography variant="subtitle2" gutterBottom>
-            Create Backup
+            A one-off backup with a password you choose, downloaded to this computer.
           </Typography>
           <ButtonRow sx={{ maxWidth: 480 }}>
             <TextField
@@ -275,13 +269,8 @@ export function BackupRestoreSection() {
               autoComplete="new-password"
             />
             <FormControlLabel
-              control={
-                <Checkbox
-                  checked={includeHistory}
-                  onChange={(e) => setIncludeHistory(e.target.checked)}
-                />
-              }
-              label="Include historical sensor data"
+              control={<Switch checked={includeHistory} onChange={(e) => setIncludeHistory(e.target.checked)} />}
+              label="Include sensor history"
             />
             <Button
               variant="contained"
@@ -326,8 +315,12 @@ export function BackupRestoreSection() {
 
       <Card sx={surfaceSx}>
         <CardContent>
-          <Typography variant="subtitle2" gutterBottom>
-            Restore Backup
+          <Typography variant="h6" gutterBottom>
+            Restore from a file
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Bring back a backup file, also one from another server. A backup the server made itself (Back up
+            now or the daily backup) opens with that server's backup key from its emergency kit.
           </Typography>
           <input
             ref={restoreFileRef}

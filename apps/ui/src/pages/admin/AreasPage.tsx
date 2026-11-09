@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Alert, Box, Button, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import { PageHeader } from "../../components/PageHeader";
+import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import AddIcon from "@mui/icons-material/Add";
@@ -10,7 +11,6 @@ import { ButtonRow } from "../../components/ButtonRow";
 import { useLiveChanges } from "../../lib/live-changes";
 import { getDashboardIcon } from "../../lib/dashboard-icons";
 import { DashboardIconPicker } from "../../components/DashboardIconPicker";
-import { SidePanel } from "../../components/side-panel/SidePanel";
 import { PanelTile } from "../../components/PanelTile";
 import { contentSurfaceSx } from "../../skins/surfaceStyles";
 import { ICON_SIZE } from "../../lib/appearance/type";
@@ -124,17 +124,17 @@ export function AreasPage() {
 
   return (
     <Stack spacing={2}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center">
-        <Typography variant="h4">{AREA.plural}</Typography>
-        {canEdit ? (
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => open(null)}>
-            {AREA.add}
-          </Button>
-        ) : null}
-      </Stack>
-      <Typography color="text.secondary">
-        The rooms and places in your home.{canEdit ? " Drag a box by its title to change the order; Edit opens its settings." : ""}
-      </Typography>
+      <PageHeader
+        title={AREA.plural}
+        hint={<>The rooms and places in your home.{canEdit ? " Drag a box by its title to change the order; Edit opens its settings." : ""}</>}
+        actions={
+          canEdit ? (
+            <Button variant="contained" startIcon={<AddIcon />} onClick={() => open(null)}>
+              {AREA.add}
+            </Button>
+          ) : null
+        }
+      />
       {error ? (
         <Alert severity="error" onClose={() => setError(null)}>
           {error}
@@ -199,7 +199,7 @@ export function AreasPage() {
                 </Box>
                 {canEdit ? (
                   <Tooltip title={`Edit ${a.name}`}>
-                    <Button variant="outlined" size="small" aria-label={`Edit ${a.name}`} onClick={() => open(a)} sx={{ minWidth: 32, width: 32, height: 32, p: 0 }}>
+                    <Button variant="outlined" size="small" aria-label={`Edit ${a.name}`} onClick={() => open(a)} sx={{ minWidth: 36, width: 36, minHeight: 36, height: 36, p: 0 }}>
                       <EditOutlinedIcon fontSize="small" />
                     </Button>
                   </Tooltip>
@@ -225,23 +225,12 @@ export function AreasPage() {
         })}
       </Box>
 
-      <SidePanel
-        open={Boolean(editing)}
-        onClose={() => setEditing(null)}
-        title={editing?.id ? `Edit ${editingArea?.name ?? AREA.singular.toLowerCase()}` : AREA.add}
-        footer={
-          <ButtonRow direction="row">
-            <Button variant="outlined" fullWidth onClick={() => setEditing(null)}>
-              Cancel
-            </Button>
-            <Button variant="contained" fullWidth disabled={busy} onClick={() => void save()}>
-              {busy ? "Saving…" : editing?.id ? "Save" : "Add"}
-            </Button>
-          </ButtonRow>
-        }
-      >
+      {/* A pop-up in the middle, like Device settings (side panels are only for editing a dashboard). */}
+      <Dialog open={Boolean(editing)} onClose={() => setEditing(null)} fullWidth maxWidth="sm">
+        <DialogTitle>{editing?.id ? `Edit ${editingArea?.name ?? AREA.singular.toLowerCase()}` : AREA.add}</DialogTitle>
+        <DialogContent>
         {editing ? (
-          <Stack spacing={3}>
+          <Stack spacing={3} sx={{ pt: 1 }}>
             <TextField
               label="Name"
               size="small"
@@ -267,7 +256,7 @@ export function AreasPage() {
                     Devices here
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    {editingDevices.length ? editingDevices.join(", ") : "None yet."} A device's area is chosen on the Devices page.
+                    {editingDevices.length ? `${editingDevices.join(", ")}.` : "None yet."} A device's area is chosen on the Devices page.
                   </Typography>
                 </Box>
                 <Box sx={{ borderTop: 1, borderColor: "divider", pt: 2 }}>
@@ -280,7 +269,7 @@ export function AreasPage() {
                         <Button variant="outlined" onClick={() => setAskDelete(false)}>
                           Cancel
                         </Button>
-                        <Button variant="contained" color="error" disabled={busy} onClick={() => void remove()}>
+                        <Button startIcon={<DeleteOutlineIcon />} variant="contained" color="error" disabled={busy} onClick={() => void remove()}>
                           Delete
                         </Button>
                       </ButtonRow>
@@ -295,7 +284,16 @@ export function AreasPage() {
             ) : null}
           </Stack>
         ) : null}
-      </SidePanel>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" onClick={() => setEditing(null)}>
+            Cancel
+          </Button>
+          <Button variant="contained" disabled={busy} onClick={() => void save()}>
+            {busy ? "Saving…" : editing?.id ? "Save" : AREA.add}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Stack>
   );
 }

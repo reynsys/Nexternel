@@ -12,7 +12,8 @@ import ts from "typescript";
  */
 const SRC = join(dirname(fileURLToPath(import.meta.url)), "..");
 const BUTTONS = new Set(["Button", "IconButton", "LoadingButton"]);
-const SPACED = new Set(["ButtonRow", "DialogActions", "CardActions", "ToggleButtonGroup", "ButtonGroup"]);
+// PageActions puts its buttons into the page header's ButtonRow.
+const SPACED = new Set(["ButtonRow", "PageActions", "DialogActions", "CardActions", "ToggleButtonGroup", "ButtonGroup"]);
 /** Holders whose buttons are not side by side (separate blocks of a dialog, steps, table rows), or a toolbar with its own wider gap. */
 const NOT_A_ROW = new Set(["DialogContent", "StepContent", "TableBody", "Collapse", "Box", "Toolbar"]);
 

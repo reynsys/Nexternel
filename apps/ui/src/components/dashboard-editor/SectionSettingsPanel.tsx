@@ -126,7 +126,7 @@ export function SectionSettingsPanel({ section, onCancel, onApply, onChange, onM
                   <Button variant="outlined" onClick={() => setAskDelete(false)}>
                     Cancel
                   </Button>
-                  <Button variant="contained" color="error" onClick={onDelete}>
+                  <Button startIcon={<DeleteOutlineIcon />} variant="contained" color="error" onClick={onDelete}>
                     Delete
                   </Button>
                 </ButtonRow>

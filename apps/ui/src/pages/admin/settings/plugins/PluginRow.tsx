@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { Link as RouterLink } from "react-router-dom";
 import { Alert, Box, Button, Checkbox, Chip, Collapse, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, Paper, Stack, Switch, Typography } from "@mui/material";
 import type { PluginCatalogEntry, PluginGrants, PluginInfo, PluginManifestInfo } from "../../../../api";
@@ -71,7 +72,7 @@ export function InstalledPlugin({
             <Typography variant="body2" color="text.secondary">{p.version}</Typography>
             {badges}
             <Chip size="small" label={status.label} color={status.color} />
-            {p.source === "file" ? <Chip size="small" variant="outlined" color="warning" label="From a file" /> : null}
+            {p.source === "file" ? <Chip size="small" variant="outlined" label="From a file" /> : null}
           </Stack>
           <Typography variant="body2" color="text.secondary">
             {p.enabled && p.missingSettings.length
@@ -92,7 +93,7 @@ export function InstalledPlugin({
               control={<Switch checked={p.enabled} disabled={busy !== null} onChange={(e) => onToggle(e.target.checked)} />}
               label="Switched on"
             />
-            <Button color="error" size="small" disabled={busy !== null} onClick={onRemove}>
+            <Button startIcon={<DeleteOutlineIcon />} color="error" size="small" disabled={busy !== null} onClick={onRemove}>
               Remove
             </Button>
           </ButtonRow>

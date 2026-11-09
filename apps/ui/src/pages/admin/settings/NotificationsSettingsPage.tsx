@@ -115,7 +115,7 @@ export function NotificationsSettingsPage() {
                 {t.key === "devices" ? (
                   // In its own box: the list around it resets margins, which squeezed it against the text above.
                   <Box sx={{ pl: 7, pt: 1.5, pb: 0.5 }}>
-                  <FormControl size="small" fullWidth sx={{ maxWidth: 320 }} disabled={!topics?.devices}>
+                  <FormControl size="small" fullWidth sx={{ maxWidth: 420 }} disabled={!topics?.devices}>
                     <InputLabel id="bell-offline-minutes">Report a device after</InputLabel>
                     <Select
                       labelId="bell-offline-minutes"
@@ -141,7 +141,7 @@ export function NotificationsSettingsPage() {
             {plugins.length ? (
               <Stack spacing={1.5}>
                 {plugins.map((p) => (
-                  <FormControl key={p.id} size="small" fullWidth>
+                  <FormControl key={p.id} size="small" fullWidth sx={{ maxWidth: 420 }}>
                     <InputLabel id={`bell-topic-${p.id}`}>{p.name}</InputLabel>
                     <Select
                       labelId={`bell-topic-${p.id}`}

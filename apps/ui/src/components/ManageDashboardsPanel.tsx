@@ -1,4 +1,5 @@
 import { dashboardPath } from "../lib/dashboard-path";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { leaveThen } from "../lib/leave-guard";
@@ -39,7 +40,7 @@ type Props = {
   onCurrentTabMeta?: (meta: { name: string; tabIcon: string; showTabLabel: boolean }) => void;
 };
 
-const square = { minWidth: 32, width: 32, height: 32, p: 0 } as const;
+const square = { minWidth: 36, width: 36, minHeight: 36, height: 36, p: 0 } as const;
 
 /**
  * Every dashboard on this system: create, open, order in the Dashboard Menu, the one that opens
@@ -261,7 +262,7 @@ export function ManageDashboardsPanel({ compact, currentDashboardId, onDashboard
                     <Button variant="outlined" onClick={() => setRowMode(null)}>
                       Cancel
                     </Button>
-                    <Button variant="contained" color="error" disabled={busy} onClick={() => void remove(d.id)}>
+                    <Button startIcon={<DeleteOutlineIcon />} variant="contained" color="error" disabled={busy} onClick={() => void remove(d.id)}>
                       Delete
                     </Button>
                   </ButtonRow>

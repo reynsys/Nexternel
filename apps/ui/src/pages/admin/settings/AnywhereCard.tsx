@@ -287,7 +287,7 @@ export function AnywhereCard() {
 
           {view && !view.setUp && !view.licensed ? (
             <Typography variant="body2">
-              Nexternel Anywhere is a paid service. Add its licence key in Settings → Extensions, then choose your name here.
+              Nexternel Anywhere is a paid service. Add its licence key in Extensions → Manage extensions, then choose your name here.
             </Typography>
           ) : null}
 

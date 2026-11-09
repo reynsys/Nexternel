@@ -109,7 +109,7 @@ export const rolesRoutes: FastifyPluginAsync = async (app) => {
       const msg = err instanceof Error ? err.message : String(err);
       if (msg.includes("unique") || msg.includes("duplicate")) {
         return reply.code(409).send({
-          error: { code: "conflict", message: "A role with that slug already exists" },
+          error: { code: "conflict", message: "A role with that name already exists" },
         });
       }
       throw err;

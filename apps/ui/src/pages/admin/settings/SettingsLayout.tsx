@@ -1,5 +1,6 @@
 import { Outlet, useLocation } from "react-router-dom";
-import { Alert, Box, CircularProgress, Stack, Typography } from "@mui/material";
+import { PageHeaderWithSlot } from "../../../components/PageHeader";
+import { Alert, Box, CircularProgress, Stack } from "@mui/material";
 import { hasPermission } from "../../../lib/permissions";
 import { useShellAuth } from "../../../skins/useShellAuth";
 import { SETTINGS_TABS, settingsTabPath } from "./settings-nav";
@@ -38,17 +39,12 @@ export function SettingsLayout() {
   const current = tabs.find((t) => t.segment === active);
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
-        {current?.label ?? "Settings"}
-      </Typography>
-      {current?.hint ? (
-        <Typography color="text.secondary" sx={{ mb: 2 }}>
-          {current.hint}
-        </Typography>
-      ) : null}
       {/* Every Settings page is in the menu (the side menu, or the menu button at the top right on phones
-          and tablets), so there is no row of page buttons here. */}
-      <Outlet />
+          and tablets), so there is no row of page buttons here. A page puts its own main buttons on
+          the right of this header with <PageActions>. */}
+      <PageHeaderWithSlot title={current?.label ?? "Settings"} hint={current?.hint}>
+        <Outlet />
+      </PageHeaderWithSlot>
     </Box>
   );
 }

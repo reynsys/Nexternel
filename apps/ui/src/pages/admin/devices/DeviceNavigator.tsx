@@ -85,7 +85,7 @@ export function DeviceNavigator({
         kind: "camera",
         name: c.name,
         summary: c.enabled ? "Camera · live picture" : "Camera",
-        status: c.enabled ? { word: "On", tone: "ok" } : { word: "Switched off", tone: "off" },
+        status: c.enabled ? { word: "In use", tone: "ok" } : { word: "Switched off", tone: "off" },
         selection: { kind: "camera", cameraId: c.id },
         attention: false,
         offline: false,

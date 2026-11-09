@@ -567,14 +567,12 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
         </Row>
       </Section>
 
-      <Section
-        title="Background effect colour"
-        hint={effectId === "off" ? "No background effect is on. Choose one on the Look tab first." : "White, your main colour, or the colours of your background."}
-      >
-        {effectId !== "off" ? (
+      {/* Only while a background effect is on (chosen on the Look tab). */}
+      {effectId !== "off" ? (
+        <Section title="Background effect colour" hint="White, your main colour, or the colours of your background.">
           <Segmented<EffectColour> label="Effect colour" value={themePrefs.effectColour ?? "white"} options={EFFECT_COLOURS} onChange={(v) => set({ effectColour: v })} />
-        ) : null}
-      </Section>
+        </Section>
+      ) : null}
       </Stack>
     ),
     style: (

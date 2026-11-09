@@ -16,8 +16,6 @@ import {
   Switch,
   Typography,
 } from "@mui/material";
-import DownloadRoundedIcon from "@mui/icons-material/DownloadRounded";
-import RestoreRoundedIcon from "@mui/icons-material/RestoreRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import { api, type BackupSchedule, type StoredBackup } from "../../../api";
 import { useConfirm } from "../../../components/confirm";
@@ -241,32 +239,37 @@ export function AutomaticBackupsSection() {
         {busy === "now" && <LinearProgress sx={{ mb: 2 }} />}
 
         {files.length > 0 && (
-          // One row per backup: when and how big, then its buttons with their words; Delete apart from the others.
-          <Stack spacing={1}>
-            {files.map((f) => (
-              <Paper key={f.name} variant="outlined" sx={{ p: 1.5, borderRadius: 1.5 }}>
-                <Typography variant="body2">
-                  {formatWhen(f.createdAt)}
-                  <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-                    {f.automatic ? "automatic" : "manual"} · {formatSize(f.sizeBytes)}
+          // A short list: one line per backup (when, kind and size), its buttons at the end of the line;
+          // on a narrow screen the buttons go under it. Delete keeps its bin, like every Delete.
+          <Paper variant="inset" sx={{ borderRadius: 1.5, overflow: "hidden" }}>
+            {files.map((f, i) => (
+              <Stack
+                key={f.name}
+                direction="row"
+                alignItems="center"
+                flexWrap="wrap"
+                useFlexGap
+                gap={1}
+                sx={{ px: 1.5, py: 1, borderTop: i ? 1 : 0, borderColor: "divider" }}
+              >
+                <Box sx={{ flex: "1 1 220px", minWidth: 0 }}>
+                  <Typography variant="body2">{formatWhen(f.createdAt)}</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {f.automatic ? "Automatic" : "Made by hand"} · {formatSize(f.sizeBytes)}
                   </Typography>
-                </Typography>
-                <ButtonRow direction="row" sx={{ mt: 1, alignItems: "center" }}>
+                </Box>
+                <ButtonRow direction="row">
                   <Button
-                    size="small"
                     variant="outlined"
-                    startIcon={<DownloadRoundedIcon fontSize="small" />}
                     disabled={busy !== null}
                     onClick={() => void run(`dl:${f.name}`, async () => saveBlob(await api.downloadStoredBackup(f.name)))}
                   >
                     Download
                   </Button>
-                  <Button size="small" variant="outlined" startIcon={<RestoreRoundedIcon fontSize="small" />} disabled={busy !== null} onClick={() => void restore(f)}>
+                  <Button variant="outlined" disabled={busy !== null} onClick={() => void restore(f)}>
                     Restore
                   </Button>
-                  <Box sx={{ flex: 1 }} />
                   <Button
-                    size="small"
                     variant="outlined"
                     color="error"
                     startIcon={<DeleteOutlineRoundedIcon fontSize="small" />}
@@ -285,9 +288,9 @@ export function AutomaticBackupsSection() {
                     Delete
                   </Button>
                 </ButtonRow>
-              </Paper>
+              </Stack>
             ))}
-          </Stack>
+          </Paper>
         )}
       </CardContent>
     </Card>

@@ -13,6 +13,10 @@ import MemoryIcon from "@mui/icons-material/Memory";
 import MeetingRoomOutlinedIcon from "@mui/icons-material/MeetingRoomOutlined";
 import DevicesOtherOutlinedIcon from "@mui/icons-material/DevicesOtherOutlined";
 import ExtensionOutlinedIcon from "@mui/icons-material/ExtensionOutlined";
+import ForumOutlinedIcon from "@mui/icons-material/ForumOutlined";
+import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
+import MapOutlinedIcon from "@mui/icons-material/MapOutlined";
+import { pluginPanelBlock } from "../plugins/loadContributions";
 import { groupAddPanelDiscovery, type AddPanelDiscoveryItem } from "../lib/add-panel-discovery";
 import { ICON_SIZE } from "../lib/appearance/type";
 import { choiceSx } from "../skins/surfaceStyles";
@@ -23,7 +27,14 @@ type Props = {
   onChange: (typeId: string) => void;
 };
 
-/** A picture for each kind of panel (an extension's panels share the extension picture). */
+/** An extension panel's picture comes from what it draws. */
+const BLOCK_ICON: Record<string, SvgIconComponent> = {
+  conversation: ForumOutlinedIcon,
+  text: ArticleOutlinedIcon,
+  map: MapOutlinedIcon,
+};
+
+/** A picture for each kind of panel. */
 const TYPE_ICON: Record<string, SvgIconComponent> = {
   "panel.gauge": SpeedIcon,
   "panel.status": SensorsIcon,
@@ -54,7 +65,7 @@ export function AddPanelTypePicker({ catalog, value, onChange }: Props) {
           </Typography>
           <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(104px, 1fr))", gap: "var(--nx-control-gap)" }}>
             {group.items.map((item) => {
-              const Icon = TYPE_ICON[item.id] ?? ExtensionOutlinedIcon;
+              const Icon = TYPE_ICON[item.id] ?? BLOCK_ICON[pluginPanelBlock(item.id) ?? ""] ?? ExtensionOutlinedIcon;
               const chosen = value === item.id;
               return (
                 <ButtonBase

@@ -16,14 +16,16 @@ export const NOT_DISPLAY: DisplayOptions = { active: false, textSize: 100, tabs:
 const TEXT_SIZES = [90, 100, 110, 125];
 
 /** The account's wall display settings (Users → Edit → Wall display); `start` = dashboard id. */
-export type WallPrefs = { textSize: number; tabs: boolean; rotate: number; light: boolean; autoscroll: boolean; start: string | null };
-export const DEFAULT_WALL: WallPrefs = { textSize: 110, tabs: true, rotate: 0, light: true, autoscroll: true, start: null };
+/** screen: this account is for a wall screen (Users → Edit shows its Appearance and Wall display). */
+export type WallPrefs = { screen: boolean; textSize: number; tabs: boolean; rotate: number; light: boolean; autoscroll: boolean; start: string | null };
+export const DEFAULT_WALL: WallPrefs = { screen: false, textSize: 110, tabs: true, rotate: 0, light: true, autoscroll: true, start: null };
 
 const rotation = (n: number) => (Number.isFinite(n) && Math.round(n) >= 10 ? Math.min(Math.round(n), 3600) : 0);
 
 export function normalizeWallPrefs(raw: unknown): WallPrefs {
   const o = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
   return {
+    screen: o.screen === true,
     textSize: TEXT_SIZES.includes(o.textSize as number) ? (o.textSize as number) : 110,
     tabs: o.tabs !== false,
     rotate: typeof o.rotate === "number" ? rotation(o.rotate) : 0,

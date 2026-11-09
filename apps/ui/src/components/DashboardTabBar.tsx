@@ -99,11 +99,13 @@ export function DashboardTabBar({
   // Adding and reordering are part of editing (or the only way forward when there is no dashboard yet).
   const canAdd = canEdit && !display.active && !phoneEditing && (editMode || (!loading && dashboards.length === 0));
 
-  // While editing: a grip on every dashboard and arrows on the open one (lib/use-arrange-dashboards.ts).
+  // Dashboards are put in order in one place on every screen: Dashboard settings → All dashboards
+  // (a list with names and buttons). The menu itself stays as it looks outside editing — no grips or
+  // arrows on its buttons (they crowded the dock).
   const arrange = useArrangeDashboards({
     dashboards,
     setDashboards,
-    enabled: editMode && canEdit && !display.active && !phone,
+    enabled: false,
     onError: setError,
   });
   // In a standing column (the rail) names show on the left, so they never cover the next button.

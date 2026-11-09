@@ -178,7 +178,7 @@ export function DeviceDetailPane({ selection, device, isAdmin, busy, hostname, s
         onChange={(_, v: TabKey) => setTab(v)}
         variant="scrollable"
         allowScrollButtonsMobile
-        sx={{ px: 1 }}
+        sx={{ mx: 2, mt: 1.5 }}
       >
         <Tab value="overview" label="Overview" />
         <Tab value="readings" label="Readings & switches" />

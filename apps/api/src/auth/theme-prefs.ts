@@ -39,12 +39,14 @@ export type ThemePrefsDto = {
 /** The notification bell for this person: when it shows and where (Settings → Notifications). */
 export type BellPrefs = { show: "always" | "new" | "never"; position: "menu" | "menu-bottom" | "top" };
 
-export type WallPrefs = { textSize: number; tabs: boolean; rotate: number; light: boolean; autoscroll: boolean; start: string | null };
+/** screen: this account is for a wall screen (Users → Edit shows its Appearance and Wall display). */
+export type WallPrefs = { screen: boolean; textSize: number; tabs: boolean; rotate: number; light: boolean; autoscroll: boolean; start: string | null };
 const WALL_TEXT = new Set([90, 100, 110, 125]);
 function wallField(raw: unknown): WallPrefs {
   const o = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
   const rotate = typeof o.rotate === "number" && Number.isFinite(o.rotate) ? Math.round(o.rotate) : 0;
   return {
+    screen: o.screen === true,
     textSize: typeof o.textSize === "number" && WALL_TEXT.has(o.textSize) ? o.textSize : 110,
     tabs: o.tabs !== false,
     rotate: rotate >= 10 ? Math.min(rotate, 3600) : 0,

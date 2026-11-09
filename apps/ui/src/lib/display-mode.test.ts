@@ -18,5 +18,5 @@ test("the account's wall settings apply unless the address says otherwise", () =
   const wall = normalizeWallPrefs({ textSize: 125, tabs: false, rotate: 60, light: false, autoscroll: false, start: "d1" });
   assert.deepEqual(parseDisplayOptions("", wall), { active: true, textSize: 125, tabs: false, rotate: 60, light: false, autoscroll: false });
   assert.deepEqual(parseDisplayOptions("?tabs=1&rotate=0", wall), { active: true, textSize: 125, tabs: true, rotate: 0, light: false, autoscroll: false });
-  assert.deepEqual(normalizeWallPrefs(undefined), { textSize: 110, tabs: true, rotate: 0, light: true, autoscroll: true, start: null });
+  assert.deepEqual(normalizeWallPrefs(undefined), { screen: false, textSize: 110, tabs: true, rotate: 0, light: true, autoscroll: true, start: null });
 });

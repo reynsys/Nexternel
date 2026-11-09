@@ -50,6 +50,12 @@ function makePanelComponent(pluginId: string, panel: PluginPanelInfo) {
   return PluginPanel;
 }
 
+/** What each extension panel draws (conversation, text, map), so Add panel can give it a fitting picture. */
+const pluginPanelBlocks = new Map<string, string>();
+export function pluginPanelBlock(type: string): string | undefined {
+  return pluginPanelBlocks.get(type);
+}
+
 /** Register the panels of installed, switched-on plugins so they can be added to dashboards. */
 export function loadPluginContributions(plugins: PluginInfo[]) {
   for (const p of plugins) {
@@ -64,9 +70,10 @@ export function loadPluginContributions(plugins: PluginInfo[]) {
         rendererClass: "composite-tile",
         Component: panelComponent(p.id, panel),
         // Shown in Add panel under the plugin's name.
-        ...({ description: panel.description ?? `From the ${p.name} plugin` } as object),
+        ...({ description: panel.description ?? `From the ${p.name} extension` } as object),
       });
       registeredPluginPanels.push(panel.type);
+      pluginPanelBlocks.set(panel.type, panel.block);
     }
   }
 }

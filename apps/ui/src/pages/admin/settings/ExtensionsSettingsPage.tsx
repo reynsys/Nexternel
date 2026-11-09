@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Collapse, Paper, Stack, TextField, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
+import { PageHeader } from "../../../components/PageHeader";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import { Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Collapse, Paper, Stack, TextField, Typography } from "@mui/material";
 import { api, type AddonInfo, type AddonsResponse, type PluginCatalogEntry, type PluginsResponse } from "../../../api";
 import { useConfirm } from "../../../components/confirm";
 import { usePluginHost } from "../../../plugins/PluginHostContext";
@@ -27,7 +29,7 @@ function Badges({ type, paid }: { type: Exclude<ExtType, "all">; paid: boolean }
   return (
     <>
       <Chip size="small" variant="outlined" label={TYPE_LABEL[type]} />
-      <Chip size="small" variant="outlined" color={paid ? "info" : "secondary"} label={paid ? "Paid" : "Free"} />
+      <Chip size="small" variant="outlined" label={paid ? "Paid" : "Free"} />
     </>
   );
 }
@@ -132,7 +134,7 @@ export function ExtensionsSettingsPage() {
         <Chip size="small" color={ADDON_STATUS[a.status].color} label={ADDON_STATUS[a.status].label} />
         <Box sx={{ flex: 1 }} />
         {canManage ? (
-          <Button
+          <Button startIcon={<DeleteOutlineIcon />}
             size="small"
             color="error"
             disabled={busy !== null}
@@ -169,20 +171,24 @@ export function ExtensionsSettingsPage() {
 
   return (
     <Stack spacing={3}>
-      <Box>
-        <Typography variant="h4" gutterBottom>Manage extensions</Typography>
-        <Typography color="text.secondary">Extra features and Looks. Free ones install with one click; paid ones unlock with the licence key from your email.</Typography>
-      </Box>
+      <PageHeader title="Manage extensions" hint="Extra features and Looks. Free ones install with one click; paid ones unlock with the licence key from your email." />
       <Card sx={surfaceSx}>
         <CardContent>
           <Stack spacing={2}>
             <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} alignItems={{ sm: "center" }}>
               <Box sx={{ flex: 1 }}>
-                <ToggleButtonGroup exclusive size="small" value={type} onChange={(_e, v: ExtType | null) => v && setType(v)} aria-label="Show">
-                  <ToggleButton value="all">All</ToggleButton>
-                  <ToggleButton value="feature">Features</ToggleButton>
-                  <ToggleButton value="style">Looks</ToggleButton>
-                </ToggleButtonGroup>
+                {/* A filter, so round pills like Activity and Devices. */}
+                <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" role="group" aria-label="Show">
+                  {(
+                    [
+                      ["all", "All"],
+                      ["feature", "Features"],
+                      ["style", "Looks"],
+                    ] as [ExtType, string][]
+                  ).map(([v, label]) => (
+                    <Chip key={v} label={label} clickable color={type === v ? "primary" : "default"} variant={type === v ? "filled" : "outlined"} onClick={() => setType(v)} />
+                  ))}
+                </Stack>
               </Box>
               {canManage && addons?.available ? (
                 <Button variant={keyOpen ? "contained" : "outlined"} onClick={() => setKeyOpen((o) => !o)}>

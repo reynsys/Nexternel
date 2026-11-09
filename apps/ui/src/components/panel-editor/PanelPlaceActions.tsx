@@ -64,7 +64,7 @@ export function PanelPlaceActions() {
             <Button variant="outlined" onClick={() => setAskRemove(false)}>
               Cancel
             </Button>
-            <Button variant="contained" color="error" onClick={place.onRemove}>
+            <Button startIcon={<DeleteOutlineIcon />} variant="contained" color="error" onClick={place.onRemove}>
               Remove
             </Button>
           </ButtonRow>

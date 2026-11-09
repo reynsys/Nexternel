@@ -1,4 +1,7 @@
 import { CODE_TEXT } from "../../lib/appearance/type";
+import { PageHeader } from "../../components/PageHeader";
+import AddIcon from "@mui/icons-material/Add";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { CameraPane } from "./devices/CameraPane";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -440,12 +443,12 @@ export function DevicesPage() {
     try {
       const res = await api.syncDeviceEsphome(device.id);
       const pruneParts: string[] = [];
-      if (res.removedRelays > 0) pruneParts.push(`${res.removedRelays} relay(s)`);
-      if (res.removedSensors > 0) pruneParts.push(`${res.removedSensors} sensor(s)`);
+      if (res.removedRelays > 0) pruneParts.push(`${res.removedRelays} switch${res.removedRelays === 1 ? "" : "es"}`);
+      if (res.removedSensors > 0) pruneParts.push(`${res.removedSensors} reading${res.removedSensors === 1 ? "" : "s"}`);
       const pruneNote =
         pruneParts.length > 0 ? ` — removed ${pruneParts.join(", ")} not in YAML` : "";
       setInfo(
-        `Synced ${device.name} from ${res.yamlFile}.yaml — ${res.totalRelays} relay(s), ${res.sensorsInYaml.length} sensor(s) in YAML${pruneNote}`
+        `Synced ${device.name} from ${res.yamlFile}.yaml — ${res.totalRelays} switch${res.totalRelays === 1 ? "" : "es"}, ${res.sensorsInYaml.length} reading${res.sensorsInYaml.length === 1 ? "" : "s"} in its settings file${pruneNote}`
       );
       await load();
     } catch (err) {
@@ -532,28 +535,17 @@ export function DevicesPage() {
 
   return (
     <Stack spacing={2}>
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        justifyContent="space-between"
-        alignItems={{ xs: "stretch", sm: "center" }}
-        gap={1}
-      >
-        <Typography variant="h4">Devices</Typography>
-        <ButtonRow direction="row" flexWrap="wrap" useFlexGap>
-          {isAdmin && (
-            <>
-              <Button variant="contained" onClick={() => openAddDeviceChooser()}>
-                Add device
-              </Button>
-            </>
-          )}
-        </ButtonRow>
-      </Stack>
-
-      <Typography color="text.secondary">
-        Everything Nexternel talks to: ESPHome boards, Shelly switches, cameras and online services. Pick one to see its readings,
-        switches and settings.
-      </Typography>
+      <PageHeader
+        title="Devices"
+        hint="Everything Nexternel talks to: ESPHome boards, Shelly switches, cameras and online services. Pick one to see its readings, switches and settings."
+        actions={
+          isAdmin ? (
+            <Button startIcon={<AddIcon />} variant="contained" onClick={() => openAddDeviceChooser()}>
+              Add device
+            </Button>
+          ) : null
+        }
+      />
 
       <BoardUpdatesCard canEdit={isAdmin} />
 
@@ -599,18 +591,18 @@ export function DevicesPage() {
                     {entry.mqttTopicPrefix}
                   </Typography>
                   <Typography variant="caption" display="block" color="text.secondary">
-                    {entry.sensorCount} sensor(s), {entry.relayCount} relay(s)
+                    {entry.sensorCount === 1 ? "1 reading" : `${entry.sensorCount} readings`}, {entry.relayCount === 1 ? "1 switch" : `${entry.relayCount} switches`}
                   </Typography>
                 </Box>
                 <ButtonRow direction="row" flexWrap="wrap" useFlexGap>
-                  <Button
+                  <Button startIcon={<AddIcon />}
                     size="small"
                     variant="contained"
                     onClick={() => openAddDeviceWizard(entry.fileName)}
                   >
                     Add device
                   </Button>
-                  <Button
+                  <Button startIcon={<DeleteOutlineIcon />}
                     size="small"
                     color="error"
                     disabled={busy}
@@ -633,9 +625,10 @@ export function DevicesPage() {
             display: "flex",
             flexDirection: { xs: "column", md: "row" },
             gap: 2,
+            // The list and the details fill the screen: the page scrolls the boxes above away once, then
+            // only the list and the details scroll (no second, half-hidden page scroll).
             minHeight: { md: 520 },
-            height: { md: "calc(100vh - 280px)" },
-            maxHeight: { md: 900 },
+            height: { md: "calc(100dvh - 32px)" },
           }}
         >
           {showNavigator && (
@@ -787,7 +780,7 @@ export function DevicesPage() {
                 <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
                   Its technical address is fixed: it is how Nexternel recognises the device (Troubleshooting → Technical details).
                 </Typography>
-                <Button
+                <Button startIcon={<DeleteOutlineIcon />}
                   variant="outlined"
                   color="error"
                   disabled={busy}
@@ -1066,8 +1059,8 @@ export function DevicesPage() {
               </Stack>
             </Button>
             <Typography variant="caption" color="text.secondary">
-              Online services such as Octopus energy are set up in their own settings; more kinds of devices come as Extensions (Settings →
-              Extensions).
+              Online services such as Octopus energy are set up in their own settings; more kinds of devices come as Extensions (Extensions →
+              Manage extensions).
             </Typography>
           </ButtonRow>
         </DialogContent>
