@@ -123,7 +123,15 @@ test("ten dials share one layout", () => {
   assert.ok(large > small);
   assert.equal(series("gauge").data[0].value, 21.5);
   const needleOnSquare = series("gauge");
-  assert.ok(Math.abs(needleOnSquare.detail.offsetCenter[1] - needleOnSquare.radius * 0.5) < 3);
+  // The reading sits below the lowest point the needle can reach (its tip at 0 or at the top of the scale).
+  const needleReach = 0.62 * needleOnSquare.radius * Math.sin(Math.PI / 4);
+  assert.ok(needleOnSquare.detail.offsetCenter[1] - needleOnSquare.detail.fontSize / 2 >= needleReach);
+  for (const tile of [{ tileWidth: 160, tileHeight: 160 }, { tileWidth: 200, tileHeight: 260 }, { tileWidth: 420, tileHeight: 220 }]) {
+    for (const value of [0, 1071]) {
+      const s = series("gauge", { ...tile, value, unit: "W", min: 0, max: 5000 });
+      assert.ok(s.detail.offsetCenter[1] - s.detail.fontSize / 2 >= 0.62 * s.radius * Math.sin(Math.PI / 4), `needle clear at ${tile.tileWidth}x${tile.tileHeight}`);
+    }
+  }
   const semi = series("gauge-temperature");
   const double = series("gauge-double");
   assert.equal(semi.detail.offsetCenter[1], double.detail.offsetCenter[1]);

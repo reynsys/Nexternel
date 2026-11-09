@@ -39,8 +39,12 @@ const actNowFlash = keyframes`
 `;
 
 /** In a narrow panel title (see the title tile's container), lights take less room. */
-const COMPACT = { "@container nx-title (max-width: 230px)": { width: 16 } } as const;
-const COMPACT_DOTS = { "@container nx-title (max-width: 230px)": { gap: "3px", "& > *": { width: 11, height: 11 } } } as const;
+// In a narrow title (phones, small panels) lights are smaller, so they fit the line under the name.
+// The size is a CSS variable the shapes read, so the narrow-title rule always wins over their own size.
+const COMPACT = { "@container nx-title (max-width: 230px)": { width: 16, "--nx-light-pill-h": "11px" } } as const;
+const COMPACT_DOTS = { "@container nx-title (max-width: 230px)": { gap: "3px", "--nx-light-dot": "11px" } } as const;
+const DOT_SIZE = "var(--nx-light-dot, 15px)";
+const PILL_HEIGHT = "var(--nx-light-pill-h, 16px)";
 
 /** The look a panel's lights use: the panel's own choice (Edit menu → Status light), else the starting look. */
 export type StatusLook = {
@@ -144,7 +148,7 @@ export function StatusLight({ capabilityId, kind, unit, look, placement, edge = 
         sx={{
           // Narrower on phones, and a small square in narrow panels, where titles have little room.
           width: placement === "inline" ? { xs: 32, sm: 46 } : 46,
-          height: 16,
+          height: PILL_HEIGHT,
           display: "flex",
           flex: "none",
           filter: `drop-shadow(0 0 4px ${colour})`,
@@ -169,8 +173,8 @@ export function StatusLight({ capabilityId, kind, unit, look, placement, edge = 
             key={s}
             data-nx-dot={i + 1}
             sx={{
-              width: 15,
-              height: 15,
+              width: DOT_SIZE,
+              height: DOT_SIZE,
               display: "flex",
               filter: lit(s) && state !== "stale" ? `drop-shadow(0 0 4px ${look.colours[s]})` : "none",
             }}
@@ -341,7 +345,7 @@ function UnsetLight({ look, placement, edge }: { look: StatusLook; placement: Pr
     node = (
       <Box {...common} data-nx-status-style="dots" sx={{ display: "flex", gap: "6px", alignItems: "center", flex: "none", ...COMPACT_DOTS, ...centred }}>
         {[0, 1, 2].map((i) => (
-          <Box key={i} data-nx-dot={i + 1} sx={{ width: 15, height: 15, display: "flex" }}>
+          <Box key={i} data-nx-dot={i + 1} sx={{ width: DOT_SIZE, height: DOT_SIZE, display: "flex" }}>
             <Box data-nx-status-shape sx={{ flex: 1, borderRadius: "50%", bgcolor: UNSET_FILL, boxShadow: UNSET_EDGE }} />
           </Box>
         ))}
@@ -364,7 +368,7 @@ function UnsetLight({ look, placement, edge }: { look: StatusLook; placement: Pr
       <Box
         {...common}
         data-nx-status-style="pill"
-        sx={{ width: placement === "inline" ? { xs: 32, sm: 46 } : 46, height: 16, display: "flex", flex: "none", ...COMPACT, ...centred }}
+        sx={{ width: placement === "inline" ? { xs: 32, sm: 46 } : 46, height: PILL_HEIGHT, display: "flex", flex: "none", ...COMPACT, ...centred }}
       >
         <Box data-nx-status-shape sx={{ flex: 1, borderRadius: "8px", bgcolor: UNSET_FILL, boxShadow: UNSET_EDGE }} />
       </Box>

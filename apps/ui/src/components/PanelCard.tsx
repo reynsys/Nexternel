@@ -60,13 +60,12 @@ function PanelTitleTile({
   const titleLine = tileTitle?.trim() || null;
   const areaLine = areaLabel?.trim() || null;
   const showAreaRow = Boolean(areaLine || (isChartsPanel && rangeNote));
+  // The name gets the whole first line: a status light sits at the end of the area line when there is one.
+  const lightOnAreaRow = Boolean(light && showAreaRow);
 
-  return (
+  const titleRow = (
     <Box
-      data-nx-title-tile
-      className={actions ? PANEL_DRAG_HANDLE : undefined}
       sx={{
-        ...(actions ? { cursor: "grab", touchAction: "none", "&:active": { cursor: "grabbing" } } : {}),
         flexShrink: 0,
         height: PANEL_TITLE_TILE_HEIGHT,
         minHeight: PANEL_TITLE_TILE_HEIGHT,
@@ -85,12 +84,6 @@ function PanelTitleTile({
         containerName: "nx-title",
       }}
     >
-      {actions ? (
-        // The grip: shows the title is where a panel is picked up to move it.
-        <Tooltip title="Drag to move this panel">
-          <DragIndicatorIcon aria-label="Drag to move this panel" sx={{ fontSize: ICON_SIZE.title, flexShrink: 0, color: "text.secondary", ml: -0.5 }} />
-        </Tooltip>
-      ) : null}
       {icon.iconId !== null ? (
         <ItemIcon iconId={icon.iconId} kind={icon.kind} sx={{ fontSize: ICON_SIZE.title, flexShrink: 0, color: "primary.main" }} />
       ) : null}
@@ -151,15 +144,38 @@ function PanelTitleTile({
               {rangeNote}
             </Box>
           ) : null}
+          {lightOnAreaRow ? (
+            // Narrow titles draw lights smaller so they fit this line; a full-size light lines up with
+            // the line's bottom and reaches up beside the name's end, so it is never cut off below.
+            <Box sx={{ display: "flex", alignItems: "flex-end", flexShrink: 0, height: `${PANEL_TITLE_AREA_LINE_PX}px` }}>{light}</Box>
+          ) : null}
         </Box>
       ) : null}
       </Box>
-      {light}
-      {actions ? (
+      {lightOnAreaRow ? null : light}
+    </Box>
+  );
+
+  if (!actions) return <Box data-nx-title-tile sx={{ flexShrink: 0, minWidth: 0 }}>{titleRow}</Box>;
+
+  // While arranging: the grip and the panel's buttons get a line of their own above the name,
+  // and the whole top of the panel is where it is picked up to move it.
+  return (
+    <Box
+      data-nx-title-tile
+      className={PANEL_DRAG_HANDLE}
+      sx={{ flexShrink: 0, minWidth: 0, display: "flex", flexDirection: "column", gap: "2px", cursor: "grab", touchAction: "none", "&:active": { cursor: "grabbing" } }}
+    >
+      <Box data-nx-edit-tools sx={{ display: "flex", alignItems: "center", gap: "var(--nx-control-gap)", px: "var(--nx-title-inset, 8px)", minWidth: 0 }}>
+        <Tooltip title="Drag to move this panel">
+          <DragIndicatorIcon aria-label="Drag to move this panel" sx={{ fontSize: ICON_SIZE.title, flexShrink: 0, color: "text.secondary", ml: -0.5 }} />
+        </Tooltip>
+        <Box sx={{ flex: 1 }} />
         <Box className={PANEL_NO_DRAG} sx={{ display: "flex", gap: "var(--nx-control-gap)", flexShrink: 0, cursor: "default" }}>
           {actions}
         </Box>
-      ) : null}
+      </Box>
+      {titleRow}
     </Box>
   );
 }

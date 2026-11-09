@@ -255,6 +255,19 @@ function bowlDepth(shape: Shape): number {
   return rim <= 0.08 ? 1 : rim;
 }
 
+/** Needle length, in radius units. */
+const NEEDLE_LENGTH = 0.62;
+
+/** How far below the hub the needle's tip can reach, in radius units (at the ends of the scale). */
+function needleDepth(shape: Shape): number {
+  const down = (deg: number) => -Math.sin((deg * Math.PI) / 180);
+  return NEEDLE_LENGTH * Math.max(0, down(shape.start), down(shape.end));
+}
+
+function needleWidth(arc: number): number {
+  return Math.max(2, Math.round(arc * 0.35));
+}
+
 /** True when this angle lies on the drawn arc. */
 function onArc(deg: number, shape: Shape): boolean {
   const clockwise = shape.clockwise !== false;
@@ -467,20 +480,23 @@ function place(ctx: EchartsBuildCtx, shape: Shape): Place {
       verticalCap = Math.min(readingGuess, Math.max(8, Math.round(rim - 2)));
     }
     const dialBottom = box.maxY;
+    // Lowest point of the needle (its tip at either end of the scale, plus half its width and a gap).
+    const needleClear = (radius: number) => (shape.pointer ? needleDepth(shape) * radius + needleWidth(arc) / 2 + 3 : 0);
     const detailFor = (font: number) => {
       if (reading === "center") return 0;
       if (reading === "gap") {
         const rim = bowlDepth(shape) * innerHole;
         const half = font / 2;
-        const limit = Math.max(half, rim - half - 2);
-        // Under the hub, never on it.
-        return Math.round(Math.min(Math.max(r * 0.5, hub + 3 + half), limit));
+        // A needle dial lets the number reach into the open bottom of the dial, where the needle never goes.
+        const limit = Math.max(half, shape.pointer ? rim : rim - half - 2);
+        // Under the hub and below where the needle's tip can reach, so the needle never crosses it.
+        return Math.round(Math.min(Math.max(r * 0.5, hub + 3 + half, needleClear(r) + half), limit));
       }
       return Math.round(dialBottom + gap + font / 2);
     };
     const fits = (font: number) => {
       const at = detailFor(font);
-      if (reading === "gap" && at - font / 2 < hub + 2) return false;
+      if (reading === "gap" && at - font / 2 < Math.max(hub + 2, needleClear(r) - 1)) return false;
       const maxW = reading === "below" ? tileHalf * 2 : clearWidth(at, font, hole, tileHalf, shape);
       return glyphWidth(text, font) <= maxW + 0.5;
     };
@@ -590,8 +606,8 @@ function seriesFor(
     clockwise: shape.clockwise !== false,
     pointer: {
       show: shape.pointer && !inner,
-      length: "62%",
-      width: Math.max(2, Math.round(laid.arc * 0.35)),
+      length: `${NEEDLE_LENGTH * 100}%`,
+      width: needleWidth(laid.arc),
       itemStyle: { color: ink.text },
     },
     progress: {

@@ -45,6 +45,11 @@ export type FlowPanel = {
   maxH?: number;
   /** Items shown as pictures (cameras): how many, how many side by side as arranged, their shape. */
   pictures?: PanelPictures;
+  /**
+   * The content is one drawing that reads well small (a gauge): on a narrow screen it takes half
+   * the row instead of the whole row, so two sit side by side.
+   */
+  compact?: boolean;
 };
 
 /** What a panel of pictures told the dashboard about its items (see PanelItemGrid). */
@@ -88,7 +93,8 @@ export const FLOW_MIN_PANEL_W = 2 * STEPS;
  * - Wider than the screen: full width, same proportions. A panel of pictures (cameras) instead
  *   puts its pictures under each other at their own shape, and grows to hold them.
  * - Narrow screens only: when the space left beside the panel is too narrow for any panel
- *   (a 3-wide gauge on a 4-wide phone), it takes the whole row, same proportions.
+ *   (a 3-wide chart on a 4-wide phone), it takes the whole row, same proportions. A compact
+ *   panel (a gauge) takes half the row instead, so two sit side by side.
  *   Otherwise it keeps its shape, so its tiles stay the size of every other panel's.
  * Never shorter than the panel's minimum, or 2 squares.
  */
@@ -96,6 +102,11 @@ export function flowShape(panel: FlowPanel, cols: number, design = DESIGN_COLS, 
   const tooWide = panel.w > cols;
   const strandedGap = cols < design && panel.w < cols && cols - panel.w < FLOW_MIN_PANEL_W;
   if (!tooWide && !strandedGap) return { w: Math.max(1, panel.w), h: panel.h };
+  const half = Math.floor(cols / 2 / STEPS) * STEPS;
+  if (panel.compact && cols < design && half >= FLOW_MIN_PANEL_W && half >= (panel.minW ?? 1) && half < panel.w) {
+    // Half the row, same proportions: two gauges side by side instead of one the whole screen wide.
+    return { w: half, h: Math.max(Math.round((panel.h * half) / panel.w), panel.minH ?? 1, 2) };
+  }
   const w = cols;
   if (panel.pictures && panel.pictures.count > 0) {
     // Pictures go under each other instead of shrinking, at their own shape: the panel grows to hold them.

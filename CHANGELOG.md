@@ -2,6 +2,14 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.12
+
+- Panel names get the whole first line of the title: a status light now sits at the end of the line under the name (the area), slightly smaller on phones and in narrow panels so it is never cut off, so names like "Kids Room Temperature" are no longer cut to a few letters. While editing a dashboard, the move grip and the pencil have a line of their own above the name.
+- Gauges on phones: a gauge that used to fill the whole screen width is now half as wide, so two sit side by side. On needle gauges the number always sits below the furthest point the needle reaches, so the needle never runs through it.
+- Charts with no readings say so in the middle of the chart, for the chart's own period ("No readings in the last 24 hours"), instead of a small "No data" in the corner.
+- The calendar always fits its panel: the weeks share the panel's height and the text gets smaller if needed, so the month no longer slides up and down inside its panel.
+- Switches with a pressed-in track (such as the light switch with its little lights) have a faint edge round the track, so the switch shows its full shape even when the track has the same colour as the panel.
+
 ## V5.3.11
 
 - Phones: one row at the bottom of the screen, your dashboards (the dock, or the row at the top if you chose it). The menu with every page, This phone and Sign out is now behind the menu button at the top right, beside the bell.

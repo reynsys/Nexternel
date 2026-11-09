@@ -7,7 +7,9 @@
   --s-accent: var(--nx-accent, #1a73e8);
   --s-surface: var(--nx-control-surface, rgba(255, 255, 255, 0.1));
   --s-raise: var(--nx-control-raise, 0 1px 2px rgba(0, 0, 0, 0.45));
-  --s-press: var(--nx-control-press, inset 0 1px 3px rgba(0, 0, 0, 0.45));
+  /* A pressed-in track also gets a faint edge line, so its shape shows even when its fill is the tile's own colour. */
+  --s-edge: color-mix(in srgb, var(--s-muted) 30%, transparent);
+  --s-press: var(--nx-control-press, inset 0 1px 3px rgba(0, 0, 0, 0.45)), inset 0 0 0 1px var(--s-edge);
   --s-radius: var(--nx-control-radius, 10px);
   --s-pill: var(--nx-pill-radius, 999px);
   --s-knob: var(--nx-knob, #fff);

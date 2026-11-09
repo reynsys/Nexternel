@@ -52,10 +52,13 @@ export function CalendarWidget({ widget: _widget }: { widget: WidgetInstance }) 
           p: 1,
           // The month fits its tile: day names plus the weeks, sized by width and height.
           ...genericTileLinesQuerySx,
-          "--nx-cal-font": genericTileFitLinesSize(1 + weeks, { reservedPx: weeks * 2, widthCqi: 3.6, max: "2.25rem" }),
+          // Smaller text rather than a month that runs out of its panel (short panels, large text).
+          "--nx-cal-font": genericTileFitLinesSize(1 + weeks, { reservedPx: weeks * 2, widthCqi: 3.6, max: "2.25rem", min: "0.5rem" }),
           display: "grid",
           gridTemplateColumns: "repeat(7, 1fr)",
-          gridTemplateRows: `auto repeat(${weeks}, minmax(min-content, 1fr))`, // rows share the height; the text size above makes every week fit
+          // Every row gets an equal share of the height and never more, so the month never scrolls or moves.
+          gridTemplateRows: `repeat(${1 + weeks}, minmax(0, 1fr))`,
+          overflow: "hidden",
           gap: 0.25,
           textAlign: "center",
         })}
@@ -65,7 +68,7 @@ export function CalendarWidget({ widget: _widget }: { widget: WidgetInstance }) 
             key={d}
             variant="caption"
             color="primary.main"
-            sx={{ fontSize: "var(--nx-cal-font)", fontWeight: "fontWeightBold", lineHeight: 1.2 }}
+            sx={{ fontSize: "var(--nx-cal-font)", fontWeight: "fontWeightBold", lineHeight: 1.2, minHeight: 0, alignSelf: "center" }}
           >
             {d}
           </Typography>
@@ -77,6 +80,8 @@ export function CalendarWidget({ widget: _widget }: { widget: WidgetInstance }) 
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              minHeight: 0,
+              overflow: "hidden",
               borderRadius: 0.5,
               fontSize: "var(--nx-cal-font)",
               // The same line height as the day names, so the size from genericTileFitLinesSize

@@ -87,6 +87,17 @@ test("on a phone, a panel too wide for two per row takes the whole row", () => {
   assert.deepEqual(laid.big1, [0, 12, 4, 4]); // 6×6 → 4×4
 });
 
+test("on a phone, gauges take half the row (two side by side) instead of the whole row", () => {
+  const gauges = DASHBOARDS.Energy!.map((panel) => (panel.i.startsWith("g") ? { ...panel, compact: true } : panel));
+  const laid = pos(flowLayout(gauges, sq(4), D));
+  assert.deepEqual(laid.g1, [0, 0, 2, 2]); // 3×3 gauge → 2×2, same proportions
+  assert.deepEqual(laid.g2, [2, 0, 2, 2]);
+  assert.deepEqual(laid.g3, [0, 2, 2, 2]);
+  assert.deepEqual(laid.c1, [0, 4, 4, 3]); // charts still take the whole row
+  // Wide screens are unchanged: the arrangement is shown exactly as made.
+  assert.deepEqual(pos(flowLayout(gauges, D, D)).g1, [0, 0, 3, 3]);
+});
+
 test("a 1280 px monitor (8 columns): Hallway Monitor keeps its 6×2 shape, so its tiles match the gauges", () => {
   const laid = pos(flowLayout(DASHBOARDS["DAMN HomE"]!, sq(8), D));
   assert.deepEqual(laid.hallway.slice(2), [6, 2]); // not stretched to 8×3

@@ -6,7 +6,7 @@ import { api } from "../api";
 import { PanelItemGrid } from "../components/PanelItemGrid";
 import { PanelTile } from "../components/PanelTile";
 import type { PanelAppearanceLayout } from "../lib/panel-appearance";
-import { CapabilityHistoryChart } from "./CapabilityHistoryChart";
+import { CapabilityHistoryChart, NO_READINGS } from "./CapabilityHistoryChart";
 
 const MAX_CHARTS = 12;
 
@@ -71,12 +71,12 @@ export function ChartsPanel({
         for (const id of ids) {
           const series = batch.series.find((s) => s.capabilityId === id);
           if (!series) {
-            next[id] = { loading: false, error: "No data", points: [] };
+            next[id] = { loading: false, error: NO_READINGS, points: [] };
             continue;
           }
           const err =
             series.error ??
-            (series.points.length === 0 ? "No data" : null);
+            (series.points.length === 0 ? NO_READINGS : null);
           next[id] = {
             loading: false,
             error: err ? friendlyHistoryError(err) : null,

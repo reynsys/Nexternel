@@ -17,11 +17,11 @@
  */
 export function genericTileFitLinesSize(
   lines: number,
-  opts: { reservedPx?: number; widthCqi?: number; max?: string } = {}
+  opts: { reservedPx?: number; widthCqi?: number; max?: string; min?: string } = {}
 ): string {
   const byHeight = `calc((100cqb - ${opts.reservedPx ?? 0}px) / ${(Math.max(1, lines) * 1.25).toFixed(2)})`;
   const size = opts.widthCqi ? `min(${opts.widthCqi}cqi, ${byHeight})` : byHeight;
-  return `clamp(0.7rem, ${size}, ${opts.max ?? "1.15rem"})`;
+  return `clamp(${opts.min ?? "0.7rem"}, ${size}, ${opts.max ?? "1.15rem"})`;
 }
 
 /** Width query for a single figure or a short label. */

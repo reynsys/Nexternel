@@ -23,7 +23,8 @@ import { PluginPanelEditor } from "./panel-editor/PluginPanelEditor";
 import { mergeRuntimePanelPatch } from "../lib/panel-compatibility/normalize-panel";
 import { PanelAreaLineContext, type PanelAreaLineChoice } from "./PanelAreaLineFields";
 import { api } from "../api";
-import { flowCommit, flowGridForWidth, flowLayout, picturesAcross, type PanelPictures } from "../panels/flow-layout";
+import { normalizePanelKind } from "../lib/panel-kind";
+import { flowCommit, flowGridForWidth, flowLayout, picturesAcross, type FlowPanel, type PanelPictures } from "../panels/flow-layout";
 import { PanelPicturesContext, type PanelPicturesLink } from "../lib/panel-pictures-context";
 import { PanelWidgetEditor, isPanelWidgetType, panelLabel } from "../widgets/panel";
 import { GAUGE_WIDGET_TYPE } from "../widgets/gauge";
@@ -200,7 +201,9 @@ export function SectionGrid({
       panels
         .filter((p) => typeof p.id === "string" && p.id.trim())
         .map((p) => {
-          const item = gridLayoutItemForPanel(p);
+          const item: FlowPanel = gridLayoutItemForPanel(p);
+          // A gauge reads well small: on a phone two sit side by side (flow-layout.ts).
+          if (normalizePanelKind(p.type) === "panel.gauge") item.compact = true;
           return pictures[p.id] ? { ...item, pictures: pictures[p.id] } : item;
         }),
     [panels, pictures]

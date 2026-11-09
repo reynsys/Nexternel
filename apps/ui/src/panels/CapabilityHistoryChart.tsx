@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Box, CircularProgress, Typography, useTheme } from "@mui/material";
 import ReactECharts from "echarts-for-react";
+import ShowChartIcon from "@mui/icons-material/ShowChart";
+import { ICON_SIZE } from "../lib/appearance/type";
 import type { HistoryPoint, HistoryRange, ResolvedPanelCapability } from "../api";
 import { api } from "../api";
 import { echartsInitTheme, echartsPaletteFromTheme } from "../widgets/echarts/chart-theme";
@@ -17,6 +19,21 @@ import { PanelValueSummary } from "./PanelValueSummary";
 import { usePanelResponsiveSemanticState } from "./responsive";
 import { parseCapabilityReading } from "./parse-capability-reading";
 import { useSkin } from "../skins/SkinProvider";
+
+/** History came back empty (no readings in the chart's period). */
+export const NO_READINGS = "No data";
+
+const PERIOD_WORDS: Record<HistoryRange, string> = {
+  "1h": "the last hour",
+  "6h": "the last 6 hours",
+  "24h": "the last 24 hours",
+  "7d": "the last 7 days",
+};
+
+/** "No readings in the last 24 hours" — the empty chart's words. */
+export function noReadingsText(range: HistoryRange): string {
+  return `No readings in ${PERIOD_WORDS[range] ?? "this period"}`;
+}
 
 type PrefetchedHistory = {
   loading: boolean;
@@ -114,10 +131,17 @@ function CapabilityHistoryChartCanvas({
   }
 
   if (error && points.length === 0) {
+    // In the middle of the chart, in words: what is missing, for which period.
     return (
-      <Typography variant="caption" color="text.secondary">
-        {error}
-      </Typography>
+      <Box
+        role="status"
+        sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 0.5, height: "100%", p: 1.5, textAlign: "center" }}
+      >
+        <ShowChartIcon sx={{ fontSize: ICON_SIZE.picker, color: "text.disabled" }} />
+        <Typography variant="body2" color="text.secondary">
+          {error === NO_READINGS ? noReadingsText(range) : error}
+        </Typography>
+      </Box>
     );
   }
 
@@ -170,7 +194,7 @@ export function CapabilityHistoryChart({
         if (cancelled) return;
         setPoints(res.points);
         if (res.points.length === 0) {
-          setError("No data");
+          setError(NO_READINGS);
         }
       })
       .catch((err) => {
