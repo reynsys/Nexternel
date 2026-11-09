@@ -2,7 +2,6 @@ import { Outlet, useLocation } from "react-router-dom";
 import { Alert, Box, CircularProgress, Stack, Typography } from "@mui/material";
 import { hasPermission } from "../../../lib/permissions";
 import { useShellAuth } from "../../../skins/useShellAuth";
-import { SegmentButtonNav } from "../../../components/SegmentButtonNav";
 import { SETTINGS_TABS, settingsTabPath } from "./settings-nav";
 
 export function SettingsLayout() {
@@ -36,12 +35,6 @@ export function SettingsLayout() {
     tabs[0]?.segment ??
     "appearance";
 
-  const navItems = tabs.map((tab) => ({
-    id: tab.segment,
-    label: tab.label,
-    to: settingsTabPath(tab.segment),
-  }));
-
   const current = tabs.find((t) => t.segment === active);
   return (
     <Box>
@@ -53,10 +46,8 @@ export function SettingsLayout() {
           {current.hint}
         </Typography>
       ) : null}
-      {/* Wide screens list these pages under Settings in the side menu; phones get the buttons here. */}
-      <Box sx={{ display: { xs: "block", md: "none" } }}>
-        <SegmentButtonNav items={navItems} activeId={active} />
-      </Box>
+      {/* Every Settings page is in the menu (the side menu, or the menu button at the top right on phones
+          and tablets), so there is no row of page buttons here. */}
       <Outlet />
     </Box>
   );

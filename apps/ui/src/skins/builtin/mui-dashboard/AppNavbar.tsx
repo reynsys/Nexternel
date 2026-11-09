@@ -109,7 +109,7 @@ export function AppNavbar({
         slotProps={{ backdrop: { sx: { bgcolor: "rgba(0, 0, 0, 0.6)" } } }}
         PaperProps={{
           sx: {
-            width: "min(320px, 85vw)",
+            width: "min(272px, 78vw)",
             pb: "env(safe-area-inset-bottom)",
             // Solid, so the dashboard does not show through the menu: the frame colour laid over the page colour.
             backgroundColor: "background.default",

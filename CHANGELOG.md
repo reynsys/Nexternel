@@ -2,6 +2,15 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.16
+
+- Phones: the menu at the top right is narrower, so more of the page stays in view.
+- Settings on phones and tablets: no more row of page buttons at the top (it slid sideways and cut the names); every Settings page is in the menu under Settings.
+- Settings → Appearance: the Layout choice (side menu or top menu) is not shown on phones, where the menu is always behind the button at the top right. Its description no longer uses the word "app".
+- Settings → Notifications: "Where it sits" is not shown on phones, where the bell is always in the top bar.
+- Settings → Users on phones: one card per person (name, can sign in, role, Edit) instead of a table that ran off the screen. The Edit button looks like a button.
+- Backup & Restore: every backup has Download and Restore buttons with their words, and Delete apart from them at the right.
+
 ## V5.3.15
 
 - Phones: every gauge is at most half the screen wide, so gauges sit two side by side, also those made 4 squares wide on a computer (which used to fill the whole phone screen). Computers and wall screens keep their layout exactly as arranged.

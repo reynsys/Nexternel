@@ -1,3 +1,4 @@
+import { isPhoneScreen } from "../lib/phone-screen";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Alert,
@@ -402,13 +403,16 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
         />
       </Section>
 
-      <Section title="Layout" hint="How the whole app is laid out around your dashboards.">
-        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 1 }}>
-          {skins.map((sk) => (
-            <ChoiceTile key={sk.id} selected={skinId === sk.id} onClick={() => onSkinChange(sk.id)} title={sk.label} text={sk.description} />
-          ))}
-        </Box>
-      </Section>
+      {/* A phone always has its menu behind the button at the top right, so the choice does nothing there. */}
+      {isPhoneScreen() ? null : (
+        <Section title="Layout" hint="Where Nexternel's menu sits around your dashboards on this screen.">
+          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 1 }}>
+            {skins.map((sk) => (
+              <ChoiceTile key={sk.id} selected={skinId === sk.id} onClick={() => onSkinChange(sk.id)} title={sk.label} text={sk.description} />
+            ))}
+          </Box>
+        </Section>
+      )}
     </Stack>
   );
 

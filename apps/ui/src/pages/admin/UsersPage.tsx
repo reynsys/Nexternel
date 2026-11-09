@@ -16,11 +16,13 @@ import {
   InputLabel,
   MenuItem,
   Select,
+  Paper,
   Stack,
   Switch,
   Tab,
   Table,
   TableBody,
+  Box,
   TableCell,
   TableHead,
   TableRow,
@@ -264,7 +266,59 @@ function UsersAdminPage() {
       <SecondCheckSection />
       <Card sx={surfaceSx}>
         <CardContent sx={{ px: { xs: 1, sm: 2 }, "&:last-child": { pb: 2 } }}>
-          <Table size="small">
+          {/* Phones: one card per person instead of the table (which ran off the screen). */}
+          <Stack spacing={1.5} sx={{ display: { xs: "flex", sm: "none" } }}>
+            {users.map((u) => (
+              <Paper key={u.id} variant="outlined" sx={{ p: 1.5, borderRadius: 1.5 }}>
+                <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
+                  <Avatar src={u.avatarData ?? undefined} sx={{ width: 36, height: 36 }}>
+                    {userInitial(u)}
+                  </Avatar>
+                  <Box sx={{ minWidth: 0, flex: 1 }}>
+                    <Typography variant="body2" sx={{ fontWeight: "fontWeightBold" }} noWrap>
+                      {u.displayName ?? u.username}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" noWrap display="block">
+                      {u.username}
+                    </Typography>
+                  </Box>
+                  <Switch checked={u.isActive} inputProps={{ "aria-label": `${u.username} can sign in` }} onChange={() => void toggleActive(u)} />
+                </Stack>
+                {u.lockedOutside || u.secondCheck ? (
+                  <Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: "wrap" }} useFlexGap>
+                    {u.lockedOutside && <Chip size="small" color="error" variant="outlined" label="Locked from outside" />}
+                    {u.secondCheck && <Chip size="small" color="success" variant="outlined" label="Second check on" />}
+                  </Stack>
+                ) : null}
+                <Select
+                  size="small"
+                  fullWidth
+                  value={u.role}
+                  aria-label={`Role for ${u.username}`}
+                  onChange={(e) => void setUserRole(u, e.target.value)}
+                  sx={{ mt: 1.5 }}
+                >
+                  {roles.map((r) => (
+                    <MenuItem key={r.id} value={r.slug}>
+                      {r.name}
+                      {r.isAdmin ? " (admin)" : ""}
+                    </MenuItem>
+                  ))}
+                </Select>
+                <ButtonRow direction="row" sx={{ mt: 1.5, justifyContent: "flex-end" }}>
+                  {u.lockedOutside && (
+                    <Button size="small" color="error" variant="outlined" onClick={() => void unlock(u)}>
+                      Unlock
+                    </Button>
+                  )}
+                  <Button size="small" variant="outlined" onClick={() => openEdit(u)}>
+                    Edit
+                  </Button>
+                </ButtonRow>
+              </Paper>
+            ))}
+          </Stack>
+          <Table size="small" sx={{ display: { xs: "none", sm: "table" } }}>
             <TableHead>
               <TableRow>
                 <TableCell>User</TableCell>

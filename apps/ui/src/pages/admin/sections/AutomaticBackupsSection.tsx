@@ -7,19 +7,13 @@ import {
   CardContent,
   FormControl,
   FormControlLabel,
-  IconButton,
   InputLabel,
   LinearProgress,
   MenuItem,
   Select,
+  Paper,
   Stack,
   Switch,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Tooltip,
   Typography,
 } from "@mui/material";
 import DownloadRoundedIcon from "@mui/icons-material/DownloadRounded";
@@ -247,71 +241,53 @@ export function AutomaticBackupsSection() {
         {busy === "now" && <LinearProgress sx={{ mb: 2 }} />}
 
         {files.length > 0 && (
-          <Box sx={{ overflowX: "auto" }}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Backup</TableCell>
-                  <TableCell>Size</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {files.map((f) => (
-                  <TableRow key={f.name}>
-                    <TableCell>
-                      {formatWhen(f.createdAt)}
-                      <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-                        {f.automatic ? "automatic" : "manual"}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>{formatSize(f.sizeBytes)}</TableCell>
-                    <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
-                      <Tooltip title="Download">
-                        <span>
-                          <IconButton
-                            size="small"
-                            disabled={busy !== null}
-                            onClick={() => void run(`dl:${f.name}`, async () => saveBlob(await api.downloadStoredBackup(f.name)))}
-                          >
-                            <DownloadRoundedIcon fontSize="small" />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
-                      <Tooltip title="Restore">
-                        <span>
-                          <IconButton size="small" disabled={busy !== null} onClick={() => void restore(f)}>
-                            <RestoreRoundedIcon fontSize="small" />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
-                      <Tooltip title="Delete">
-                        <span>
-                          <IconButton
-                            size="small"
-                            color="error"
-                            disabled={busy !== null}
-                            onClick={() =>
-                              void (async () => {
-                                const ok = await confirm({
-                                  title: "Delete this backup?",
-                                  message: `The backup from ${formatWhen(f.createdAt)} will be removed from the server.`,
-                                  confirmLabel: "Delete",
-                                });
-                                if (ok) await run(`del:${f.name}`, async () => setFiles((await api.deleteStoredBackup(f.name)).files));
-                              })()
-                            }
-                          >
-                            <DeleteOutlineRoundedIcon fontSize="small" />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Box>
+          // One row per backup: when and how big, then its buttons with their words; Delete apart from the others.
+          <Stack spacing={1}>
+            {files.map((f) => (
+              <Paper key={f.name} variant="outlined" sx={{ p: 1.5, borderRadius: 1.5 }}>
+                <Typography variant="body2">
+                  {formatWhen(f.createdAt)}
+                  <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                    {f.automatic ? "automatic" : "manual"} · {formatSize(f.sizeBytes)}
+                  </Typography>
+                </Typography>
+                <ButtonRow direction="row" sx={{ mt: 1, alignItems: "center" }}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<DownloadRoundedIcon fontSize="small" />}
+                    disabled={busy !== null}
+                    onClick={() => void run(`dl:${f.name}`, async () => saveBlob(await api.downloadStoredBackup(f.name)))}
+                  >
+                    Download
+                  </Button>
+                  <Button size="small" variant="outlined" startIcon={<RestoreRoundedIcon fontSize="small" />} disabled={busy !== null} onClick={() => void restore(f)}>
+                    Restore
+                  </Button>
+                  <Box sx={{ flex: 1 }} />
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    color="error"
+                    startIcon={<DeleteOutlineRoundedIcon fontSize="small" />}
+                    disabled={busy !== null}
+                    onClick={() =>
+                      void (async () => {
+                        const ok = await confirm({
+                          title: "Delete this backup?",
+                          message: `The backup from ${formatWhen(f.createdAt)} will be removed from the server.`,
+                          confirmLabel: "Delete",
+                        });
+                        if (ok) await run(`del:${f.name}`, async () => setFiles((await api.deleteStoredBackup(f.name)).files));
+                      })()
+                    }
+                  >
+                    Delete
+                  </Button>
+                </ButtonRow>
+              </Paper>
+            ))}
+          </Stack>
         )}
       </CardContent>
     </Card>

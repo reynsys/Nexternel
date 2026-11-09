@@ -87,7 +87,7 @@ export function ProfileSection() {
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Username <strong>{user.username}</strong> · {roleLabel(user.role, user.roleName)}.
-          An administrator can change your role in the table below.
+          An administrator can change your role in the list of users below.
         </Typography>
         <Stack component="form" spacing={2} onSubmit={(e) => void onSave(e)}>
           <UserAvatarField

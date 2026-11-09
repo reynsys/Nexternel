@@ -1,3 +1,4 @@
+import { isPhoneScreen } from "../../../lib/phone-screen";
 import { Fragment, useEffect, useState } from "react";
 import { Alert, Box, Card, CardContent, FormControl, FormControlLabel, InputLabel, MenuItem, Select, Stack, Switch, Typography } from "@mui/material";
 import { api, type BellTopics, type PluginInfo } from "../../../api";
@@ -80,7 +81,7 @@ export function NotificationsSettingsPage() {
             Its number has the colour of the most important new message: your main colour for information, amber for keep an eye on it, red for act now.
             Saved to your account.
           </Typography>
-          <BellFields value={themePrefs.bell} onChange={(bell) => setThemePrefs((prev) => ({ ...prev, bell }))} />
+          <BellFields value={themePrefs.bell} showPlace={!isPhoneScreen()} onChange={(bell) => setThemePrefs((prev) => ({ ...prev, bell }))} />
         </CardContent>
       </Card>
 

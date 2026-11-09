@@ -6,7 +6,16 @@ import { Segmented } from "./Segmented";
  * One person's notification bell: when it shows and where it sits. Used in Settings → Notifications
  * (your own) and in Users → Edit (an administrator setting it for someone).
  */
-export function BellFields({ value, onChange }: { value: BellPrefs | undefined; onChange: (next: BellPrefs) => void }) {
+export function BellFields({
+  value,
+  onChange,
+  showPlace = true,
+}: {
+  value: BellPrefs | undefined;
+  onChange: (next: BellPrefs) => void;
+  /** "Where it sits" (side menu or dashboard tools): left out on a phone, where the bell is always in the top bar. */
+  showPlace?: boolean;
+}) {
   const bell = normalizeBellPrefs(value);
   return (
     <Stack spacing={1.5}>
@@ -25,6 +34,7 @@ export function BellFields({ value, onChange }: { value: BellPrefs | undefined; 
           onChange={(show) => onChange({ ...bell, show })}
         />
       </Stack>
+      {showPlace ? (
       <Stack spacing={0.75}>
         <Typography variant="body2" fontWeight="fontWeightBold">
           Where it sits
@@ -49,6 +59,7 @@ export function BellFields({ value, onChange }: { value: BellPrefs | undefined; 
           On phones it is always in the top bar.
         </Typography>
       </Stack>
+      ) : null}
     </Stack>
   );
 }
