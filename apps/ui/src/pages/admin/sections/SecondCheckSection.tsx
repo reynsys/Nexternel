@@ -15,6 +15,7 @@ import { api, type TrustedScreen } from "../../../api";
 import { ButtonRow } from "../../../components/ButtonRow";
 import { copyTextToClipboard } from "../../../lib/copyText";
 import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
+import { MIN_PASSWORD_LENGTH } from "@nexternel/domain";
 
 type Setup = { key: string; accountName: string; link: string; qrSvg: string };
 
@@ -108,7 +109,7 @@ export function SecondCheckSection() {
       setTurningOff(false);
       setPassword("");
       setCode("");
-      setMsg("The second check is off. Signing in from outside now needs a password of at least 12 characters.");
+      setMsg(`The second check is off. Signing in from outside now needs a password of at least ${MIN_PASSWORD_LENGTH} characters.`);
       await load();
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Could not turn it off");
@@ -172,7 +173,7 @@ export function SecondCheckSection() {
           {state !== "on" && !setup && (
             <Stack spacing={1.5}>
               <Typography variant="body2" color="text.secondary">
-                Without it, signing in from outside needs a password of at least 12 characters. Install Google or Microsoft
+                Without it, signing in from outside needs a password of at least {MIN_PASSWORD_LENGTH} characters. Install Google or Microsoft
                 Authenticator on your phone first (free).
               </Typography>
               <Button variant="contained" onClick={() => void begin()} disabled={busy} sx={{ alignSelf: "flex-start" }}>

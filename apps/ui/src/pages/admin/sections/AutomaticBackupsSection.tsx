@@ -130,7 +130,7 @@ export function AutomaticBackupsSection() {
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           A full backup every day — devices, dashboards, settings, and sensor history — kept on the
-          server in the <strong>backups</strong> folder (~/nexternel/backups). Download the emergency
+          machine Nexternel runs on (the list below). Download the emergency
           kit once and keep it somewhere safe: it holds the key that opens these backups on a new
           server.
         </Typography>

@@ -2,6 +2,13 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.27
+
+- New homes start clean: no made-up areas, and the owner's own name instead of "Administrator".
+- The password hint on the first setup screen now gives the real rule (at least 12 characters); all password hints and checks use one shared rule.
+- Devices: the Octopus line now says Not set up, Switched off, Working, Needs attention or Couldn't check — it no longer says "Working" when Octopus was never set up. A confusing warning that every new home showed is gone.
+- Backup page: plain words instead of a folder path.
+
 ## V5.3.26
 
 - Dashboards now sit in the middle of wide screens (side menu folded, zoomed out, or a big monitor) instead of on the left with an empty gap on the right. Smaller screens look the same as before.

@@ -149,7 +149,7 @@ export const setupRoutes: FastifyPluginAsync = async (app) => {
     const inserted = await pool.query<{
       id: string;
       username: string;
-      display_name: string;
+      display_name: string | null;
       role: string;
       theme_prefs: unknown;
       avatar_data: string | null;
@@ -157,7 +157,8 @@ export const setupRoutes: FastifyPluginAsync = async (app) => {
       `INSERT INTO users (username, password_hash, display_name, role, is_active)
        VALUES ($1, $2, $3, 'admin', true)
        RETURNING id, username, display_name, role, theme_prefs, avatar_data`,
-      [username, passwordHash, "Administrator"]
+      // No name of its own yet: screens show the username until the owner sets one (role ≠ name).
+      [username, passwordHash, null]
     );
     const user = inserted.rows[0];
     if (!user) {

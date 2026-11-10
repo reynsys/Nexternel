@@ -1010,7 +1010,6 @@ export const api = {
   esphomeCatalog: () =>
     apiFetch<{
       configs: EsphomeCatalogEntry[];
-      esphomeDirHint: string | null;
       yamlStatus?: {
         markedMissing: { id: string; name: string }[];
         restored: { id: string; name: string }[];

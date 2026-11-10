@@ -21,7 +21,7 @@ import { parseAvatarInput } from "../auth/avatar.js";
 import { resolveRoleInfo } from "../auth/roles.js";
 import { isFromHome, loginGuard, waitText } from "../auth/login-guard.js";
 import { clearOutsideFails, OUTSIDE_LOCK_AFTER, OUTSIDE_WARN_AT, parseEmail, recordOutsideFail } from "../auth/outside-lock.js";
-import { isStrongPassword, passwordProblem } from "../auth/password-rules.js";
+import { isStrongPassword, MIN_PASSWORD_LENGTH, passwordProblem } from "../auth/password-rules.js";
 import { raiseTokenVersion } from "../auth/token-version.js";
 import { tokensFor } from "../auth/issue-tokens.js";
 import { readPassToken, signPassToken } from "../auth/tokens.js";
@@ -204,7 +204,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
               code: "password_too_weak_outside",
               message:
                 "Your password is too simple for signing in from outside the home. " +
-                "Sign in at home and choose a new one (at least 12 characters) in My profile.",
+                `Sign in at home and choose a new one (at least ${MIN_PASSWORD_LENGTH} characters) in My profile.`,
             },
           });
         }

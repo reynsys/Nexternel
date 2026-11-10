@@ -14,6 +14,7 @@ import { notifyUserUpdated } from "../../../lib/user-events";
 import { roleLabel } from "../../../lib/user-display";
 import { useShellAuth } from "../../../skins/useShellAuth";
 import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
+import { MIN_PASSWORD_LENGTH } from "@nexternel/domain";
 
 export function ProfileSection() {
   const surfaceSx = useContentSurfaceSx();
@@ -118,7 +119,7 @@ export function ProfileSection() {
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             fullWidth
-            helperText="Leave blank to keep your password. At least 12 characters; a few words in a row are easy to remember."
+            helperText={`Leave blank to keep your password. At least ${MIN_PASSWORD_LENGTH} characters; a few words in a row are easy to remember.`}
           />
           {newPassword && (
             <TextField

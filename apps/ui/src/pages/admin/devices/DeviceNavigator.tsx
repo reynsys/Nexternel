@@ -4,7 +4,7 @@ import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import type { BoardStatus, CameraRecord, Capability, DeviceRecord } from "../../../api";
 import { deviceConnectivityState } from "../../../lib/device-utils";
 import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
-import { deviceMatchesSearch, isPhysicalDevice, OCTOPUS_SERVICE_ID, type DeviceSelection, type StatusFilter } from "./device-nav-utils";
+import { deviceMatchesSearch, isPhysicalDevice, OCTOPUS_SERVICE_ID, OCTOPUS_STATUS, type DeviceSelection, type OctopusState, type StatusFilter } from "./device-nav-utils";
 import { deviceStatus, deviceSummary, type DeviceStatus } from "./device-summary";
 import { DeviceRow, type DeviceKind } from "./DeviceBits";
 import { devicesPanelChromeSx } from "./devices-panel-styles";
@@ -18,7 +18,7 @@ type Props = {
   onSearchChange: (value: string) => void;
   statusFilter: StatusFilter;
   onStatusFilterChange: (value: StatusFilter) => void;
-  octopusNeedsAttention: boolean;
+  octopus: OctopusState;
   showOctopus: boolean;
   showConnectedServices: boolean;
   cameras: CameraRecord[];
@@ -51,7 +51,7 @@ export function DeviceNavigator({
   onSearchChange,
   statusFilter,
   onStatusFilterChange,
-  octopusNeedsAttention,
+  octopus,
   showOctopus,
   showConnectedServices,
   cameras,
@@ -101,9 +101,9 @@ export function DeviceNavigator({
               kind: "service",
               name: "Octopus Home Mini",
               summary: "Energy use from Octopus",
-              status: octopusNeedsAttention ? { word: "Needs attention", tone: "warn" } : { word: "Working", tone: "ok" },
+              status: OCTOPUS_STATUS[octopus],
               selection: { kind: "service", serviceId: OCTOPUS_SERVICE_ID },
-              attention: octopusNeedsAttention,
+              attention: OCTOPUS_STATUS[octopus].tone === "warn",
               offline: false,
               search: !q || "octopus home mini energy".includes(q) ? "" : "-",
             },
@@ -125,7 +125,7 @@ export function DeviceNavigator({
     groups.push({ key: "none", label: "No area", rows: sortRows(byArea.get("") ?? []) });
     groups.push({ key: "services", label: "Online services", rows: sortRows(services) });
     return { groups: groups.filter((g) => g.rows.length), counts };
-  }, [devices, cameras, areas, values, boards, search, statusFilter, showOctopus, showConnectedServices, octopusNeedsAttention]);
+  }, [devices, cameras, areas, values, boards, search, statusFilter, showOctopus, showConnectedServices, octopus]);
 
   const filters: { value: StatusFilter; label: string; count: number; tone?: "warning" | "error" }[] = [
     { value: "all", label: "All", count: counts.all },

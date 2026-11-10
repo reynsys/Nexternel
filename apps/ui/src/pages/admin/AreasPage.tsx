@@ -21,7 +21,7 @@ const AREA_ICON = "place";
 type Editing = { id: string | null; name: string; description: string; icon: string };
 
 /**
- * Areas: the rooms and places of the home, each a box drawn like a dashboard panel (title row with grip,
+ * Areas: the parts of the home, each a box drawn like a dashboard panel (title row with grip,
  * icon, name and device count; the devices listed inside). Drag a box by its title to change the order;
  * Edit opens the side panel (name, icon, description, delete).
  */
@@ -126,7 +126,7 @@ export function AreasPage() {
     <Stack spacing={2}>
       <PageHeader
         title={AREA.plural}
-        hint={<>The rooms and places in your home.{canEdit ? " Drag a box by its title to change the order; Edit opens its settings." : ""}</>}
+        hint={<>The parts of your home, like the kitchen, the garden or the garage.{canEdit ? " Drag a box by its title to change the order; Edit opens its settings." : ""}</>}
         actions={
           canEdit ? (
             <Button variant="contained" startIcon={<AddIcon />} onClick={() => open(null)}>

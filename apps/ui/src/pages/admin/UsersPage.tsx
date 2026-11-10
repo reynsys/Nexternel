@@ -61,6 +61,7 @@ import { useLiveChanges } from "../../lib/live-changes";
 import { WallDisplayFields } from "../../components/WallDisplayFields";
 import { BellFields } from "../../components/BellFields";
 import { normalizeWallPrefs } from "../../lib/display-mode";
+import { MIN_PASSWORD_LENGTH } from "@nexternel/domain";
 
 function prefsFromUser(u: AdminUser | null): { theme: ThemePrefs; skinId: string } {
   const n = normalizeThemePrefs(u?.themePrefs ?? DEFAULT_THEME_PREFS);
@@ -476,7 +477,7 @@ function UsersAdminPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       fullWidth
-                      helperText="At least 12 characters. A few words in a row are easy to remember."
+                      helperText={`At least ${MIN_PASSWORD_LENGTH} characters. A few words in a row are easy to remember.`}
                     />
                   ) : (
                     <TextField
@@ -485,7 +486,7 @@ function UsersAdminPage() {
                       value={editPassword}
                       onChange={(e) => setEditPassword(e.target.value)}
                       fullWidth
-                      helperText="Leave blank to keep the current password. At least 12 characters."
+                      helperText={`Leave blank to keep the current password. At least ${MIN_PASSWORD_LENGTH} characters.`}
                     />
                   )}
                   <TextField

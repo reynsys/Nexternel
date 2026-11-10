@@ -16,3 +16,4 @@ export * from "./widget-bindings.js";
 export * from "./esphome-builder.js";
 export * from "./status-light.js";
 export * from "./panel-area-line.js";
+export * from "./passwords.js";

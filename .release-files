@@ -501,6 +501,7 @@ apps/ui/src/pages/admin/devices/CameraPane.tsx
 apps/ui/src/pages/admin/devices/DeviceBits.tsx
 apps/ui/src/pages/admin/devices/DeviceDetailPane.tsx
 apps/ui/src/pages/admin/devices/DeviceNavigator.tsx
+apps/ui/src/pages/admin/devices/device-nav-utils.test.ts
 apps/ui/src/pages/admin/devices/device-nav-utils.ts
 apps/ui/src/pages/admin/devices/DeviceOverviewTab.tsx
 apps/ui/src/pages/admin/devices/DeviceReadingsTab.tsx
@@ -783,6 +784,7 @@ packages/domain/src/panel-area-line.ts
 packages/domain/src/panel-registry.ts
 packages/domain/src/panel-scope.test.ts
 packages/domain/src/panel-scope.ts
+packages/domain/src/passwords.ts
 packages/domain/src/status-light.test.ts
 packages/domain/src/status-light.ts
 packages/domain/src/system.ts

@@ -25,7 +25,8 @@ export async function ensureAdminFromEnv(): Promise<"created" | "exists" | "skip
   await pool.query(
     `INSERT INTO users (username, password_hash, display_name, role, is_active)
      VALUES ($1, $2, $3, 'admin', true)`,
-    [username, passwordHash, "Administrator"]
+    // No name of its own yet: screens show the username until the owner sets one (role ≠ name).
+    [username, passwordHash, null]
   );
   return "created";
 }

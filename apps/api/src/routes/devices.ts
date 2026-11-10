@@ -142,11 +142,8 @@ export const devicesRoutes: FastifyPluginAsync = async (app) => {
     );
 
     return {
+      // No files yet is how every new home starts (adding a board makes the first one): nothing to warn about.
       configs,
-      esphomeDirHint:
-        fileEntries.length === 0
-          ? "No YAML files found in /esphome — create a device in ESPHome Builder first, then ensure the esphome/ folder is on the server."
-          : null,
       yamlStatus,
       /** @deprecated use yamlStatus.markedMissing */
       pruned: yamlStatus.markedMissing,

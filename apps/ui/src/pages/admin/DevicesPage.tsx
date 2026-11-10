@@ -24,9 +24,11 @@ import { useBoardUpdates } from "../../lib/board-updates";
 import { ReadingSettingsDialog, type ReadingToEdit } from "./devices/ReadingSettingsDialog";
 import {
   isPhysicalDevice,
+  octopusState,
   parseSelectionFromSearchParams,
   selectionToSearchParams,
   type DeviceSelection,
+  type OctopusState,
   type StatusFilter,
 } from "./devices/device-nav-utils";
 import { insetSx } from "../../skins/surfaceStyles";
@@ -80,7 +82,6 @@ export function DevicesPage() {
   const [devices, setDevices] = useState<DeviceRecord[]>([]);
   const [areas, setAreas] = useState<AreaOption[]>([]);
   const [catalog, setCatalog] = useState<EsphomeCatalogEntry[]>([]);
-  const [catalogHint, setCatalogHint] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [editingReading, setEditingReading] = useState<ReadingToEdit | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -111,7 +112,7 @@ export function DevicesPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const capabilityValues = useCapabilityValues();
   const { boards: boardStatuses } = useBoardUpdates();
-  const [octopusNeedsAttention, setOctopusNeedsAttention] = useState(false);
+  const [octopus, setOctopus] = useState<OctopusState>("not_set_up");
   const [cameras, setCameras] = useState<CameraRecord[]>([]);
 
   const selection = useMemo(
@@ -158,7 +159,6 @@ export function DevicesPage() {
         api.me(),
         api.esphomeCatalog().catch(() => ({
           configs: [],
-          esphomeDirHint: null,
           yamlStatus: undefined,
           pruned: [],
         })),
@@ -174,19 +174,14 @@ export function DevicesPage() {
             .map((s) => ({ id: s.id, label: s.label }))
         );
         try {
-          const octRes = await api.octopusSettings();
-          setOctopusNeedsAttention(
-            Boolean(octRes.settings.enabled && octRes.settings.lastError)
-          );
+          setOctopus(octopusState((await api.octopusSettings()).settings));
         } catch {
-          setOctopusNeedsAttention(false);
+          setOctopus(octopusState(null));
         }
       } else {
         setSystems([]);
-        setOctopusNeedsAttention(false);
       }
       setCatalog(catRes.configs);
-      setCatalogHint(catRes.esphomeDirHint);
       if (catRes.yamlStatus?.markedMissing?.length) {
         setInfo(
           `YAML missing on server for ${catRes.yamlStatus.markedMissing.length} device(s): ${catRes.yamlStatus.markedMissing.map((p) => p.name).join(", ")}`
@@ -559,7 +554,6 @@ export function DevicesPage() {
           {info}
         </Alert>
       )}
-      {catalogHint && <Alert severity="warning">{catalogHint}</Alert>}
 
       {isAdmin && unregistered.length > 0 && (
         <Card sx={{ p: 2 }}>
@@ -651,7 +645,7 @@ export function DevicesPage() {
                 onStatusFilterChange={setStatusFilter}
                 values={capabilityValues}
                 boards={boardStatuses}
-                octopusNeedsAttention={octopusNeedsAttention}
+                octopus={octopus}
                 showOctopus={isAdmin}
                 showConnectedServices={showConnectedServices}
                 cameras={cameras}

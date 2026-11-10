@@ -21,6 +21,7 @@ import { choiceSx } from "../skins/surfaceStyles";
 import { ButtonRow } from "../components/ButtonRow";
 import { BrandMark } from "../components/BrandMark";
 import { backupSecretError, backupSecretField } from "../lib/backup-file";
+import { MIN_PASSWORD_LENGTH } from "@nexternel/domain";
 
 /**
  * Welcome screen on a new installation: start a new home, or take over one from its backup.
@@ -100,8 +101,8 @@ export function SetupPage() {
   async function onCreateAdmin(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    if (password.length < 12) {
-      setError("The password must be at least 12 characters long.");
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(`The password must be at least ${MIN_PASSWORD_LENGTH} characters long.`);
       return;
     }
     if (password !== confirmPassword) {
@@ -238,7 +239,7 @@ export function SetupPage() {
                   fullWidth
                   disabled={busy}
                   autoComplete="new-password"
-                  helperText="At least 8 characters"
+                  helperText={`At least ${MIN_PASSWORD_LENGTH} characters. A few words in a row are easy to remember.`}
                 />
                 <TextField
                   label="Confirm password"

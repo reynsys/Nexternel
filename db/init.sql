@@ -134,8 +134,5 @@ VALUES
   ('viewer', 'Viewer', 'Signed-in access without admin privileges', FALSE, TRUE, 10)
 ON CONFLICT (slug) DO NOTHING;
 
--- Default room
-INSERT INTO rooms (name, description, sort_order) VALUES
-    ('Living Room', 'Main living area', 1),
-    ('Bedroom', 'Master bedroom', 2),
-    ('Garage', 'Garage and workshop', 3);
+-- No starter areas: a new home starts empty and the owner adds the parts of their own home
+-- (made-up ones showed up as if they were real and had to be deleted first).

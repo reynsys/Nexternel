@@ -24,6 +24,7 @@ import {
   storedBackupPath,
   updateBackupSchedule,
 } from "./scheduled.js";
+import { MIN_BACKUP_PASSWORD_LENGTH } from "@nexternel/domain";
 
 export const backupRoutes: FastifyPluginAsync = async (app) => {
   /** Automatic backups: settings, last result, and the backups kept on this server. */
@@ -131,11 +132,11 @@ export const backupRoutes: FastifyPluginAsync = async (app) => {
     const confirmPassword = String(request.body?.confirmPassword ?? "").trim();
     const includeHistory = request.body?.includeHistory !== false;
 
-    if (!password || password.length < 8) {
+    if (!password || password.length < MIN_BACKUP_PASSWORD_LENGTH) {
       return reply.code(400).send({
         error: {
           code: "bad_request",
-          message: "Backup password must be at least 8 characters.",
+          message: `Backup password must be at least ${MIN_BACKUP_PASSWORD_LENGTH} characters.`,
         },
       });
     }

@@ -16,6 +16,7 @@ import { api, type BackupInspectResult, type BackupJob } from "../../../api";
 import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
 import { ButtonRow } from "../../../components/ButtonRow";
 import { backupSecretError, backupSecretField } from "../../../lib/backup-file";
+import { MIN_BACKUP_PASSWORD_LENGTH } from "@nexternel/domain";
 
 const PHASE_LABELS: Record<string, string> = {
   queued: "Checking backup",
@@ -139,8 +140,8 @@ export function BackupRestoreSection() {
 
   async function onCreateBackup() {
     setCreateErr(null);
-    if (password.length < 8) {
-      setCreateErr("Backup password must be at least 8 characters.");
+    if (password.length < MIN_BACKUP_PASSWORD_LENGTH) {
+      setCreateErr(`Backup password must be at least ${MIN_BACKUP_PASSWORD_LENGTH} characters.`);
       return;
     }
     if (password !== confirmPassword) {

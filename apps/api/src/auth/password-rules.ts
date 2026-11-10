@@ -1,13 +1,14 @@
+import { MIN_PASSWORD_LENGTH } from "@nexternel/domain";
 import { COMMON_PASSWORDS_TEXT } from "./common-passwords.js";
 
 /**
  * Rules for a new password. Without the second check (two-step sign-in) a password has to be strong:
- * at least 12 characters, not a well-known password (also not one with only numbers or signs
+ * at least MIN_PASSWORD_LENGTH characters (packages/domain), not a well-known password (also not one with only numbers or signs
  * added, like "Password1234!"), not the username with numbers added, and not the same few
  * characters over and over.
  */
 
-export const MIN_PASSWORD_LENGTH = 12;
+export { MIN_PASSWORD_LENGTH };
 
 let common: Set<string> | null = null;
 function commonPasswords(): Set<string> {

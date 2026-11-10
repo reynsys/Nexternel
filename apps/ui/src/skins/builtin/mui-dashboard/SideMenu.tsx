@@ -13,6 +13,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import LoginIcon from "@mui/icons-material/Login";
 import { Link as RouterLink } from "react-router-dom";
 import { APP_VERSION } from "../../../version";
+import { roleLabel, userInitial } from "../../../lib/user-display";
 import { MenuContent } from "./MenuContent";
 import { NotificationBell } from "../../../components/NotificationBell";
 import { hasPermission } from "../../../lib/permissions";
@@ -77,10 +78,8 @@ export function SideMenu({
   );
 
   const userName = user?.displayName?.trim() || user?.username || "User";
-  const initial = (user?.displayName || user?.username || "?").trim().slice(0, 1).toUpperCase();
-  const roleName =
-    user?.roleName ||
-    (user?.role === "admin" ? "Administrator" : user?.role === "viewer" ? "Viewer" : (user?.role ?? ""));
+  const initial = userInitial(user);
+  const roleName = roleLabel(user?.role, user?.roleName);
 
   return (
     <MuiDrawer

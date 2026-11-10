@@ -1,4 +1,5 @@
-import type { DeviceRecord } from "../../../api";
+import type { DeviceRecord, OctopusSettingsPublic } from "../../../api";
+import type { DeviceStatus } from "./device-summary";
 
 export const OCTOPUS_SERVICE_ID = "octopus" as const;
 export const OCTOPUS_DEVICE_SLUG = "octopus-home-mini";
@@ -9,6 +10,24 @@ export type DeviceSelection =
   /** A camera; cameraId "new" = adding one. */
   | { kind: "camera"; cameraId: string }
   | null;
+
+/** What the Octopus row says: it is listed for every owner, because its settings are opened from there. */
+export type OctopusState = "not_set_up" | "switched_off" | "working" | "needs_attention" | "unknown";
+
+/** Octopus settings → its state; null = they could not be read (never shown as working). */
+export function octopusState(settings: OctopusSettingsPublic | null): OctopusState {
+  if (!settings) return "unknown";
+  if (!settings.enabled) return settings.accountNumber || settings.hasApiKey ? "switched_off" : "not_set_up";
+  return settings.lastError ? "needs_attention" : "working";
+}
+
+export const OCTOPUS_STATUS: Record<OctopusState, DeviceStatus> = {
+  not_set_up: { word: "Not set up", tone: "off" },
+  switched_off: { word: "Switched off", tone: "off" },
+  working: { word: "Working", tone: "ok" },
+  needs_attention: { word: "Needs attention", tone: "warn" },
+  unknown: { word: "Couldn't check", tone: "warn" },
+};
 
 /** The quick filters above the Devices list. */
 export type StatusFilter = "all" | "needs_attention" | "offline";
