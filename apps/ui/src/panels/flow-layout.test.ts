@@ -135,7 +135,7 @@ test("a resize changes only that panel's shape; on a wide screen positions are k
   assert.deepEqual(commit.hallway, [4, 4, 6, 2]);
 });
 
-test("grid geometry: laptops keep their layout exactly, wide screens grow squares to a limit, narrow screens flow", () => {
+test("grid geometry: laptops keep their layout exactly, wider sections fill their width, narrow screens flow", () => {
   // This laptop's real section width (measured on the live dashboard at 1600 px).
   const laptop = flowGridForWidth(1278, D);
   assert.deepEqual([laptop.cols, laptop.gridWidth, laptop.rowHeight], [sq(12), 1278, 106.5]); // = before (width / 12)
@@ -145,12 +145,13 @@ test("grid geometry: laptops keep their layout exactly, wide screens grow square
   }
   const qhd = flowGridForWidth(2230, D);
   assert.equal(qhd.cols, sq(12));
-  assert.equal(qhd.gridWidth, 12 * (128 + 16) - 16); // capped at 128 px squares, 16 px gaps
+  // Panels fill the section; the dashboard itself stops at DASHBOARD_MAX_WIDTH_PX and is centred (DashboardPage).
+  assert.deepEqual([qhd.gridWidth, qhd.rowHeight], [2230, 2230 / 12]);
   assert.equal(flowGridForWidth(847, D).cols, sq(10)); // just under (tablet landscape): flows, two squares fewer
   assert.deepEqual([flowGridForWidth(316, D).cols, flowGridForWidth(316, D).gridWidth], [sq(4), 316]); // phone
 });
 
-test("fewer panels across: bigger squares, the same overall width limit, and the arrangement repacked in order", () => {
+test("fewer panels across: bigger squares, the same overall width, and the arrangement repacked in order", () => {
   const g10 = flowGridForWidth(1278, sq(10));
   assert.equal(g10.cols, sq(10));
   assert.equal(g10.rowHeight, 1278 / 10); // bigger squares than at 12 across

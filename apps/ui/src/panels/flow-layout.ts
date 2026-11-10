@@ -256,8 +256,13 @@ export function flowCommit(
   return packInOrder(ordered, design, design);
 }
 
-/** Largest square on wide screens (px): fuller use of the width without oversized panels. */
-export const FLOW_CELL_MAX_PX = 128;
+/**
+ * Widest a dashboard grows (px, its sections together); wider screens (side menu folded, zoomed out,
+ * big monitors) show it centred. Panels fill the sections inside it, so this one limit also keeps
+ * squares from getting oversized (about 128 px at 12 across with the plain Look's frame), whatever
+ * room a Look's frame takes.
+ */
+export const DASHBOARD_MAX_WIDTH_PX = 1760;
 /**
  * Smallest square at which the arrangement is still shown exactly as made (px, for 12 squares across;
  * fewer squares across need proportionally bigger ones).
@@ -270,7 +275,7 @@ export const DESIGN_MIN_CELL_PX = 56;
 /**
  * Grid geometry for a section `widthPx` wide, `design` steps across; `cols` comes back in steps.
  * Wide enough for its squares at {@link DESIGN_MIN_CELL_PX}: the arrangement exactly
- * as made, squares grown up to {@link FLOW_CELL_MAX_PX}, left-aligned.
+ * as made, filling the width (the dashboard itself stops at {@link DASHBOARD_MAX_WIDTH_PX}).
  * Narrower: fewer squares, each still at least that size (an even number, at least 4), panels flowed
  * in order, full width.
  * `rowHeight` is one square (heights are counted in squares).
@@ -288,7 +293,7 @@ export function flowGridForWidth(
 function flowGridForWidthOnly(widthPx: number, design: number): { cols: number; gridWidth: number; rowHeight: number } {
   if (widthPx <= 0) return { cols: design, gridWidth: 0, rowHeight: 56 };
   const squares = design / STEPS;
-  // Fewer squares = bigger squares; the limits keep the same overall width as 12 squares would.
+  // Fewer squares = bigger squares (the smallest readable square scales with them).
   const k = REFERENCE_SQUARES / squares;
   const designCell = (widthPx + FLOW_CELL_GAP_PX) / squares - FLOW_CELL_GAP_PX;
   if (designCell < DESIGN_MIN_CELL_PX * k) {
@@ -299,8 +304,5 @@ function flowGridForWidthOnly(widthPx: number, design: number): { cols: number; 
     const across = Math.min(Math.max(FLOW_MIN_COLS, fit - (fit % 2)), squares - 2);
     return { cols: across * STEPS, gridWidth: widthPx, rowHeight: widthPx / across };
   }
-  const maxGrid = REFERENCE_SQUARES * (FLOW_CELL_MAX_PX + FLOW_CELL_GAP_PX) - FLOW_CELL_GAP_PX;
-  const cell = Math.min((maxGrid + FLOW_CELL_GAP_PX) / squares - FLOW_CELL_GAP_PX, designCell);
-  const gridWidth = Math.min(widthPx, Math.round(squares * (cell + FLOW_CELL_GAP_PX) - FLOW_CELL_GAP_PX));
-  return { cols: design, gridWidth, rowHeight: gridWidth / squares };
+  return { cols: design, gridWidth: widthPx, rowHeight: widthPx / squares };
 }

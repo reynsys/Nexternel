@@ -118,7 +118,7 @@ import { useLiveChanges } from "../lib/live-changes";
 import { displayPath, useDisplayMode } from "../lib/display-mode";
 import { useSkin } from "../skins/SkinProvider";
 import { normalizePhoneRoomNav, normalizeRoomNav, roomNavAtTop, shownRoomNav } from "../lib/room-nav";
-import { arrangeInRows, currentPanelsPerRow, panelsPerRowChoices, rearrangeForColumns } from "../panels/flow-layout";
+import { arrangeInRows, currentPanelsPerRow, DASHBOARD_MAX_WIDTH_PX, panelsPerRowChoices, rearrangeForColumns } from "../panels/flow-layout";
 
 function sectionContentSummary(panels: RuntimePanelInstance[]): string {
   const count = panels.length;
@@ -986,13 +986,19 @@ function DashboardPageContent() {
     }
   }
 
+  /** Room on the right kept for the rail (dashboards listed down the right edge). */
+  const railRoom = roomNav === "rail" ? "var(--nx-rail-width, 0px)" : "0px";
   return (
     <DashboardErrorBoundary>
     <Stack
       spacing={2}
       sx={{
         // Room on the right for the rail. A side panel opens over the right edge; the dashboard stays put.
-        pr: roomNav === "rail" ? "var(--nx-rail-width, 0px)" : 0,
+        // One limit for the whole dashboard (its bars and sections together): on wider screens (side menu
+        // folded, zoomed out, big monitors) equal room either side, so it sits in the middle of the space
+        // left of the rail (flow-layout.ts DASHBOARD_MAX_WIDTH_PX).
+        pl: `max(0px, (100% - ${railRoom} - ${DASHBOARD_MAX_WIDTH_PX}px) / 2)`,
+        pr: `calc(${railRoom} + max(0px, (100% - ${railRoom} - ${DASHBOARD_MAX_WIDTH_PX}px) / 2))`,
       }}
     >
       {pageLoading && (

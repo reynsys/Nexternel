@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.26
+
+- Dashboards now sit in the middle of wide screens (side menu folded, zoomed out, or a big monitor) instead of on the left with an empty gap on the right. Smaller screens look the same as before.
+
 ## V5.3.25
 
 - The secure connection now sends the standard browser-safety instructions on every page, at home and through Nexternel Anywhere: they stop the dashboard being hidden inside another site, stop the browser guessing a file's type, pass on less of the address when you leave, and drop the server's name from replies. Nothing on the dashboard changes. (From a security review of the whole setup.)
