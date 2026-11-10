@@ -269,7 +269,7 @@ export function SetupPage() {
     <Box sx={{ minHeight: "100dvh", display: "grid", placeItems: "center", py: { xs: 2, sm: 6 }, px: 2 }}>
       <Card sx={{ width: "100%", maxWidth: 600 }}>
         <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
-          <ButtonRow>
+          <Stack spacing={2.5}>
             <Stack direction="row" alignItems="center" spacing={1.5}>
               <BrandMark size={44} />
               <Typography variant="h6">Nexternel</Typography>
@@ -611,7 +611,7 @@ export function SetupPage() {
             <Typography variant="caption" color="text.secondary">
               Nexternel {status?.version || ""}
             </Typography>
-          </ButtonRow>
+          </Stack>
         </CardContent>
       </Card>
     </Box>
