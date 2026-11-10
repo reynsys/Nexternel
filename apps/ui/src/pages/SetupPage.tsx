@@ -596,15 +596,17 @@ export function SetupPage() {
                 {!!job?.restoreResult?.warnings?.length && (
                   <Alert severity="warning">{job.restoreResult.warnings.join(" ")}</Alert>
                 )}
-                {restoreOk ? (
-                  <Button variant="contained" onClick={() => navigate("/login", { replace: true })}>
-                    Sign in
-                  </Button>
-                ) : (
-                  <Button variant="contained" onClick={() => go("welcome")}>
-                    Start again
-                  </Button>
-                )}
+                <ButtonRow direction="row" justifyContent="flex-end">
+                  {restoreOk ? (
+                    <Button variant="contained" onClick={() => navigate("/login", { replace: true })}>
+                      Sign in
+                    </Button>
+                  ) : (
+                    <Button variant="contained" onClick={() => go("welcome")}>
+                      Start again
+                    </Button>
+                  )}
+                </ButtonRow>
               </>
             )}
 
