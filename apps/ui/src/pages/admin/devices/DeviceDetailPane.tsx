@@ -122,7 +122,7 @@ export function DeviceDetailPane({ selection, device, isAdmin, busy, hostname, s
   const [tab, setTab] = useState<TabKey>("overview");
   const selectionKey = selection?.kind === "device" ? `device:${selection.deviceId}` : selection?.kind === "service" ? "service" : "none";
   useEffect(() => setTab("overview"), [selectionKey]);
-  const connection = useDeviceConnection(device?.id ?? "", `${device?.id}:${device?.connectivityState}:${device?.lastSeenAt?.slice(0, 15)}`);
+  const connection = useDeviceConnection(device?.id ?? null, `${device?.id}:${device?.connectivityState}:${device?.lastSeenAt?.slice(0, 15)}`);
 
   if (!selection) return <EmptyDetail />;
   if (selection.kind === "service") {

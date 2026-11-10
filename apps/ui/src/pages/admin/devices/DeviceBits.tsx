@@ -113,10 +113,14 @@ export function InfoCard({ title, children, action }: { title: string; children:
   );
 }
 
-/** A device's connection summary (last 24 hours), fetched again when `refresh` changes. */
-export function useDeviceConnection(deviceId: string, refresh?: unknown): DeviceConnection | null {
+/** A device's connection summary (last 24 hours), fetched again when `refresh` changes; null while no device is chosen. */
+export function useDeviceConnection(deviceId: string | null, refresh?: unknown): DeviceConnection | null {
   const [c, setC] = useState<DeviceConnection | null>(null);
   useEffect(() => {
+    if (!deviceId) {
+      setC(null);
+      return;
+    }
     let cancelled = false;
     void api
       .deviceConnection(deviceId)
