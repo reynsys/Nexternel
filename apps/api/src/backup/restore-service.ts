@@ -21,6 +21,7 @@ import {
 import { remapDomainForCurrentServer, restartStackAfterRestore } from "./post-restore.js";
 import { buildNetworkAdaptationPreview } from "./inspect-adaptation.js";
 import { getPool } from "../db.js";
+import { restoreCountsProblem, type RestoreExpectation } from "./counts.js";
 
 /** Wait until the API's MQTT client reports connected (after the broker restarted). */
 async function waitForMqtt(timeoutMs: number): Promise<boolean> {
@@ -161,30 +162,25 @@ export async function runCreateBackupJob(
   }
 }
 
-async function verifyRestore(): Promise<{ ok: boolean; message: string }> {
+async function verifyRestore(expected: RestoreExpectation | null): Promise<{ ok: boolean; message: string }> {
   const pool = getPool();
-  const [areas, devices, mqtt] = await Promise.all([
-    pool.query<{ count: string }>(`SELECT COUNT(*)::text AS count FROM rooms`),
-    pool.query<{ count: string }>(`SELECT COUNT(*)::text AS count FROM devices`),
-    Promise.resolve(getMqttStatus()),
+  const count = async (sql: string) => Number((await pool.query<{ count: string }>(sql)).rows[0]?.count ?? 0);
+  const [areas, devices, users] = await Promise.all([
+    count(`SELECT COUNT(*)::text AS count FROM rooms`),
+    count(`SELECT COUNT(*)::text AS count FROM devices`),
+    count(`SELECT COUNT(*)::text AS count FROM users WHERE is_active = true`),
   ]);
-  const areaCount = Number(areas.rows[0]?.count ?? 0);
-  const deviceCount = Number(devices.rows[0]?.count ?? 0);
-  if (mqtt.status !== "connected") {
+  if (getMqttStatus().status !== "connected") {
     return {
       ok: false,
       message: "MQTT broker is not connected. Try Restart services in Settings → System.",
     };
   }
-  if (areaCount === 0 && deviceCount === 0) {
-    return {
-      ok: false,
-      message: "No areas or devices were found after restore.",
-    };
-  }
+  const problem = restoreCountsProblem(expected, { areas, devices, users });
+  if (problem) return { ok: false, message: problem };
   return {
     ok: true,
-    message: `Verified ${areaCount} areas and ${deviceCount} devices.`,
+    message: `Verified ${areas} areas, ${devices} devices and ${users} accounts.`,
   };
 }
 
@@ -376,7 +372,8 @@ export async function runRestoreBackupJob(
     });
 
     updateJob(jobId, { status: "verifying", percent: 95, message: "Verifying installation" });
-    const verification = await verifyRestore();
+    const c = manifest.counts;
+    const verification = await verifyRestore(c ? { areas: c.areas ?? 0, devices: c.devices ?? 0, users: c.users ?? 0 } : null);
     phases.push({
       name: "Verification",
       ok: verification.ok,

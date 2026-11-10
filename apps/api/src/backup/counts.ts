@@ -41,3 +41,21 @@ export function countPanelsAndPlugins(dashboards: ExportedDashboard[]): {
   }
   return { panels, plugins };
 }
+
+/** What a restore is checked against: the backup's own counts (older backups may lack some). */
+export type RestoreExpectation = { areas: number; devices: number; users: number };
+
+/**
+ * Why a finished restore does not match its backup, in plain words; null when it does.
+ * A home may rightly have no areas or devices yet (a new home): only what the backup held is expected.
+ */
+export function restoreCountsProblem(expected: RestoreExpectation | null, found: RestoreExpectation): string | null {
+  if (found.users === 0) return "No accounts were found after the restore, so nobody could sign in.";
+  if (!expected) return null;
+  const missing = [
+    found.areas < expected.areas ? `${expected.areas - found.areas} of ${expected.areas} areas` : null,
+    found.devices < expected.devices ? `${expected.devices - found.devices} of ${expected.devices} devices` : null,
+    found.users < expected.users ? `${expected.users - found.users} of ${expected.users} accounts` : null,
+  ].filter(Boolean);
+  return missing.length ? `Not everything came back from the backup: ${missing.join(", ")} are missing.` : null;
+}
