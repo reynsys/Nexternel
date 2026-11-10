@@ -16,6 +16,11 @@ const IPV4 = /^(?:\d{1,3}\.){3}\d{1,3}$/;
 const PROBE =
   "import socket; s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM); s.connect(('1.1.1.1', 80)); print(s.getsockname()[0])";
 
+/** The name the home network knows this machine by ("nexternel.local"; LOCAL_NAME in .env). */
+export function localHostName(): string {
+  return `${(process.env.LOCAL_NAME || "nexternel").toLowerCase()}.local`;
+}
+
 let detected: string | null = null;
 /** ESPHome exists but is still starting — worth asking again. */
 let retryable = false;

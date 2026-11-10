@@ -17,6 +17,7 @@ import {
 import type { DomainExport } from "./domain-export.js";
 import { sanitizeDomainForRestore } from "./domain-sanitize.js";
 import { readAnywhereSettings, validAnywhereName, writeAnywhereSettings } from "../system/anywhere.js";
+import { getTermsRecord, setHome, writeTermsRecord } from "../system/home.js";
 import { applyHttps } from "../system/https.js";
 
 function pgErrMessage(err: unknown): string {
@@ -475,6 +476,22 @@ export async function restoreDomain(
     throw err;
   } finally {
     client.release();
+  }
+
+  // The home's name and its terms record (older backups have neither: the server keeps its own).
+  const home = domain.home;
+  if (home && typeof home === "object") {
+    try {
+      if (typeof home.name === "string") await setHome({ name: home.name });
+      const t = home.terms;
+      const now = await getTermsRecord();
+      // The newest agreement wins (agreeing in the setup wizard happens just before a restore).
+      if (t && typeof t.version === "string" && typeof t.acceptedAt === "string" && (!now || t.acceptedAt > now.acceptedAt)) {
+        await writeTermsRecord({ version: t.version, acceptedAt: t.acceptedAt, username: typeof t.username === "string" ? t.username : "" });
+      }
+    } catch {
+      /* the rest of the restore stands; the name can be set again in Settings */
+    }
   }
 
   // Nexternel Anywhere comes back with its name and key, switched OFF: one click turns it on.

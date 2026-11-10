@@ -3,6 +3,7 @@ import type { PluginManifest } from "@nexternel/plugin-sdk";
 import { loadCustomStatusSettings } from "../capabilities/status-lights.js";
 import { decryptSecret, isEncryptedSecret } from "../plugins/secrets.js";
 import { getBellTopics, getOfflineMinutes } from "../notifications/topics.js";
+import { getHome, getTermsRecord } from "../system/home.js";
 import { getPool } from "../db.js";
 import { buildConfigPayload } from "../migrate/export-config.js";
 import type { ExportedDashboard } from "../migrate/types.js";
@@ -97,6 +98,8 @@ export type DomainExport = {
   bellOfflineMinutes?: number;
   /** Nexternel Anywhere: the home's name and door key (V5.3.0+). The backup itself is encrypted. */
   anywhere?: { name: string; key: string; doorDomain: string; gpsPort?: number | null };
+  /** The home's name and the terms of use the owner agreed to (V5.3.28+). */
+  home?: { name: string; terms: { version: string; acceptedAt: string; username: string } | null };
   integrations: {
     octopus: ExportedOctopus | null;
     /** Installed plugins (V5.2.86+). Secret settings are stored readable here — the backup itself is encrypted. */
@@ -325,6 +328,7 @@ export async function exportDomain(): Promise<DomainExport> {
     bellTopics,
     bellOfflineMinutes,
     ...(await anywhereForBackup()),
+    home: { name: (await getHome()).name, terms: await getTermsRecord() },
   });
 }
 

@@ -153,8 +153,9 @@ export function App() {
           </SetupGate>
         }
       />
+      {/* The setup wizard: full screen as well, without the menu. */}
+      <Route path="setup" element={<SetupPage />} />
       <Route element={<AppLayout />}>
-        <Route path="setup" element={<SetupPage />} />
         {/* Retired developer pages (Troubleshoot, panel preview): the diagnostic report lives in Settings → System. */}
         <Route path="troubleshoot/*" element={<Navigate to="/admin/settings/system" replace />} />
         <Route path="panels" element={<Navigate to="/admin/settings/system" replace />} />

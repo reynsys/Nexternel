@@ -197,6 +197,7 @@ apps/api/src/routes/diagnostics.ts
 apps/api/src/routes/health.ts
 apps/api/src/routes/history.test.ts
 apps/api/src/routes/history.ts
+apps/api/src/routes/home.ts
 apps/api/src/routes/octopus.ts
 apps/api/src/routes/plugins.ts
 apps/api/src/routes/roles.ts
@@ -218,6 +219,8 @@ apps/api/src/shelly/validate.ts
 apps/api/src/system/anywhere-routes.ts
 apps/api/src/system/anywhere.test.ts
 apps/api/src/system/anywhere.ts
+apps/api/src/system/home.test.ts
+apps/api/src/system/home.ts
 apps/api/src/system/host-ip.ts
 apps/api/src/system/https-routes.ts
 apps/api/src/system/https.test.ts
@@ -329,6 +332,8 @@ apps/ui/src/components/PanelMotionField.tsx
 apps/ui/src/components/PanelNotice.tsx
 apps/ui/src/components/PanelTile.tsx
 apps/ui/src/components/PanelTitleFields.tsx
+apps/ui/src/components/PasswordTicks.tsx
+apps/ui/src/components/PlaceSearch.tsx
 apps/ui/src/components/ReadingList.tsx
 apps/ui/src/components/RoomMenu.tsx
 apps/ui/src/components/SectionGrid.tsx
@@ -409,6 +414,7 @@ apps/ui/src/lib/esphome-install-guide.ts
 apps/ui/src/lib/esphome-open.ts
 apps/ui/src/lib/group-by-area.ts
 apps/ui/src/lib/home-dashboard.ts
+apps/ui/src/lib/home-title.ts
 apps/ui/src/lib/icons/catalog.ts
 apps/ui/src/lib/icons/ItemIcon.tsx
 apps/ui/src/lib/leave-guard.ts
@@ -529,6 +535,7 @@ apps/ui/src/pages/admin/settings/AppearanceSettingsPage.tsx
 apps/ui/src/pages/admin/settings/BackupSettingsPage.tsx
 apps/ui/src/pages/admin/settings/DiagnosticReportCard.tsx
 apps/ui/src/pages/admin/settings/ExtensionsSettingsPage.tsx
+apps/ui/src/pages/admin/settings/HomeNameCard.tsx
 apps/ui/src/pages/admin/settings/HttpsCard.tsx
 apps/ui/src/pages/admin/settings/NotificationsSettingsPage.tsx
 apps/ui/src/pages/admin/settings/plugins/PluginActivityView.tsx
@@ -659,6 +666,7 @@ apps/ui/src/skins/surfaceStyles.ts
 apps/ui/src/skins/ThemeOptionsFields.tsx
 apps/ui/src/skins/ThemeOptionsPanel.tsx
 apps/ui/src/skins/themePrefs.ts
+apps/ui/src/skins/ThemePresetTile.tsx
 apps/ui/src/skins/types.ts
 apps/ui/src/skins/useMainNav.ts
 apps/ui/src/skins/useMetricAppearance.ts
@@ -788,6 +796,7 @@ packages/domain/src/passwords.ts
 packages/domain/src/status-light.test.ts
 packages/domain/src/status-light.ts
 packages/domain/src/system.ts
+packages/domain/src/terms.ts
 packages/domain/src/widget-bindings.test.ts
 packages/domain/src/widget-bindings.ts
 packages/domain/tsconfig.json

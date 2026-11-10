@@ -15,6 +15,7 @@ import {
   type LicencePayload,
 } from "./licence.js";
 import { publishChange } from "../live/changes.js";
+import { localHostName } from "../system/host-ip.js";
 
 /**
  * Paid add-ons: installed with a licence key from the Nexternel shop, downloaded from the
@@ -243,7 +244,7 @@ export async function installWithKey(rawKey: string): Promise<AddonInfo[]> {
     key,
     serverId: sid,
     // The name people know this server by (as on the local network), not the container's id.
-    serverName: `${(process.env.LOCAL_NAME || "nexternel").toLowerCase()}.local`,
+    serverName: localHostName(),
     nexternel: APP_VERSION,
   });
   const token = typeof activated.licence === "string" ? activated.licence : "";

@@ -1,15 +1,12 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { PanelEditorShell } from "../components/panel-editor/PanelEditorShell";
 import {
-  Alert,
-  Button,
   FormControl,
   FormControlLabel,
   InputLabel,
   MenuItem,
   Select,
   Switch,
-  TextField,
   Typography,
 } from "@mui/material";
 import { api, type CameraRecord, type WidgetInstance } from "../api";
@@ -31,6 +28,10 @@ import { PanelTitleFields, type AutomaticTitle } from "../components/PanelTitleF
 import { readTitleIcon, writeTitleIcon } from "../lib/panel-title-icon";
 import { PanelMotionField } from "../components/PanelMotionField";
 import { readPanelMotion, writePanelMotion, type PanelMotion } from "../lib/motion";
+import { PlaceSearch, type ChosenPlace } from "../components/PlaceSearch";
+
+/** A weather panel that has never had a place chosen shows London (as before). */
+const DEFAULT_PLACE: ChosenPlace = { name: "London", latitude: 51.5074, longitude: -0.1278 };
 
 type Props = {
   open: boolean;
@@ -56,12 +57,7 @@ export function GeneralWidgetEditor({ open, widget, onClose, onSave, automatic, 
   const [title, setTitle] = useState("");
   const [titleIcon, setTitleIcon] = useState("auto");
   const [motion, setMotion] = useState<PanelMotion>(readPanelMotion(widget?.config));
-  const [weatherLocation, setWeatherLocation] = useState("London");
-  const [weatherLat, setWeatherLat] = useState("51.5074");
-  const [weatherLon, setWeatherLon] = useState("-0.1278");
-  const [geocodeBusy, setGeocodeBusy] = useState(false);
-  const [geocodeError, setGeocodeError] = useState<string | null>(null);
-  const [geocodeHint, setGeocodeHint] = useState<string | null>(null);
+  const [weatherPlace, setWeatherPlace] = useState<ChosenPlace>(DEFAULT_PLACE);
   const [offlineOnly, setOfflineOnly] = useState(false);
   const [cameraId, setCameraId] = useState("");
   const [cameras, setCameras] = useState<CameraRecord[]>([]);
@@ -74,14 +70,10 @@ export function GeneralWidgetEditor({ open, widget, onClose, onSave, automatic, 
   useEffect(() => {
     if (!open || !widget || !isGeneralWidgetType(widget.type)) return;
     const type = widget.type as GeneralWidgetType;
-    setGeocodeError(null);
-    setGeocodeHint(null);
     if (type === "weather") {
       const w = parseWeatherConfig(widget.config);
       const loc = w.weatherLocation === "Weather" ? "London" : w.weatherLocation;
-      setWeatherLocation(loc);
-      setWeatherLat(String(w.weatherLat));
-      setWeatherLon(String(w.weatherLon));
+      setWeatherPlace({ name: loc, latitude: w.weatherLat, longitude: w.weatherLon });
       setTitle(widget.title ?? "");
     } else {
       setTitle(widget.title ?? "");
@@ -113,46 +105,13 @@ export function GeneralWidgetEditor({ open, widget, onClose, onSave, automatic, 
   const type = widget.type;
   const label = TYPE_LABELS[type];
 
-  async function lookupPlace() {
-    const q = weatherLocation.trim();
-    if (q.length < 2) {
-      setGeocodeError("Enter a place name first (e.g. town or postcode area)");
-      return;
-    }
-    setGeocodeBusy(true);
-    setGeocodeError(null);
-    setGeocodeHint(null);
-    try {
-      const { results } = await api.weatherGeocode(q);
-      const best = results[0];
-      if (!best) {
-        setGeocodeError(
-          "No matches — try a clearer place name or enter lat/lon manually"
-        );
-        return;
-      }
-      setWeatherLat(String(best.latitude));
-      setWeatherLon(String(best.longitude));
-      setWeatherLocation(best.name);
-      setGeocodeHint(
-        `Using ${best.label} → ${best.latitude.toFixed(4)}, ${best.longitude.toFixed(4)}`
-      );
-    } catch (err) {
-      setGeocodeError(err instanceof Error ? err.message : "Lookup failed");
-    } finally {
-      setGeocodeBusy(false);
-    }
-  }
-
   function buildPatch(): Partial<WidgetInstance> {
     if (!widget) return {};
     const config: Record<string, unknown> = writePanelMotion(writeTitleIcon({ ...(widget.config ?? {}) }, titleIcon), motion);
     if (type === "weather") {
-      const lat = Number(weatherLat);
-      const lon = Number(weatherLon);
-      config.weatherLocation = weatherLocation.trim() || "London";
-      config.weatherLat = Number.isFinite(lat) ? lat : 51.5074;
-      config.weatherLon = Number.isFinite(lon) ? lon : -0.1278;
+      config.weatherLocation = weatherPlace.name;
+      config.weatherLat = weatherPlace.latitude;
+      config.weatherLon = weatherPlace.longitude;
     }
     if (type === "device_status") {
       config.offlineOnly = offlineOnly;
@@ -200,42 +159,7 @@ export function GeneralWidgetEditor({ open, widget, onClose, onSave, automatic, 
               <>
         {type === "weather" && (
           <>
-            <TextField
-              label="Location / place name"
-              size="small"
-              fullWidth
-              value={weatherLocation}
-              onChange={(e) => {
-                setWeatherLocation(e.target.value);
-                setGeocodeHint(null);
-              }}
-              helperText="The name shown on the panel. Look up fills in the position below."
-            />
-            <Button
-              variant="outlined"
-              disabled={geocodeBusy}
-              onClick={() => void lookupPlace()}
-            >
-              {geocodeBusy ? "Finding…" : "Find place"}
-            </Button>
-            {geocodeError && <Alert severity="error">{geocodeError}</Alert>}
-            {geocodeHint && <Alert severity="success">{geocodeHint}</Alert>}
-            <TextField
-              label="Latitude"
-              size="small"
-              fullWidth
-              value={weatherLat}
-              onChange={(e) => setWeatherLat(e.target.value)}
-              inputProps={{ inputMode: "decimal" }}
-            />
-            <TextField
-              label="Longitude"
-              size="small"
-              fullWidth
-              value={weatherLon}
-              onChange={(e) => setWeatherLon(e.target.value)}
-              inputProps={{ inputMode: "decimal" }}
-            />
+            <PlaceSearch value={weatherPlace} onChange={(p) => p && setWeatherPlace(p)} search={api.weatherGeocode} label="Town or postcode" />
             <Typography variant="caption" color="text.secondary">
               Forecasts come from Open-Meteo (UK Met Office model).
             </Typography>
@@ -291,7 +215,7 @@ export function GeneralWidgetEditor({ open, widget, onClose, onSave, automatic, 
           onIconChange={setTitleIcon}
           automatic={
             automatic ?? {
-              title: type === "weather" ? weatherLocation || "Weather" : generalWidgetHeading(widget, label),
+              title: type === "weather" ? weatherPlace.name || "Weather" : generalWidgetHeading(widget, label),
               icon: { iconId: "auto", kind: null },
             }
           }

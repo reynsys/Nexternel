@@ -32,7 +32,8 @@ import { Segmented } from "../components/Segmented";
 import { AppearancePreview } from "../components/appearance/AppearancePreview";
 import { HARMONIES } from "../lib/appearance/scale";
 import { CORE_FONTS, FONT_GROUPS, DEFAULT_FONT_ID } from "../lib/appearance/fonts";
-import { THEME_PRESETS, type ThemePreset } from "../lib/appearance/presets";
+import { THEME_PRESETS } from "../lib/appearance/presets";
+import { ChoiceTile, ThemePresetTile, prefsWithPreset, presetIsChosen } from "./ThemePresetTile";
 import { MINE_GLOW_ID, MINE_GRADIENT_ID, isMineBackground, mineBackground, schemeForPrefs } from "./appearance-scheme";
 import { fontFamilyFor } from "./looks/resolve";
 
@@ -125,33 +126,6 @@ function Row({ label, hint, children }: { label: string; hint?: string; children
   );
 }
 
-/** A choice tile: a name and a line about it (Looks, effects, menus…). */
-function ChoiceTile({ selected, onClick, title, text, children, sx, disabled }: { selected: boolean; onClick: () => void; title: ReactNode; text?: ReactNode; children?: ReactNode; sx?: object; disabled?: boolean }) {
-  return (
-    <ButtonBase
-      onClick={onClick}
-      disabled={disabled}
-      aria-pressed={selected}
-      sx={[
-        { width: "100%", height: "100%", display: "grid", gridTemplateColumns: "minmax(0, 1fr)", justifyItems: "start", alignContent: "start", textAlign: "left", gap: 0.25, px: 1.25, py: 1 },
-        choiceSx(selected),
-        disabled ? { opacity: 0.5 } : {},
-        sx ?? {},
-      ]}
-    >
-      {children}
-      <Typography variant="body2" fontWeight="fontWeightBold">
-        {title}
-      </Typography>
-      {text ? (
-        <Typography variant="caption" color="text.secondary">
-          {text}
-        </Typography>
-      ) : null}
-    </ButtonBase>
-  );
-}
-
 /** A round colour swatch: a colour sample to pick, not a button of the Look. */
 function Swatch({ colour, label, selected, onClick }: { colour: string; label: string; selected: boolean; onClick: () => void }) {
   return (
@@ -215,27 +189,9 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
     if (normalized) set({ primary: normalized });
   }
 
-  function applyPreset(p: ThemePreset) {
-    onThemeChange({
-      ...withLook(themePrefs, resolveLook(p.lookId).id === p.lookId ? p.lookId : "standard"),
-      mode: p.mode,
-      autoMode: false,
-      primary: p.primary,
-      harmony: p.harmony,
-      gradientId: p.gradientId,
-      lookFont: p.font,
-    });
-  }
-
   // Fonts: Nexternel's built-in ones, plus any a Look brings of its own.
   const lookOwnFonts = (look.fonts ?? []).filter((f) => !CORE_FONTS.some((c) => c.id === f.id));
   const fontId = themePrefs.lookFont ?? look.fonts?.[0]?.id ?? DEFAULT_FONT_ID;
-  const presetPreview = (p: ThemePreset) => {
-    const pPrefs: ThemePrefs = { ...themePrefs, lookId: p.lookId, mode: p.mode, autoMode: false, primary: p.primary, harmony: p.harmony, gradientId: p.gradientId };
-    const s = schemeForPrefs(pPrefs, p.mode, Boolean(resolveLook(p.lookId).frosted));
-    const bg = isMineBackground(p.gradientId) ? mineBackground(s, p.gradientId).css : (gradientCss(p.gradientId, p.mode) ?? s.roles.surfaceSolid.background);
-    return { s, bg };
-  };
   const swatches = kind === "glow" ? GLOW_PALETTES : kind === "gradient" ? GRADIENT_PALETTES : [];
 
   const modeTiles = (
@@ -420,36 +376,9 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
     theme: (
       <Section title="Ready-made themes" hint="Picking one replaces your style, light or dark, colours, background and font. Change anything afterwards; Cancel puts back how it was.">
         <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 1 }}>
-          {THEME_PRESETS.filter((p) => resolveLook(p.lookId).id === p.lookId).map((p) => {
-            const { s, bg } = presetPreview(p);
-            const selected =
-              themePrefs.primary.toUpperCase() === p.primary && (themePrefs.lookId ?? "standard") === p.lookId && mode === p.mode && (themePrefs.gradientId ?? "none") === p.gradientId;
-            return (
-              <ChoiceTile key={p.id} selected={selected} onClick={() => applyPreset(p)} title={p.label} text={p.description}>
-                <Box
-                  aria-hidden
-                  sx={{
-                    width: "100%",
-                    height: 52,
-                    mb: 0.75,
-                    borderRadius: 1,
-                    border: `1px solid ${s.roles.line.edge}`,
-                    backgroundImage: bg.includes("gradient") ? bg : undefined,
-                    bgcolor: bg.includes("gradient") ? s.roles.surfaceSolid.background : bg,
-                    display: "flex",
-                    alignItems: "flex-end",
-                    gap: 0.5,
-                    p: 0.75,
-                  }}
-                >
-                  {[s.roles.main.solid, s.roles.second.solid, s.roles.third.solid].map((c) => (
-                    <Box key={c} sx={{ width: 16, height: 16, borderRadius: "50%", bgcolor: c, border: `1px solid ${s.roles.line.edge}` }} />
-                  ))}
-                  <Typography variant="subtitle2" sx={{ ml: "auto", fontFamily: CORE_FONTS.find((f) => f.id === p.font)?.family, color: s.roles.text.main }}>Aa</Typography>
-                </Box>
-              </ChoiceTile>
-            );
-          })}
+          {THEME_PRESETS.filter((p) => resolveLook(p.lookId).id === p.lookId).map((p) => (
+            <ThemePresetTile key={p.id} preset={p} prefs={themePrefs} selected={presetIsChosen(themePrefs, mode, p)} onPick={() => onThemeChange(prefsWithPreset(themePrefs, p))} />
+          ))}
         </Box>
       </Section>
     ),

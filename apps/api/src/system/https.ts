@@ -4,7 +4,7 @@ import { mkdir, readFile, rm, writeFile } from "fs/promises";
 import path from "path";
 import { promisify } from "util";
 import { anywhereAddress, OUTSIDE_ENTRANCE_PORT, readAnywhereSettings } from "./anywhere.js";
-import { detectedHostIp } from "./host-ip.js";
+import { detectedHostIp, localHostName } from "./host-ip.js";
 import { ENTRANCE_HEADER } from "../auth/login-guard.js";
 
 /**
@@ -351,7 +351,7 @@ export async function httpsStatus(): Promise<HttpsStatus> {
   const addresses = settings.enabled
     ? [...(settings.domain && domainCert ? [settings.domain] : []), ...names].map((n) => `https://${n}${suffix}`)
     : [];
-  const localName = `${(process.env.LOCAL_NAME || "nexternel").toLowerCase()}.local`;
+  const localName = localHostName();
   return {
     settings,
     httpsPort: port,

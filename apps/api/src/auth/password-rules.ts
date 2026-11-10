@@ -18,26 +18,51 @@ function commonPasswords(): Set<string> {
 
 const EDGE = /^[\d\W_]+|[\d\W_]+$/g;
 
-/** Why this password is not good enough, in plain words; null when it is fine. */
-export function passwordProblem(password: string, username = ""): string | null {
-  if (password.length < MIN_PASSWORD_LENGTH) {
-    return `The password must be at least ${MIN_PASSWORD_LENGTH} characters long.`;
-  }
-  if (password.length > 200) return "The password is too long (200 characters at most).";
+/** One rule a new password must meet: shown as a tick while typing, and its message when it fails. */
+export type PasswordCheck = { id: "length" | "common" | "username" | "variety"; label: string; ok: boolean; problem: string };
+
+/** Every rule for this password, in the order a person reads them (setup's live ticks use this). */
+export function passwordChecks(password: string, username = ""): PasswordCheck[] {
   const lower = password.toLowerCase();
   const core = lower.replace(EDGE, "");
   const list = commonPasswords();
-  if (list.has(lower) || (core.length > 0 && list.has(core))) {
-    return "That password is one of the most common ones. Choose something less easy to guess.";
-  }
   const name = username.trim().toLowerCase();
-  if (name.length >= 3 && (core === name || core === "" || lower.includes(name) && core.replace(name, "").length < 4)) {
-    return "The password is too close to the username.";
-  }
-  if (new Set(lower).size < 5) {
-    return "The password uses too few different characters.";
-  }
-  return null;
+  const tooLong = password.length > 200;
+  return [
+    {
+      id: "length",
+      label: `At least ${MIN_PASSWORD_LENGTH} characters`,
+      ok: password.length >= MIN_PASSWORD_LENGTH && !tooLong,
+      problem: tooLong
+        ? "The password is too long (200 characters at most)."
+        : `The password must be at least ${MIN_PASSWORD_LENGTH} characters long.`,
+    },
+    {
+      id: "common",
+      label: "Not a well-known password",
+      ok: password.length > 0 && !(list.has(lower) || (core.length > 0 && list.has(core))),
+      problem: "That password is one of the most common ones. Choose something less easy to guess.",
+    },
+    {
+      id: "username",
+      label: "Not too close to your username",
+      ok:
+        password.length > 0 &&
+        !(name.length >= 3 && (core === name || core === "" || (lower.includes(name) && core.replace(name, "").length < 4))),
+      problem: "The password is too close to the username.",
+    },
+    {
+      id: "variety",
+      label: "Not the same few characters over and over",
+      ok: new Set(lower).size >= 5,
+      problem: "The password uses too few different characters.",
+    },
+  ];
+}
+
+/** Why this password is not good enough, in plain words; null when it is fine. */
+export function passwordProblem(password: string, username = ""): string | null {
+  return passwordChecks(password, username).find((c) => !c.ok)?.problem ?? null;
 }
 
 /** True when this password meets today's rules (checked at sign-in from outside). */

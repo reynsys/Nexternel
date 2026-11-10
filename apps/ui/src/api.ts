@@ -217,9 +217,11 @@ async function apiDownload(path: string, fallbackName: string): Promise<{ blob: 
   return { blob: await res.blob(), filename: match?.[1] || fallbackName };
 }
 
-async function postWelcomeBackup<T>(path: string, opts: { file: File; password: string }): Promise<T> {
+async function postWelcomeBackup<T>(path: string, opts: { file: File; password: string; termsVersion?: string }): Promise<T> {
   const form = new FormData();
   form.append("password", opts.password);
+  // Text fields before the file: the server reads them as the upload arrives.
+  if (opts.termsVersion) form.append("termsVersion", opts.termsVersion);
   form.append("file", opts.file);
   const res = await fetch(apiUrl(path), { method: "POST", credentials: "include", body: form });
   if (!res.ok) throw new Error(await parseErrorMessage(res));
@@ -1378,7 +1380,17 @@ export const api = {
   setupStatus: () =>
     apiFetch<SetupStatusResponse>("/api/v1/setup/status"),
 
-  setupComplete: (opts: { username: string; password: string; confirmPassword: string }) =>
+  setupComplete: (opts: {
+    username: string;
+    password: string;
+    confirmPassword: string;
+    displayName?: string;
+    email?: string;
+    termsVersion: string;
+    homeName?: string;
+    place?: { name: string; latitude: number; longitude: number } | null;
+    themePrefs?: UserThemePrefs;
+  }) =>
     apiFetch<{ ok: boolean; user: User; accessToken: string; refreshToken: string }>(
       "/api/v1/setup/complete",
       {
@@ -1391,8 +1403,23 @@ export const api = {
   welcomeInspectBackup: (opts: { file: File; password: string }) =>
     postWelcomeBackup<BackupInspectResult>("/api/v1/setup/restore/inspect", opts),
 
-  welcomeRestoreBackup: (opts: { file: File; password: string }) =>
+  welcomeRestoreBackup: (opts: { file: File; password: string; termsVersion: string }) =>
     postWelcomeBackup<{ job: BackupJob }>("/api/v1/setup/restore", opts),
+
+  /** Live password ticks (setup, and anyone signed in): the server's own rules. */
+  passwordCheck: (password: string, username: string) =>
+    apiFetch<{ checks: PasswordCheck[] }>("/api/v1/setup/password-check", {
+      method: "POST",
+      body: JSON.stringify({ password, username }),
+    }),
+
+  /** Town or postcode search before any account exists (setup wizard). */
+  setupPlaces: (q: string) => apiFetch<{ results: FoundPlace[] }>(`/api/v1/setup/places?q=${encodeURIComponent(q)}`),
+
+  home: () => apiFetch<{ home: HomeInfo }>("/api/v1/home"),
+
+  updateHome: (home: HomeInfo) =>
+    apiFetch<{ home: HomeInfo }>("/api/v1/home", { method: "PUT", body: JSON.stringify(home) }),
 
   welcomeRestoreJob: (id: string) =>
     apiFetch<{ job: BackupJob }>(`/api/v1/setup/restore/jobs/${encodeURIComponent(id)}`),
@@ -1727,18 +1754,7 @@ export const api = {
       `/api/v1/weather?lat=${encodeURIComponent(String(lat))}&lon=${encodeURIComponent(String(lon))}`
     ),
 
-  weatherGeocode: (q: string) =>
-    apiFetch<{
-      results: Array<{
-        name: string;
-        latitude: number;
-        longitude: number;
-        country: string;
-        admin1: string;
-        timezone: string;
-        label: string;
-      }>;
-    }>(`/api/v1/weather/geocode?q=${encodeURIComponent(q)}`),
+  weatherGeocode: (q: string) => apiFetch<{ results: FoundPlace[] }>(`/api/v1/weather/geocode?q=${encodeURIComponent(q)}`),
 
   users: () => apiFetch<{ users: AdminUser[] }>("/api/v1/users"),
 
@@ -2212,8 +2228,28 @@ export type SetupStatusResponse = {
   needsSetup: boolean;
   version: string;
   serverIp: string | null;
+  /** How to open Nexternel at home: the name first, then this machine's address. */
+  localAddresses: string[];
+  timeZone: string;
+  termsVersion: string;
   installationReady: boolean;
 };
+
+export type PasswordCheck = { id: string; label: string; ok: boolean };
+
+/** A place found by town name or postcode; `label` tells places of the same name apart. */
+export type FoundPlace = {
+  name: string;
+  latitude: number;
+  longitude: number;
+  country: string;
+  admin1: string;
+  timezone: string;
+  label: string;
+};
+
+/** The home as a whole (Settings → System; set first in the setup wizard). */
+export type HomeInfo = { name: string };
 
 export type NetworkAdaptationPreview = {
   differentInstallation: boolean;

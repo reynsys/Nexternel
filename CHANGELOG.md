@@ -2,6 +2,13 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.28
+
+- New homes are set up on screen, step by step: welcome, terms of use, your account, your home (name and town for the weather), your colours, and a last page with the addresses to save and what to do next. The install itself now shows a few short steps instead of pages of technical text.
+- Password rules show as ticks while you type.
+- Weather panels: choose the place by typing a town or postcode and picking it from a list. No more latitude and longitude.
+- Settings → System: give your home a name; it shows in the browser tab.
+
 ## V5.3.27
 
 - New homes start clean: no made-up areas, and the owner's own name instead of "Administrator".

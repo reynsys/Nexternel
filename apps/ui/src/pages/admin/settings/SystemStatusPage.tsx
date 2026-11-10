@@ -10,6 +10,7 @@ import { DiagnosticReportCard } from "./DiagnosticReportCard";
 import { UpdatesCard } from "./UpdatesCard";
 import { HttpsCard } from "./HttpsCard";
 import { AnywhereCard } from "./AnywhereCard";
+import { HomeNameCard } from "./HomeNameCard";
 import { ButtonRow } from "../../../components/ButtonRow";
 import { ActivityList } from "../../../components/ActivityList";
 import { hasPermission } from "../../../lib/permissions";
@@ -51,7 +52,7 @@ function healthLine(info: SystemInfo): { ok: boolean; title: string; text: strin
 }
 
 /**
- * Settings → System, in tabs so it is not one long page: Overview (health, version and updates),
+ * Settings → System, in tabs so it is not one long page: Overview (the home's name, health, version and updates),
  * Addresses (how to open Nexternel, at home and with Nexternel Anywhere), Activity (what happened),
  * Help & troubleshooting.
  */
@@ -118,6 +119,7 @@ export function SystemStatusPage() {
 
       {tab === "overview" ? (
       <>
+      <HomeNameCard surfaceSx={surfaceSx} canEdit={Boolean(isAdmin)} />
       <Card sx={surfaceSx}>
         <CardContent>
           <Typography variant="h6" gutterBottom>

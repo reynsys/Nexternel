@@ -1,4 +1,4 @@
-import type { FastifyPluginAsync } from "fastify";
+import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
 import { requireUser } from "../auth/plugin.js";
 
 const WMO: Record<number, string> = {
@@ -107,66 +107,64 @@ function dayKey(iso: string): string {
   return iso.slice(0, 10);
 }
 
+/** A place found by name or postcode (Open-Meteo's place search). */
+export type FoundPlace = {
+  name: string;
+  latitude: number;
+  longitude: number;
+  country: string;
+  admin1: string;
+  timezone: string;
+  /** "Bristol, England, United Kingdom": tells places of the same name apart. */
+  label: string;
+};
+
+/** Places matching a town name or postcode, best first (at most 5). Throws when the search service fails. */
+export async function findPlaces(query: string): Promise<FoundPlace[]> {
+  const url = new URL("https://geocoding-api.open-meteo.com/v1/search");
+  url.searchParams.set("name", query);
+  url.searchParams.set("count", "5");
+  url.searchParams.set("language", "en");
+  url.searchParams.set("format", "json");
+  const res = await fetch(url.toString(), { signal: AbortSignal.timeout(12_000) });
+  if (!res.ok) throw new Error(`place search answered ${res.status}`);
+  const data = (await res.json()) as {
+    results?: Array<{ name?: string; latitude?: number; longitude?: number; country?: string; admin1?: string; timezone?: string }>;
+  };
+  return (data.results ?? [])
+    .filter((r) => typeof r.latitude === "number" && typeof r.longitude === "number" && typeof r.name === "string")
+    .map((r) => ({
+      name: r.name!,
+      latitude: r.latitude!,
+      longitude: r.longitude!,
+      country: r.country ?? "",
+      admin1: r.admin1 ?? "",
+      timezone: r.timezone ?? "",
+      label: [r.name, r.admin1, r.country].filter(Boolean).join(", "),
+    }));
+}
+
+/** The place search answer (weather panel settings, and the setup wizard before any account exists). */
+export async function placeSearchReply(request: FastifyRequest, reply: FastifyReply) {
+  const q = request.query as { q?: string };
+  const name = typeof q.q === "string" ? q.q.trim() : "";
+  if (name.length < 2) {
+    return reply.code(400).send({ error: { code: "validation_error", message: "Type at least 2 letters of the town or postcode." } });
+  }
+  try {
+    return { results: await findPlaces(name) };
+  } catch (err) {
+    request.log.warn({ err }, "place search failed");
+    return reply.code(502).send({
+      error: { code: "upstream_error", message: "The place search is not answering right now. Check this machine's internet connection, then try again." },
+    });
+  }
+}
+
 export const weatherRoutes: FastifyPluginAsync = async (app) => {
   app.get("/api/v1/weather/geocode", async (request, reply) => {
     if (!requireUser(request, reply)) return;
-
-    const q = request.query as { q?: string };
-    const name = typeof q.q === "string" ? q.q.trim() : "";
-    if (name.length < 2) {
-      return reply.code(400).send({
-        error: { code: "validation_error", message: "q must be at least 2 characters" },
-      });
-    }
-
-    const url = new URL("https://geocoding-api.open-meteo.com/v1/search");
-    url.searchParams.set("name", name);
-    url.searchParams.set("count", "5");
-    url.searchParams.set("language", "en");
-    url.searchParams.set("format", "json");
-
-    try {
-      const res = await fetch(url.toString(), {
-        signal: AbortSignal.timeout(12_000),
-      });
-      if (!res.ok) {
-        return reply.code(502).send({
-          error: { code: "upstream_error", message: "Geocoding unavailable" },
-        });
-      }
-      const data = (await res.json()) as {
-        results?: Array<{
-          name?: string;
-          latitude?: number;
-          longitude?: number;
-          country?: string;
-          admin1?: string;
-          timezone?: string;
-        }>;
-      };
-      const results = (data.results ?? [])
-        .filter(
-          (r) =>
-            typeof r.latitude === "number" &&
-            typeof r.longitude === "number" &&
-            typeof r.name === "string"
-        )
-        .map((r) => ({
-          name: r.name!,
-          latitude: r.latitude!,
-          longitude: r.longitude!,
-          country: r.country ?? "",
-          admin1: r.admin1 ?? "",
-          timezone: r.timezone ?? "",
-          label: [r.name, r.admin1, r.country].filter(Boolean).join(", "),
-        }));
-      return { results };
-    } catch (err) {
-      request.log.warn({ err }, "weather geocode failed");
-      return reply.code(502).send({
-        error: { code: "upstream_error", message: "Geocoding unavailable" },
-      });
-    }
+    return placeSearchReply(request, reply);
   });
 
   app.get("/api/v1/weather", async (request, reply) => {
