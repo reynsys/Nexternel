@@ -605,7 +605,7 @@ export function TrackingPage({ pluginId, pageId, title, mapPanelId }: PageProps)
       {shownTab === 0 && mapPanelId ? (
         <Section>
           <FillingMapBox>
-            <MapPanel pluginId={pluginId} panelId={mapPanelId} />
+            <MapPanel pluginId={pluginId} panelId={mapPanelId} extensionName={title} />
           </FillingMapBox>
         </Section>
       ) : null}

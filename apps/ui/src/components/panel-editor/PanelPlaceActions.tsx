@@ -6,7 +6,6 @@ import { ButtonRow } from "../ButtonRow";
 export type PanelPlace = {
   /** The panel's name, for the question before removing it. */
   name: string;
-  kind: "panel" | "plugin";
   /** The section the panel is in now. */
   section: { id: string; title: string };
   /** The dashboard's other sections. */

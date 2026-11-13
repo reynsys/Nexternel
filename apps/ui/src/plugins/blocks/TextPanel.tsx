@@ -18,14 +18,14 @@ function Line({ text }: { text: string }) {
 }
 
 /** Text building block for plugin panels: shows what the plugin last wrote (e.g. a summary). */
-export function TextPanel({ pluginId, panelId, label }: { pluginId: string; panelId: string; label: string }) {
+export function TextPanel({ pluginId, panelId, label, extensionName }: { pluginId: string; panelId: string; label: string; extensionName: string }) {
   const { content, loaded } = usePanelContent(pluginId, panelId);
 
   if (!loaded) return null;
   if (!content || (!content.body && !content.title)) {
     return (
       <Typography variant="body2" color="text.secondary" sx={{ p: 1.5 }}>
-        Nothing yet. The {label.toLowerCase()} appears here when the plugin writes it.
+        Nothing yet. The {label.toLowerCase()} appears here when {extensionName} writes it.
       </Typography>
     );
   }

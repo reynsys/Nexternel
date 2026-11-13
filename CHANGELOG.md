@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.31
+
+- **GPS Tracker** (update the GPS Tracker extension to 1.0.6 too): if a tracker stops sending while driving, for example in a tunnel or with no mobile signal, the map now says "Signal lost while moving" after 3 minutes. It no longer shows the car as still moving at its old speed.
+- Extension panels now use the extension's name and plain words: an empty panel says, for example, "The summary appears here when AI Assistant writes it", a missing one says "Extension unavailable", and the Edit button says "Edit this panel".
+
 ## V5.3.30
 
 - **GPS Tracker** (update the GPS Tracker extension to 1.0.5 too): the map moves the moment a new position arrives, at most a few seconds after the tracker sends it (it used to be up to about 1½ minutes behind). The route line follows the car from the start of each journey instead of appearing several minutes later.

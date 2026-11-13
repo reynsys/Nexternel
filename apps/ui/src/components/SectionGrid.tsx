@@ -39,7 +39,7 @@ import {
   resolveDashboardEditorKind,
 } from "../lib/panel-editor-route";
 import { GeneralWidgetEditor } from "../widgets/GeneralWidgetEditor";
-import { migrateContributionPanelType, isPluginPanelType, readPanelAreaLine, withPanelAreaLine, type PanelAreaLine } from "@nexternel/domain";
+import { migrateContributionPanelType, readPanelAreaLine, withPanelAreaLine, type PanelAreaLine } from "@nexternel/domain";
 import {
   DASHBOARD_GRID_MARGIN_X,
   DASHBOARD_GRID_MARGIN_Y,
@@ -101,16 +101,12 @@ function widgetTypeLabel(type: string): string {
   return getPanelContribution(migrated)?.label ?? type;
 }
 
-function dashboardItemKind(type: string): "panel" | "plugin" {
-  const migrated = migrateContributionPanelType(type);
-  return isPluginPanelType(migrated) ? "plugin" : "panel";
-}
 
 
 /** A panel's button while arranging, in its title: Edit (move and remove are in its Edit menu too). */
-function PanelEditButton({ name, kind, onEdit }: { name: string; kind: "panel" | "plugin"; onEdit: () => void }) {
+function PanelEditButton({ name, onEdit }: { name: string; onEdit: () => void }) {
   return (
-    <Tooltip title={`Edit this ${kind}`}>
+    <Tooltip title="Edit this panel">
       <Button variant="outlined" size="small" aria-label={`Edit ${name}`} onClick={onEdit} sx={{ minWidth: 36, width: 36, minHeight: 36, height: 36, p: 0 }}>
         <EditOutlinedIcon fontSize="small" />
       </Button>
@@ -270,7 +266,6 @@ export function SectionGrid({
   const editingPlace: PanelPlace | null = editing
     ? {
         name: panelHeading(editing, capabilities, sectionRoomId, cameras).title || widgetTypeLabel(editing.type),
-        kind: dashboardItemKind(editing.type),
         section: { id: sectionId, title: sectionTitle ?? "" },
         moveTargets: onMovePanel ? moveTargets : [],
         onMove: (to) => {
@@ -424,7 +419,6 @@ export function SectionGrid({
           resizeHandles={["se"]}
         >
           {panels.map((w) => {
-            const itemKind = dashboardItemKind(w.type);
             const tileTitle = panelHeading(w, capabilities, sectionRoomId, cameras).title;
             const saved = savedItems.find((p) => p.i === w.id);
             const shown = gridLayout.find((p) => p.i === w.id);
@@ -451,7 +445,7 @@ export function SectionGrid({
                   onCapabilityState={onCapabilityState}
                   editFallbackTitle={widgetTypeLabel(w.type)}
                   editActions={
-                    editMode ? <PanelEditButton name={tileTitle || widgetTypeLabel(w.type)} kind={itemKind} onEdit={() => setEditPanelId(w.id)} /> : undefined
+                    editMode ? <PanelEditButton name={tileTitle || widgetTypeLabel(w.type)} onEdit={() => setEditPanelId(w.id)} /> : undefined
                   }
                 />
                 </PanelPicturesContext.Provider>

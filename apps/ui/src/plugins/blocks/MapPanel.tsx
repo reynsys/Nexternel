@@ -34,7 +34,7 @@ function sameMarkers(a: MapMarker[], b: MapMarker[]): boolean {
 }
 
 /** Map building block for plugin panels: shows the places and the trail the plugin last wrote. */
-export function MapPanel({ pluginId, panelId }: { pluginId: string; panelId: string }) {
+export function MapPanel({ pluginId, panelId, extensionName }: { pluginId: string; panelId: string; extensionName: string }) {
   const theme = useTheme();
   const movingColor = theme.palette.success.main;
   const parkedColor = theme.palette.error.main;
@@ -112,7 +112,7 @@ export function MapPanel({ pluginId, panelId }: { pluginId: string; panelId: str
   if (!hasPlaces && !content.note) {
     return (
       <Typography variant="body2" color="text.secondary" sx={{ p: 1.5 }}>
-        Nothing yet. The map appears here when the plugin sends a location.
+        Nothing yet. The map appears here when {extensionName} sends a location.
       </Typography>
     );
   }

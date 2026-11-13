@@ -20,18 +20,18 @@ let registeredPluginPanels: string[] = [];
 // Same component for the same panel across refreshes, so open panels are not rebuilt.
 const components = new Map<string, ReturnType<typeof makePanelComponent>>();
 
-function panelComponent(pluginId: string, panel: PluginPanelInfo) {
-  const key = JSON.stringify([pluginId, panel.id, panel.block, panel.label, panel.description ?? ""]);
+function panelComponent(pluginId: string, pluginName: string, panel: PluginPanelInfo) {
+  const key = JSON.stringify([pluginId, pluginName, panel.id, panel.block, panel.label, panel.description ?? ""]);
   let component = components.get(key);
   if (!component) {
-    component = makePanelComponent(pluginId, panel);
+    component = makePanelComponent(pluginId, pluginName, panel);
     components.set(key, component);
   }
   return component;
 }
 
 /** A plugin panel is drawn by one of Nexternel's building blocks, fed by the plugin. */
-function makePanelComponent(pluginId: string, panel: PluginPanelInfo) {
+function makePanelComponent(pluginId: string, pluginName: string, panel: PluginPanelInfo) {
   function PluginPanel({ widget }: { widget: { id: string } }) {
     if (panel.block === "conversation") {
       return createElement(ConversationPanel, {
@@ -42,9 +42,9 @@ function makePanelComponent(pluginId: string, panel: PluginPanelInfo) {
       });
     }
     if (panel.block === "map") {
-      return createElement(Suspense, { fallback: null }, createElement(MapPanel, { pluginId, panelId: panel.id }));
+      return createElement(Suspense, { fallback: null }, createElement(MapPanel, { pluginId, panelId: panel.id, extensionName: pluginName }));
     }
-    return createElement(TextPanel, { pluginId, panelId: panel.id, label: panel.label });
+    return createElement(TextPanel, { pluginId, panelId: panel.id, label: panel.label, extensionName: pluginName });
   }
   PluginPanel.displayName = `PluginPanel(${panel.type})`;
   return PluginPanel;
@@ -68,8 +68,8 @@ export function loadPluginContributions(plugins: PluginInfo[]) {
         needsCapability: false,
         defaultSize: panel.defaultSize ?? (panel.block === "conversation" ? { w: 4, h: 4 } : { w: 4, h: 3 }),
         rendererClass: "composite-tile",
-        Component: panelComponent(p.id, panel),
-        // Shown in Add panel under the plugin's name.
+        Component: panelComponent(p.id, p.name, panel),
+        // Shown in Add panel under the extension's name.
         ...({ description: panel.description ?? `From the ${p.name} extension` } as object),
       });
       registeredPluginPanels.push(panel.type);

@@ -7,7 +7,7 @@ type Props = {
 };
 
 export function PluginUnavailable({ pluginName, pluginId, reason = "missing" }: Props) {
-  const label = pluginName?.trim() || pluginId?.trim() || "Plugin";
+  const label = pluginName?.trim() || pluginId?.trim() || "Extension";
   const detail =
     reason === "disabled"
       ? "This extension is installed but switched off."
@@ -23,7 +23,7 @@ export function PluginUnavailable({ pluginName, pluginId, reason = "missing" }: 
       sx={{ px: 2, textAlign: "center" }}
     >
       <Typography variant="body2" fontWeight="fontWeightBold" gutterBottom>
-        Plugin unavailable
+        Extension unavailable
       </Typography>
       <Typography variant="caption" color="text.secondary" display="block">
         {label}
