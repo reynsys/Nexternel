@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { contrast, hexToOklch, oklchToHex } from "./color.ts";
 import { buildScale, harmonyColours, HARMONIES } from "./scale.ts";
 import { buildScheme } from "./scheme.ts";
+import { THEME_PRESETS } from "./presets.ts";
 
 /** Repeatable "random" colours, so a failure can be found again. */
 function colours(count: number): string[] {
@@ -77,4 +78,22 @@ test("a panel row keeps room for the frame, the title and content", async () => 
   const { minPanelRowPx } = await import("../panel-heading.ts");
   assert.equal(minPanelRowPx("4px"), 4 + 4 + 30 + 6 + 32);
   assert.equal(minPanelRowPx("7px 8px 13px"), 7 + 13 + 30 + 6 + 32);
+});
+
+test("ready-made themes: readable, and each dark theme has its own main colour and its own set", () => {
+  for (const p of THEME_PRESETS) {
+    for (const surfaces of ["solid", "glass"] as const) {
+      const s = buildScheme({ mode: p.mode, surfaces, main: p.primary, harmony: p.harmony, second: p.second, third: p.third });
+      assert.deepEqual(s.audit.filter((a) => !a.pass), [], `${p.label} ${surfaces}`);
+    }
+  }
+  const dark = THEME_PRESETS.filter((p) => p.mode === "dark");
+  const hues = dark.map((p) => hexToOklch(p.primary).h);
+  for (let i = 0; i < hues.length; i++)
+    for (let j = i + 1; j < hues.length; j++) {
+      const d = Math.abs(hues[i] - hues[j]);
+      assert.ok(Math.min(d, 360 - d) >= 25, `${dark[i].label} and ${dark[j].label} main colours are too alike`);
+    }
+  const sets = dark.map((p) => [p.second, p.third].join("|"));
+  assert.equal(new Set(sets).size, sets.length, "two dark themes share second and third colours");
 });

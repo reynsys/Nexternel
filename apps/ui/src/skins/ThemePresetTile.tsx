@@ -43,6 +43,8 @@ export function prefsWithPreset(prefs: ThemePrefs, p: ThemePreset): ThemePrefs {
     autoMode: false,
     primary: p.primary,
     harmony: p.harmony,
+    second: p.second,
+    third: p.third,
     gradientId: p.gradientId,
     lookFont: p.font,
   };
@@ -55,7 +57,7 @@ export function presetIsChosen(prefs: ThemePrefs, mode: "light" | "dark", p: The
 
 /** A ready-made theme to pick: its name, its line, and a small picture of its colours (Appearance and setup). */
 export function ThemePresetTile({ preset: p, prefs, selected, onPick }: { preset: ThemePreset; prefs: ThemePrefs; selected: boolean; onPick: () => void }) {
-  const pPrefs: ThemePrefs = { ...prefs, lookId: p.lookId, mode: p.mode, autoMode: false, primary: p.primary, harmony: p.harmony, gradientId: p.gradientId };
+  const pPrefs: ThemePrefs = { ...prefs, lookId: p.lookId, mode: p.mode, autoMode: false, primary: p.primary, harmony: p.harmony, second: p.second, third: p.third, gradientId: p.gradientId };
   const s = schemeForPrefs(pPrefs, p.mode, Boolean(resolveLook(p.lookId).frosted));
   const bg = isMineBackground(p.gradientId) ? mineBackground(s, p.gradientId).css : (gradientCss(p.gradientId, p.mode) ?? s.roles.surfaceSolid.background);
   return (

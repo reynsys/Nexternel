@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.32
+
+- **The six dark ready-made themes each have their own colours:** Midnight Blue (blue, amber, teal), Ember (orange-red, gold, lilac), Ocean Glass (teal, blue, sea green), Aurora (purple, mint, pink), Forest (green, gold, sky blue) and Control Room (amber, sky blue, lime). Before, four of them started from blue and got almost the same second colours.
+- If you already use one of these themes, pick it again in Settings → Appearance → Theme to get its new colours.
+
 ## V5.3.31
 
 - **GPS Tracker** (update the GPS Tracker extension to 1.0.6 too): if a tracker stops sending while driving, for example in a tunnel or with no mobile signal, the map now says "Signal lost while moving" after 3 minutes. It no longer shows the car as still moving at its old speed.
