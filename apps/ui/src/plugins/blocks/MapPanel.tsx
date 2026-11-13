@@ -3,11 +3,12 @@ import { Box, IconButton, Stack, Tooltip, Typography, useTheme } from "@mui/mate
 import { alpha } from "@mui/material/styles";
 import MyLocationIcon from "@mui/icons-material/MyLocation";
 import L from "leaflet";
-import { api } from "../../api";
 import { createMap, mapSx } from "./map-base";
+import { usePanelContent } from "./use-panel-content";
 import { mapIsDark, parseMapContent, timeAgo, type MapMarker } from "../../lib/map-panel-content";
 
-const REFRESH_MS = 30_000;
+/** How often the "minutes ago" text moves on (new positions arrive by themselves). */
+const CLOCK_MS = 30_000;
 const CLOSE_ZOOM = 15;
 /** Plugins resend at least every 5 minutes, so anything older means the plugin has stopped. */
 const STOPPED_MS = 10 * 60_000;
@@ -42,32 +43,16 @@ export function MapPanel({ pluginId, panelId }: { pluginId: string; panelId: str
   const layers = useRef<L.LayerGroup | null>(null);
   const following = useRef(true);
   const shown = useRef<MapMarker[]>([]);
-  const [saved, setSaved] = useState<{ body: string; updatedAt: string } | null>(null);
-  const [loaded, setLoaded] = useState(false);
+  const { content: saved, loaded } = usePanelContent(pluginId, panelId);
   const [wandered, setWandered] = useState(false);
   const [now, setNow] = useState(() => Date.now());
 
+  // "2 min ago" and the stopped-extension warning count on between updates.
   useEffect(() => {
-    let alive = true;
-    const load = () =>
-      api
-        .pluginPanelContent(pluginId, panelId)
-        .then((r) => {
-          if (!alive) return;
-          setSaved(r.content);
-          setNow(Date.now());
-          setLoaded(true);
-        })
-        .catch(() => alive && setLoaded(true));
-    void load();
-    const timer = setInterval(() => {
-      if (document.visibilityState === "visible") void load();
-    }, REFRESH_MS);
-    return () => {
-      alive = false;
-      clearInterval(timer);
-    };
-  }, [pluginId, panelId]);
+    setNow(Date.now());
+    const timer = setInterval(() => setNow(Date.now()), CLOCK_MS);
+    return () => clearInterval(timer);
+  }, [saved]);
 
   const content = useMemo(() => parseMapContent(saved?.body ?? ""), [saved?.body]);
   const dark = mapIsDark(content.look, theme.palette.mode === "dark");

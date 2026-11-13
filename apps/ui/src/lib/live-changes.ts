@@ -22,7 +22,9 @@ export type ChangeTopic =
   | "plugins"
   | "notifications"
   | "activity"
-  | "system";
+  | "system"
+  /** One extension panel's content (plugin id / panel id), written by its extension. */
+  | `plugin-panel:${string}`;
 
 type Listener = { topics: Set<string>; fn: (topic: string) => void };
 const listeners = new Set<Listener>();

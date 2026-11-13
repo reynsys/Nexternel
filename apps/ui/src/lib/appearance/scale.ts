@@ -1,4 +1,4 @@
-import { contrast, hexToOklch, lightnessForContrast, oklchToHex, type Oklch } from "./color";
+import { bestLightness, contrast, hexToOklch, lightnessForContrast, maxChroma, oklchToHex, type Oklch } from "./color";
 
 export type Mode = "light" | "dark";
 
@@ -37,12 +37,13 @@ export function inkOn(solid: string): string {
  * possible; text shades are moved just far enough to stay readable on the background shades, and
  * the control edge shade just far enough to be seen (WCAG: text 4.5:1, strongest text 7:1, edges 3:1).
  */
-export function buildScale(seed: string, mode: Mode, opts: { chroma?: number } = {}): Scale {
+export function buildScale(seed: string, mode: Mode, opts: { chroma?: number; share?: number[] } = {}): Scale {
   const s = hexToOklch(seed);
   const chroma = Math.min(opts.chroma ?? s.c, 0.2);
   const [lo, hi] = SOLID_BAND[mode];
   const solidL = Math.min(hi, Math.max(lo, s.l));
-  const at = (i: number, l: number): Oklch => ({ l, c: chroma * CHROMA_SHARE[i], h: s.h });
+  const share = opts.share ?? CHROMA_SHARE;
+  const at = (i: number, l: number): Oklch => ({ l, c: chroma * share[i], h: s.h });
   const out: string[] = LIGHTNESS[mode].map((l, i) => (Number.isNaN(l) ? "" : oklchToHex(at(i, l))));
 
   // Solid colour, and the same pointed at (a little darker on light pages, lighter on dark ones).
@@ -71,12 +72,20 @@ export function buildScale(seed: string, mode: Mode, opts: { chroma?: number } =
   return out;
 }
 
-/** The greys of a scheme: tinted very slightly with the main colour, so the page feels like one family. */
-export function buildNeutralScale(main: string, mode: Mode, tint = 0.014): Scale {
+/**
+ * How much of the main colour the page, boxes and lines carry: enough to see that each theme has
+ * its own background (deep navy, deep green, plum…), little enough to stay calm. Light pages need
+ * less to show the same hint. Text greys carry less, so they still read as grey.
+ */
+const NEUTRAL_TINT: Record<Mode, number> = { light: 0.012, dark: 0.024 };
+const NEUTRAL_SHARE = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.6, 0.35];
+
+/** The greys of a scheme: tinted with the main colour, so each theme has its own background. */
+export function buildNeutralScale(main: string, mode: Mode, tint = NEUTRAL_TINT[mode]): Scale {
   const { h } = hexToOklch(main);
-  // Greys keep the same small colourfulness on every shade (no stronger middle).
   const grey = oklchToHex({ l: 0.6, c: tint, h });
-  return buildScale(grey, mode, { chroma: tint * 2 });
+  // The same small colourfulness on every background and line shade (not cut down on the darkest).
+  return buildScale(grey, mode, { chroma: tint, share: NEUTRAL_SHARE });
 }
 
 /** How the second and third colours are found from the main one, on the colour wheel. */
@@ -97,10 +106,18 @@ const OFFSETS: Record<Exclude<Harmony, "custom">, [number, number]> = {
   complementary: [180, 150],
 };
 
-/** The second and third colours suggested for a main colour (same colourfulness and lightness). */
+/**
+ * The second and third colours suggested for a main colour: turned round the colour wheel, each at
+ * the lightness where its own hue looks best (a yellow stays yellow instead of turning olive), with
+ * the main colour's colourfulness as far as the screen can show it.
+ */
 export function harmonyColours(main: string, harmony: Exclude<Harmony, "custom">): [string, string] {
   const m = hexToOklch(main);
   const [a, b] = OFFSETS[harmony];
-  const turn = (d: number) => oklchToHex({ l: m.l, c: Math.max(m.c, 0.08), h: (m.h + d + 360) % 360 });
+  const turn = (d: number) => {
+    const h = (m.h + d + 360) % 360;
+    const l = Math.min(0.82, Math.max(0.5, bestLightness(h)));
+    return oklchToHex({ l, c: Math.min(Math.max(m.c, 0.08), maxChroma(l, h)), h });
+  };
   return [turn(a), turn(b)];
 }

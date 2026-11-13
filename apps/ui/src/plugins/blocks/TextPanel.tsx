@@ -1,10 +1,6 @@
-import { useEffect, useState } from "react";
 import { Box, Stack, Typography } from "@mui/material";
-import { api } from "../../api";
+import { usePanelContent } from "./use-panel-content";
 
-type Content = { title: string; body: string; updatedAt: string };
-
-const REFRESH_MS = 60_000;
 
 /** One line of the plugin's text: "- " lines become bullet points, others stay paragraphs. */
 function Line({ text }: { text: string }) {
@@ -23,29 +19,7 @@ function Line({ text }: { text: string }) {
 
 /** Text building block for plugin panels: shows what the plugin last wrote (e.g. a summary). */
 export function TextPanel({ pluginId, panelId, label }: { pluginId: string; panelId: string; label: string }) {
-  const [content, setContent] = useState<Content | null>(null);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    let alive = true;
-    const load = () =>
-      api
-        .pluginPanelContent(pluginId, panelId)
-        .then((r) => {
-          if (!alive) return;
-          setContent(r.content);
-          setLoaded(true);
-        })
-        .catch(() => alive && setLoaded(true));
-    void load();
-    const timer = setInterval(() => {
-      if (document.visibilityState === "visible") void load();
-    }, REFRESH_MS);
-    return () => {
-      alive = false;
-      clearInterval(timer);
-    };
-  }, [pluginId, panelId]);
+  const { content, loaded } = usePanelContent(pluginId, panelId);
 
   if (!loaded) return null;
   if (!content || (!content.body && !content.title)) {

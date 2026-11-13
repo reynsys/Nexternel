@@ -90,6 +90,35 @@ export function oklchToHex(color: Oklch): string {
   return rgbToHex({ r: linearToSrgb(clamp01(lin.r)), g: linearToSrgb(clamp01(lin.g)), b: linearToSrgb(clamp01(lin.b)) });
 }
 
+/** The most colourfulness a screen can show at this lightness and hue. */
+export function maxChroma(l: number, h: number): number {
+  let lo = 0;
+  let hi = 0.4;
+  for (let i = 0; i < 20; i++) {
+    const mid = (lo + hi) / 2;
+    if (inGamut(oklchToLinear({ l, c: mid, h }))) lo = mid;
+    else hi = mid;
+  }
+  return lo;
+}
+
+/**
+ * The lightness at which a hue is at its most colourful: yellow is at its best when light, blue
+ * when darker. A yellow made as dark as a blue looks olive or brown.
+ */
+export function bestLightness(h: number): number {
+  let best = 0.6;
+  let most = -1;
+  for (let l = 0.3; l <= 0.98; l += 0.01) {
+    const c = maxChroma(l, h);
+    if (c > most) {
+      most = c;
+      best = l;
+    }
+  }
+  return best;
+}
+
 /** WCAG 2 relative luminance (0 = black, 1 = white). */
 export function luminance(hex: string): number {
   const { r, g, b } = hexToRgb(hex);

@@ -4,6 +4,10 @@ import type { PluginManifest, PluginPanelDef } from "@nexternel/plugin-sdk";
 import { requireUser } from "../auth/plugin.js";
 import { getPool } from "../db.js";
 import { pushPluginEvent } from "./events.js";
+import { publishChange } from "../live/changes.js";
+
+/** The live "changes" topic for one panel's content: screens showing that panel load it again at once. */
+export const panelContentTopic = (pluginId: string, panelId: string) => `plugin-panel:${pluginId}/${panelId}`;
 
 /**
  * Plugin panels on the dashboard. A "conversation" panel sends a question to its plugin and
@@ -101,6 +105,7 @@ export async function setPanelContent(
       typeof content.body === "string" ? content.body.slice(0, 20_000) : "",
     ]
   );
+  publishChange(panelContentTopic(pluginId, panelId));
   return null;
 }
 

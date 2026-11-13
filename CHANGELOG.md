@@ -2,6 +2,13 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.30
+
+- **GPS Tracker** (update the GPS Tracker extension to 1.0.5 too): the map moves the moment a new position arrives, at most a few seconds after the tracker sends it (it used to be up to about 1½ minutes behind). The route line follows the car from the start of each journey instead of appearing several minutes later.
+- Every extension panel on a dashboard now updates as soon as its extension has something new, without waiting.
+- **Ready-made themes look clearly different:** each has its own background (navy, deep green, plum, warm brown…), and the second and third colours are bright and clear instead of olive or brown. This also applies when you choose your own colours.
+- The theme "Nexternel" is now called **Midnight Blue**. If you use it, nothing changes.
+
 ## V5.3.29
 
 - Devices → Add device is a new window. **Search my home** looks for devices on your home network and puts them in groups: ready to bring in, cameras and doorbells, also on your network, and already in Nexternel. You can still add one yourself.

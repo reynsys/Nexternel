@@ -17,7 +17,7 @@ export type ThemePreset = {
 };
 
 export const THEME_PRESETS: ThemePreset[] = [
-  { id: "nexternel", label: "Nexternel", description: "Clean blue on deep night.", lookId: "standard", mode: "dark", primary: "#1A73E8", harmony: "split", gradientId: "none", font: "inter" },
+  { id: "nexternel", label: "Midnight Blue", description: "Clean blue on deep night.", lookId: "standard", mode: "dark", primary: "#1A73E8", harmony: "split", gradientId: "none", font: "inter" },
   { id: "ember", label: "Ember", description: "Warm orange glow.", lookId: "standard", mode: "dark", primary: "#F4511E", harmony: "split", gradientId: "mine-glow", font: "inter" },
   { id: "ocean-glass", label: "Ocean Glass", description: "See-through panels over calm blues.", lookId: "glass", mode: "dark", primary: "#0288D1", harmony: "analogous", gradientId: "mine-glow", font: "manrope" },
   { id: "aurora", label: "Aurora", description: "Northern lights behind frosted glass.", lookId: "glass", mode: "dark", primary: "#7E57C2", harmony: "triadic", gradientId: "glow-aurora", font: "space-grotesk" },

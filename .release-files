@@ -638,6 +638,7 @@ apps/ui/src/plugins/blocks/ConversationPanel.tsx
 apps/ui/src/plugins/blocks/map-base.ts
 apps/ui/src/plugins/blocks/MapPanel.tsx
 apps/ui/src/plugins/blocks/TextPanel.tsx
+apps/ui/src/plugins/blocks/use-panel-content.ts
 apps/ui/src/plugins/loadContributions.ts
 apps/ui/src/plugins/pages/SetupPage.tsx
 apps/ui/src/plugins/pages/TrackingMap.tsx
