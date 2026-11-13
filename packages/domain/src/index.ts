@@ -18,3 +18,4 @@ export * from "./status-light.js";
 export * from "./panel-area-line.js";
 export * from "./passwords.js";
 export * from "./terms.js";
+export * from "./home-network.js";

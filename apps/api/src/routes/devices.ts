@@ -38,7 +38,7 @@ function pgErrorCode(err: unknown): string {
   return "";
 }
 
-async function afterDeviceMutation() {
+export async function afterDeviceMutation() {
   await syncCapabilitiesFromLegacy();
   const { repairDashboardCapabilityBindings } = await import(
     "../migrate/repair-dashboard-bindings.js"

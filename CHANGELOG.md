@@ -2,6 +2,15 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.29
+
+- Devices → Add device is a new window. **Search my home** looks for devices on your home network and puts them in groups: ready to bring in, cameras and doorbells, also on your network, and already in Nexternel. You can still add one yourself.
+- **Bring in Shelly switches** (older and newer kinds) with one tap. If the switch has its own password, Nexternel asks for it.
+- **Bring in ESP boards that are already on your Wi-Fi:** Nexternel makes the software for known board kinds and puts it on over Wi-Fi. A board locked by another system is refused, and nothing on it is changed.
+- A camera that Search my home finds opens the camera form with its address filled in.
+- **Wi-Fi for your devices** is now set on screen: in the setup steps for a new home, in Settings → System, and asked for when it is missing. No more editing a file.
+- Nexternel checks its own home address every 5 minutes, so devices are never pointed at an old address after a router change.
+
 ## V5.3.28
 
 - New homes are set up on screen, step by step: welcome, terms of use, your account, your home (name and town for the weather), your colours, and a last page with the addresses to save and what to do next. The install itself now shows a few short steps instead of pages of technical text.

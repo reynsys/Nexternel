@@ -4,6 +4,7 @@ import { parseEmail } from "../auth/outside-lock.js";
 import { parseThemePrefsInput } from "../auth/theme-prefs.js";
 import { normalizeHomeName, recordTermsAccepted, setHome } from "../system/home.js";
 import { placeSearchReply } from "./weather.js";
+import { boardWifiProblem, writeBoardWifi } from "../esphome/board-wifi.js";
 import type { FastifyPluginAsync } from "fastify";
 import { getPool } from "../db.js";
 import { hashPassword, signAccessToken, signRefreshToken } from "../auth/tokens.js";
@@ -158,6 +159,7 @@ export const setupRoutes: FastifyPluginAsync = async (app) => {
       homeName?: unknown;
       place?: unknown;
       themePrefs?: unknown;
+      devicesWifi?: unknown;
     };
   }>("/api/v1/setup/complete", async (request, reply) => {
     if (await isSetupComplete()) {
@@ -204,6 +206,16 @@ export const setupRoutes: FastifyPluginAsync = async (app) => {
       typeof request.body?.displayName === "string" ? request.body.displayName.replace(/\s+/g, " ").trim().slice(0, 100) || null : null;
     const themePrefs = parseThemePrefsInput(request.body?.themePrefs) ?? null;
     const place = setupPlace(request.body?.place);
+    // Wi-Fi for your devices (optional step): checked before anything is created.
+    const wifiRaw = request.body?.devicesWifi as { ssid?: unknown; password?: unknown } | undefined;
+    const devicesWifi =
+      wifiRaw && typeof wifiRaw.ssid === "string" && wifiRaw.ssid.trim()
+        ? { ssid: wifiRaw.ssid, password: typeof wifiRaw.password === "string" ? wifiRaw.password : "" }
+        : null;
+    const wifiProblem = devicesWifi ? boardWifiProblem(devicesWifi, false) : null;
+    if (wifiProblem) {
+      return reply.code(400).send({ error: { code: "bad_request", message: wifiProblem } });
+    }
 
     const pool = getPool();
     const existing = await pool.query(`SELECT id FROM users WHERE username = $1 LIMIT 1`, [
@@ -241,6 +253,13 @@ export const setupRoutes: FastifyPluginAsync = async (app) => {
     await recordTermsAccepted(TERMS_VERSION, user.username);
     const homeName = normalizeHomeName(request.body?.homeName);
     if (homeName) await setHome({ name: homeName });
+    if (devicesWifi) {
+      try {
+        writeBoardWifi(devicesWifi);
+      } catch (err) {
+        request.log.warn({ err }, "Wi-Fi for devices not saved during setup");
+      }
+    }
     await ensureStarterDashboard(user.id, { place }).catch((err) => {
       request.log.warn({ err }, "starter dashboard not created");
     });

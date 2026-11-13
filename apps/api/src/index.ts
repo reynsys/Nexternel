@@ -47,6 +47,8 @@ import { setupRoutes } from "./routes/setup.js";
 import { weatherRoutes } from "./routes/weather.js";
 import { homeRoutes } from "./routes/home.js";
 import { shellyRoutes } from "./routes/shelly.js";
+import { homeNetworkRoutes } from "./routes/home-network.js";
+import { devicesWifiRoutes } from "./routes/devices-wifi.js";
 import { octopusRoutes } from "./routes/octopus.js";
 import { pluginsRoutes } from "./routes/plugins.js";
 import { addonsRoutes } from "./routes/addons.js";
@@ -181,6 +183,8 @@ await app.register(async (api) => {
   await api.register(weatherRoutes);
   await api.register(homeRoutes);
   await api.register(shellyRoutes);
+  await api.register(homeNetworkRoutes);
+  await api.register(devicesWifiRoutes);
   await api.register(octopusRoutes);
   await api.register(panelApiRoutes, { apiVersion: "v5" });
   await api.register(v4Routes);
@@ -222,8 +226,9 @@ try {
   await ensureCameraSchema();
   await ensureOctopusSchema();
   await ensureBackupScheduleSchema();
-  const { refreshHostIpAtStartup } = await import("./system/host-ip.js");
+  const { refreshHostIpAtStartup, keepHostIpCurrent } = await import("./system/host-ip.js");
   const hostIp = await refreshHostIpAtStartup();
+  keepHostIpCurrent();
   app.log.info({ hostIp, envServerIp: process.env.SERVER_IP || null }, "server address on the home network");
   // The secure front door (Caddy) needs the server's address for its certificate.
   void applyHttps(true)
@@ -239,6 +244,8 @@ try {
   }
   app.log.info({ adminSeed, needsSetup: installState.needsSetup }, "admin bootstrap");
   try {
+    const { ensureEsphomeSecretsFile } = await import("./esphome/board-wifi.js");
+    if (ensureEsphomeSecretsFile()) app.log.info("esphome/secrets.yaml created for a new home (Wi-Fi is set on screen)");
     const { ensureEsphomeSecretsForServer } = await import(
       "./migrate/ensure-esphome-secrets.js"
     );

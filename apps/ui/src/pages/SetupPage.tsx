@@ -27,6 +27,7 @@ import { toAccountThemePrefs } from "../skins/themePrefs";
 import { THEME_PRESETS } from "../lib/appearance/presets";
 import { ThemePresetTile, prefsWithPreset, presetIsChosen } from "../skins/ThemePresetTile";
 import { ButtonRow } from "../components/ButtonRow";
+import { DevicesWifiExplainer, DevicesWifiFields, type DevicesWifiValue } from "../components/DevicesWifi";
 import { BrandMark } from "../components/BrandMark";
 import { PlaceSearch, type ChosenPlace } from "../components/PlaceSearch";
 import { PasswordTicks, passwordChecksPass } from "../components/PasswordTicks";
@@ -40,9 +41,9 @@ import { showHomeInTab } from "../lib/home-title";
  * backup's own accounts. Nothing is saved until Finish: the server gets everything in one go.
  * Full screen, without the menu (there is nothing in it yet).
  */
-type Step = "welcome" | "terms" | "account" | "home" | "look" | "ready" | "pick-backup" | "review" | "restoring" | "restored";
+type Step = "welcome" | "terms" | "account" | "home" | "devices-wifi" | "look" | "ready" | "pick-backup" | "review" | "restoring" | "restored";
 
-const FRESH: Step[] = ["welcome", "terms", "account", "home", "look", "ready"];
+const FRESH: Step[] = ["welcome", "terms", "account", "home", "devices-wifi", "look", "ready"];
 const RESTORE: Step[] = ["welcome", "terms", "pick-backup", "review", "restored"];
 /** The ready-made themes offered in setup: clearly different from each other (the rest are in Appearance). */
 const SETUP_THEMES = ["nexternel", "ember", "forest", "paper"];
@@ -128,6 +129,7 @@ export function SetupPage() {
   const [checks, setChecks] = useState<PasswordCheck[]>([]);
   const [homeName, setHomeName] = useState("");
   const [place, setPlace] = useState<ChosenPlace | null>(null);
+  const [devicesWifi, setDevicesWifi] = useState<DevicesWifiValue>({ ssid: "", password: "" });
   const [backupFile, setBackupFile] = useState<File | null>(null);
   const [backupPassword, setBackupPassword] = useState("");
   const [inspect, setInspect] = useState<BackupInspectResult | null>(null);
@@ -189,6 +191,7 @@ export function SetupPage() {
         homeName: homeName.trim() || undefined,
         place: place ? { name: place.name, latitude: place.latitude, longitude: place.longitude } : null,
         themePrefs: toAccountThemePrefs(themePrefs, skin.id),
+        devicesWifi: devicesWifi.ssid.trim() ? devicesWifi : null,
       });
       rememberAuth({ accessToken: data.accessToken, refreshToken: data.refreshToken, user: data.user });
       applyAccountPrefs(data.user.themePrefs);
@@ -410,12 +413,48 @@ export function SetupPage() {
                       onClick={() => {
                         setHomeName("");
                         setPlace(null);
+                        go("devices-wifi");
+                      }}
+                    >
+                      Skip
+                    </Button>
+                    <Button variant="contained" onClick={() => go("devices-wifi")}>
+                      Next
+                    </Button>
+                  </ButtonRow>
+                </ButtonRow>
+              </>
+            )}
+
+            {step === "devices-wifi" && (
+              <>
+                <Typography variant="h5">Wi-Fi for your devices</Typography>
+                <DevicesWifiExplainer />
+                <DevicesWifiFields idPrefix="setup-devices-wifi" value={devicesWifi} onChange={setDevicesWifi} />
+                <Typography variant="caption" color="text.secondary">
+                  You can skip this and set it later in Settings → System. Nexternel asks again when you add your first board.
+                </Typography>
+                {error && <Alert severity="error">{error}</Alert>}
+                <ButtonRow direction="row" justifyContent="space-between">
+                  <Button onClick={() => go("home")}>Back</Button>
+                  <ButtonRow direction="row">
+                    <Button
+                      onClick={() => {
+                        setDevicesWifi({ ssid: "", password: "" });
                         go("look");
                       }}
                     >
                       Skip
                     </Button>
-                    <Button variant="contained" onClick={() => go("look")}>
+                    <Button
+                      variant="contained"
+                      onClick={() => {
+                        const { ssid, password } = devicesWifi;
+                        if (!ssid.trim()) return setError("Type the name of your home Wi-Fi, or press Skip.");
+                        if (password.length < 8 || password.length > 63) return setError("A Wi-Fi password has 8 to 63 characters.");
+                        go("look");
+                      }}
+                    >
                       Next
                     </Button>
                   </ButtonRow>
@@ -440,7 +479,7 @@ export function SetupPage() {
                 {busy && <LinearProgress />}
                 {error && <Alert severity="error">{error}</Alert>}
                 <ButtonRow direction="row" justifyContent="space-between">
-                  <Button onClick={() => go("home")} disabled={busy}>
+                  <Button onClick={() => go("devices-wifi")} disabled={busy}>
                     Back
                   </Button>
                   <ButtonRow direction="row">

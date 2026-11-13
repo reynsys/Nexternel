@@ -1,6 +1,6 @@
 import { pushDiagnosticError } from "./diagnostics/errorRing";
 import { dashboardHistoryScheduler } from "./lib/dashboard-data-runtime/history-scheduler";
-import type { DashboardGridCols } from "@nexternel/domain";
+import type { DashboardGridCols, FoundDevice } from "@nexternel/domain";
 
 const ACCESS_KEY = "nexternel_access_token";
 const REFRESH_KEY = "nexternel_refresh_token";
@@ -181,12 +181,15 @@ function shouldAttemptRefresh(path: string): boolean {
   );
 }
 
-async function parseErrorMessage(res: Response): Promise<string> {
+/** The server's error answer: its message for people, and its code for screens that act on it. */
+async function parseErrorBody(res: Response): Promise<{ message: string; code: string | null }> {
   let message = `HTTP ${res.status}`;
+  let code: string | null = null;
   try {
     const body = (await res.json()) as {
-      error?: { message?: string; debug?: Record<string, unknown> };
+      error?: { message?: string; code?: string; debug?: Record<string, unknown> };
     };
+    if (typeof body.error?.code === "string") code = body.error.code;
     if (body.error?.message) {
       message = body.error.message;
       if (body.error.debug) {
@@ -196,7 +199,11 @@ async function parseErrorMessage(res: Response): Promise<string> {
   } catch {
     /* ignore */
   }
-  return message;
+  return { message, code };
+}
+
+async function parseErrorMessage(res: Response): Promise<string> {
+  return (await parseErrorBody(res)).message;
 }
 
 /** Download a file from the API (signed in), refreshing the login once if it expired. */
@@ -304,14 +311,15 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   if (!res.ok) {
     // Maintenance mode: tell the banner straight away.
     if (res.status === 503) window.dispatchEvent(new Event("nexternel:maintenance"));
-    const message = await parseErrorMessage(res);
+    const { message, code } = await parseErrorBody(res);
     pushDiagnosticError({
       kind: "api",
       message,
       source: path,
       status: res.status,
     });
-    throw new Error(message);
+    // The answer's status and code travel with the error, so a screen can tell kinds of refusal apart.
+    throw Object.assign(new Error(message), { status: res.status, code });
   }
 
   if (res.status === 204) {
@@ -864,6 +872,25 @@ export const api = {
       }[];
     }>("/api/v1/shelly/models"),
 
+  /** Wi-Fi for your devices: the Wi-Fi boards join (the password is never sent back). */
+  devicesWifi: () => apiFetch<{ ssid: string | null; passwordSet: boolean }>("/api/v1/devices-wifi"),
+  saveDevicesWifi: (body: { ssid: string; password: string }) =>
+    apiFetch<{ ssid: string | null; passwordSet: boolean }>("/api/v1/devices-wifi", {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+
+  /** Devices → Add device → Search my home (only listens; changes nothing). */
+  homeNetworkSearch: () =>
+    apiFetch<{ devices: FoundDevice[] }>("/api/v1/home-network/search", { method: "POST", body: "{}" }),
+
+  /** Bring one found device into Nexternel. */
+  homeNetworkBringIn: (device: FoundDevice, extra?: { password?: string }) =>
+    apiFetch<{ deviceId: string; name: string; message: string }>("/api/v1/home-network/bring-in", {
+      method: "POST",
+      body: JSON.stringify({ device, ...extra }),
+    }),
+
   shellyDiscover: (body?: { timeoutMs?: number }) =>
     apiFetch<{
       devices: {
@@ -1390,6 +1417,7 @@ export const api = {
     homeName?: string;
     place?: { name: string; latitude: number; longitude: number } | null;
     themePrefs?: UserThemePrefs;
+    devicesWifi?: { ssid: string; password: string } | null;
   }) =>
     apiFetch<{ ok: boolean; user: User; accessToken: string; refreshToken: string }>(
       "/api/v1/setup/complete",

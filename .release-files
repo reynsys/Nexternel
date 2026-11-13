@@ -107,6 +107,8 @@ apps/api/src/diagnostics/live-pipeline.ts
 apps/api/src/esphome/board-update-routes.ts
 apps/api/src/esphome/board-update-state.test.ts
 apps/api/src/esphome/board-updates.ts
+apps/api/src/esphome/board-wifi.test.ts
+apps/api/src/esphome/board-wifi.ts
 apps/api/src/esphome/builder/builder.test.ts
 apps/api/src/esphome/builder/component-generators.ts
 apps/api/src/esphome/builder/firmware.ts
@@ -142,6 +144,14 @@ apps/api/src/history/mqtt-persist.ts
 apps/api/src/history/pipeline.test.ts
 apps/api/src/history/query.ts
 apps/api/src/history/resolve.ts
+apps/api/src/home-network/bring-in.test.ts
+apps/api/src/home-network/bring-in.ts
+apps/api/src/home-network/classify.test.ts
+apps/api/src/home-network/classify.ts
+apps/api/src/home-network/local-name.ts
+apps/api/src/home-network/search.ts
+apps/api/src/home-network/shelly-local.test.ts
+apps/api/src/home-network/shelly-local.ts
 apps/api/src/index.ts
 apps/api/src/installation-meta.ts
 apps/api/src/lib/host-metrics.ts
@@ -193,10 +203,12 @@ apps/api/src/routes/auth.ts
 apps/api/src/routes/cameras.ts
 apps/api/src/routes/capabilities.ts
 apps/api/src/routes/devices.ts
+apps/api/src/routes/devices-wifi.ts
 apps/api/src/routes/diagnostics.ts
 apps/api/src/routes/health.ts
 apps/api/src/routes/history.test.ts
 apps/api/src/routes/history.ts
+apps/api/src/routes/home-network.ts
 apps/api/src/routes/home.ts
 apps/api/src/routes/octopus.ts
 apps/api/src/routes/plugins.ts
@@ -265,7 +277,9 @@ apps/api/src/version.ts
 apps/api/tsconfig.json
 apps/door-link/Dockerfile
 apps/door-link/link.mjs
+apps/local-name/dns.mjs
 apps/local-name/Dockerfile
+apps/local-name/network-search.mjs
 apps/local-name/responder.mjs
 apps/plugin-host/Dockerfile
 apps/plugin-host/host.mjs
@@ -309,6 +323,7 @@ apps/ui/src/components/DashboardErrorBoundary.tsx
 apps/ui/src/components/DashboardIconPicker.tsx
 apps/ui/src/components/DashboardTabBar.tsx
 apps/ui/src/components/DashboardTileBody.tsx
+apps/ui/src/components/DevicesWifi.tsx
 apps/ui/src/components/IconPicker.tsx
 apps/ui/src/components/ItemOverrideFields.tsx
 apps/ui/src/components/MaintenanceBanner.tsx
@@ -498,6 +513,7 @@ apps/ui/src/lib/widget-bindings.ts
 apps/ui/src/lib/widget-title.ts
 apps/ui/src/main.tsx
 apps/ui/src/pages/admin/AreasPage.tsx
+apps/ui/src/pages/admin/devices/AddDeviceDialog.tsx
 apps/ui/src/pages/admin/devices/BoardHealthCard.tsx
 apps/ui/src/pages/admin/devices/BoardSignalHistory.tsx
 apps/ui/src/pages/admin/devices/BoardSoftware.tsx
@@ -533,6 +549,7 @@ apps/ui/src/pages/admin/settings/addon-status.ts
 apps/ui/src/pages/admin/settings/AnywhereCard.tsx
 apps/ui/src/pages/admin/settings/AppearanceSettingsPage.tsx
 apps/ui/src/pages/admin/settings/BackupSettingsPage.tsx
+apps/ui/src/pages/admin/settings/DevicesWifiCard.tsx
 apps/ui/src/pages/admin/settings/DiagnosticReportCard.tsx
 apps/ui/src/pages/admin/settings/ExtensionsSettingsPage.tsx
 apps/ui/src/pages/admin/settings/HomeNameCard.tsx
@@ -786,6 +803,7 @@ packages/domain/src/esphome-builder.ts
 packages/domain/src/esphome-builder-types.ts
 packages/domain/src/group.ts
 packages/domain/src/history.ts
+packages/domain/src/home-network.ts
 packages/domain/src/index.ts
 packages/domain/src/panel-area-line.test.ts
 packages/domain/src/panel-area-line.ts

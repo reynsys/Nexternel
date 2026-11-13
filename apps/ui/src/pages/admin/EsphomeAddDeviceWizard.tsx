@@ -31,6 +31,8 @@ import { BuilderComponentFields } from "./esphome/BuilderComponentFields";
 import { BuilderComponentPicker } from "./esphome/BuilderComponentPicker";
 import { useConfirm } from "../../components/confirm";
 import { ButtonRow } from "../../components/ButtonRow";
+import { insetSx } from "../../skins/surfaceStyles";
+import { DevicesWifiExplainer, DevicesWifiForm } from "../../components/DevicesWifi";
 
 type AreaOption = { id: string; name: string };
 
@@ -80,6 +82,15 @@ export function EsphomeAddDeviceWizard({
   const { confirm } = useConfirm();
   const [path, setPath] = useState<Path>("choose");
   const [newStep, setNewStep] = useState<NewStep>("hardware");
+  /** Wi-Fi for your devices: asked here when it isn't set yet (the board can't be installed without it). */
+  const [wifiMissing, setWifiMissing] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    void api
+      .devicesWifi()
+      .then((w) => setWifiMissing(!w.ssid || !w.passwordSet))
+      .catch(() => setWifiMissing(false));
+  }, [open]);
   const [platform, setPlatform] = useState<EsphomePlatform>("esp32");
   const [boardId, setBoardId] = useState<EsphomeBoardId>("esp32dev");
   const [displayName, setDisplayName] = useState("");
@@ -479,6 +490,14 @@ export function EsphomeAddDeviceWizard({
                 </Step>
               </Stepper>
 
+              {newStep === "hardware" && wifiMissing && (
+                <Stack spacing={1.5} sx={[{ p: 2, mb: 2 }, insetSx()]}>
+                  <Typography variant="subtitle1">First: Wi-Fi for your devices</Typography>
+                  <DevicesWifiExplainer />
+                  <DevicesWifiForm idPrefix="board-wizard-wifi" onSaved={() => setWifiMissing(false)} />
+                </Stack>
+              )}
+
               {newStep === "hardware" && (
                 <Stack spacing={2}>
                   <FormControl fullWidth size="small">
@@ -549,7 +568,7 @@ export function EsphomeAddDeviceWizard({
                 <Stack spacing={2}>
                   <Typography variant="body2" color="text.secondary">
                     Choose sensors and relays from the component catalogue. Wi-Fi and MQTT
-                    are configured automatically from this server.
+                    are set automatically from Nexternel.
                   </Typography>
                   {components.length === 0 && (
                     <Alert severity="info">

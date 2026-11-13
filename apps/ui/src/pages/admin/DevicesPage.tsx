@@ -34,6 +34,8 @@ import {
 import { insetSx } from "../../skins/surfaceStyles";
 import { ButtonRow } from "../../components/ButtonRow";
 import { useLiveChanges } from "../../lib/live-changes";
+import { AddDeviceDialog, type BringInState } from "./devices/AddDeviceDialog";
+import type { FoundDevice } from "@nexternel/domain";
 
 type AreaOption = { id: string; name: string };
 
@@ -105,6 +107,7 @@ export function DevicesPage() {
   const [deleteTarget, setDeleteTarget] = useState<DeviceRecord | null>(null);
   const [deleteYamlToo, setDeleteYamlToo] = useState(false);
   const [addDeviceChooserOpen, setAddDeviceChooserOpen] = useState(false);
+  const [newCameraHost, setNewCameraHost] = useState<string | undefined>(undefined);
   const [esphomePanelMode, setEsphomePanelMode] = useState<"usb" | "file">("usb");
   const [esphomePanelDevice, setEsphomePanelDevice] = useState<DeviceRecord | null>(null);
   const [systems, setSystems] = useState<{ id: string; label: string }[]>([]);
@@ -257,6 +260,30 @@ export function DevicesPage() {
     } finally {
       setBusy(false);
     }
+  }
+
+  /** Search my home → Bring in: one device at a time, each reporting how it went. */
+  async function bringInFound(
+    found: FoundDevice[],
+    report: (key: string, state: BringInState) => void,
+    password?: string
+  ) {
+    for (const d of found) {
+      report(d.key, { status: "working" });
+      try {
+        const res = await api.homeNetworkBringIn(d, password ? { password } : undefined);
+        report(d.key, { status: "done", message: res.message });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Didn't work. Try again.";
+        // 422: the device has its own password; devices_wifi_needed: the Wi-Fi for boards. The row asks for it.
+        const { status, code } = err as { status?: number; code?: string | null };
+        report(d.key, {
+          status: code === "devices_wifi_needed" ? "wifi" : status === 422 ? "password" : "failed",
+          message,
+        });
+      }
+    }
+    await load();
   }
 
   function openShellyCreate() {
@@ -659,6 +686,7 @@ export function DevicesPage() {
                   <CameraPane
                     key={selection.cameraId}
                     cameraId={selection.cameraId}
+                    newHost={selection.cameraId === "new" ? newCameraHost : undefined}
                     onSaved={(id) => setSelection({ kind: "camera", cameraId: id })}
                     onDeleted={() => setSelection(null)}
                     onCancelNew={() => setSelection(null)}
@@ -998,70 +1026,25 @@ export function DevicesPage() {
         </form>
       </Dialog>
 
-      <Dialog
+      <AddDeviceDialog
         open={addDeviceChooserOpen}
         onClose={() => setAddDeviceChooserOpen(false)}
-        fullWidth
-        maxWidth="xs"
-      >
-        <DialogTitle>Add device</DialogTitle>
-        <DialogContent>
-          <ButtonRow sx={{ mt: 0.5 }}>
-            <Typography variant="body2" color="text.secondary">
-              What would you like to add?
-            </Typography>
-            <Button
-              variant="outlined"
-              fullWidth
-              sx={{ justifyContent: "flex-start", textAlign: "left", py: 1.5, px: 2 }}
-              onClick={() => openAddDeviceWizard()}
-            >
-              <Stack alignItems="flex-start" spacing={0.25}>
-                <Typography fontWeight="fontWeightBold">ESPHome board</Typography>
-                <Typography variant="caption" color="text.secondary">
-                  An ESP32 / ESP8266 board — Nexternel writes, builds and installs its firmware
-                </Typography>
-              </Stack>
-            </Button>
-            <Button
-              variant="outlined"
-              fullWidth
-              sx={{ justifyContent: "flex-start", textAlign: "left", py: 1.5, px: 2 }}
-              onClick={() => openShellyCreate()}
-            >
-              <Stack alignItems="flex-start" spacing={0.25}>
-                <Typography fontWeight="fontWeightBold">Shelly switch</Typography>
-                <Typography variant="caption" color="text.secondary">
-                  A Shelly switch or plug — found on your network, or entered by hand
-                </Typography>
-              </Stack>
-            </Button>
-            <Button
-              variant="outlined"
-              fullWidth
-              sx={{ justifyContent: "flex-start", textAlign: "left", py: 1.5, px: 2 }}
-              onClick={() => {
-                setAddDeviceChooserOpen(false);
-                setSelection({ kind: "camera", cameraId: "new" });
-              }}
-            >
-              <Stack alignItems="flex-start" spacing={0.25}>
-                <Typography fontWeight="fontWeightBold">Camera</Typography>
-                <Typography variant="caption" color="text.secondary">
-                  A network camera's live picture
-                </Typography>
-              </Stack>
-            </Button>
-            <Typography variant="caption" color="text.secondary">
-              Online services such as Octopus energy are set up in their own settings; more kinds of devices come as Extensions (Extensions →
-              Manage extensions).
-            </Typography>
-          </ButtonRow>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setAddDeviceChooserOpen(false)}>Cancel</Button>
-        </DialogActions>
-      </Dialog>
+        onAddBoard={() => openAddDeviceWizard()}
+        onAddShelly={() => openShellyCreate()}
+        onAddCamera={(host) => {
+          setNewCameraHost(host);
+          setSelection({ kind: "camera", cameraId: "new" });
+        }}
+        onOpenExisting={(found) => {
+          if (!found.alreadyIn) return;
+          setSelection(
+            found.alreadyIn.kind === "camera"
+              ? { kind: "camera", cameraId: found.alreadyIn.id }
+              : { kind: "device", deviceId: found.alreadyIn.id }
+          );
+        }}
+        onBringIn={bringInFound}
+      />
 
       {isAdmin && (
         <EsphomeDevicePanelDialog

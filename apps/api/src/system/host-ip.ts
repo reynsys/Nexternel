@@ -2,19 +2,15 @@
  * The server's address on the home network, as the devices see it.
  *
  * SERVER_IP in .env is written once at install time; if the router later gives the server another
- * address (e.g. the old server's, to take over its devices), that value is stale. The API runs on
- * Docker's internal network and cannot see the home network itself, but the ESPHome container runs
- * on the host network: ask it which address the server uses to reach the outside world.
+ * address, that value is stale. The API runs on Docker's internal network and cannot see the home
+ * network itself, but the local-name service runs on the host network: it answers with the address
+ * of the server's route to the outside world. Asked at start, every few minutes, and before a
+ * device is told where to report.
  */
-import { execFile } from "child_process";
-import { promisify } from "util";
+import { askLocalName, LocalNameUnavailable } from "../home-network/local-name.js";
 
-const execFileAsync = promisify(execFile);
-const ESPHOME_CONTAINER = "nexternel-esphome";
 const IPV4 = /^(?:\d{1,3}\.){3}\d{1,3}$/;
-// A UDP "connect" sends nothing; it only picks the address of the route to the internet.
-const PROBE =
-  "import socket; s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM); s.connect(('1.1.1.1', 80)); print(s.getsockname()[0])";
+const EVERY_MS = 5 * 60 * 1000;
 
 /** The name the home network knows this machine by ("nexternel.local"; LOCAL_NAME in .env). */
 export function localHostName(): string {
@@ -22,7 +18,7 @@ export function localHostName(): string {
 }
 
 let detected: string | null = null;
-/** ESPHome exists but is still starting — worth asking again. */
+/** The local-name service is still starting — worth asking again. */
 let retryable = false;
 
 /** Last detected address, or null when it could not be detected (then .env SERVER_IP is used). */
@@ -32,19 +28,22 @@ export function detectedHostIp(): string | null {
 
 export async function refreshHostIp(): Promise<string | null> {
   try {
-    const { stdout } = await execFileAsync("docker", ["exec", ESPHOME_CONTAINER, "python3", "-c", PROBE], {
-      timeout: 15_000,
-    });
-    const ip = stdout.trim();
-    if (IPV4.test(ip) && !ip.startsWith("127.")) detected = ip;
+    const { address } = await askLocalName<{ address: string | null }>("/address", 3_000);
+    if (address && IPV4.test(address) && !address.startsWith("127.")) detected = address;
     retryable = false;
   } catch (err) {
-    // Keep the previous value. Only a starting container is worth waiting for — not a machine
-    // without Docker access (development) or without the ESPHome container.
-    const text = String((err as { stderr?: string }).stderr ?? (err as Error).message ?? "");
-    retryable = /is not running|is restarting/i.test(text);
+    // Keep the previous value. Only a starting service is worth waiting for.
+    retryable = err instanceof LocalNameUnavailable;
   }
   return detected;
+}
+
+let timer: NodeJS.Timeout | null = null;
+/** Keep the address current while running (a router may hand out another one). */
+export function keepHostIpCurrent(): void {
+  if (timer) return;
+  timer = setInterval(() => void refreshHostIp(), EVERY_MS);
+  timer.unref();
 }
 
 /** At startup ESPHome may still be starting: try for up to ~40 s. */

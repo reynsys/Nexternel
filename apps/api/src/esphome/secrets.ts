@@ -3,14 +3,8 @@ import path from "path";
 import { config } from "../config.js";
 import { esphomeDir, pathExists } from "../migrate/paths.js";
 import { parseSimpleSecretsYaml } from "../migrate/flash-yaml.js";
+import { isPlaceholderWifiValue } from "./board-wifi.js";
 
-const WIFI_PLACEHOLDER_PATTERNS = [
-  /^YOUR_WIFI_SSID$/i,
-  /^YOUR_WIFI_PASSWORD$/i,
-  /^change_me/i,
-  /^your_wifi/i,
-  /^example$/i,
-];
 
 export type EsphomeBuildPrerequisites = {
   ready: boolean;
@@ -43,11 +37,6 @@ export function loadEsphomeSecretsMerged(): Record<string, string> {
   return secrets;
 }
 
-function isPlaceholderWifiValue(value: string): boolean {
-  const trimmed = value.trim();
-  if (!trimmed) return false;
-  return WIFI_PLACEHOLDER_PATTERNS.some((pattern) => pattern.test(trimmed));
-}
 
 /** Check Wi-Fi / MQTT secrets required before `esphome compile` for Device Builder devices. */
 export function checkEsphomeBuildPrerequisites(): EsphomeBuildPrerequisites {
@@ -95,7 +84,7 @@ export function checkEsphomeBuildPrerequisites(): EsphomeBuildPrerequisites {
   return {
     ready: missing.length === 0,
     missing,
-    wifiConfigured: Boolean(wifiSsid && wifiPassword !== ""),
+    wifiConfigured: Boolean(wifiSsid && wifiPassword !== "" && !isPlaceholderWifiValue(wifiSsid) && !isPlaceholderWifiValue(wifiPassword)),
     secretsFileExists,
   };
 }
@@ -104,7 +93,9 @@ export function assertEsphomeBuildPrerequisites(): void {
   const check = checkEsphomeBuildPrerequisites();
   if (!check.ready) {
     throw new Error(
-      `Cannot build firmware — ${check.missing.join("; ")}. Edit esphome/secrets.yaml on the server, then try again.`
+      check.wifiConfigured
+        ? `Nexternel can't make board software yet: ${check.missing.join("; ")}. Restart Nexternel (Settings → System) and try again.`
+        : "Nexternel needs your Wi-Fi name and password for boards first: Settings → System → Wi-Fi for your devices."
     );
   }
 }

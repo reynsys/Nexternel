@@ -58,7 +58,14 @@ function slugFromName(name: string): string {
  * One camera on the Devices page: its details with Edit and Delete ("new" = adding a camera). The
  * camera editor opens as before.
  */
-export type CameraPaneProps = { cameraId: string; onSaved: (id: string) => void; onDeleted: () => void; onCancelNew: () => void };
+export type CameraPaneProps = {
+  cameraId: string;
+  /** Adding a camera found by Search my home: its address is filled in. */
+  newHost?: string;
+  onSaved: (id: string) => void;
+  onDeleted: () => void;
+  onCancelNew: () => void;
+};
 
 export function CameraPane(props: CameraPaneProps) {
   return <CamerasPage pane={props} />;
@@ -115,7 +122,7 @@ function CamerasPage({ pane }: { pane: CameraPaneProps }) {
 
   function openCreate() {
     setEditing(null);
-    setForm(emptyForm);
+    setForm({ ...emptyForm, host: pane.newHost ?? "" });
     setDialogOpen(true);
   }
 

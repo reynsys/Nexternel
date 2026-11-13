@@ -11,6 +11,7 @@ import { UpdatesCard } from "./UpdatesCard";
 import { HttpsCard } from "./HttpsCard";
 import { AnywhereCard } from "./AnywhereCard";
 import { HomeNameCard } from "./HomeNameCard";
+import { DevicesWifiCard } from "./DevicesWifiCard";
 import { ButtonRow } from "../../../components/ButtonRow";
 import { ActivityList } from "../../../components/ActivityList";
 import { hasPermission } from "../../../lib/permissions";
@@ -120,6 +121,7 @@ export function SystemStatusPage() {
       {tab === "overview" ? (
       <>
       <HomeNameCard surfaceSx={surfaceSx} canEdit={Boolean(isAdmin)} />
+      <DevicesWifiCard surfaceSx={surfaceSx} canEdit={Boolean(isAdmin)} />
       <Card sx={surfaceSx}>
         <CardContent>
           <Typography variant="h6" gutterBottom>

@@ -225,12 +225,9 @@ export function validateEsphomeBuilderConfig(
     );
   }
 
+  // A board with nothing added yet is still a board: every Nexternel board reports its Wi-Fi signal,
+  // uptime and health (shared settings). Search my home → Bring in starts boards like that.
   const components = Array.isArray(config.components) ? config.components : [];
-  if (components.length === 0) {
-    issues.push(
-      issue("components", "Add at least one component", "components_required")
-    );
-  }
 
   const usedPins = new Map<number, string>();
 

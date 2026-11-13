@@ -1,9 +1,12 @@
 // Answers "nexternel.local" on the home network (multicast DNS, the way printers and Apple
 // devices are found by name), so phones and computers at home can open http://nexternel.local.
-// No libraries: one small UDP listener. Runs with the host's network to see the home network.
+// The same listener also hears what devices say about themselves, for the home network search
+// (network-search.mjs). No libraries. Runs with the host's network to see the home network.
 import dgram from "node:dgram";
 import { readFileSync } from "node:fs";
 import os from "node:os";
+import { encodeName, readName } from "./dns.mjs";
+import { noteAnswer, startSearchService } from "./network-search.mjs";
 
 const BASE_NAME = (process.env.NEXTERNEL_LOCAL_NAME || "nexternel").toLowerCase();
 // Becomes "nexternel-2.local" if another machine on the network already answers to the name.
@@ -29,37 +32,6 @@ function homeAddress() {
     if (a) return a.address;
   }
   return null;
-}
-
-function encodeName(name) {
-  const parts = name.split(".").map((l) => {
-    const b = Buffer.from(l, "utf8");
-    return Buffer.concat([Buffer.from([b.length]), b]);
-  });
-  return Buffer.concat([...parts, Buffer.from([0])]);
-}
-
-/** Read a (possibly compressed) name at offset; returns [name, next offset]. */
-function readName(buf, offset) {
-  const labels = [];
-  let pos = offset;
-  let next = -1;
-  for (let guard = 0; guard < 64; guard++) {
-    const len = buf[pos];
-    if (len === undefined) throw new Error("short packet");
-    if (len === 0) {
-      pos += 1;
-      break;
-    }
-    if ((len & 0xc0) === 0xc0) {
-      if (next < 0) next = pos + 2;
-      pos = ((len & 0x3f) << 8) | buf[pos + 1];
-      continue;
-    }
-    labels.push(buf.toString("utf8", pos + 1, pos + 1 + len));
-    pos += 1 + len;
-  }
-  return [labels.join(".").toLowerCase(), next >= 0 ? next : pos];
 }
 
 /** An answer: NAME has address IP. */
@@ -104,7 +76,13 @@ socket.on("message", (msg, from) => {
   try {
     if (msg.length < 12) return;
     if (msg.readUInt16BE(2) & 0x8000) {
-      // An answer: while checking a name, notice another machine already using it.
+      // An answer: note what it says about devices (home network search), and while checking
+      // a name, notice another machine already using it.
+      try {
+        noteAnswer(msg, from.address);
+      } catch {
+        /* a packet we can't read fully */
+      }
       const mine = homeAddress();
       if (probing && addressesIn(msg, probing.name).some((ip) => ip !== mine)) probing.conflict = true;
       return;
@@ -169,6 +147,7 @@ socket.bind(PORT, async () => {
     }
     console.log(`${candidate} is already used by another machine on the network.`);
   }
+  startSearchService({ socket, port: PORT, group: GROUP, homeAddress });
   const ip = homeAddress();
   console.log(`Answering ${NAME} → ${ip ?? "(no home address yet)"}`);
   // Tell the network straight away (twice, as the standard suggests).
