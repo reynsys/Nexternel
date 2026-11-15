@@ -2,6 +2,12 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.36
+
+- **Settings → Home** is new, and first in the Settings menu. Your home's name is set there now.
+- **Wi-Fi for your devices** has moved to the Devices page: press **Wi-Fi for devices**, next to Add device.
+- Settings → System → Overview now starts with whether everything is running.
+
 ## V5.3.35
 
 - **Three new ready-made themes:** Fuchsia (bold pink-purple through glass), Moss (deep olive green) and Mono (black, white and grey, no colour). Warm Linen is gone.

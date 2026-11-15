@@ -32,6 +32,9 @@ import {
 } from "./devices/device-nav-utils";
 import { useLiveChanges } from "../../lib/live-changes";
 import { AddDeviceDialog, type BringInState } from "./devices/AddDeviceDialog";
+import { ButtonRow } from "../../components/ButtonRow";
+import { DevicesWifiExplainer, DevicesWifiForm } from "../../components/DevicesWifi";
+import WifiIcon from "@mui/icons-material/Wifi";
 import type { FoundDevice } from "@nexternel/domain";
 
 type AreaOption = { id: string; name: string };
@@ -66,6 +69,7 @@ export function DevicesPage() {
   const [deleteTarget, setDeleteTarget] = useState<DeviceRecord | null>(null);
   const [deleteYamlToo, setDeleteYamlToo] = useState(false);
   const [addDeviceChooserOpen, setAddDeviceChooserOpen] = useState(false);
+  const [wifiOpen, setWifiOpen] = useState(false);
   const [newCameraHost, setNewCameraHost] = useState<string | undefined>(undefined);
   const [esphomePanelMode, setEsphomePanelMode] = useState<"usb" | "file">("usb");
   const [esphomePanelDevice, setEsphomePanelDevice] = useState<DeviceRecord | null>(null);
@@ -412,9 +416,14 @@ export function DevicesPage() {
         hint="Everything Nexternel talks to: ESPHome boards, Shelly switches, cameras and online services. Pick one to see its readings, switches and settings."
         actions={
           isAdmin ? (
-            <Button startIcon={<AddIcon />} variant="contained" onClick={() => openAddDeviceChooser()}>
-              Add device
-            </Button>
+            <ButtonRow>
+              <Button startIcon={<WifiIcon />} variant="outlined" onClick={() => setWifiOpen(true)}>
+                Wi-Fi for devices
+              </Button>
+              <Button startIcon={<AddIcon />} variant="contained" onClick={() => openAddDeviceChooser()}>
+                Add device
+              </Button>
+            </ButtonRow>
           ) : null
         }
       />
@@ -619,6 +628,22 @@ export function DevicesPage() {
             </Button>
           </DialogActions>
         </form>
+      </Dialog>
+
+      <Dialog open={wifiOpen} onClose={() => setWifiOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle>Wi-Fi for your devices</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 0.5 }}>
+            <DevicesWifiExplainer />
+            <Typography variant="body2" color="text.secondary">
+              Boards already running keep the Wi-Fi they have until their next install.
+            </Typography>
+            <DevicesWifiForm idPrefix="devices-page-wifi" />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setWifiOpen(false)}>Close</Button>
+        </DialogActions>
       </Dialog>
 
       <AddDeviceDialog

@@ -4,7 +4,7 @@ import { api } from "../../../api";
 import { showHomeInTab } from "../../../lib/home-title";
 import { ButtonRow } from "../../../components/ButtonRow";
 
-/** Settings → System → Overview: the home's name (set first in the setup wizard; shown in the browser tab). */
+/** Settings → Home: the home's name (set first in the setup wizard; shown in the browser tab). */
 export function HomeNameCard({ surfaceSx, canEdit }: { surfaceSx: object; canEdit: boolean }) {
   const [saved, setSaved] = useState<string | null>(null);
   const [name, setName] = useState("");
@@ -41,7 +41,7 @@ export function HomeNameCard({ surfaceSx, canEdit }: { surfaceSx: object; canEdi
     <Card sx={surfaceSx}>
       <CardContent>
         <Typography variant="h6" gutterBottom>
-          Your home
+          Name
         </Typography>
         <Stack spacing={2}>
           <TextField

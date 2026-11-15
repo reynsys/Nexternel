@@ -9,6 +9,7 @@ import { ExtensionsSettingsPage } from "./pages/admin/settings/ExtensionsSetting
 import { SettingsLayout } from "./pages/admin/settings/SettingsLayout";
 import { SettingsIndexRedirect } from "./pages/admin/settings/SettingsIndexRedirect";
 import { AppearanceSettingsPage } from "./pages/admin/settings/AppearanceSettingsPage";
+import { HomeSettingsPage } from "./pages/admin/settings/HomeSettingsPage";
 import { SystemStatusPage } from "./pages/admin/settings/SystemStatusPage";
 import { NotificationsSettingsPage } from "./pages/admin/settings/NotificationsSettingsPage";
 import { BackupSettingsPage } from "./pages/admin/settings/BackupSettingsPage";
@@ -239,6 +240,14 @@ export function App() {
           }
         >
           <Route index element={<SettingsIndexRedirect />} />
+          <Route
+            path="home"
+            element={
+              <RequirePermission permission="viewSystem">
+                <HomeSettingsPage />
+              </RequirePermission>
+            }
+          />
           <Route
             path="appearance"
             element={

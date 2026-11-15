@@ -7,7 +7,7 @@ import { showHomeInTab } from "../lib/home-title";
 export function AppLayout() {
   const { skin } = useSkin();
   const Layout = skin.Layout;
-  // The home's name in the browser tab (Settings → System → Your home).
+  // The home's name in the browser tab (Settings → Home).
   useEffect(() => {
     if (!getStoredAccessToken()) return;
     void api

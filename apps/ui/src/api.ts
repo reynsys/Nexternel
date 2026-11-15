@@ -2276,7 +2276,7 @@ export type FoundPlace = {
   label: string;
 };
 
-/** The home as a whole (Settings → System; set first in the setup wizard). */
+/** The home as a whole (Settings → Home; set first in the setup wizard). */
 export type HomeInfo = { name: string };
 
 export type NetworkAdaptationPreview = {

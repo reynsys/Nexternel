@@ -550,10 +550,10 @@ apps/ui/src/pages/admin/settings/addon-status.ts
 apps/ui/src/pages/admin/settings/AnywhereCard.tsx
 apps/ui/src/pages/admin/settings/AppearanceSettingsPage.tsx
 apps/ui/src/pages/admin/settings/BackupSettingsPage.tsx
-apps/ui/src/pages/admin/settings/DevicesWifiCard.tsx
 apps/ui/src/pages/admin/settings/DiagnosticReportCard.tsx
 apps/ui/src/pages/admin/settings/ExtensionsSettingsPage.tsx
 apps/ui/src/pages/admin/settings/HomeNameCard.tsx
+apps/ui/src/pages/admin/settings/HomeSettingsPage.tsx
 apps/ui/src/pages/admin/settings/HttpsCard.tsx
 apps/ui/src/pages/admin/settings/NotificationsSettingsPage.tsx
 apps/ui/src/pages/admin/settings/plugins/PluginActivityView.tsx

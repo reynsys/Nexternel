@@ -9,7 +9,7 @@ export type DevicesWifiValue = { ssid: string; password: string };
 
 /**
  * "Wi-Fi for your devices": the name and password of the home Wi-Fi that boards join.
- * The same fields everywhere the setting is asked (setup wizard, Settings → System, Add device).
+ * The same fields everywhere the setting is asked (setup wizard, Devices → Wi-Fi for devices, Add device).
  */
 export function DevicesWifiFields(props: {
   value: DevicesWifiValue;

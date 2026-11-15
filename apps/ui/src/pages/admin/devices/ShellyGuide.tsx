@@ -204,7 +204,7 @@ function StepGiveHomeWifi() {
             <b>Internet &amp; Security → Wi-Fi Mode – Client</b>.
           </>,
           <>
-            Choose <b>{wifi.ssid}</b> and type its password. That's the Wi-Fi you set for your devices in Settings.
+            Choose <b>{wifi.ssid}</b> and type its password. That's the Wi-Fi set for your devices (Devices → Wi-Fi for devices).
           </>,
           <>
             Press <b>Save</b>. Then put your phone back on your home Wi-Fi.
