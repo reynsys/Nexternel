@@ -2,6 +2,12 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.35
+
+- **Three new ready-made themes:** Fuchsia (bold pink-purple through glass), Moss (deep olive green) and Mono (black, white and grey, no colour). Warm Linen is gone.
+- The readings colour of every theme was chosen again, so no two themes look alike.
+- **The theme you've picked is easy to see:** it has a ring in its main colour and a tick before its name. The other choices in Appearance, such as Light, Dark and Automatic, are marked the same way.
+
 ## V5.3.34
 
 - **New ready-made themes:** Midnight Blue, Aurora, Emerald, Ocean, Warm Linen, Ember and Ruby. Each one comes in Light and Dark. Picking a theme keeps your Light, Dark or Automatic choice, which now sits right under the themes in Settings → Appearance → Theme.

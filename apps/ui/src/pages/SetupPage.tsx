@@ -46,7 +46,7 @@ type Step = "welcome" | "terms" | "account" | "home" | "devices-wifi" | "look" |
 const FRESH: Step[] = ["welcome", "terms", "account", "home", "devices-wifi", "look", "ready"];
 const RESTORE: Step[] = ["welcome", "terms", "pick-backup", "review", "restored"];
 /** The ready-made themes offered in setup: clearly different from each other (the rest are in Appearance). */
-const SETUP_THEMES = ["nexternel", "aurora", "emerald", "warm-linen"];
+const SETUP_THEMES = ["nexternel", "aurora", "emerald", "ember"];
 /** Where Nexternel for Android is explained and downloaded. */
 const ANDROID_PAGE = "https://www.nexternel.com/#android";
 

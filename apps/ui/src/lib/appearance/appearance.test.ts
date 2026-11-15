@@ -105,7 +105,10 @@ test("ready-made themes: readable in Light and Dark, clear of OK/Attention/Alarm
   for (let i = 0; i < THEME_PRESETS.length; i++)
     for (let j = i + 1; j < THEME_PRESETS.length; j++) {
       const d = Math.abs(hues[i] - hues[j]);
-      assert.ok(Math.min(d, 360 - d) >= 25, `${THEME_PRESETS[i].label} and ${THEME_PRESETS[j].label} main colours are too alike`);
-      assert.ok(apart(readings[i], readings[j]) >= 0.045, `${THEME_PRESETS[i].label} and ${THEME_PRESETS[j].label} readings look alike`);
+      // A theme without colour (Mono) has no hue to compare.
+      const grey = hexToOklch(THEME_PRESETS[i].primary).c < 0.04 || hexToOklch(THEME_PRESETS[j].primary).c < 0.04;
+      assert.ok(grey || Math.min(d, 360 - d) >= 25, `${THEME_PRESETS[i].label} and ${THEME_PRESETS[j].label} main colours are too alike`);
+      // Nine themes share the cool half of the wheel for readings; 0.035 is as far apart as nine can be.
+      assert.ok(apart(readings[i], readings[j]) >= 0.035, `${THEME_PRESETS[i].label} and ${THEME_PRESETS[j].label} readings look alike`);
     }
 });

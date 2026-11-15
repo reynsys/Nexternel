@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { Box, ButtonBase, Typography } from "@mui/material";
+import { Box, ButtonBase, Typography, type Theme } from "@mui/material";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { gradientCss } from "./gradientPalettes";
 import { type ThemePrefs, withLook } from "./themePrefs";
 import { resolveLook } from "./looks/registry";
@@ -18,12 +19,15 @@ export function ChoiceTile({ selected, onClick, title, text, children, sx, disab
       sx={[
         { width: "100%", height: "100%", display: "grid", gridTemplateColumns: "minmax(0, 1fr)", justifyItems: "start", alignContent: "start", textAlign: "left", gap: 0.25, px: 1.25, py: 1 },
         choiceSx(selected),
+        // The chosen one stands out: a thick ring in the main colour (on top of the Look's own edge).
+        selected ? (t: Theme) => ({ outline: `2px solid ${t.palette.primary.main}`, outlineOffset: 1 }) : {},
         disabled ? { opacity: 0.5 } : {},
         sx ?? {},
       ]}
     >
       {children}
-      <Typography variant="body2" fontWeight="fontWeightBold">
+      <Typography variant="body2" fontWeight="fontWeightBold" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+        {selected ? <CheckCircleIcon color="primary" fontSize="small" titleAccess="Chosen" /> : null}
         {title}
       </Typography>
       {text ? (
