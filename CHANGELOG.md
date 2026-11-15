@@ -2,6 +2,12 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.34
+
+- **New ready-made themes:** Midnight Blue, Aurora, Emerald, Ocean, Warm Linen, Ember and Ruby. Each one comes in Light and Dark. Picking a theme keeps your Light, Dark or Automatic choice, which now sits right under the themes in Settings → Appearance → Theme.
+- Each theme has its own colour for readings such as temperatures, so the themes no longer look alike. Green, amber and red are kept for OK, Attention and Alarm in every theme.
+- Forest, Control Room, Paper, Rose Glass and Sunrise are gone. If you used one, your screens keep their colours until you pick a new theme.
+
 ## V5.3.33
 
 - **New Add device window** (Devices → Add device): Search my home is at the top, and below it you pick what you have in your hand. Shelly and Camera work now. ESP32 board, Zigbee and Matter show as Coming soon.

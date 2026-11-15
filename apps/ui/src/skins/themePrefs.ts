@@ -39,6 +39,8 @@ export type ThemePrefs = {
   /** Second and third colours chosen by hand (used when harmony is "custom"). */
   second?: string;
   third?: string;
+  /** The colour backgrounds, boxes and lines are tinted with (a ready-made theme's); left out, the main colour. */
+  tint?: string;
   /** Layout skin id (also kept in localStorage for offline boot) */
   skinId?: string;
   /** The dashboard's Look (Standard, Glass, or an installed Look pack). See skins/looks. */
@@ -225,6 +227,7 @@ export function normalizeThemePrefs(raw: unknown): ThemePrefs {
 
   const second = typeof parsed.second === "string" ? normalizeAccentHex(parsed.second) : null;
   const third = typeof parsed.third === "string" ? normalizeAccentHex(parsed.third) : null;
+  const tint = typeof parsed.tint === "string" ? normalizeAccentHex(parsed.tint) : null;
   return {
     mode: parsed.mode === "light" ? "light" : "dark",
     ...(parsed.autoMode === true ? { autoMode: true } : {}),
@@ -232,6 +235,7 @@ export function normalizeThemePrefs(raw: unknown): ThemePrefs {
     harmony: normalizeHarmony(parsed.harmony),
     ...(second ? { second } : {}),
     ...(third ? { third } : {}),
+    ...(tint ? { tint } : {}),
     skinId:
       typeof parsed.skinId === "string" && parsed.skinId.trim()
         ? parsed.skinId.trim()
@@ -327,6 +331,7 @@ export function toAccountThemePrefs(prefs: ThemePrefs, skinId: string) {
     harmony: normalizeHarmony(prefs.harmony),
     ...(prefs.second ? { second: prefs.second } : {}),
     ...(prefs.third ? { third: prefs.third } : {}),
+    ...(prefs.tint ? { tint: prefs.tint } : {}),
     skinId: prefs.skinId ?? skinId,
     lookId: prefs.lookId ?? "standard",
     motion: prefs.motion !== false,

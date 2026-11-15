@@ -1,7 +1,8 @@
 import type { Harmony } from "./scale";
 
 /**
- * Ready-made themes: a starting point that sets style, mode, colours, background and font together.
+ * Ready-made themes: a starting point that sets style, colours, background and font together. Each
+ * works in Light and Dark: picking one keeps the person's own Light / Dark / Auto choice.
  * Anything can be changed afterwards; the result is the person's own theme.
  */
 export type ThemePreset = {
@@ -9,29 +10,31 @@ export type ThemePreset = {
   label: string;
   description: string;
   lookId: string;
-  mode: "light" | "dark";
   primary: string;
   harmony: Harmony;
-  /** Second and third colours chosen by hand for this theme (with harmony "custom"). */
+  /** Second colour (big readings) and third (small touches), chosen by hand (harmony "custom"). */
   second?: string;
   third?: string;
+  /** The colour backgrounds, boxes and lines are tinted with; left out, the main colour. */
+  tint?: string;
   gradientId: string;
   font: string;
 };
 
 /*
- * The six dark themes have clearly different main colours (blue, orange-red, teal, purple, green,
- * amber) and hand-picked second and third colours, so no two share a set: worked out from the
- * main colour alone, the blue ones all came out with the same orange and teal.
+ * Seven themes from the colour wheel (purple, blue, green, teal, warm neutral, orange, red).
+ * Green, amber and red mean OK, Attention and Alarm everywhere, so:
+ * - main colours that sit near them (Emerald, Ember, Ruby) are deeper shades, checked to stay apart;
+ * - readings (second colour) come from the cool half of the wheel or pale tones, and each theme has
+ *   its own, chosen together so no two themes' readings look alike (appearance.test.ts checks this);
+ * - the third colour is a calmer neighbour of the main colour, for small touches.
  */
 export const THEME_PRESETS: ThemePreset[] = [
-  { id: "nexternel", label: "Midnight Blue", description: "Clean blue on deep night.", lookId: "standard", mode: "dark", primary: "#2F7BFF", harmony: "custom", second: "#FFB020", third: "#2DD4BF", gradientId: "none", font: "inter" },
-  { id: "ember", label: "Ember", description: "Warm orange glow.", lookId: "standard", mode: "dark", primary: "#F4511E", harmony: "custom", second: "#FFC83D", third: "#C084FC", gradientId: "mine-glow", font: "inter" },
-  { id: "ocean-glass", label: "Ocean Glass", description: "See-through panels over calm sea colours.", lookId: "glass", mode: "dark", primary: "#12B8C8", harmony: "custom", second: "#5B8CFF", third: "#7CE0B8", gradientId: "mine-glow", font: "manrope" },
-  { id: "aurora", label: "Aurora", description: "Northern lights behind frosted glass.", lookId: "glass", mode: "dark", primary: "#A855F7", harmony: "custom", second: "#34E3A0", third: "#F472B6", gradientId: "glow-aurora", font: "space-grotesk" },
-  { id: "forest", label: "Forest", description: "Calm greens, friendly letters.", lookId: "standard", mode: "dark", primary: "#3FB950", harmony: "custom", second: "#E3B341", third: "#6FB7FF", gradientId: "none", font: "nunito" },
-  { id: "control-room", label: "Control Room", description: "Technical lettering, amber like a control desk.", lookId: "standard", mode: "dark", primary: "#FFB000", harmony: "custom", second: "#38BDF8", third: "#A3E635", gradientId: "mine-gradient", font: "rajdhani" },
-  { id: "paper", label: "Paper", description: "Light and quiet, for daytime.", lookId: "standard", mode: "light", primary: "#344767", harmony: "split", gradientId: "none", font: "ibm-plex-sans" },
-  { id: "rose-glass", label: "Rose Glass", description: "Soft pinks through light glass.", lookId: "glass", mode: "light", primary: "#D81B60", harmony: "analogous", gradientId: "mine-glow", font: "poppins" },
-  { id: "sunrise", label: "Sunrise", description: "Bright and easy to read.", lookId: "standard", mode: "light", primary: "#FB8C00", harmony: "complementary", gradientId: "mine-gradient", font: "lexend" },
+  { id: "nexternel", label: "Midnight Blue", description: "Blue for trust, with orchid readings.", lookId: "standard", primary: "#2F7BFF", harmony: "custom", second: "#E879F9", third: "#A38BE1", gradientId: "none", font: "inter" },
+  { id: "aurora", label: "Aurora", description: "Purple for new ideas, behind frosted glass.", lookId: "glass", primary: "#8B5CF6", harmony: "custom", second: "#DDD6FE", third: "#C57BC3", gradientId: "glow-aurora", font: "space-grotesk" },
+  { id: "emerald", label: "Emerald", description: "Deep green, friendly letters.", lookId: "standard", primary: "#0F9D6B", harmony: "custom", second: "#818CF8", third: "#5BADAE", gradientId: "none", font: "nunito" },
+  { id: "ocean-glass", label: "Ocean", description: "Calm teal through glass.", lookId: "glass", primary: "#0EA5B7", harmony: "custom", second: "#C084FC", third: "#87B1D3", gradientId: "mine-glow", font: "manrope" },
+  { id: "warm-linen", label: "Warm Linen", description: "Plum on warm cream by day, warm brown by night.", lookId: "standard", primary: "#8E5A8C", harmony: "custom", second: "#CCF5EE", third: "#8881A8", tint: "#C8A27A", gradientId: "none", font: "ibm-plex-sans" },
+  { id: "ember", label: "Ember", description: "Deep copper glow.", lookId: "standard", primary: "#B45309", harmony: "custom", second: "#67E8F9", third: "#F9A8D4", gradientId: "mine-glow", font: "lexend" },
+  { id: "ruby", label: "Ruby", description: "Rich raspberry red.", lookId: "standard", primary: "#C2185B", harmony: "custom", second: "#0EA5E9", third: "#AC67A5", gradientId: "mine-gradient", font: "poppins" },
 ];

@@ -80,20 +80,32 @@ test("a panel row keeps room for the frame, the title and content", async () => 
   assert.equal(minPanelRowPx("7px 8px 13px"), 7 + 13 + 30 + 6 + 32);
 });
 
-test("ready-made themes: readable, and each dark theme has its own main colour and its own set", () => {
-  for (const p of THEME_PRESETS) {
-    for (const surfaces of ["solid", "glass"] as const) {
-      const s = buildScheme({ mode: p.mode, surfaces, main: p.primary, harmony: p.harmony, second: p.second, third: p.third });
-      assert.deepEqual(s.audit.filter((a) => !a.pass), [], `${p.label} ${surfaces}`);
+test("ready-made themes: readable in Light and Dark, clear of OK/Attention/Alarm, and none alike", () => {
+  // How far apart two colours look (OKLab distance).
+  const apart = (a: string, b: string) => {
+    const A = hexToOklch(a), B = hexToOklch(b), r = Math.PI / 180;
+    return Math.hypot(A.l - B.l, A.c * Math.cos(A.h * r) - B.c * Math.cos(B.h * r), A.c * Math.sin(A.h * r) - B.c * Math.sin(B.h * r));
+  };
+  const scheme = (p: (typeof THEME_PRESETS)[number], mode: "light" | "dark", surfaces: "solid" | "glass") =>
+    buildScheme({ mode, surfaces, main: p.primary, harmony: p.harmony, second: p.second, third: p.third, tint: p.tint });
+  for (const p of THEME_PRESETS)
+    for (const mode of ["light", "dark"] as const) {
+      for (const surfaces of ["solid", "glass"] as const)
+        assert.deepEqual(scheme(p, mode, surfaces).audit.filter((a) => !a.pass), [], `${p.label} ${mode} ${surfaces}`);
+      const r = scheme(p, mode, "solid").roles;
+      for (const k of ["main", "second", "third"] as const)
+        for (const [st, roles] of Object.entries(r.status))
+          assert.ok(apart(r[k].solid, roles.solid) >= 0.1, `${p.label} ${mode}: its ${k} colour looks like the ${st} status colour`);
+      if (mode === "dark")
+        for (const [st, roles] of Object.entries(r.status))
+          assert.ok(apart(r.value, roles.text) >= 0.1, `${p.label}: readings look like ${st} text`);
     }
-  }
-  const dark = THEME_PRESETS.filter((p) => p.mode === "dark");
-  const hues = dark.map((p) => hexToOklch(p.primary).h);
-  for (let i = 0; i < hues.length; i++)
-    for (let j = i + 1; j < hues.length; j++) {
+  const hues = THEME_PRESETS.map((p) => hexToOklch(p.primary).h);
+  const readings = THEME_PRESETS.map((p) => scheme(p, "dark", "solid").roles.value);
+  for (let i = 0; i < THEME_PRESETS.length; i++)
+    for (let j = i + 1; j < THEME_PRESETS.length; j++) {
       const d = Math.abs(hues[i] - hues[j]);
-      assert.ok(Math.min(d, 360 - d) >= 25, `${dark[i].label} and ${dark[j].label} main colours are too alike`);
+      assert.ok(Math.min(d, 360 - d) >= 25, `${THEME_PRESETS[i].label} and ${THEME_PRESETS[j].label} main colours are too alike`);
+      assert.ok(apart(readings[i], readings[j]) >= 0.045, `${THEME_PRESETS[i].label} and ${THEME_PRESETS[j].label} readings look alike`);
     }
-  const sets = dark.map((p) => [p.second, p.third].join("|"));
-  assert.equal(new Set(sets).size, sets.length, "two dark themes share second and third colours");
 });

@@ -11,6 +11,8 @@ export type ThemePrefsDto = {
   /** Second and third colours chosen by hand (harmony "custom"). */
   second?: string;
   third?: string;
+  /** The colour backgrounds are tinted with (a ready-made theme's). */
+  tint?: string;
   skinId: string;
   /** The dashboard's Look (Standard, Glass or an installed Look pack). */
   lookId?: string;
@@ -260,6 +262,7 @@ export function parseThemePrefsInput(
     harmony: harmonies.includes(o.harmony as (typeof harmonies)[number]) ? (o.harmony as ThemePrefsDto["harmony"]) : "split",
     ...(typeof o.second === "string" && HEX.test(o.second) ? { second: o.second } : {}),
     ...(typeof o.third === "string" && HEX.test(o.third) ? { third: o.third } : {}),
+    ...(typeof o.tint === "string" && HEX.test(o.tint) ? { tint: o.tint } : {}),
     skinId,
     lookId: lookField(o),
     motion: o.motion !== false,

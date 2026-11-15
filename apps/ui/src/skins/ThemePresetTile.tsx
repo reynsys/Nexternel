@@ -35,31 +35,35 @@ export function ChoiceTile({ selected, onClick, title, text, children, sx, disab
   );
 }
 
-/** The person's theme with a ready-made theme picked: its style, light or dark, colours, background and font. */
+/** The person's theme with a ready-made theme picked: its style, colours, background and font (Light / Dark / Auto stay as they were). */
 export function prefsWithPreset(prefs: ThemePrefs, p: ThemePreset): ThemePrefs {
   return {
     ...withLook(prefs, resolveLook(p.lookId).id === p.lookId ? p.lookId : "standard"),
-    mode: p.mode,
-    autoMode: false,
     primary: p.primary,
     harmony: p.harmony,
     second: p.second,
     third: p.third,
+    tint: p.tint,
     gradientId: p.gradientId,
     lookFont: p.font,
   };
 }
 
 /** True when these prefs are this ready-made theme (as picked, before any change of one's own). */
-export function presetIsChosen(prefs: ThemePrefs, mode: "light" | "dark", p: ThemePreset): boolean {
-  return prefs.primary.toUpperCase() === p.primary && (prefs.lookId ?? "standard") === p.lookId && mode === p.mode && (prefs.gradientId ?? "none") === p.gradientId;
+export function presetIsChosen(prefs: ThemePrefs, p: ThemePreset): boolean {
+  return (
+    prefs.primary.toUpperCase() === p.primary &&
+    (prefs.second ?? "").toUpperCase() === (p.second ?? "") &&
+    (prefs.lookId ?? "standard") === p.lookId &&
+    (prefs.gradientId ?? "none") === p.gradientId
+  );
 }
 
-/** A ready-made theme to pick: its name, its line, and a small picture of its colours (Appearance and setup). */
-export function ThemePresetTile({ preset: p, prefs, selected, onPick }: { preset: ThemePreset; prefs: ThemePrefs; selected: boolean; onPick: () => void }) {
-  const pPrefs: ThemePrefs = { ...prefs, lookId: p.lookId, mode: p.mode, autoMode: false, primary: p.primary, harmony: p.harmony, second: p.second, third: p.third, gradientId: p.gradientId };
-  const s = schemeForPrefs(pPrefs, p.mode, Boolean(resolveLook(p.lookId).frosted));
-  const bg = isMineBackground(p.gradientId) ? mineBackground(s, p.gradientId).css : (gradientCss(p.gradientId, p.mode) ?? s.roles.surfaceSolid.background);
+/** A ready-made theme to pick: its name, its line, and a small picture of its colours in the Light or Dark now shown (Appearance and setup). */
+export function ThemePresetTile({ preset: p, prefs, mode, selected, onPick }: { preset: ThemePreset; prefs: ThemePrefs; mode: "light" | "dark"; selected: boolean; onPick: () => void }) {
+  const pPrefs: ThemePrefs = { ...prefs, lookId: p.lookId, primary: p.primary, harmony: p.harmony, second: p.second, third: p.third, tint: p.tint, gradientId: p.gradientId };
+  const s = schemeForPrefs(pPrefs, mode, Boolean(resolveLook(p.lookId).frosted));
+  const bg = isMineBackground(p.gradientId) ? mineBackground(s, p.gradientId).css : (gradientCss(p.gradientId, mode) ?? s.roles.surfaceSolid.background);
   return (
     <ChoiceTile selected={selected} onClick={onPick} title={p.label} text={p.description}>
       <Box

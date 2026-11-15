@@ -57,6 +57,7 @@ export function schemeForPrefs(prefs: ThemePrefs, mode: "light" | "dark", froste
     harmony: prefs.harmony ?? "split",
     second: prefs.second,
     third: prefs.third,
+    tint: prefs.tint,
     status: prefs.statusLight?.colours,
   };
   if (!frosted || !prefs.gradientId || prefs.gradientId === GRADIENT_NONE_ID) return buildScheme(input);

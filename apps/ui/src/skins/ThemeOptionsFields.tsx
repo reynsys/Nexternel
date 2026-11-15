@@ -374,13 +374,16 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
 
   const tabContent: Record<string, ReactNode> = {
     theme: (
-      <Section title="Ready-made themes" hint="Picking one replaces your style, light or dark, colours, background and font. Change anything afterwards; Cancel puts back how it was.">
-        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 1 }}>
-          {THEME_PRESETS.filter((p) => resolveLook(p.lookId).id === p.lookId).map((p) => (
-            <ThemePresetTile key={p.id} preset={p} prefs={themePrefs} selected={presetIsChosen(themePrefs, mode, p)} onPick={() => onThemeChange(prefsWithPreset(themePrefs, p))} />
-          ))}
-        </Box>
-      </Section>
+      <Stack spacing={3}>
+        <Section title="Ready-made themes" hint="Each theme comes in Light and Dark. Picking one replaces your style, colours, background and font, and keeps your Light, Dark or Automatic choice below. Change anything afterwards; Cancel puts back how it was.">
+          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 1 }}>
+            {THEME_PRESETS.filter((p) => resolveLook(p.lookId).id === p.lookId).map((p) => (
+              <ThemePresetTile key={p.id} preset={p} prefs={themePrefs} mode={mode} selected={presetIsChosen(themePrefs, p)} onPick={() => onThemeChange(prefsWithPreset(themePrefs, p))} />
+            ))}
+          </Box>
+        </Section>
+        {modeTiles}
+      </Stack>
     ),
     colours: (
       <Stack spacing={3.5} divider={<Divider flexItem />}>

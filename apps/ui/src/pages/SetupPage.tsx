@@ -46,7 +46,7 @@ type Step = "welcome" | "terms" | "account" | "home" | "devices-wifi" | "look" |
 const FRESH: Step[] = ["welcome", "terms", "account", "home", "devices-wifi", "look", "ready"];
 const RESTORE: Step[] = ["welcome", "terms", "pick-backup", "review", "restored"];
 /** The ready-made themes offered in setup: clearly different from each other (the rest are in Appearance). */
-const SETUP_THEMES = ["nexternel", "ember", "forest", "paper"];
+const SETUP_THEMES = ["nexternel", "aurora", "emerald", "warm-linen"];
 /** Where Nexternel for Android is explained and downloaded. */
 const ANDROID_PAGE = "https://www.nexternel.com/#android";
 
@@ -470,7 +470,7 @@ export function SetupPage() {
                 </Typography>
                 <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 1 }}>
                   {setupThemes.map((p) => (
-                    <ThemePresetTile key={p.id} preset={p} prefs={themePrefs} selected={presetIsChosen(themePrefs, themePrefs.mode, p)} onPick={() => setThemePrefs(prefsWithPreset(themePrefs, p))} />
+                    <ThemePresetTile key={p.id} preset={p} prefs={themePrefs} mode={themePrefs.mode} selected={presetIsChosen(themePrefs, p)} onPick={() => setThemePrefs(prefsWithPreset(themePrefs, p))} />
                   ))}
                 </Box>
                 <Typography variant="caption" color="text.secondary">
