@@ -885,7 +885,7 @@ export const api = {
     apiFetch<{ devices: FoundDevice[] }>("/api/v1/home-network/search", { method: "POST", body: "{}" }),
 
   /** Bring one found device into Nexternel. */
-  homeNetworkBringIn: (device: FoundDevice, extra?: { password?: string }) =>
+  homeNetworkBringIn: (device: FoundDevice, extra?: { password?: string; name?: string; roomId?: string | null }) =>
     apiFetch<{ deviceId: string; name: string; message: string }>("/api/v1/home-network/bring-in", {
       method: "POST",
       body: JSON.stringify({ device, ...extra }),

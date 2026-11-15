@@ -37,7 +37,11 @@ async function existingByMac(mac: string | null): Promise<{ id: string; name: st
   return hit ? { id: hit.id, name: hit.name } : null;
 }
 
-async function bringInShelly(found: FoundDevice, password?: string): Promise<BringInResult> {
+/** What the owner chose in the Add device window: the name and room for the new device. */
+export type BringInChoices = { password?: string; name?: string; roomId?: string | null };
+
+async function bringInShelly(found: FoundDevice, opts: BringInChoices = {}): Promise<BringInResult> {
+  const { password } = opts;
   const ip = found.address;
   if (!ip || !IPV4.test(ip)) throw new BringInRefused("Nexternel doesn't know this switch's address. Search again.");
   await refreshHostIp(); // the address the switch must use, as it is right now
@@ -56,9 +60,10 @@ async function bringInShelly(found: FoundDevice, password?: string): Promise<Bri
     password
   );
 
-  const name = facts.name || found.name;
+  const name = opts.name?.trim() || facts.name || found.name;
   const device = await createDevice({
     name,
+    roomId: opts.roomId || null,
     mqttTopicPrefix: facts.id,
     firmwareType: "shelly",
     shellyGen: facts.gen,
@@ -145,11 +150,11 @@ async function bringInBoard(found: FoundDevice): Promise<BringInResult> {
   };
 }
 
-export async function bringInFoundDevice(found: FoundDevice, opts: { password?: string } = {}): Promise<BringInResult> {
+export async function bringInFoundDevice(found: FoundDevice, opts: BringInChoices = {}): Promise<BringInResult> {
   if (found.alreadyIn) throw new BringInRefused(`This is already in Nexternel as “${found.alreadyIn.name}”.`);
   switch (found.kind) {
     case "shelly":
-      return bringInShelly(found, opts.password);
+      return bringInShelly(found, opts);
     case "board":
       return bringInBoard(found);
     default:

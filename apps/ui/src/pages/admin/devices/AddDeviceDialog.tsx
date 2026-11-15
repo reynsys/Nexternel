@@ -15,11 +15,20 @@ import {
   Typography,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
+import ToggleOnOutlinedIcon from "@mui/icons-material/ToggleOnOutlined";
+import VideocamOutlinedIcon from "@mui/icons-material/VideocamOutlined";
+import MemoryOutlinedIcon from "@mui/icons-material/MemoryOutlined";
+import HubOutlinedIcon from "@mui/icons-material/HubOutlined";
+import DeviceHubOutlinedIcon from "@mui/icons-material/DeviceHubOutlined";
+import ExtensionOutlinedIcon from "@mui/icons-material/ExtensionOutlined";
+import { useMediaQuery, useTheme, ButtonBase, Chip } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import type { FoundDevice } from "@nexternel/domain";
 import { api } from "../../../api";
 import { ButtonRow } from "../../../components/ButtonRow";
 import { insetSx } from "../../../skins/surfaceStyles";
 import { DevicesWifiExplainer, DevicesWifiForm } from "../../../components/DevicesWifi";
+import { ShellyGuide, type ShellyGuideStep } from "./ShellyGuide";
 
 /** What happens to one device while it is being brought in. */
 export type BringInState = { status: "working" | "done" | "failed" | "password" | "wifi"; message?: string };
@@ -27,10 +36,12 @@ export type BringInState = { status: "working" | "done" | "failed" | "password" 
 export type AddDeviceDialogProps = {
   open: boolean;
   onClose: () => void;
-  /** Add one yourself. */
-  onAddBoard: () => void;
-  onAddShelly: () => void;
+  /** Areas a new device can be put in. */
+  areas: { id: string; name: string }[];
+  /** A camera: opens the camera window (with the address when Search my home found one). */
   onAddCamera: (host?: string) => void;
+  /** A device was added from a guide: show it. */
+  onDeviceAdded: (deviceId: string) => void;
   /** Open a device or camera Nexternel already has. */
   onOpenExisting: (found: FoundDevice) => void;
   /** Bring the ticked devices in; reports each device as it goes (password: the device's own, when it has one). */
@@ -41,7 +52,18 @@ export type AddDeviceDialogProps = {
   ) => Promise<void>;
 };
 
-type Stage = "start" | "searching" | "results";
+type Stage = "start" | "searching" | "results" | "shelly" | "soon" | "more";
+
+/** Kinds that have a tile but can't be added yet. */
+type SoonKind = "board" | "zigbee" | "matter";
+const SOON: Record<SoonKind, { title: string; sentence: string }> = {
+  board: {
+    title: "ESP32 board",
+    sentence: "Adding a new ESP32 board comes with Nexternel's own board software, which is being built now.",
+  },
+  zigbee: { title: "Zigbee device", sentence: "Zigbee devices come in a later update. They'll need a small Zigbee USB stick in the Nexternel computer." },
+  matter: { title: "Matter device", sentence: "Matter devices come in a later update. You'll add one by scanning the code on the device or its box." },
+};
 
 /** The plain sentence that says what bringing this device in does. */
 export function bringInSentence(d: FoundDevice): string {
@@ -188,6 +210,11 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
   const [states, setStates] = useState<Record<string, BringInState>>({});
   const [bringing, setBringing] = useState(false);
   const [showExisting, setShowExisting] = useState(false);
+  const [shellyStep, setShellyStep] = useState<ShellyGuideStep>(1);
+  const [soon, setSoon] = useState<SoonKind>("board");
+  const navigate = useNavigate();
+  const theme = useTheme();
+  const phone = useMediaQuery(theme.breakpoints.down("sm"));
 
   const groups = useMemo(() => {
     const ready = found.filter(canBringIn);
@@ -208,10 +235,17 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
     setTicked(new Set());
     setStates({});
     setShowExisting(false);
+    setShellyStep(1);
   }
 
+  /** Closing keeps the window where it was: it opens again at the same step. */
   function close() {
     if (bringing) return;
+    props.onClose();
+  }
+
+  /** Close and start fresh next time (the job is done, or another window takes over). */
+  function finish() {
     props.onClose();
     reset();
   }
@@ -241,63 +275,179 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
     }
   }
 
-  const addYourself = (
-    <Stack gap={1}>
-      <Typography variant="subtitle1">Or add one yourself</Typography>
-      <ButtonRow direction="column" alignItems="stretch">
-      {[
-        { title: "ESPHome board", text: "An ESP32 or ESP8266 board. Nexternel makes and installs its board software.", go: props.onAddBoard },
-        { title: "Shelly switch", text: "A Shelly switch or plug", go: props.onAddShelly },
-        { title: "Camera", text: "A network camera's live picture", go: () => props.onAddCamera() },
-      ].map((o) => (
-        <Button
-          key={o.title}
-          variant="outlined"
-          fullWidth
-          sx={{ justifyContent: "flex-start", textAlign: "left", py: 1.25, px: 2 }}
-          onClick={() => {
-            close();
-            o.go();
-          }}
-        >
-          <Stack alignItems="flex-start" spacing={0.25}>
-            <Typography fontWeight="fontWeightBold">{o.title}</Typography>
-            <Typography variant="caption" color="text.secondary">
-              {o.text}
-            </Typography>
-          </Stack>
-        </Button>
-      ))}
-      </ButtonRow>
-      <Typography variant="caption" color="text.secondary">
-        Online services such as Octopus energy are set up in their own settings. More kinds of devices come as Extensions
-        (Extensions → Manage extensions).
+  const tile = (o: { key: string; title: string; text: string; icon: React.ReactNode; ready?: boolean; soon?: boolean; go: () => void }) => (
+    <ButtonBase
+      key={o.key}
+      onClick={o.go}
+      focusRipple
+      sx={[
+        {
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "stretch",
+          justifyContent: "flex-start",
+          textAlign: "left",
+          gap: 1,
+          p: 1.75,
+          minWidth: 0,
+          borderRadius: "var(--nx-control-radius, 12px)",
+        },
+        insetSx(),
+      ]}
+    >
+      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" gap={1}>
+        <Box sx={{ opacity: o.soon ? 0.6 : 1, display: "flex" }} aria-hidden>
+          {o.icon}
+        </Box>
+        {o.ready ? <Chip size="small" variant="outlined" color="success" label="Ready" /> : null}
+        {o.soon ? <Chip size="small" variant="outlined" label="Coming soon" /> : null}
+      </Stack>
+      <Typography fontWeight="fontWeightMedium" sx={{ opacity: o.soon ? 0.75 : 1 }}>
+        {o.title}
       </Typography>
+      <Typography variant="body2" color="text.secondary">
+        {o.text}
+      </Typography>
+    </ButtonBase>
+  );
+
+  const kinds = (
+    <Stack gap={1.25}>
+      <Typography variant="subtitle1">Or pick what you have in your hand</Typography>
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))" }, gap: 1.25 }}>
+        {tile({
+          key: "shelly",
+          title: "Shelly",
+          text: "A new Shelly switch, plug or dimmer, still in its box",
+          icon: <ToggleOnOutlinedIcon />,
+          ready: true,
+          go: () => {
+            setShellyStep(1);
+            setStage("shelly");
+          },
+        })}
+        {tile({
+          key: "camera",
+          title: "Camera or doorbell",
+          text: "One that gives a live picture on your home network",
+          icon: <VideocamOutlinedIcon />,
+          ready: true,
+          go: () => {
+            finish();
+            props.onAddCamera();
+          },
+        })}
+        {(["board", "zigbee", "matter"] as const).map((k) =>
+          tile({
+            key: k,
+            title: SOON[k].title,
+            text:
+              k === "board"
+                ? "A bare board you're building into something"
+                : k === "zigbee"
+                  ? "IKEA, Hue, Aqara, Sonoff sensors and bulbs"
+                  : "Anything with the Matter logo",
+            icon: k === "board" ? <MemoryOutlinedIcon /> : k === "zigbee" ? <HubOutlinedIcon /> : <DeviceHubOutlinedIcon />,
+            soon: true,
+            go: () => {
+              setSoon(k);
+              setStage("soon");
+            },
+          })
+        )}
+        {tile({
+          key: "more",
+          title: "More kinds",
+          text: "Online services and other devices, added through Extensions",
+          icon: <ExtensionOutlinedIcon />,
+          go: () => setStage("more"),
+        })}
+      </Box>
     </Stack>
   );
 
   return (
-    <Dialog open={props.open} onClose={close} fullWidth maxWidth={stage === "results" ? "sm" : "xs"}>
-      <DialogTitle>Add device</DialogTitle>
+    <Dialog open={props.open} onClose={close} fullWidth fullScreen={phone} maxWidth="sm">
+      <DialogTitle>{stage === "shelly" ? "Add a Shelly" : "Add a device"}</DialogTitle>
       <DialogContent>
         <Stack gap={2.5} sx={{ mt: 0.5 }}>
           {error ? <Alert severity="error">{error}</Alert> : null}
 
           {stage === "start" ? (
             <>
-              <Stack gap={1.25}>
-                <Typography variant="subtitle1">Already have smart devices at home?</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Nexternel can look around your home network and show what it finds. Nothing changes until you choose.
-                </Typography>
-                <ButtonRow>
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                gap={1.5}
+                alignItems={{ xs: "stretch", sm: "center" }}
+                justifyContent="space-between"
+                sx={(t) => ({ p: 2, borderRadius: "var(--nx-control-radius, 12px)", border: `1px solid ${t.palette.primary.main}` })}
+              >
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography fontWeight="fontWeightMedium">Already working at home?</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Devices already on your Wi-Fi, set up with another system or their own phone program. Nexternel finds them and
+                    brings them in. Nothing changes until you choose.
+                  </Typography>
+                </Box>
+                <ButtonRow sx={{ flexShrink: 0 }}>
                   <Button variant="contained" startIcon={<SearchIcon />} onClick={() => void search()}>
                     Search my home
                   </Button>
                 </ButtonRow>
               </Stack>
-              {addYourself}
+              {kinds}
             </>
+          ) : null}
+
+          {stage === "shelly" ? (
+            <ShellyGuide
+              step={shellyStep}
+              onStep={setShellyStep}
+              areas={props.areas}
+              onLeave={reset}
+              onFinished={(id) => {
+                finish();
+                props.onDeviceAdded(id);
+              }}
+            />
+          ) : null}
+
+          {stage === "soon" ? (
+            <Stack gap={2}>
+              <Typography variant="h6">{SOON[soon].title}: coming soon</Typography>
+              <Typography>{SOON[soon].sentence}</Typography>
+              <Typography color="text.secondary">
+                If it already works on your Wi-Fi, Search my home may be able to bring it in.
+              </Typography>
+              <ButtonRow justifyContent="space-between">
+                <Button onClick={reset}>Back</Button>
+                <Button variant="contained" startIcon={<SearchIcon />} onClick={() => void search()}>
+                  Search my home
+                </Button>
+              </ButtonRow>
+            </Stack>
+          ) : null}
+
+          {stage === "more" ? (
+            <Stack gap={2}>
+              <Typography variant="h6">More kinds</Typography>
+              <Typography>
+                Online services, such as Octopus Energy, are set up in their own settings. More kinds of devices come as
+                Extensions.
+              </Typography>
+              <ButtonRow justifyContent="space-between">
+                <Button onClick={reset}>Back</Button>
+                <Button
+                  variant="contained"
+                  onClick={() => {
+                    finish();
+                    navigate("/extensions");
+                  }}
+                >
+                  Open extensions
+                </Button>
+              </ButtonRow>
+            </Stack>
           ) : null}
 
           {stage === "searching" ? (
@@ -349,7 +499,7 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
                           size="small"
                           variant="outlined"
                           onClick={() => {
-                            close();
+                            finish();
                             props.onAddCamera(d.address ?? undefined);
                           }}
                         >
@@ -389,7 +539,7 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
                               size="small"
                               variant="outlined"
                               onClick={() => {
-                                close();
+                                finish();
                                 props.onOpenExisting(d);
                               }}
                             >
@@ -424,13 +574,15 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
                     : `Bring in ${chosen.length} devices`}
               </Button>
             ) : (
-              <Button variant="contained" onClick={close}>
+              <Button variant="contained" onClick={finish}>
                 Done
               </Button>
             )}
           </>
+        ) : stage === "start" ? (
+          <Button onClick={finish}>Cancel</Button>
         ) : (
-          <Button onClick={close}>Cancel</Button>
+          <Button onClick={close}>Close</Button>
         )}
       </DialogActions>
     </Dialog>

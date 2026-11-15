@@ -533,6 +533,7 @@ apps/ui/src/pages/admin/devices/device-summary.ts
 apps/ui/src/pages/admin/devices/DeviceTroubleshootingTab.tsx
 apps/ui/src/pages/admin/DevicesPage.tsx
 apps/ui/src/pages/admin/devices/ReadingSettingsDialog.tsx
+apps/ui/src/pages/admin/devices/ShellyGuide.tsx
 apps/ui/src/pages/admin/devices/use-capability-values.ts
 apps/ui/src/pages/admin/EsphomeAddDeviceWizard.tsx
 apps/ui/src/pages/admin/esphome/BuilderComponentFields.tsx

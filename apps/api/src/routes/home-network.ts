@@ -30,14 +30,20 @@ export async function homeNetworkRoutes(app: FastifyInstance) {
   /** Search my home → Bring in one found device. */
   app.post("/api/v1/home-network/bring-in", async (request, reply) => {
     if (!requirePermission(request, reply, "editDevices")) return;
-    const body = (request.body ?? {}) as { device?: FoundDevice; password?: unknown };
+    const body = (request.body ?? {}) as { device?: FoundDevice; password?: unknown; name?: unknown; roomId?: unknown };
     const device = body.device;
     if (!device || typeof device !== "object" || typeof device.kind !== "string") {
       return reply.code(400).send({ error: { code: "validation_error", message: "Which device? Search again." } });
     }
     const password = typeof body.password === "string" && body.password ? body.password : undefined;
+    const name = typeof body.name === "string" && body.name.trim() ? body.name.trim() : undefined;
+    if (name && name.length > 100) {
+      return reply.code(400).send({ error: { code: "validation_error", message: "Keep the name under 100 letters." } });
+    }
+    const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const roomId = typeof body.roomId === "string" && UUID.test(body.roomId) ? body.roomId : null;
     try {
-      return await bringInFoundDevice(device, { password });
+      return await bringInFoundDevice(device, { password, name, roomId });
     } catch (err) {
       if (err instanceof ShellyPasswordNeeded) {
         // Not 401: that would look like being signed out of Nexternel.

@@ -24,6 +24,11 @@ export type SchemeInput = {
   third?: string;
   status?: { ok?: string; watch?: string; alert?: string };
   /**
+   * The colour backgrounds, boxes and lines are tinted with (only its hue is used). Left out, they
+   * are tinted with the main colour; a theme sets it for, say, warm cream behind a blue main colour.
+   */
+  tint?: string;
+  /**
    * Colours the page background shows (a plain colour, or the colours of a gradient or glow).
    * See-through surfaces are checked for readability over each of them.
    */
@@ -116,7 +121,7 @@ function buildWith(input: SchemeInput, GLASS: GlassAlpha): Scheme {
   const st = { ...DEFAULT_STATUS, ...input.status };
 
   const scales = {
-    neutral: buildNeutralScale(input.main, mode),
+    neutral: buildNeutralScale(input.tint ?? input.main, mode),
     main: buildScale(input.main, mode),
     second: buildScale(second, mode),
     third: buildScale(third, mode),

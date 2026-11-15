@@ -2,6 +2,13 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.33
+
+- **New Add device window** (Devices → Add device): Search my home is at the top, and below it you pick what you have in your hand. Shelly and Camera work now. ESP32 board, Zigbee and Matter show as Coming soon.
+- **Adding a brand-new Shelly** is a 4-step guide with no technical settings: power it on, join its Wi-Fi on your phone, give it your home Wi-Fi, and Nexternel finds it. You choose its name and area, and can switch it on and off once to check it works.
+- Close the window halfway and it opens again at the same step.
+- The old board-making window, the "ESPHome files not added yet" box and the old Shelly form are gone.
+
 ## V5.3.32
 
 - **The six dark ready-made themes each have their own colours:** Midnight Blue (blue, amber, teal), Ember (orange-red, gold, lilac), Ocean Glass (teal, blue, sea green), Aurora (purple, mint, pink), Forest (green, gold, sky blue) and Control Room (amber, sky blue, lime). Before, four of them started from blue and got almost the same second colours.
