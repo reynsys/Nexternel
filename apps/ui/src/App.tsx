@@ -9,7 +9,7 @@ import { ExtensionsSettingsPage } from "./pages/admin/settings/ExtensionsSetting
 import { SettingsLayout } from "./pages/admin/settings/SettingsLayout";
 import { SettingsIndexRedirect } from "./pages/admin/settings/SettingsIndexRedirect";
 import { AppearanceSettingsPage } from "./pages/admin/settings/AppearanceSettingsPage";
-import { HomeSettingsPage } from "./pages/admin/settings/HomeSettingsPage";
+import { AnywherePage } from "./pages/admin/AnywherePage";
 import { SystemStatusPage } from "./pages/admin/settings/SystemStatusPage";
 import { NotificationsSettingsPage } from "./pages/admin/settings/NotificationsSettingsPage";
 import { BackupSettingsPage } from "./pages/admin/settings/BackupSettingsPage";
@@ -214,6 +214,16 @@ export function App() {
         />
 
         <Route
+          path="anywhere"
+          element={
+            <RequireAuth>
+              <RequirePermission permission="viewSystem">
+                <AnywherePage />
+              </RequirePermission>
+            </RequireAuth>
+          }
+        />
+        <Route
           path="extensions"
           element={
             <RequireAuth>
@@ -240,14 +250,8 @@ export function App() {
           }
         >
           <Route index element={<SettingsIndexRedirect />} />
-          <Route
-            path="home"
-            element={
-              <RequirePermission permission="viewSystem">
-                <HomeSettingsPage />
-              </RequirePermission>
-            }
-          />
+          {/* The home's name is Nexternel Anywhere's name now. */}
+          <Route path="home" element={<Navigate to="/anywhere" replace />} />
           <Route
             path="appearance"
             element={

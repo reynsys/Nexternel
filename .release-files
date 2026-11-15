@@ -512,6 +512,7 @@ apps/ui/src/lib/visualization-rect.ts
 apps/ui/src/lib/widget-bindings.ts
 apps/ui/src/lib/widget-title.ts
 apps/ui/src/main.tsx
+apps/ui/src/pages/admin/AnywherePage.tsx
 apps/ui/src/pages/admin/AreasPage.tsx
 apps/ui/src/pages/admin/devices/AddDeviceDialog.tsx
 apps/ui/src/pages/admin/devices/BoardHealthCard.tsx
@@ -552,8 +553,6 @@ apps/ui/src/pages/admin/settings/AppearanceSettingsPage.tsx
 apps/ui/src/pages/admin/settings/BackupSettingsPage.tsx
 apps/ui/src/pages/admin/settings/DiagnosticReportCard.tsx
 apps/ui/src/pages/admin/settings/ExtensionsSettingsPage.tsx
-apps/ui/src/pages/admin/settings/HomeNameCard.tsx
-apps/ui/src/pages/admin/settings/HomeSettingsPage.tsx
 apps/ui/src/pages/admin/settings/HttpsCard.tsx
 apps/ui/src/pages/admin/settings/NotificationsSettingsPage.tsx
 apps/ui/src/pages/admin/settings/plugins/PluginActivityView.tsx

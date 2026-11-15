@@ -1446,9 +1446,6 @@ export const api = {
 
   home: () => apiFetch<{ home: HomeInfo }>("/api/v1/home"),
 
-  updateHome: (home: HomeInfo) =>
-    apiFetch<{ home: HomeInfo }>("/api/v1/home", { method: "PUT", body: JSON.stringify(home) }),
-
   welcomeRestoreJob: (id: string) =>
     apiFetch<{ job: BackupJob }>(`/api/v1/setup/restore/jobs/${encodeURIComponent(id)}`),
 
@@ -2276,7 +2273,7 @@ export type FoundPlace = {
   label: string;
 };
 
-/** The home as a whole (Settings → Home; set first in the setup wizard). */
+/** The home as a whole: its name is its Nexternel Anywhere name (empty without Anywhere). */
 export type HomeInfo = { name: string };
 
 export type NetworkAdaptationPreview = {

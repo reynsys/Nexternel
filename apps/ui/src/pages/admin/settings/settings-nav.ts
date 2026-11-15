@@ -1,5 +1,4 @@
 import type { ComponentType } from "react";
-import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import PaletteRoundedIcon from "@mui/icons-material/PaletteRounded";
 import MemoryRoundedIcon from "@mui/icons-material/MemoryRounded";
 import NotificationsRoundedIcon from "@mui/icons-material/NotificationsRounded";
@@ -16,7 +15,6 @@ export const SETTINGS_TABS: {
   /** One line under the page title. */
   hint?: string;
 }[] = [
-  { label: "Home", segment: "home", icon: HomeRoundedIcon, permission: "viewSystem", hint: "About your home. Its name is shown in the browser tab." },
   { label: "Appearance", segment: "appearance", icon: PaletteRoundedIcon, permission: "viewSystem", hint: "How Nexternel looks for you. Each person chooses their own." },
   { label: "System", segment: "system", icon: MemoryRoundedIcon, permission: "viewSystem", hint: "This Nexternel server: whether everything is running, updates, addresses, what happened, and help." },
   { label: "Users", segment: "users", icon: PeopleRoundedIcon, permission: "manageUsers", hint: "The people who can sign in, their role, and what each role may see and change." },

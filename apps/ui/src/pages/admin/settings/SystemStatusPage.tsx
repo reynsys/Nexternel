@@ -9,7 +9,6 @@ import { SystemDiagnosticsSection } from "./SystemDiagnosticsSection";
 import { DiagnosticReportCard } from "./DiagnosticReportCard";
 import { UpdatesCard } from "./UpdatesCard";
 import { HttpsCard } from "./HttpsCard";
-import { AnywhereCard } from "./AnywhereCard";
 import { ButtonRow } from "../../../components/ButtonRow";
 import { ActivityList } from "../../../components/ActivityList";
 import { hasPermission } from "../../../lib/permissions";
@@ -52,7 +51,7 @@ function healthLine(info: SystemInfo): { ok: boolean; title: string; text: strin
 
 /**
  * Settings → System, in tabs so it is not one long page: Overview (the home's name, health, version and updates),
- * Addresses (how to open Nexternel, at home and with Nexternel Anywhere), Activity (what happened),
+ * Addresses (how to open Nexternel at home), Activity (what happened),
  * Help & troubleshooting.
  */
 export function SystemStatusPage() {
@@ -62,8 +61,7 @@ export function SystemStatusPage() {
   const { permissions, isAdmin } = useShellAuth();
   const canSeeActivity = hasPermission(permissions ?? null, "viewDevices", Boolean(isAdmin));
   const tabs = TABS.filter((t) => t.id !== "activity" || canSeeActivity);
-  // Old links to the Anywhere card (…/system#nexternel-anywhere) open the Addresses tab.
-  const asked = (params.get("tab") ?? (window.location.hash === "#nexternel-anywhere" ? "addresses" : "overview")) as SystemTab;
+  const asked = (params.get("tab") ?? "overview") as SystemTab;
   const tab: SystemTab = tabs.some((t) => t.id === asked) ? asked : "overview";
   const openTab = (id: SystemTab) => setParams(id === "overview" ? {} : { tab: id }, { replace: true });
   const [restartBusy, setRestartBusy] = useState<"all" | "mqtt" | null>(null);
@@ -104,7 +102,6 @@ export function SystemStatusPage() {
       {tab === "addresses" ? (
         <>
           <HttpsCard />
-          <AnywhereCard />
         </>
       ) : null}
 

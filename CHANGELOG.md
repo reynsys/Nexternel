@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
 
+## V5.3.37
+
+- **Nexternel Anywhere has its own place in the menu:** Extensions → Nexternel Anywhere. It used to be hidden in Settings → System → Addresses.
+- **Your home's name is its Nexternel Anywhere name**, and it shows in the browser tab. The separate home name and Settings → Home are gone. Without Anywhere, the browser tab says "Nexternel".
+
 ## V5.3.36
 
 - **Settings → Home** is new, and first in the Settings menu. Your home's name is set there now.

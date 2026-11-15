@@ -32,7 +32,6 @@ import { BrandMark } from "../components/BrandMark";
 import { PlaceSearch, type ChosenPlace } from "../components/PlaceSearch";
 import { PasswordTicks, passwordChecksPass } from "../components/PasswordTicks";
 import { backupSecretError, backupSecretField } from "../lib/backup-file";
-import { showHomeInTab } from "../lib/home-title";
 
 /**
  * The setup wizard on a new installation, step by step with Next and Back:
@@ -127,7 +126,6 @@ export function SetupPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [email, setEmail] = useState("");
   const [checks, setChecks] = useState<PasswordCheck[]>([]);
-  const [homeName, setHomeName] = useState("");
   const [place, setPlace] = useState<ChosenPlace | null>(null);
   const [devicesWifi, setDevicesWifi] = useState<DevicesWifiValue>({ ssid: "", password: "" });
   const [backupFile, setBackupFile] = useState<File | null>(null);
@@ -188,14 +186,12 @@ export function SetupPage() {
         displayName: displayName.trim() || undefined,
         email: email.trim() || undefined,
         termsVersion: status!.termsVersion,
-        homeName: homeName.trim() || undefined,
         place: place ? { name: place.name, latitude: place.latitude, longitude: place.longitude } : null,
         themePrefs: toAccountThemePrefs(themePrefs, skin.id),
         devicesWifi: devicesWifi.ssid.trim() ? devicesWifi : null,
       });
       rememberAuth({ accessToken: data.accessToken, refreshToken: data.refreshToken, user: data.user });
       applyAccountPrefs(data.user.themePrefs);
-      showHomeInTab(homeName);
       go("ready");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Setup did not finish. Try again.");
@@ -386,14 +382,6 @@ export function SetupPage() {
             {step === "home" && (
               <>
                 <Typography variant="h5">Your home</Typography>
-                <TextField
-                  label="Name of your home"
-                  value={homeName}
-                  onChange={(e) => setHomeName(e.target.value)}
-                  fullWidth
-                  inputProps={{ maxLength: 60 }}
-                  helperText="Shown in the browser tab. You can change it later in Settings → System."
-                />
                 <Stack spacing={0.5}>
                   <Typography variant="body2" fontWeight="fontWeightBold">Your town, for the weather</Typography>
                   <Typography variant="caption" color="text.secondary">
@@ -411,7 +399,6 @@ export function SetupPage() {
                   <ButtonRow direction="row">
                     <Button
                       onClick={() => {
-                        setHomeName("");
                         setPlace(null);
                         go("devices-wifi");
                       }}

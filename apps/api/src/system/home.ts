@@ -1,6 +1,6 @@
 /**
  * Facts about the home as a whole, kept with the installation (installation_meta) and in backups:
- * its name (browser tab, Settings → System) and which terms of use the owner agreed to.
+ * its name (kept for backups; the browser tab now shows the Nexternel Anywhere name) and which terms of use the owner agreed to.
  */
 import { getPool } from "../db.js";
 

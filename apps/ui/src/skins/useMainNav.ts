@@ -2,12 +2,13 @@ import { useMemo } from "react";
 import ExtensionRoundedIcon from "@mui/icons-material/ExtensionRounded";
 import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
 import TuneOutlinedIcon from "@mui/icons-material/TuneOutlined";
+import PublicRoundedIcon from "@mui/icons-material/PublicRounded";
 import { usePluginHostOptional } from "../plugins/PluginHostContext";
-import { MAIN_NAV, MANAGE_EXTENSIONS_PATH, type NavItem } from "./nav";
+import { ANYWHERE_PATH, MAIN_NAV, MANAGE_EXTENSIONS_PATH, type NavItem } from "./nav";
 
 /**
  * The main menu, with one Extensions group just above Settings: the page of each switched-on
- * extension, then Manage extensions. It stays one button however many are added.
+ * extension, Nexternel Anywhere (always listed, so it can be found and bought), then Manage extensions. It stays one button however many are added.
  */
 export function useMainNav(): NavItem[] {
   const plugins = usePluginHostOptional()?.plugins;
@@ -29,7 +30,14 @@ export function useMainNav(): NavItem[] {
       auth: true,
       permission: "viewSystem",
     };
-    const children = [...pages, manage];
+    const anywhere: NavItem = {
+      label: "Nexternel Anywhere",
+      to: ANYWHERE_PATH,
+      icon: PublicRoundedIcon,
+      auth: true,
+      permission: "viewSystem",
+    };
+    const children = [...pages, anywhere, manage];
     const group: NavItem = {
       label: "Extensions",
       to: children[0]!.to,
