@@ -19,7 +19,7 @@ import { OctopusSettingsCard } from "../OctopusSettingsCard";
 import type { DeviceSelection } from "./device-nav-utils";
 import type { ReadingToEdit } from "./ReadingSettingsDialog";
 import { deviceStatus } from "./device-summary";
-import { InfoCard, KIND_WORD, KindTile, StatusWord, deviceKind, shortWhen, useDeviceConnection, type DeviceKind } from "./DeviceBits";
+import { InfoCard, KIND_WORD, KindTile, StatusWord, deviceKind, useDeviceConnection, type DeviceKind } from "./DeviceBits";
 import { DeviceOverviewTab } from "./DeviceOverviewTab";
 import { DeviceReadingsTab } from "./DeviceReadingsTab";
 import { DeviceTroubleshootingTab } from "./DeviceTroubleshootingTab";
@@ -144,7 +144,7 @@ export function DeviceDetailPane({ selection, device, isAdmin, busy, hostname, s
   const isBoard = kind === "board";
   const board = boards?.find((b) => b.deviceId === device.id) ?? null;
   const status = deviceStatus(device, board, values);
-  const since = connection?.since && status.tone !== "off" ? ` since ${shortWhen(connection.since).replace(/^Today /, "")}` : "";
+  const since = connection?.since && (status.tone === "ok" || status.tone === "bad") ? connection.since : undefined;
 
   return (
     <Box sx={devicesPanelChromeSx(contentSurface, theme)}>
@@ -164,7 +164,7 @@ export function DeviceDetailPane({ selection, device, isAdmin, busy, hostname, s
               {device.roomName ?? `No ${AREA.singular.toLowerCase()}`} · {KIND_WORD[kind]}
             </Typography>
           </Box>
-          <StatusWord word={`${status.word}${status.tone === "ok" || status.tone === "bad" ? since : ""}`} tone={status.tone} emphasis />
+          <StatusWord word={status.word} since={since} tone={status.tone} emphasis />
           {isAdmin ? (
             <Button {...devicesOutlinedButton} startIcon={<TuneRoundedIcon />} onClick={() => actions.onEdit(device)}>
               Device settings

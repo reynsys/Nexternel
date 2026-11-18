@@ -323,10 +323,10 @@ apps/ui/src/components/ActivityList.tsx
 apps/ui/src/components/AdaptiveReading.tsx
 apps/ui/src/components/AddPanelSteps.tsx
 apps/ui/src/components/AddPanelTypePicker.tsx
-apps/ui/src/components/AndroidUpdate.tsx
 apps/ui/src/components/AnywhereStatus.tsx
 apps/ui/src/components/appearance/AppearancePreview.tsx
 apps/ui/src/components/AppErrorBoundary.tsx
+apps/ui/src/components/AppFrame.tsx
 apps/ui/src/components/ArrangeControls.tsx
 apps/ui/src/components/BellFields.tsx
 apps/ui/src/components/BrandMark.tsx
@@ -341,6 +341,7 @@ apps/ui/src/components/DashboardIconPicker.tsx
 apps/ui/src/components/DashboardTabBar.tsx
 apps/ui/src/components/DashboardTileBody.tsx
 apps/ui/src/components/DevicesWifi.tsx
+apps/ui/src/components/FullDateTime.tsx
 apps/ui/src/components/IconPicker.tsx
 apps/ui/src/components/ItemOverrideFields.tsx
 apps/ui/src/components/MaintenanceBanner.tsx
@@ -444,6 +445,8 @@ apps/ui/src/lib/edge-scroll.test.ts
 apps/ui/src/lib/edge-scroll.ts
 apps/ui/src/lib/esphome-install-guide.ts
 apps/ui/src/lib/esphome-open.ts
+apps/ui/src/lib/full-date.test.ts
+apps/ui/src/lib/full-date.ts
 apps/ui/src/lib/group-by-area.ts
 apps/ui/src/lib/home-dashboard.ts
 apps/ui/src/lib/home-title.ts
@@ -584,6 +587,7 @@ apps/ui/src/pages/admin/settings/SystemDiagnosticsSection.tsx
 apps/ui/src/pages/admin/settings/SystemStatusPage.tsx
 apps/ui/src/pages/admin/settings/UpdatesCard.tsx
 apps/ui/src/pages/admin/UsersPage.tsx
+apps/ui/src/pages/AppSettingsPage.tsx
 apps/ui/src/pages/DashboardPage.tsx
 apps/ui/src/pages/DisplayPage.tsx
 apps/ui/src/pages/LoginPage.tsx
@@ -675,6 +679,7 @@ apps/ui/src/skins/builtin/classic/theme.ts
 apps/ui/src/skins/builtin/mui-dashboard/AppNavbar.tsx
 apps/ui/src/skins/builtin/mui-dashboard/Layout.tsx
 apps/ui/src/skins/builtin/mui-dashboard/MenuContent.tsx
+apps/ui/src/skins/builtin/mui-dashboard/MenuFooter.tsx
 apps/ui/src/skins/builtin/mui-dashboard/SideMenu.tsx
 apps/ui/src/skins/builtin/mui-dashboard/skin.ts
 apps/ui/src/skins/builtin/mui-dashboard/theme.ts

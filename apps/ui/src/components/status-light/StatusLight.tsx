@@ -166,7 +166,7 @@ export function StatusLight({ capabilityId, kind, unit, look, placement, edge = 
       <Box
         {...common}
         data-nx-status-style="dots"
-        sx={{ display: "flex", gap: "6px", alignItems: "center", flex: "none", ...COMPACT_DOTS, ...centred, ...blinkSx }}
+        sx={{ display: "flex", gap: "6px", alignItems: "center", flex: "none", ...COMPACT_DOTS, ...centred }}
       >
         {(["ok", "watch", "alert"] as const).map((s, i) => (
           <Box
@@ -177,6 +177,8 @@ export function StatusLight({ capabilityId, kind, unit, look, placement, edge = 
               height: DOT_SIZE,
               display: "flex",
               filter: lit(s) && state !== "stale" ? `drop-shadow(0 0 4px ${look.colours[s]})` : "none",
+              // Only the lit dot blinks; the two dark ones stay still.
+              ...(s === state ? blinkSx : {}),
             }}
           >
             <Box

@@ -83,7 +83,7 @@ export class BoardWifiInvalid extends Error {}
 /** What is wrong with this Wi-Fi name and password, in plain words; null when they can be saved. */
 export function boardWifiProblem(input: { ssid: string; password: string }, passwordAlreadySet: boolean): string | null {
   const ssid = input.ssid.trim();
-  if (!ssid) return "Type the name of your home Wi-Fi.";
+  if (!ssid) return "Type the name of the Wi-Fi your devices will use.";
   if (Buffer.byteLength(ssid, "utf8") > 32) return "A Wi-Fi name has at most 32 letters.";
   if (!input.password && !passwordAlreadySet) return "Type your Wi-Fi password.";
   if (input.password && (input.password.length < 8 || input.password.length > 63)) {

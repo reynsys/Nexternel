@@ -2,6 +2,15 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting at 1. Newest first.
 
+## V5.4.2
+
+- **The menu is tidier on phones and tablets.** At the top is Nexternel: Dashboards, Areas, Devices, Extensions and Settings. At the bottom: who is signed in, Nexternel Anywhere, **App settings** and Sign out. Phones and tablets now show the same menu.
+- **App settings** is new (only in the app on a phone or tablet): the app's version and Check for update, **Keep the screen on while Nexternel is open** (for a tablet used as a room's screen; needs app 1.0.5), and which home the app opens, with Change home. A dot shows on App settings when an app update is ready.
+- **Device pages show full dates**, like "Wednesday 18 November 2026, 10:37", instead of "Today".
+- **Status light "three dots":** only the lit red dot blinks now.
+- **"Switching…"** no longer flashes for a split second when a device answers just after the wait.
+- Nexternel no longer assumes it is at home: setup asks for "the Wi-Fi your devices will use", and the Addresses card speaks of Nexternel's own network.
+
 ## V5.4.1
 
 - **Zherodius devices work in Nexternel.** Devices → Add device → Search this network finds them. Press Add, type the pairing code shown on the device's own page, and choose an area. Its switches and readings are then ready for your panels.

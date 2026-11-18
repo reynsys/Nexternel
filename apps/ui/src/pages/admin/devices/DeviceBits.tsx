@@ -11,6 +11,8 @@ import { ICON_SIZE } from "../../../lib/appearance/type";
 import { insetSx } from "../../../skins/surfaceStyles";
 import type { StatusTone } from "./device-summary";
 import { devicesActionGroupSx, devicesNavItemSx } from "./devices-panel-styles";
+import { fullDateTime } from "../../../lib/full-date";
+import { FullDateTime } from "../../../components/FullDateTime";
 
 /** The kinds of thing on the Devices page, each with its picture and its name in words. */
 export type DeviceKind = "zherodius" | "board" | "switch" | "camera" | "service";
@@ -59,12 +61,19 @@ export function KindTile({ kind, size = 40 }: { kind: DeviceKind; size?: number 
 }
 
 /** A status in one word with its coloured dot: Online, Offline, Update ready… */
-export function StatusWord({ word, tone, emphasis = false }: { word: string; tone: StatusTone; emphasis?: boolean }) {
+/** The status word with its dot; `since` adds the full date it has been so ("Offline since …"). */
+export function StatusWord({ word, tone, emphasis = false, since }: { word: string; tone: StatusTone; emphasis?: boolean; since?: string }) {
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexShrink: 0, color: TONE_COLOUR[tone] }}>
+    <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexShrink: since ? 1 : 0, minWidth: 0, color: TONE_COLOUR[tone] }}>
       <Box component="span" sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: TONE_COLOUR[tone], flex: "none" }} />
-      <Typography variant={emphasis ? "body2" : "caption"} fontWeight={emphasis ? "fontWeightBold" : undefined} color="inherit" noWrap>
+      <Typography variant={emphasis ? "body2" : "caption"} fontWeight={emphasis ? "fontWeightBold" : undefined} color="inherit" noWrap={!since}>
         {word}
+        {since ? (
+          <>
+            {" since "}
+            <FullDateTime when={since} />
+          </>
+        ) : null}
       </Typography>
     </Box>
   );
@@ -143,16 +152,11 @@ export function useDeviceConnection(deviceId: string | null, refresh?: unknown):
 }
 
 /** "10:53" today, else "Fri 19:52". */
-export function shortWhen(iso: string): string {
-  const d = new Date(iso);
-  const clock = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  return d.toDateString() === new Date().toDateString() ? `Today ${clock}` : `${d.toLocaleDateString([], { weekday: "short", day: "numeric", month: "short" })} ${clock}`;
-}
 
 /** "fair (-61 dBm)"; a reading that stopped being renewed says when it is from. */
 export function wifiSignalWords(c: { wifiDbm: number | null; wifiQuality: string | null; wifiAt?: string | null }): string {
   const old = c.wifiAt && Date.now() - Date.parse(c.wifiAt) > 3 * 60_000;
-  return `Wi‑Fi signal: ${c.wifiQuality} (${c.wifiDbm} dBm)${old ? `, last heard ${shortWhen(c.wifiAt!).replace(/^Today /, "")}` : ""}`;
+  return `Wi‑Fi signal: ${c.wifiQuality} (${c.wifiDbm} dBm)${old ? `, last heard ${fullDateTime(c.wifiAt!)}` : ""}`;
 }
 
 /** "under a minute", "4 min", "3 hours". */

@@ -437,7 +437,7 @@ export function SetupPage() {
                       variant="contained"
                       onClick={() => {
                         const { ssid, password } = devicesWifi;
-                        if (!ssid.trim()) return setError("Type the name of your home Wi-Fi, or press Skip.");
+                        if (!ssid.trim()) return setError("Type the name of the Wi-Fi your devices will use, or press Skip.");
                         if (password.length < 8 || password.length > 63) return setError("A Wi-Fi password has 8 to 63 characters.");
                         go("look");
                       }}

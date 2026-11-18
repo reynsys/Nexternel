@@ -30,8 +30,8 @@ import {
 import { chromeSurfaceSx } from "../../surfaceStyles";
 import { useGradientActive } from "../../useSurfaceStyles";
 import { ButtonRow } from "../../../components/ButtonRow";
-import { AndroidUpdate, inPhoneFrame } from "../../../components/AndroidUpdate";
-import { AnywhereStatus } from "../../../components/AnywhereStatus";
+import { AppSettingsButton } from "../../../components/AppFrame";
+import { MenuFooter } from "./MenuFooter";
 
 type Props = {
   signedIn: boolean;
@@ -180,6 +180,7 @@ export function SideMenu({
                   {APP_VERSION.replace(/^V/, "")}
                 </Typography>
               </Tooltip>
+              <AppSettingsButton iconOnly />
               <Tooltip title="Sign out" placement="right">
                 <Button variant="outlined" size="small" onClick={onLogout} aria-label="Sign out" sx={{ minWidth: 40, px: 1 }}>
                   <LogoutIcon fontSize="small" />
@@ -188,34 +189,7 @@ export function SideMenu({
               {collapseToggle}
             </>
           ) : (
-            <>
-              {/* Who is signed in: picture, name, role and version, each on its own line. */}
-              <Stack direction="row" spacing={1.25} alignItems="center" sx={{ minWidth: 0 }}>
-                <Avatar src={user?.avatarData ?? undefined} sx={{ width: 40, height: 40, flexShrink: 0 }}>
-                  {initial}
-                </Avatar>
-                <Box sx={{ minWidth: 0, flex: 1 }}>
-                  <Typography variant="body2" sx={{ fontWeight: "fontWeightBold", lineHeight: 1.3 }} noWrap title={userName}>
-                    {userName}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary" noWrap display="block" title={roleName}>
-                    {roleName}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary" noWrap display="block">
-                    {APP_VERSION}
-                  </Typography>
-                </Box>
-                <NotificationBell place="menu-bottom" canClear={hasPermission(permissions ?? null, "manageUsers", isAdmin)} />
-              </Stack>
-              <AnywhereStatus permissions={permissions} isAdmin={isAdmin} homeLine={inPhoneFrame()} />
-              <AndroidUpdate px={0} pb={0} />
-              <ButtonRow direction="row">
-                <Button variant="outlined" size="small" startIcon={<LogoutIcon fontSize="small" />} onClick={onLogout} sx={{ flex: 1 }}>
-                  Sign out
-                </Button>
-                {collapseToggle}
-              </ButtonRow>
-            </>
+            <MenuFooter user={user} isAdmin={isAdmin} permissions={permissions} onLogout={onLogout} bell endButton={collapseToggle} />
           )
         ) : (
           <ButtonRow direction={collapsed ? "column" : "row"} alignItems="center">

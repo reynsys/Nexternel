@@ -3,9 +3,10 @@ import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
 import { type Capability, type DeviceConnection, type DeviceRecord } from "../../../api";
 import { deviceConnectivityState } from "../../../lib/device-utils";
 import { BoardSoftware } from "./BoardSoftware";
-import { InfoCard, durationWords, shortWhen, wifiSignalWords } from "./DeviceBits";
+import { InfoCard, durationWords, wifiSignalWords } from "./DeviceBits";
 import { readingValue, switchWord } from "./device-summary";
 import { devicesOutlinedButton } from "./devices-panel-styles";
+import { FullDateTime } from "../../../components/FullDateTime";
 
 type Props = {
   device: DeviceRecord;
@@ -50,7 +51,7 @@ export function DeviceOverviewTab({ device, isAdmin, busy, connection, values, o
           </Typography>
           {connection?.since ? (
             <Typography variant="body2" color="text.secondary">
-              Since {shortWhen(connection.since).replace(/^Today /, "")}
+              Since <FullDateTime when={connection.since} />
             </Typography>
           ) : null}
           {connection?.wifiDbm != null ? (
@@ -67,7 +68,7 @@ export function DeviceOverviewTab({ device, isAdmin, busy, connection, values, o
           ) : null}
           {connection?.restartedAt ? (
             <Typography variant="body2" color="text.secondary">
-              Last restart: {shortWhen(connection.restartedAt)}
+              Last restart: <FullDateTime when={connection.restartedAt} />
               {connection.health?.resetReason ? ` (${connection.health.resetReason})` : ""}
             </Typography>
           ) : null}

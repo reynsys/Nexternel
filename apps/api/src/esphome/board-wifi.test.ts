@@ -46,7 +46,7 @@ test("an existing file keeps its other settings; placeholders count as not set",
 });
 
 test("plain-word problems", () => {
-  assert.equal(boardWifiProblem({ ssid: " ", password: "x" }, false), "Type the name of your home Wi-Fi.");
+  assert.equal(boardWifiProblem({ ssid: " ", password: "x" }, false), "Type the name of the Wi-Fi your devices will use.");
   assert.equal(boardWifiProblem({ ssid: "a", password: "" }, false), "Type your Wi-Fi password.");
   assert.equal(boardWifiProblem({ ssid: "a", password: "" }, true), null);
   assert.equal(boardWifiProblem({ ssid: "a", password: "short" }, false), "A Wi-Fi password has 8 to 63 characters.");

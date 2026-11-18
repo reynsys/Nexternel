@@ -23,7 +23,7 @@ export const ESPHOME_INSTALL_STEPS = [
   },
   {
     id: "online",
-    title: "Device joins your home",
+    title: "Device joins the Wi‑Fi",
     detail:
       "Power the ESP32 on your Wi‑Fi. It should appear as Online on the Devices page within a few minutes.",
   },
@@ -34,7 +34,7 @@ export const ESPHOME_WRONG_FLASH_RECOVERY = [
   'If ESPHome Web offered a new device named "ESPHome Web …", that is not your Nexternel device — do not adopt it.',
   "Connect USB again, open ESPHome Web Installer, click Connect, then Install, and select the .bin you downloaded from Nexternel.",
   'Do not click "New device" or "Prepare for first use".',
-  "After flashing, power the board on your home Wi‑Fi. It should appear Online in Nexternel within a few minutes.",
+  "After flashing, switch the board on where it can reach its Wi‑Fi. It should appear Online in Nexternel within a few minutes.",
 ] as const;
 
 /** Shown after downloading the firmware .bin file. */

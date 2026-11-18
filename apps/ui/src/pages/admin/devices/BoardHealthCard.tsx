@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { Alert, Box, Button, Typography } from "@mui/material";
 import MonitorHeartRoundedIcon from "@mui/icons-material/MonitorHeartRounded";
 import { api, type BoardHealthReport, type Capability, type DeviceRecord } from "../../../api";
-import { InfoCard, durationWords, shortWhen } from "./DeviceBits";
+import { InfoCard, durationWords } from "./DeviceBits";
 import { devicesOutlinedButton } from "./devices-panel-styles";
+import { fullDateTime } from "../../../lib/full-date";
 
 /** "3 days 4 hours", "2 hours 5 min", "4 min". */
 function uptimeWords(s: number): string {
@@ -69,7 +70,7 @@ export function BoardHealthCard({
         ["Message service drops since restart", report.mqttDrops !== null ? String(report.mqttDrops) : "—", (report.mqttDrops ?? 0) > 2],
         // Boards with the newer shared settings say how long the last break lasted and where they are.
         ...(report.lastBreakS != null && report.lastBreakEndedAt
-          ? ([["Last break from the message service", `${report.lastBreakS} s, ${shortWhen(report.lastBreakEndedAt)}`, report.lastBreakS > 10]] as [string, string, boolean][])
+          ? ([["Last break from the message service", `${report.lastBreakS} s, ${fullDateTime(report.lastBreakEndedAt)}`, report.lastBreakS > 10]] as [string, string, boolean][])
           : []),
         ...(report.accessPoint
           ? ([["Wi‑Fi access point", `${report.accessPoint}${report.channel != null ? ` · channel ${report.channel}` : ""}`]] as [string, string][])
@@ -97,7 +98,7 @@ export function BoardHealthCard({
       {report ? (
         <>
           <Typography variant="caption" color={Date.now() - Date.parse(report.at) > 3 * 60_000 ? "warning.main" : "text.secondary"}>
-            Last report: {shortWhen(report.at)} · the board sends one every minute
+            Last report: {fullDateTime(report.at)} · the board sends one every minute
           </Typography>
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" }, gap: 1.5 }}>
             {rows.map(([label, value, warn]) => (

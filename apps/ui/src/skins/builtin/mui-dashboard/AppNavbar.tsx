@@ -11,7 +11,6 @@ import SwipeableDrawer from "@mui/material/SwipeableDrawer";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import type { Theme } from "@mui/material/styles";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
-import { APP_VERSION } from "../../../version";
 import { MenuContent } from "./MenuContent";
 import type { User } from "../../../api";
 import type { RolePermissions } from "../../../lib/permissions";
@@ -21,8 +20,7 @@ import { Link as RouterLink } from "react-router-dom";
 import { barSurfaceSx } from "../../surfaceStyles";
 import { useGradientActive } from "../../useSurfaceStyles";
 import { BrandMark } from "../../../components/BrandMark";
-import { AndroidUpdate, inPhoneFrame } from "../../../components/AndroidUpdate";
-import { AnywhereStatus } from "../../../components/AnywhereStatus";
+import { MenuFooter } from "./MenuFooter";
 
 const Toolbar = styled(MuiToolbar)({
   width: "100%",
@@ -94,7 +92,7 @@ export function AppNavbar({
           {signedIn ? (
             <NotificationBell canClear={hasPermission(permissions ?? null, "manageUsers", isAdmin)} />
           ) : null}
-          {/* The menu: every page, This phone and Sign out. The bottom of a phone's screen is left to
+          {/* The menu: every page, App settings and Sign out. The bottom of a phone's screen is left to
               the dashboards (the dock), so there is one row there, not two. */}
           <Button variant="outlined" aria-label={dot ? "Menu, new messages" : "Menu"} onClick={() => setOpen(true)} sx={{ minWidth: 40, width: 40, height: 40, p: 0, position: "relative" }}>
             <MenuRoundedIcon />
@@ -125,28 +123,20 @@ export function AppNavbar({
           },
         }}
       >
-        <Stack direction="row" sx={{ p: 2, alignItems: "flex-start", gap: 1 }}>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="subtitle1">
-              Nexternel {APP_VERSION}
-            </Typography>
-            {signedIn && (
-              <Typography variant="caption" color="text.secondary">
-                {user?.username} · {user?.role}
-              </Typography>
-            )}
-          </Box>
+        {/* The same top as the side menu: logo and name, then the menu; only the close button is extra. */}
+        <Stack direction="row" sx={{ p: 2, alignItems: "center", gap: 1.5, minHeight: 64 }}>
+          <BrandMark size={28} />
+          <Typography variant="subtitle1" sx={(t) => ({ fontWeight: "fontWeightBold", lineHeight: 1.2, flex: 1, textTransform: t.nx.headingCase, letterSpacing: t.nx.headingSpacing })}>
+            Nexternel
+          </Typography>
           <Button variant="outlined" aria-label="Close menu" onClick={() => setOpen(false)} sx={{ minWidth: 40, width: 40, height: 40, p: 0, flexShrink: 0 }}>
             <CloseRoundedIcon />
           </Button>
         </Stack>
         {signedIn ? (
-          <Stack spacing={1.5} sx={{ px: 2, pb: 1.5, "&:empty": { display: "none" } }}>
-            {/* What you look at each time: Nexternel Anywhere (logo in its light's colour) and the home
-                this phone opens. Check for update and Change home are at the bottom. */}
-            <AnywhereStatus permissions={permissions} isAdmin={isAdmin} homeLine={inPhoneFrame()} />
+          <Box sx={{ px: 2, pb: 1.5, "&:empty": { display: "none" } }}>
             <NotificationBell place="phone-menu" canClear={hasPermission(permissions ?? null, "manageUsers", isAdmin)} />
-          </Stack>
+          </Box>
         ) : null}
         <Divider />
         <MenuContent
@@ -157,27 +147,20 @@ export function AppNavbar({
           authLoading={authLoading}
           onNavigate={() => setOpen(false)}
         />
-        {signedIn ? <AndroidUpdate pb={0} /> : null}
-        <Box sx={{ p: 2 }}>
+        <Box sx={{ mt: "auto", p: 1.5, borderTop: "1px solid", borderColor: "divider" }}>
           {signedIn ? (
-            <Button
-              fullWidth
-              variant="outlined"
-              onClick={() => {
+            <MenuFooter
+              user={user}
+              isAdmin={isAdmin}
+              permissions={permissions}
+              onNavigate={() => setOpen(false)}
+              onLogout={() => {
                 setOpen(false);
                 onLogout();
               }}
-            >
-              Sign out
-            </Button>
+            />
           ) : (
-            <Button
-              fullWidth
-              variant="contained"
-              component={RouterLink}
-              to="/login"
-              onClick={() => setOpen(false)}
-            >
+            <Button fullWidth variant="contained" component={RouterLink} to="/login" onClick={() => setOpen(false)}>
               Sign in
             </Button>
           )}

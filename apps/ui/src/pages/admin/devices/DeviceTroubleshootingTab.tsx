@@ -3,13 +3,15 @@ import { Box, Button, Stack, Typography } from "@mui/material";
 import ContentCopyRoundedIcon from "@mui/icons-material/ContentCopyRounded";
 import type { BoardStatus, Capability, DeviceConnection, DeviceRecord } from "../../../api";
 import { CODE_TEXT } from "../../../lib/appearance/type";
-import { InfoCard, durationWords, shortWhen, wifiSignalWords } from "./DeviceBits";
+import { InfoCard, durationWords, wifiSignalWords } from "./DeviceBits";
 import { LastBoardUpdates } from "./BoardSoftware";
 import { ActivityList } from "../../../components/ActivityList";
 import { BoardHealthCard } from "./BoardHealthCard";
 import { BoardSignalHistory } from "./BoardSignalHistory";
 import { devicesOutlinedButton } from "./devices-panel-styles";
 import { copyTextToClipboard } from "../../../lib/copyText";
+import { clockTime, fullDateTime } from "../../../lib/full-date";
+import { FullDateTime } from "../../../components/FullDateTime";
 
 const DAY_MS = 24 * 60 * 60_000;
 
@@ -128,13 +130,13 @@ export function DeviceTroubleshootingTab({
               ) : null}
               {connection.restartedAt ? (
                 <Typography variant="body2" color="text.secondary">
-                  Last restart: {shortWhen(connection.restartedAt)}
+                  Last restart: <FullDateTime when={connection.restartedAt} />
                 </Typography>
               ) : null}
             </Stack>
             {connection.outages.slice(0, 8).map((o) => (
               <Typography key={o.from} variant="caption" color="text.secondary">
-                {shortWhen(o.from)} – {o.to ? new Date(o.to).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "now"} · offline {durationWords(o.minutes)}
+                <FullDateTime when={o.from} /> – {o.to ? (new Date(o.to).toDateString() === new Date(o.from).toDateString() ? clockTime(o.to) : fullDateTime(o.to)) : "now"} · offline {durationWords(o.minutes)}
               </Typography>
             ))}
           </>

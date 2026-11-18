@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /** How long a "no answer" message stays under a switch. */
 const ERROR_SHOWN_MS = 10_000;
@@ -7,6 +7,8 @@ const ERROR_SHOWN_MS = 10_000;
  * (and the greyed switch), so a quick switch goes straight from Off to On without a flash between.
  */
 const SHOW_WAITING_AFTER_MS = 600;
+/** Once "Switching…" shows, it stays at least this long, so an answer just after the wait never makes it blink. */
+const WAITING_SHOWN_AT_LEAST_MS = 500;
 import type { Capability } from "../../api";
 import { api } from "../../api";
 
@@ -42,12 +44,21 @@ export function useSwitchControl(
   }, [pending, busy]);
 
   const [slow, setSlow] = useState(false);
+  const slowSince = useRef(0);
   useEffect(() => {
-    if (!busy) {
+    if (busy) {
+      const t = window.setTimeout(() => {
+        slowSince.current = Date.now();
+        setSlow(true);
+      }, SHOW_WAITING_AFTER_MS);
+      return () => window.clearTimeout(t);
+    }
+    const left = WAITING_SHOWN_AT_LEAST_MS - (Date.now() - slowSince.current);
+    if (left <= 0) {
       setSlow(false);
       return;
     }
-    const t = window.setTimeout(() => setSlow(true), SHOW_WAITING_AFTER_MS);
+    const t = window.setTimeout(() => setSlow(false), left);
     return () => window.clearTimeout(t);
   }, [busy]);
 
