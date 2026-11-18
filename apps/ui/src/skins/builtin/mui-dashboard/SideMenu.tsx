@@ -1,5 +1,4 @@
 import { useState } from "react";
-import Avatar from "@mui/material/Avatar";
 import MuiDrawer, { drawerClasses } from "@mui/material/Drawer";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
@@ -12,12 +11,9 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import LogoutIcon from "@mui/icons-material/Logout";
 import LoginIcon from "@mui/icons-material/Login";
 import { Link as RouterLink } from "react-router-dom";
-import { APP_VERSION } from "../../../version";
-import { roleLabel, userInitial } from "../../../lib/user-display";
 import { MenuContent } from "./MenuContent";
 import { NotificationBell } from "../../../components/NotificationBell";
 import { hasPermission } from "../../../lib/permissions";
-import type { User } from "../../../api";
 import type { RolePermissions } from "../../../lib/permissions";
 import { BrandMark } from "../../../components/BrandMark";
 import { LookDecor, RoleDivider, useHasDecor } from "../../looks/LookDecor";
@@ -38,7 +34,6 @@ type Props = {
   isAdmin: boolean;
   permissions?: RolePermissions | null;
   authLoading?: boolean;
-  user: User | null;
   onLogout: () => void;
   collapsed: boolean;
   onCollapsedChange: (collapsed: boolean) => void;
@@ -49,7 +44,6 @@ export function SideMenu({
   isAdmin,
   permissions,
   authLoading = false,
-  user,
   onLogout,
   collapsed,
   onCollapsedChange,
@@ -77,9 +71,6 @@ export function SideMenu({
     </Tooltip>
   );
 
-  const userName = user?.displayName?.trim() || user?.username || "User";
-  const initial = userInitial(user);
-  const roleName = roleLabel(user?.role, user?.roleName);
 
   return (
     <MuiDrawer
@@ -165,21 +156,6 @@ export function SideMenu({
           collapsed ? (
             <>
               <NotificationBell place="menu-bottom" canClear={hasPermission(permissions ?? null, "manageUsers", isAdmin)} />
-              <Tooltip title={`${userName} · ${roleName}`} placement="right">
-                <Avatar
-                  src={user?.avatarData ?? undefined}
-                  sx={{ width: 36, height: 36, cursor: "pointer" }}
-                  component={RouterLink}
-                  to="/admin/settings/users"
-                >
-                  {initial}
-                </Avatar>
-              </Tooltip>
-              <Tooltip title={APP_VERSION} placement="right">
-                <Typography variant="caption" color="text.secondary" noWrap>
-                  {APP_VERSION.replace(/^V/, "")}
-                </Typography>
-              </Tooltip>
               <AppSettingsButton iconOnly />
               <Tooltip title="Sign out" placement="right">
                 <Button variant="outlined" size="small" onClick={onLogout} aria-label="Sign out" sx={{ minWidth: 40, px: 1 }}>
@@ -189,7 +165,7 @@ export function SideMenu({
               {collapseToggle}
             </>
           ) : (
-            <MenuFooter user={user} isAdmin={isAdmin} permissions={permissions} onLogout={onLogout} bell endButton={collapseToggle} />
+            <MenuFooter isAdmin={isAdmin} permissions={permissions} onLogout={onLogout} bell endButton={collapseToggle} />
           )
         ) : (
           <ButtonRow direction={collapsed ? "column" : "row"} alignItems="center">

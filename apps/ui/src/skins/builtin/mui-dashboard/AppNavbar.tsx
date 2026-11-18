@@ -12,7 +12,6 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import type { Theme } from "@mui/material/styles";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import { MenuContent } from "./MenuContent";
-import type { User } from "../../../api";
 import type { RolePermissions } from "../../../lib/permissions";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
@@ -38,7 +37,6 @@ type Props = {
   isAdmin: boolean;
   permissions?: RolePermissions | null;
   authLoading?: boolean;
-  user: User | null;
   onLogout: () => void;
 };
 
@@ -47,7 +45,6 @@ export function AppNavbar({
   isAdmin,
   permissions,
   authLoading = false,
-  user,
   onLogout,
 }: Props) {
   const [open, setOpen] = useState(false);
@@ -150,7 +147,6 @@ export function AppNavbar({
         <Box sx={{ mt: "auto", p: 1.5, borderTop: "1px solid", borderColor: "divider" }}>
           {signedIn ? (
             <MenuFooter
-              user={user}
               isAdmin={isAdmin}
               permissions={permissions}
               onNavigate={() => setOpen(false)}

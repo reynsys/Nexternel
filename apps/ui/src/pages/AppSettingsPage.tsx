@@ -9,10 +9,12 @@ import {
   DialogContent,
   DialogTitle,
   FormControlLabel,
+  Paper,
   Stack,
   Switch,
   Typography,
 } from "@mui/material";
+import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import { PageHeader } from "../components/PageHeader";
 import { ButtonRow } from "../components/ButtonRow";
 import { useAppUpdate, type AppBridge } from "../components/AppFrame";
@@ -113,10 +115,16 @@ function HomeCard({ bridge, surfaceSx }: { bridge: AppBridge; surfaceSx: object 
     <Card sx={surfaceSx}>
       <CardContent>
         <Stack spacing={1.5}>
-          <Typography variant="h6">Home</Typography>
+          <Typography variant="h6">Home address</Typography>
           <Typography variant="body2" color="text.secondary">
-            This app opens {window.location.host}
+            This app opens your Nexternel here.
           </Typography>
+          <Paper variant="inset" sx={{ display: "flex", alignItems: "center", gap: 1.25, px: 1.5, py: 1.25, minWidth: 0 }}>
+            <HomeOutlinedIcon aria-hidden sx={{ color: "primary.main", flexShrink: 0 }} />
+            <Typography variant="body1" sx={{ fontWeight: "fontWeightMedium", overflowWrap: "anywhere" }}>
+              {window.location.host}
+            </Typography>
+          </Paper>
           <ButtonRow direction="row">
             <Button variant="outlined" onClick={() => setAsking(true)}>
               Change home

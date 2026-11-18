@@ -2,6 +2,12 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting at 1. Newest first.
 
+## V5.4.3
+
+- **The menu's bottom is simpler:** Nexternel Anywhere, App settings and Sign out. Your name, role and Nexternel's version are in Settings (Users → My profile, and System).
+- **Nexternel Anywhere** shows a small coloured square, with the state written under its name: Connected, Connecting…, Not connected or Switched off. Pressing the square says why.
+- **App settings → Home address** shows the address this app opens in its own box, with the house icon.
+
 ## V5.4.2
 
 - **The menu is tidier on phones and tablets.** At the top is Nexternel: Dashboards, Areas, Devices, Extensions and Settings. At the bottom: who is signed in, Nexternel Anywhere, **App settings** and Sign out. Phones and tablets now show the same menu.

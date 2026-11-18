@@ -11,7 +11,7 @@ import { PAGE_BAR_SLOT_ID } from "../../../components/PageBar";
 
 /** Free MUI dashboard-style shell: permanent side menu + mobile app bar. */
 export function MuiDashboardLayout() {
-  const { signedIn, user, isAdmin, permissions, authLoading, logout } = useShellAuth();
+  const { signedIn, isAdmin, permissions, authLoading, logout } = useShellAuth();
   const [collapsed, setCollapsed] = useSideMenuCollapsed();
   const { themePrefs } = useSkin();
   const hasGradient = isGradientActive(themePrefs);
@@ -23,7 +23,6 @@ export function MuiDashboardLayout() {
         isAdmin={isAdmin}
         permissions={permissions}
         authLoading={authLoading}
-        user={user ?? null}
         onLogout={() => void logout()}
         collapsed={collapsed}
         onCollapsedChange={setCollapsed}
@@ -33,7 +32,6 @@ export function MuiDashboardLayout() {
         isAdmin={isAdmin}
         permissions={permissions}
         authLoading={authLoading}
-        user={user ?? null}
         onLogout={() => void logout()}
       />
       <Box
