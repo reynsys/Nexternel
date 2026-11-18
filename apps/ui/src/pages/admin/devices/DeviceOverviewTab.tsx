@@ -1,4 +1,5 @@
 import { Alert, Box, Button, Stack, Typography } from "@mui/material";
+import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
 import { type Capability, type DeviceConnection, type DeviceRecord } from "../../../api";
 import { deviceConnectivityState } from "../../../lib/device-utils";
 import { BoardSoftware } from "./BoardSoftware";
@@ -74,11 +75,29 @@ export function DeviceOverviewTab({ device, isAdmin, busy, connection, values, o
 
         {isBoard ? (
           <BoardSoftware device={device} canEdit={isAdmin} busy={busy} onUsb={onUsb} showHistory={false} />
+        ) : device.zherodius ? (
+          <InfoCard title="Software">
+            <Typography variant="h6">Zherodius {device.zherodius.version ?? ""}</Typography>
+            <Fact label="Serial number" value={device.zherodius.serial} />
+            <Fact label="IP address" value={device.zherodius.address} />
+            <Box sx={{ mt: "auto", pt: 1 }}>
+              <Button
+                {...devicesOutlinedButton}
+                href={`http://${device.zherodius.address}/`}
+                target="_blank"
+                rel="noreferrer"
+                endIcon={<OpenInNewRoundedIcon />}
+                fullWidth
+              >
+                Open device page
+              </Button>
+            </Box>
+          </InfoCard>
         ) : (
           <InfoCard title="Device">
             <Typography variant="h6">{device.firmwareType === "shelly" ? "Shelly switch" : "Device"}</Typography>
             <Typography variant="body2" color="text.secondary">
-              Its readings and switches come straight from the device over your home network.
+              Its readings and switches come straight from the device over the network.
             </Typography>
           </InfoCard>
         )}
@@ -110,6 +129,20 @@ export function DeviceOverviewTab({ device, isAdmin, busy, connection, values, o
 
       <WhatToDo device={device} isBoard={isBoard} isAdmin={isAdmin} busy={busy} values={values} onUsb={onUsb} />
     </Stack>
+  );
+}
+
+/** One labelled value in a box: the label on the left, the value on the right (below it when the box is narrow). */
+function Fact({ label, value }: { label: string; value: string }) {
+  return (
+    <Box sx={{ display: "flex", flexWrap: "wrap", columnGap: 1, justifyContent: "space-between" }}>
+      <Typography variant="body2" color="text.secondary">
+        {label}
+      </Typography>
+      <Typography variant="body2" sx={{ ml: "auto", overflowWrap: "anywhere" }}>
+        {value}
+      </Typography>
+    </Box>
   );
 }
 

@@ -12,7 +12,7 @@ import { ensureDashboardSchema } from "./dashboards/ensure-schema.js";
 import { ensureCameraSchema } from "./cameras/ensure-schema.js";
 import { ensureOctopusSchema } from "./octopus/ensure-schema.js";
 import { ensureBackupScheduleSchema, startBackupScheduler } from "./backup/scheduled.js";
-import { ensureDevicesSchema , repairAutoSensorNames } from "./devices/ensure-schema.js";
+import { clearNonMqttAddresses, ensureDevicesSchema, repairAutoSensorNames } from "./devices/ensure-schema.js";
 import { ensureEsphomeBuilderSchema } from "./devices/ensure-esphome-builder-schema.js";
 import { syncAllCamerasToGo2rtc } from "./cameras/service.js";
 import { ensureUsersRoleSchema } from "./auth/ensure-users-role.js";
@@ -27,6 +27,9 @@ import { ensureAdminFromEnv } from "./auth/ensure-admin.js";
 import { bootstrapInstallationState, getUserCount } from "./installation-meta.js";
 import { syncCapabilitiesFromLegacy } from "./capabilities/sync.js";
 import { startTelemetry } from "./telemetry/mqtt.js";
+import { devicePath } from "./devices/device-path-store.js";
+import { zherodiusRoutes } from "./routes/zherodius.js";
+import { ensureZherodiusSchema } from "./zherodius/store.js";
 import { ensureLiveStateSchema, restoreKeptStates, startKeepingStates } from "./telemetry/state-keep.js";
 import { ensureBrokerLogTopic } from "./telemetry/broker-log.js";
 import { healthRoutes } from "./routes/health.js";
@@ -186,6 +189,7 @@ await app.register(async (api) => {
   await api.register(homeNetworkRoutes);
   await api.register(devicesWifiRoutes);
   await api.register(octopusRoutes);
+  await api.register(zherodiusRoutes);
   await api.register(panelApiRoutes, { apiVersion: "v5" });
   await api.register(v4Routes);
   await api.register(wsRoutes);
@@ -204,12 +208,14 @@ try {
   await ensureSecondCheckSchema();
   await ensureRolesSchema();
   await ensureDevicesSchema();
+  await ensureZherodiusSchema();
   await ensureActivitySchema();
   await ensureBoardHealthSchema();
   // Readable names for readings named automatically before (e.g. "Pm 2 5" → "PM2.5").
   await repairAutoSensorNames();
   await ensureEsphomeBuilderSchema();
   await ensureCapabilitySchema();
+  await clearNonMqttAddresses();
   await ensureStatusLightSchema();
   await ensureLiveStateSchema();
   const v4Domain = await ensureV4DomainSchema();
@@ -381,8 +387,13 @@ try {
     app.log.warn({ err }, "latest readings not put back");
   }
   startKeepingStates(app.log);
+  devicePath.startFreshnessSweep();
   await startTelemetry();
   app.log.info(getMqttLogSafe(), "telemetry started");
+  // Zherodius devices: one direct line to each paired device.
+  void import("./zherodius/service.js")
+    .then((m) => m.zherodius.start())
+    .catch((err) => app.log.warn({ err }, "Zherodius lines not started"));
   try {
     await statusEngine.start();
   } catch (err) {

@@ -34,7 +34,13 @@ export function connectionStretches(c: DeviceConnection, now = Date.now()): { on
 
 function technical(device: DeviceRecord, board: BoardStatus | null): { label: string; value: string }[] {
   return [
-    { label: "Message address (MQTT)", value: device.mqttTopicPrefix },
+    ...(device.mqttTopicPrefix ? [{ label: "Message address (MQTT)", value: device.mqttTopicPrefix }] : []),
+    ...(device.zherodius
+      ? [
+          { label: "Serial number", value: device.zherodius.serial },
+          { label: "Software", value: `Zherodius ${device.zherodius.version ?? "not known"}` },
+        ]
+      : []),
     { label: "Network address", value: device.ipAddress ?? "Not known" },
     ...(board?.file ? [{ label: "ESPHome settings file", value: board.file }] : []),
     ...(board

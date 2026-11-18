@@ -46,7 +46,7 @@ async function bringInShelly(found: FoundDevice, opts: BringInChoices = {}): Pro
   if (!ip || !IPV4.test(ip)) throw new BringInRefused("Nexternel doesn't know this switch's address. Search again.");
   await refreshHostIp(); // the address the switch must use, as it is right now
   const host = config.serverIp();
-  if (!host) throw new BringInRefused("Nexternel doesn't know its own address on your home network yet. Restart Nexternel and try again.");
+  if (!host) throw new BringInRefused("Nexternel doesn't know its own address on this network yet. Restart Nexternel and try again.");
 
   const facts = await readShelly(ip, password);
   if (!facts.id) throw new BringInRefused("The switch didn't say its name. Restart it and try again.");

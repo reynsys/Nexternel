@@ -25,7 +25,7 @@ export type CapabilityDiagnostic = {
   name: string;
   kind: string;
   sourceType: "sensor" | "relay";
-  expectedStateTopic: string;
+  expectedStateTopic: string | null;
   expectedCommandTopic: string | null;
   bindingStateTopic: string | null;
   bindingCommandTopic: string | null;
@@ -41,7 +41,7 @@ export type DevicePipelineDiagnostic = {
   driver: string;
   protocol: "shelly-gen1" | "shelly-gen3" | "esphome" | "other";
   area: string | null;
-  mqttTopicPrefix: string;
+  mqttTopicPrefix: string | null;
   ipAddress: string | null;
   isOnline: boolean;
   connectivityState: "online" | "no_recent_data" | "offline";
@@ -70,7 +70,10 @@ function stage(
   return { id, label, status, detail };
 }
 
-function resolveProtocol(device: DeviceDetail): DevicePipelineDiagnostic["protocol"] {
+/** A device reached over MQTT: the only kind this check follows. */
+type MqttDevice = DeviceDetail & { mqttTopicPrefix: string };
+
+function resolveProtocol(device: MqttDevice): DevicePipelineDiagnostic["protocol"] {
   if (device.firmwareType === "esphome") return "esphome";
   if (device.firmwareType === "shelly") {
     return isShellyGen1MqttPrefix(device.mqttTopicPrefix) ? "shelly-gen1" : "shelly-gen3";
@@ -187,7 +190,7 @@ function deriveBreakAt(pipeline: PipelineStage[]): string | null {
 }
 
 export function diagnoseDevice(
-  device: DeviceDetail,
+  device: MqttDevice,
   mqttDiag: ReturnType<typeof getMqttClientDiagnostics>,
   bindingByCapId: Map<string, { stateTopic: string | null; commandTopic: string | null }>
 ): DevicePipelineDiagnostic {
@@ -366,7 +369,7 @@ export async function buildLivePipelineDiagnostics(opts?: {
   );
   const mqttDiag = getMqttClientDiagnostics();
 
-  let selected = devices.filter((d) => d.isEnabled);
+  let selected = devices.filter((d): d is MqttDevice => d.isEnabled && Boolean(d.mqttTopicPrefix));
   if (opts?.deviceIds?.length) {
     const ids = new Set(opts.deviceIds);
     selected = selected.filter((d) => ids.has(d.id));

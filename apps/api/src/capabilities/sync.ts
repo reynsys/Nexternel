@@ -35,7 +35,7 @@ export async function syncCapabilitiesFromLegacy(): Promise<{
     name: string;
     sensor_type: string;
     unit: string | null;
-    mqtt_state_topic: string;
+    mqtt_state_topic: string | null;
     is_enabled: boolean;
   }>(
     `SELECT id, device_id, name, sensor_type, unit, mqtt_state_topic,
@@ -60,10 +60,12 @@ export async function syncCapabilitiesFromLegacy(): Promise<{
       [s.device_id, kind, s.name, s.unit, s.id, s.is_enabled]
     );
     const capabilityId = cap.rows[0].id;
+    // The binding says how the item is reached: its device's connection (mqtt, extension, zherodius, octopus).
     await pool.query(
       `INSERT INTO capability_bindings (capability_id, protocol, state_topic, command_topic)
-       VALUES ($1, 'mqtt', $2, NULL)
+       VALUES ($1, (SELECT d.connection FROM capabilities c JOIN devices d ON d.id = c.device_id WHERE c.id = $1), $2, NULL)
        ON CONFLICT (capability_id) DO UPDATE SET
+         protocol = EXCLUDED.protocol,
          state_topic = EXCLUDED.state_topic,
          command_topic = NULL,
          updated_at = NOW()`,
@@ -76,8 +78,8 @@ export async function syncCapabilitiesFromLegacy(): Promise<{
     id: string;
     device_id: string;
     name: string;
-    mqtt_state_topic: string;
-    mqtt_command_topic: string;
+    mqtt_state_topic: string | null;
+    mqtt_command_topic: string | null;
     is_enabled: boolean;
   }>(
     `SELECT id, device_id, name, mqtt_state_topic, mqtt_command_topic,
@@ -102,8 +104,9 @@ export async function syncCapabilitiesFromLegacy(): Promise<{
     const capabilityId = cap.rows[0].id;
     await pool.query(
       `INSERT INTO capability_bindings (capability_id, protocol, state_topic, command_topic)
-       VALUES ($1, 'mqtt', $2, $3)
+       VALUES ($1, (SELECT d.connection FROM capabilities c JOIN devices d ON d.id = c.device_id WHERE c.id = $1), $2, $3)
        ON CONFLICT (capability_id) DO UPDATE SET
+         protocol = EXCLUDED.protocol,
          state_topic = EXCLUDED.state_topic,
          command_topic = EXCLUDED.command_topic,
          updated_at = NOW()`,
@@ -130,8 +133,9 @@ export async function syncCapabilitiesFromLegacy(): Promise<{
     );
     await pool.query(
       `INSERT INTO capability_bindings (capability_id, protocol, state_topic, command_topic)
-       VALUES ($1, 'mqtt', $2, $3)
+       VALUES ($1, (SELECT d.connection FROM capabilities c JOIN devices d ON d.id = c.device_id WHERE c.id = $1), $2, $3)
        ON CONFLICT (capability_id) DO UPDATE SET
+         protocol = EXCLUDED.protocol,
          state_topic = EXCLUDED.state_topic,
          command_topic = EXCLUDED.command_topic,
          updated_at = NOW()`,

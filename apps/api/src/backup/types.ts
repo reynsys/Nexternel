@@ -99,8 +99,15 @@ export type RestoreResult = {
 export type OperationalBackup = {
   mqttUsername: string;
   mqttPassword: string;
-  mqttTopicPrefix: string;
+  mqttTopicPrefix: string | null;
   serverIp: string;
+  /** Zherodius direct lines: this home's line key and each paired device's key (backups from 18/11/2026). */
+  zherodius?: ZherodiusBackup;
+};
+
+export type ZherodiusBackup = {
+  hubKey: string;
+  pairings: { deviceId: string; serial: string; address: string; deviceKey: string; version: string | null }[];
 };
 
 export type InspectResult = {

@@ -2,7 +2,7 @@
 
 export type DeviceConnectivityState = "online" | "no_recent_data" | "offline";
 
-export type MqttAvailability = "online" | "offline" | "unknown";
+export type Availability = "online" | "offline" | "unknown";
 
 const MS_MIN = 60_000;
 
@@ -27,7 +27,7 @@ export type CapabilityLiveHint = {
 export type ConnectivityInput = {
   firmwareType: string;
   isEnabled: boolean;
-  mqttAvailability: MqttAvailability;
+  availability: Availability;
   lastSeenAt: string | null;
   sensorCount: number;
   relayCount: number;
@@ -64,8 +64,8 @@ function hasFreshLiveCapability(
   return false;
 }
 
-/** Boards that announce online and offline themselves (birth and last-will messages). */
-const ANNOUNCES_OWN_STATUS = new Set(["esphome", "shelly"]);
+/** Devices whose own connection says online and offline (MQTT birth and last will; Zherodius's open line). */
+const ANNOUNCES_OWN_STATUS = new Set(["esphome", "shelly", "zherodius"]);
 
 export function deriveDeviceConnectivityState(
   input: ConnectivityInput
@@ -75,18 +75,18 @@ export function deriveDeviceConnectivityState(
   const lastAge = ageMs(input.lastSeenAt, nowMs);
 
   if (!input.isEnabled) {
-    if (input.mqttAvailability === "offline") return "offline";
+    if (input.availability === "offline") return "offline";
     return "no_recent_data";
   }
 
-  if (input.mqttAvailability === "offline") {
+  if (input.availability === "offline") {
     return "offline";
   }
 
   // ESPHome and Shelly boards say "online" when they connect, and the message service says "offline"
   // for them the moment they drop out (their last will). Their own "online" is proof, however quiet
   // the board is (a relay board only reports when switched).
-  if (input.mqttAvailability === "online" && ANNOUNCES_OWN_STATUS.has(input.firmwareType.toLowerCase())) {
+  if (input.availability === "online" && ANNOUNCES_OWN_STATUS.has(input.firmwareType.toLowerCase())) {
     return "online";
   }
 
@@ -102,7 +102,7 @@ export function deriveDeviceConnectivityState(
     return "no_recent_data";
   }
 
-  if (input.mqttAvailability === "online") {
+  if (input.availability === "online") {
     return "no_recent_data";
   }
 

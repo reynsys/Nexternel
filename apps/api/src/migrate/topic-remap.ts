@@ -29,28 +29,29 @@ export function remapTopicForLegacyRoots(
 export function applyTopicRootToPayload<
   T extends {
     devices: {
-      mqttTopicPrefix: string;
-      sensors: { mqttStateTopic: string }[];
-      relays: { mqttStateTopic: string; mqttCommandTopic: string }[];
+      mqttTopicPrefix: string | null;
+      sensors: { mqttStateTopic: string | null }[];
+      relays: { mqttStateTopic: string | null; mqttCommandTopic: string | null }[];
     }[];
   },
 >(payload: T, newRoot: string): T {
   const root = newRoot.trim().replace(/^\/+|\/+$/g, "");
   if (!root) return payload;
+  const remap = (t: string | null) => (t === null ? null : remapTopicRoot(t, root));
 
   return {
     ...payload,
     devices: payload.devices.map((d) => ({
       ...d,
-      mqttTopicPrefix: remapTopicRoot(d.mqttTopicPrefix, root),
+      mqttTopicPrefix: remap(d.mqttTopicPrefix),
       sensors: d.sensors.map((s) => ({
         ...s,
-        mqttStateTopic: remapTopicRoot(s.mqttStateTopic, root),
+        mqttStateTopic: remap(s.mqttStateTopic),
       })),
       relays: d.relays.map((r) => ({
         ...r,
-        mqttStateTopic: remapTopicRoot(r.mqttStateTopic, root),
-        mqttCommandTopic: remapTopicRoot(r.mqttCommandTopic, root),
+        mqttStateTopic: remap(r.mqttStateTopic),
+        mqttCommandTopic: remap(r.mqttCommandTopic),
       })),
     })),
   };
@@ -59,28 +60,29 @@ export function applyTopicRootToPayload<
 export function applyLegacyTopicRootToPayload<
   T extends {
     devices: {
-      mqttTopicPrefix: string;
-      sensors: { mqttStateTopic: string }[];
-      relays: { mqttStateTopic: string; mqttCommandTopic: string }[];
+      mqttTopicPrefix: string | null;
+      sensors: { mqttStateTopic: string | null }[];
+      relays: { mqttStateTopic: string | null; mqttCommandTopic: string | null }[];
     }[];
   },
 >(payload: T, newRoot: string, legacyRoots: string[]): T {
   const root = newRoot.trim().replace(/^\/+|\/+$/g, "");
   if (!root || legacyRoots.length === 0) return payload;
+  const remap = (t: string | null) => (t === null ? null : remapTopicForLegacyRoots(t, root, legacyRoots));
 
   return {
     ...payload,
     devices: payload.devices.map((d) => ({
       ...d,
-      mqttTopicPrefix: remapTopicForLegacyRoots(d.mqttTopicPrefix, root, legacyRoots),
+      mqttTopicPrefix: remap(d.mqttTopicPrefix),
       sensors: d.sensors.map((s) => ({
         ...s,
-        mqttStateTopic: remapTopicForLegacyRoots(s.mqttStateTopic, root, legacyRoots),
+        mqttStateTopic: remap(s.mqttStateTopic),
       })),
       relays: d.relays.map((r) => ({
         ...r,
-        mqttStateTopic: remapTopicForLegacyRoots(r.mqttStateTopic, root, legacyRoots),
-        mqttCommandTopic: remapTopicForLegacyRoots(r.mqttCommandTopic, root, legacyRoots),
+        mqttStateTopic: remap(r.mqttStateTopic),
+        mqttCommandTopic: remap(r.mqttCommandTopic),
       })),
     })),
   };

@@ -11,7 +11,7 @@ export function remapDomainForCurrentServer(domain: DomainExport): DomainExport 
     (process.env.MQTT_TOPIC_PREFIX || "nexternel").trim() || "nexternel";
   const legacyRoots = collectOldTopicRoots(
     undefined,
-    domain.devices.map((d) => d.mqttTopicPrefix)
+    domain.devices.flatMap((d) => (d.mqttTopicPrefix ? [d.mqttTopicPrefix] : []))
   ).filter((r) => r !== topicRoot);
   const remapped = applyLegacyTopicRootToPayload(
     {

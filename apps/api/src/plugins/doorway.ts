@@ -176,9 +176,9 @@ export const pluginDoorwayRoutes: FastifyPluginAsync = async (app) => {
     if (action !== "on" && action !== "off" && action !== "toggle") {
       return reply.code(400).send({ error: { code: "bad_request", message: "action must be on, off or toggle" } });
     }
-    const { publishSwitchCommand } = await import("../telemetry/mqtt.js");
+    const { devicePath } = await import("../devices/device-path-store.js");
     try {
-      const result = await publishSwitchCommand(id, action, `Plugin ${p.id}`);
+      const result = await devicePath.switchItem(id, action, `Plugin ${p.id}`);
       await logPluginAction(p.id, "control", { capabilityId: id, action, value: result.value });
       return { ok: true, value: result.value };
     } catch (err) {

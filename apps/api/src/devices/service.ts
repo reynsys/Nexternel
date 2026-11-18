@@ -1,3 +1,4 @@
+import type { Connection } from "./device-path.js";
 import type { PoolClient } from "pg";
 import { getPool } from "../db.js";
 import { preferCatalogDisplayName } from "./display-name.js";
@@ -18,7 +19,7 @@ import { installationMqttRoot } from "../migrate/align-mqtt-topics.js";
 import {
   deriveDeviceConnectivityState,
   type DeviceConnectivityState,
-  type MqttAvailability,
+  type Availability,
 } from "./connectivity.js";
 import { getLiveState } from "../telemetry/state-cache.js";
 import { deviceSlugFromTopicPrefix, slugify } from "./slug.js";
@@ -35,9 +36,14 @@ export type DeviceDetail = {
   roomName: string | null;
   name: string;
   slug: string;
-  mqttTopicPrefix: string;
+  /** Only devices reached over MQTT have one. */
+  mqttTopicPrefix: string | null;
   esphomeName: string | null;
   firmwareType: string;
+  /** How Nexternel reaches the device. */
+  connection: Connection;
+  /** A paired Zherodius device: its serial number, software version and address. */
+  zherodius: { serial: string; version: string | null; address: string; hubName: string | null } | null;
   ipAddress: string | null;
   macAddress: string | null;
   isEnabled: boolean;
@@ -54,7 +60,7 @@ export type DeviceDetail = {
     sensorType: string;
     unit: string | null;
     esphomeEntityId: string | null;
-    mqttStateTopic: string;
+    mqttStateTopic: string | null;
     isEnabled: boolean;
     capabilityId: string | null;
     systemId: string | null;
@@ -67,8 +73,8 @@ export type DeviceDetail = {
     name: string;
     slug: string;
     esphomeEntityId: string | null;
-    mqttCommandTopic: string;
-    mqttStateTopic: string;
+    mqttCommandTopic: string | null;
+    mqttStateTopic: string | null;
     lastState: string | null;
     isEnabled: boolean;
     capabilityId: string | null;
@@ -85,17 +91,22 @@ type DeviceRow = {
   room_name: string | null;
   name: string;
   slug: string;
-  mqtt_topic_prefix: string;
+  mqtt_topic_prefix: string | null;
   esphome_name: string | null;
   firmware_type: string;
+  connection: Connection;
   ip_address: string | null;
   mac_address: string | null;
   is_enabled: boolean;
-  mqtt_availability: string;
+  availability: string;
   last_seen_at: Date | null;
   esphome_management_mode: string | null;
   esphome_lifecycle_state: string | null;
   esphome_yaml_path: string | null;
+  zh_serial: string | null;
+  zh_version: string | null;
+  zh_address: string | null;
+  zh_hub_name: string | null;
 };
 
 export async function listDevicesDetailed(): Promise<DeviceDetail[]> {
@@ -103,13 +114,15 @@ export async function listDevicesDetailed(): Promise<DeviceDetail[]> {
   const devices = await pool.query<DeviceRow>(
     `SELECT d.id, d.room_id, r.name AS room_name, d.name, d.slug,
             d.mqtt_topic_prefix, d.esphome_name,
-            COALESCE(d.firmware_type, 'esphome') AS firmware_type,
+            COALESCE(d.firmware_type, 'esphome') AS firmware_type, d.connection,
             host(d.ip_address)::text AS ip_address, d.mac_address,
             COALESCE(d.is_enabled, TRUE) AS is_enabled,
-            d.mqtt_availability, d.last_seen_at,
-            d.esphome_management_mode, d.esphome_lifecycle_state, d.esphome_yaml_path
+            d.availability, d.last_seen_at,
+            d.esphome_management_mode, d.esphome_lifecycle_state, d.esphome_yaml_path,
+            z.serial AS zh_serial, z.version AS zh_version, z.address AS zh_address, z.hub_name AS zh_hub_name
      FROM devices d
      LEFT JOIN rooms r ON r.id = d.room_id
+     LEFT JOIN zherodius_pairings z ON z.device_id = d.id
      ORDER BY d.name ASC`
   );
 
@@ -124,7 +137,7 @@ export async function listDevicesDetailed(): Promise<DeviceDetail[]> {
     sensor_type: string;
     unit: string | null;
     esphome_entity_id: string | null;
-    mqtt_state_topic: string;
+    mqtt_state_topic: string | null;
     is_enabled: boolean;
     capability_id: string | null;
     system_id: string | null;
@@ -146,8 +159,8 @@ export async function listDevicesDetailed(): Promise<DeviceDetail[]> {
     name: string;
     slug: string;
     esphome_entity_id: string | null;
-    mqtt_command_topic: string;
-    mqtt_state_topic: string;
+    mqtt_command_topic: string | null;
+    mqtt_state_topic: string | null;
     last_state: string | null;
     is_enabled: boolean;
     capability_id: string | null;
@@ -232,11 +245,11 @@ export async function listDevicesDetailed(): Promise<DeviceDetail[]> {
         });
       }
     }
-    const mqttAvailability = normalizeMqttAvailability(d.mqtt_availability);
+    const availability = normalizeAvailability(d.availability);
     const connectivityState = deriveDeviceConnectivityState({
       firmwareType: d.firmware_type || "esphome",
       isEnabled: d.is_enabled,
-      mqttAvailability,
+      availability,
       lastSeenAt: d.last_seen_at ? d.last_seen_at.toISOString() : null,
       sensorCount: sensors.length,
       relayCount: relays.length,
@@ -251,6 +264,8 @@ export async function listDevicesDetailed(): Promise<DeviceDetail[]> {
       mqttTopicPrefix: d.mqtt_topic_prefix,
       esphomeName: d.esphome_name,
       firmwareType: d.firmware_type || "esphome",
+      connection: d.connection,
+      zherodius: d.zh_serial ? { serial: d.zh_serial, version: d.zh_version, address: d.zh_address ?? "", hubName: d.zh_hub_name } : null,
       ipAddress: d.ip_address,
       macAddress: d.mac_address,
       isEnabled: d.is_enabled,
@@ -266,7 +281,7 @@ export async function listDevicesDetailed(): Promise<DeviceDetail[]> {
   });
 }
 
-function normalizeMqttAvailability(value: string | null | undefined): MqttAvailability {
+function normalizeAvailability(value: string | null | undefined): Availability {
   if (value === "online" || value === "offline") return value;
   return "unknown";
 }
@@ -570,11 +585,12 @@ export async function createDevice(input: {
     const inserted = await client.query<{ id: string }>(
       `INSERT INTO devices (
          name, slug, room_id, mqtt_topic_prefix, esphome_name, firmware_type,
-         ip_address, mac_address
+         ip_address, mac_address, connection
        ) VALUES (
          $1, $2, $3, $4, $5, $6,
          NULLIF($7, '')::inet,
-         NULLIF($8, '')
+         NULLIF($8, ''),
+         'mqtt'
        )
        RETURNING id`,
       [
@@ -626,14 +642,15 @@ export async function updateDevice(
     id: string;
     name: string;
     room_id: string | null;
-    mqtt_topic_prefix: string;
+    mqtt_topic_prefix: string | null;
     esphome_name: string | null;
     firmware_type: string;
+    connection: Connection;
     ip_address: string | null;
     mac_address: string | null;
     is_enabled: boolean;
   }>(
-    `SELECT id, name, room_id, mqtt_topic_prefix, esphome_name,
+    `SELECT id, name, room_id, mqtt_topic_prefix, esphome_name, connection,
             COALESCE(firmware_type, 'esphome') AS firmware_type,
             host(ip_address)::text AS ip_address, mac_address,
             COALESCE(is_enabled, TRUE) AS is_enabled
@@ -647,13 +664,18 @@ export async function updateDevice(
   if (!name) throw new Error("Name cannot be empty");
 
   const roomId = patch.roomId !== undefined ? patch.roomId || null : cur.room_id;
+  // Only a device reached over MQTT has a message address (and must keep one).
+  const overMqtt = cur.connection === "mqtt";
+  if (!overMqtt && patch.mqttTopicPrefix !== undefined) {
+    throw new Error("This device is not reached over MQTT, so it has no message address");
+  }
   const mqttTopicPrefix =
     patch.mqttTopicPrefix !== undefined
       ? patch.mqttTopicPrefix.trim().replace(/\/+$/, "")
       : cur.mqtt_topic_prefix;
-  if (!mqttTopicPrefix) throw new Error("MQTT topic prefix is required");
+  if (overMqtt && !mqttTopicPrefix) throw new Error("MQTT topic prefix is required");
 
-  if (cur.firmware_type === "shelly" && !isShellyGen1MqttPrefix(mqttTopicPrefix)) {
+  if (mqttTopicPrefix && cur.firmware_type === "shelly" && !isShellyGen1MqttPrefix(mqttTopicPrefix)) {
     assertValidShellyMqttPrefix(mqttTopicPrefix, installationMqttRoot());
   }
 
@@ -693,7 +715,7 @@ export async function updateDevice(
     ]
   );
 
-  if (prefixChanged) {
+  if (prefixChanged && mqttTopicPrefix) {
     if (cur.firmware_type === "shelly") {
       const relays = await getPool().query<{
         id: string;
@@ -768,6 +790,12 @@ export async function deleteDevice(
   ]);
   const deleted = (result.rowCount ?? 0) > 0;
 
+  // A Zherodius device: its direct line ends with it.
+  if (deleted && row?.firmware_type === "zherodius") {
+    const { zherodius } = await import("../zherodius/service.js");
+    zherodius.forget(id);
+  }
+
   if (deleted && row?.firmware_type === "esphome") {
     const mode = row.esphome_management_mode?.trim() || "imported";
     const shouldDeleteYaml = options?.deleteYaml ?? mode === "managed";
@@ -837,6 +865,7 @@ export async function syncDeviceFromEsphomeSuggestion(
   }
 
   const mqttTopicPrefix = suggestion.mqttTopicPrefix || device.mqttTopicPrefix;
+  if (!mqttTopicPrefix) throw new Error("ESPHome sync needs the device's MQTT address");
   const pool = getPool();
   const before = await pool.query<{ slug: string }>(
     `SELECT slug FROM relays WHERE device_id = $1`,

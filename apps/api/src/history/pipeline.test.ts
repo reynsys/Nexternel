@@ -4,7 +4,6 @@ import { resolveSensorEntityIdForHistory } from "./entity-id.js";
 import {
   formatSensorReadingLine,
   parseMqttSensorStateTopic,
-  persistMqttSensorHistory,
 } from "./mqtt-persist.js";
 import { parseMqttPayload } from "../telemetry/state-cache.js";
 
@@ -138,13 +137,4 @@ test("Test E — history writer line protocol matches the stored history schema 
     co2Line,
     /^sensor_reading,device=hallway-monitor,entity_type=sensor,entity_id=hallway_monitor_co2 value=594 1700000000000$/
   );
-});
-
-test("Test E — storing a reading never throws, even without InfluxDB", () => {
-  assert.doesNotThrow(() => {
-    persistMqttSensorHistory(
-      "nexternel/hallway-monitor/sensor/hallway_monitor_co2/state",
-      594
-    );
-  });
 });

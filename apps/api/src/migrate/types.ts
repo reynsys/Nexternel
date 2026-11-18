@@ -1,3 +1,4 @@
+import type { Connection } from "../devices/device-path.js";
 export const CONFIG_FORMAT = "nexternel-config";
 export const CONFIG_FORMAT_VERSION = 1;
 
@@ -25,7 +26,7 @@ export type ExportedSensor = {
   slug: string;
   sensorType: string;
   unit: string | null;
-  mqttStateTopic: string;
+  mqttStateTopic: string | null;
   esphomeEntityId: string | null;
   gpioPin: number | null;
   isEnabled: boolean;
@@ -47,8 +48,8 @@ export type ExportedRelay = {
   id: string;
   name: string;
   slug: string;
-  mqttCommandTopic: string;
-  mqttStateTopic: string;
+  mqttCommandTopic: string | null;
+  mqttStateTopic: string | null;
   esphomeEntityId: string | null;
   gpioPin: number | null;
   isEnabled: boolean;
@@ -61,10 +62,13 @@ export type ExportedDevice = {
   name: string;
   slug: string;
   esphomeName: string | null;
-  mqttTopicPrefix: string;
+  /** Only MQTT devices have one. */
+  mqttTopicPrefix: string | null;
   ipAddress: string | null;
   macAddress: string | null;
   firmwareType: string;
+  /** How Nexternel reaches it; missing in backups from before 18/11/2026 (worked out from firmwareType). */
+  connection?: Connection;
   isEnabled: boolean;
   sensors: ExportedSensor[];
   relays: ExportedRelay[];

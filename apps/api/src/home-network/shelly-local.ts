@@ -19,7 +19,7 @@ async function send(url: string, init: RequestInit = {}): Promise<Response> {
   try {
     return await fetch(url, { ...init, signal: AbortSignal.timeout(TIMEOUT_MS) });
   } catch {
-    throw new ShellyUnreachable("The switch didn't answer. Check it has power and is on your home Wi-Fi, then try again.");
+    throw new ShellyUnreachable("The switch didn't answer. Check it has power and is on the same network as Nexternel, then try again.");
   }
 }
 

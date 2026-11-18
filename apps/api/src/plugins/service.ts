@@ -11,7 +11,7 @@ import type {
 import { getPool } from "../db.js";
 import { APP_VERSION } from "../version.js";
 import { clearPluginEvents } from "./events.js";
-import { removePluginDevices, setPluginDevicesOnline } from "./devices.js";
+import { pluginDevicesOffline, removePluginDevices } from "./devices.js";
 import {
   downloadCatalogPackage,
   extractPackage,
@@ -268,7 +268,7 @@ export async function setPluginEnabled(id: string, enabled: boolean): Promise<Pl
   if (!row) return null;
   if (!enabled) {
     clearPluginEvents(id);
-    await setPluginDevicesOnline(id, false);
+    await pluginDevicesOffline(id);
   }
   await logPluginAction(id, enabled ? "switched-on" : "switched-off");
   return rowToRecord(row);
@@ -442,7 +442,7 @@ export async function setRunState(id: string, state: PluginRunState, message: st
      WHERE id = $1 AND (status IS DISTINCT FROM $2 OR status_message IS DISTINCT FROM $3)`,
     [id, state, message]
   );
-  if (state === "crashed" || state === "stopped") await setPluginDevicesOnline(id, false);
+  if (state === "crashed" || state === "stopped") await pluginDevicesOffline(id);
 }
 
 // Recent output lines per plugin, kept in memory for Settings → Extensions.

@@ -1,6 +1,18 @@
 # Changelog
 
-Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting again at 0. Newest first.
+Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting at 1. Newest first.
+
+## V5.4.1
+
+- **Zherodius devices work in Nexternel.** Devices → Add device → Search this network finds them. Press Add, type the pairing code shown on the device's own page, and choose an area. Its switches and readings are then ready for your panels.
+- **Changes made on a Zherodius device show by themselves**, and Nexternel talks to it directly and securely, with no message service in between. A switch answers in a fraction of a second.
+- **The device page of a Zherodius device** shows its software version, serial number, address, Wi-Fi signal and last restart, with a link to its own page.
+- **A new device can replace an earlier one** with the same name. Its panels, names, icons and limits keep working.
+- **The Add device window** stays open if you click beside it, starts fresh each time, and only lists devices Nexternel can control. After pairing, it shows what came in.
+- **Switches and controls from extensions** (such as Nest heating) now work like your boards. A press only counts once the device confirms it, and every change goes into the Activity log.
+- **When an extension stops**, its devices show Offline at once and their values show as not current.
+- **Octopus:** when Nexternel cannot read your meter, its readings show as not current until the next good reading.
+- Fixed: a board that had been unplugged could show Online after a press.
 
 ## V5.3.37
 

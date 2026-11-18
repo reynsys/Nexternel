@@ -6,7 +6,7 @@ import { deviceConnectivityState } from "../../../lib/device-utils";
 import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
 import { deviceMatchesSearch, isPhysicalDevice, OCTOPUS_SERVICE_ID, OCTOPUS_STATUS, type DeviceSelection, type OctopusState, type StatusFilter } from "./device-nav-utils";
 import { deviceStatus, deviceSummary, type DeviceStatus } from "./device-summary";
-import { DeviceRow, type DeviceKind } from "./DeviceBits";
+import { DeviceRow, deviceKind, type DeviceKind } from "./DeviceBits";
 import { devicesPanelChromeSx } from "./devices-panel-styles";
 
 type Props = {
@@ -69,7 +69,7 @@ export function DeviceNavigator({
       const status = deviceStatus(d, boards?.find((b) => b.deviceId === d.id), values);
       add(d.roomId ?? "", {
         key: `d-${d.id}`,
-        kind: d.firmwareType === "shelly" ? "switch" : "board",
+        kind: deviceKind(d),
         name: d.name,
         summary: deviceSummary(d, values),
         status,

@@ -19,7 +19,7 @@ import { OctopusSettingsCard } from "../OctopusSettingsCard";
 import type { DeviceSelection } from "./device-nav-utils";
 import type { ReadingToEdit } from "./ReadingSettingsDialog";
 import { deviceStatus } from "./device-summary";
-import { InfoCard, KIND_WORD, KindTile, StatusWord, shortWhen, useDeviceConnection, type DeviceKind } from "./DeviceBits";
+import { InfoCard, KIND_WORD, KindTile, StatusWord, deviceKind, shortWhen, useDeviceConnection, type DeviceKind } from "./DeviceBits";
 import { DeviceOverviewTab } from "./DeviceOverviewTab";
 import { DeviceReadingsTab } from "./DeviceReadingsTab";
 import { DeviceTroubleshootingTab } from "./DeviceTroubleshootingTab";
@@ -140,7 +140,7 @@ export function DeviceDetailPane({ selection, device, isAdmin, busy, hostname, s
     );
   }
 
-  const kind: DeviceKind = device.firmwareType === "shelly" ? "switch" : "board";
+  const kind: DeviceKind = deviceKind(device);
   const isBoard = kind === "board";
   const board = boards?.find((b) => b.deviceId === device.id) ?? null;
   const status = deviceStatus(device, board, values);

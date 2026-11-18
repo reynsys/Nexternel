@@ -25,7 +25,8 @@ type Item = {
   kindWord: string;
   unit: string | null;
   value: string;
-  topic: string;
+  /** Its MQTT address (devices reached over MQTT only). */
+  topic: string | null;
   entityId: string | null;
   systemId: string | null;
 };
@@ -113,10 +114,9 @@ export function DeviceReadingsTab({ device, isAdmin, values, systems, onEditRead
                     {i.renamed ? ` · the device calls it "${i.originalName}"` : ""}
                     {i.systemId ? ` · used for ${systems.find((s) => s.id === i.systemId)?.label ?? "a function"}` : ""}
                   </Typography>
-                  {technical ? (
+                  {technical && (i.topic || i.entityId) ? (
                     <Typography variant="caption" color="text.secondary" component="div" sx={{ fontFamily: CODE_TEXT.fontFamily, wordBreak: "break-all" }}>
-                      {i.topic}
-                      {i.entityId ? ` · ${i.entityId}` : ""}
+                      {[i.topic, i.entityId].filter(Boolean).join(" · ")}
                     </Typography>
                   ) : null}
                 </Box>

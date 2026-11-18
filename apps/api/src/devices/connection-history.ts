@@ -67,8 +67,8 @@ function outage(from: Date, to: Date | null, now = new Date()): Outage {
 /** A device's connection summary from the recorded history (last 24 hours, plus the change before). */
 export async function deviceConnection(deviceId: string): Promise<ConnectionSummary | null> {
   const pool = getPool();
-  const dev = await pool.query<{ mqtt_availability: string; mqtt_topic_prefix: string | null }>(
-    `SELECT mqtt_availability, mqtt_topic_prefix FROM devices WHERE id = $1`,
+  const dev = await pool.query<{ availability: string; mqtt_topic_prefix: string | null; connection: string }>(
+    `SELECT availability, mqtt_topic_prefix, connection FROM devices WHERE id = $1`,
     [deviceId]
   );
   if (!dev.rowCount) return null;
@@ -80,9 +80,23 @@ export async function deviceConnection(deviceId: string): Promise<ConnectionSumm
      ) e ORDER BY at`,
     [deviceId]
   );
+  const summary = summarizeConnection(rows.rows, dev.rows[0]!.availability);
+  if (dev.rows[0]!.connection === "zherodius") {
+    // Its Wi-Fi signal and start time come over its direct line.
+    const { zherodius } = await import("../zherodius/service.js");
+    const z = zherodius.health(deviceId);
+    return {
+      ...summary,
+      wifiDbm: z?.wifiDbm ?? null,
+      wifiAt: z?.wifiAt ?? null,
+      wifiQuality: z?.wifiDbm != null ? signalWord(z.wifiDbm) : null,
+      restartedAt: z?.restartedAt ?? null,
+      health: null,
+    };
+  }
   const h = boardHealth(dev.rows[0]!.mqtt_topic_prefix);
   return {
-    ...summarizeConnection(rows.rows, dev.rows[0]!.mqtt_availability),
+    ...summarizeConnection(rows.rows, dev.rows[0]!.availability),
     wifiDbm: h.wifiDbm,
     wifiAt: h.wifiAt,
     wifiQuality: h.wifiDbm !== null ? signalWord(h.wifiDbm) : null,

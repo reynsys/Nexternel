@@ -679,7 +679,7 @@ export type DevicePipelineDiagnostic = {
     id: string | null;
     name: string;
     kind: string;
-    expectedStateTopic: string;
+    expectedStateTopic: string | null;
     expectedCommandTopic: string | null;
     bindingStateTopic: string | null;
     bindingCommandTopic: string | null;
@@ -881,6 +881,24 @@ export const api = {
     }),
 
   /** Devices → Add device → Search my home (only listens; changes nothing). */
+  /** Pair a Zherodius device with the code shown on its own page; it becomes a device in Nexternel. */
+  zherodiusPair: (body: { address: string; code: string; roomId: string | null }) =>
+    apiFetch<{ ok: true; deviceId: string; name: string; online: boolean; switches: number; readings: number }>("/api/v1/zherodius/pair", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  /** Devices this one may replace (same name), with which items would keep their panels. */
+  deviceReplaceCandidates: (deviceId: string) =>
+    apiFetch<{ candidates: DeviceReplaceCandidate[] }>(`/api/v1/devices/${encodeURIComponent(deviceId)}/replaces`),
+
+  /** This device replaces an earlier one: its items, panels and names move here; the earlier one is removed. */
+  deviceReplace: (deviceId: string, oldDeviceId: string) =>
+    apiFetch<{ ok: true; moved: number; removed: number }>(`/api/v1/devices/${encodeURIComponent(deviceId)}/replaces`, {
+      method: "POST",
+      body: JSON.stringify({ oldDeviceId }),
+    }),
+
   homeNetworkSearch: () =>
     apiFetch<{ devices: FoundDevice[] }>("/api/v1/home-network/search", { method: "POST", body: "{}" }),
 
@@ -2516,13 +2534,28 @@ export type CameraBrandPreset = {
   hint: string;
 };
 
+/** A device a new one may replace (Devices → Add device). */
+export type DeviceReplaceCandidate = {
+  deviceId: string;
+  name: string;
+  firmwareType: string;
+  connection: DeviceRecord["connection"];
+  online: boolean;
+  moved: { name: string; kind: string }[];
+  missing: { name: string; kind: string }[];
+};
+
 export type DeviceRecord = {
   id: string;
   roomId: string | null;
   roomName: string | null;
   name: string;
   slug: string;
-  mqttTopicPrefix: string;
+  mqttTopicPrefix: string | null;
+  /** How Nexternel reaches the device. */
+  connection: "mqtt" | "extension" | "zherodius" | "octopus";
+  /** A paired Zherodius device: its serial number, software version and address. */
+  zherodius: { serial: string; version: string | null; address: string; hubName: string | null } | null;
   esphomeName: string | null;
   firmwareType?: string;
   ipAddress: string | null;
@@ -2541,7 +2574,7 @@ export type DeviceRecord = {
     sensorType: string;
     unit: string | null;
     esphomeEntityId: string | null;
-    mqttStateTopic: string;
+    mqttStateTopic: string | null;
     isEnabled: boolean;
     capabilityId?: string | null;
     systemId?: string | null;
@@ -2554,8 +2587,8 @@ export type DeviceRecord = {
     name: string;
     slug: string;
     esphomeEntityId: string | null;
-    mqttCommandTopic: string;
-    mqttStateTopic: string;
+    mqttCommandTopic: string | null;
+    mqttStateTopic: string | null;
     lastState: string | null;
     isEnabled: boolean;
     capabilityId?: string | null;

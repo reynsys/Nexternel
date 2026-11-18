@@ -19,6 +19,7 @@
     "@influxdata/influxdb-client": "^1.35.0",
     "@nexternel/domain": "file:../../packages/domain",
     "@nexternel/plugin-sdk": "file:../../packages/plugin-sdk",
+    "@noble/curves": "2.4.0",
     "bcryptjs": "^2.4.3",
     "fastify": "^5.2.1",
     "jose": "^5.9.6",
@@ -34,6 +35,7 @@
     "@types/qrcode": "1.5.5",
     "@types/ws": "^8.18.0",
     "tsx": "^4.19.3",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "ws": "8.22.0"
   }
 }

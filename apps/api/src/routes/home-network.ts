@@ -16,13 +16,13 @@ export async function homeNetworkRoutes(app: FastifyInstance) {
         return reply.code(409).send({
           error: {
             code: "search_unavailable",
-            message: "Nexternel's home network search isn't running. Try again in a minute. If it keeps happening, press Restart Nexternel in Settings → System.",
+            message: "Nexternel's network search isn't running. Try again in a minute. If it keeps happening, press Restart Nexternel in Settings → System.",
           },
         });
       }
       request.log.error({ err }, "home network search failed");
       return reply.code(500).send({
-        error: { code: "search_failed", message: "The search of your home network didn't finish. Try again." },
+        error: { code: "search_failed", message: "The search of this network didn't finish. Try again." },
       });
     }
   });

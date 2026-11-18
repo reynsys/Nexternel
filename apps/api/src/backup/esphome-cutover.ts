@@ -82,7 +82,7 @@ export function rewriteEsphomeForCurrentServer(opts: EsphomeCutoverOpts): number
     } else {
       const stem = path.basename(rel, path.extname(rel)).toLowerCase();
       const device = byStem.get(stem);
-      if (device) {
+      if (device?.mqttTopicPrefix) {
         text = rewriteDeviceMqttYaml(text, {
           brokerIp: newBrokerIp,
           mqttUsername: mqttUser,

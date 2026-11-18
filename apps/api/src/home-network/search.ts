@@ -27,9 +27,11 @@ export async function searchHomeNetwork(waitMs = 4000): Promise<FoundDevice[]> {
       mqtt_topic_prefix: string | null;
       ip_address: string | null;
       mac_address: string | null;
+      zherodius_serial: string | null;
     }>(
-      `SELECT id, name, firmware_type, esphome_name, mqtt_topic_prefix, host(ip_address) AS ip_address, mac_address
-       FROM devices`
+      `SELECT d.id, d.name, d.firmware_type, d.esphome_name, d.mqtt_topic_prefix, host(d.ip_address) AS ip_address, d.mac_address,
+              z.serial AS zherodius_serial
+       FROM devices d LEFT JOIN zherodius_pairings z ON z.device_id = d.id`
     ),
     pool.query<{ id: string; name: string; rtsp_url: string }>(`SELECT id, name, rtsp_url FROM cameras`),
   ]);
@@ -42,6 +44,7 @@ export async function searchHomeNetwork(waitMs = 4000): Promise<FoundDevice[]> {
       mqttTopicPrefix: d.mqtt_topic_prefix,
       ipAddress: d.ip_address,
       macAddress: d.mac_address,
+      zherodiusSerial: d.zherodius_serial,
     })),
     cameras: cameras.rows.map((c) => ({ id: c.id, name: c.name, host: parseRtspUrl(c.rtsp_url)?.host ?? null })),
   });

@@ -1,3 +1,4 @@
+import { canCommand, type Connection } from "../devices/device-path.js";
 import {
   PanelKindSchema,
   PanelScopeSchema,
@@ -64,7 +65,8 @@ type CapabilityRow = {
   unit: string | null;
   source_type: string;
   source_entity_id: string | null;
-  has_command: boolean;
+  connection: Connection;
+  command_topic: string | null;
   features: Record<string, unknown> | null;
   system_id: string | null;
   area_id: string | null;
@@ -132,7 +134,7 @@ async function loadPanelResolutionSnapshot(): Promise<PanelResolutionSnapshot> {
             c.system_id, c.area_id, c.group_id,
             r.name AS area_name,
             rel.esphome_entity_id AS source_entity_id,
-            (b.command_topic IS NOT NULL AND b.command_topic <> '') AS has_command,
+            d.connection, b.command_topic,
             dc.features
      FROM capabilities c
      JOIN devices d ON d.id = c.device_id
@@ -180,7 +182,7 @@ function resolvePanelFromSnapshot(
       unit: row.unit,
       sourceType: row.source_type,
       sourceEntityId: row.source_entity_id,
-      hasCommand: row.has_command,
+      hasCommand: canCommand(row),
       features: row.features,
       systemId: row.system_id,
       areaId: row.area_id,

@@ -48,12 +48,15 @@ async function runInfluxBackup(destDir: string): Promise<{ rel: string; data: Bu
   return out;
 }
 
-function operationalSnapshot(): OperationalBackup {
+async function operationalSnapshot(): Promise<OperationalBackup> {
+  const { exportZherodius } = await import("../zherodius/store.js");
+  const zherodius = await exportZherodius();
   return {
     mqttUsername: config.mqttUsername(),
     mqttPassword: config.mqttPassword(),
     mqttTopicPrefix: process.env.MQTT_TOPIC_PREFIX?.trim() || "nexternel",
     serverIp: config.serverIp() || "",
+    ...(zherodius ? { zherodius } : {}),
   };
 }
 
@@ -89,7 +92,7 @@ export async function createBackupFile(opts: {
   }
 
   progress("packaging", 80, "Finalising backup");
-  const operational = operationalSnapshot();
+  const operational = await operationalSnapshot();
   const passwd = readMosquittoPasswd();
   const { zipBuffer, manifest } = await packInnerArchive({
     domain,

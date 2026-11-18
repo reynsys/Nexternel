@@ -179,6 +179,8 @@ const nx = Object.freeze({
   /**
    * Called when someone presses one of this plugin's switches ({ device, item, action }), or changes
    * one of its controls ({ device, item, action: "set", values }): report the new state with sendReading.
+   * Only that report counts: without it within 6 s (15 s for features.internet) the press gets no answer.
+   * See packages/plugin-sdk/README.md.
    */
   onCommand(handler) {
     commandHandlers.push(handler);

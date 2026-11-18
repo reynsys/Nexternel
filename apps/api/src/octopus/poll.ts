@@ -1,5 +1,5 @@
-import { getLiveState, setLiveState } from "../telemetry/state-cache.js";
-import { writeSensorReading } from "../history/influx.js";
+import { getLiveState } from "../telemetry/state-cache.js";
+import { devicePath } from "../devices/device-path-store.js";
 import {
   fetchLiveDemandW,
   fetchTodayConsumptionKwh,
@@ -129,37 +129,33 @@ function readCachedNumber(capabilityId: string | null): number | null {
   return null;
 }
 
-/** Mirror API-polled Octopus readings into Influx so Charts panels can query history. */
-async function persistOctopusInfluxReading(
-  entityId: string,
-  value: number
-): Promise<void> {
-  try {
-    await writeSensorReading({
-      deviceSlug: OCTOPUS_DEVICE_SLUG,
-      entityId,
-      value,
-    });
-  } catch (err) {
-    console.warn("octopus influx write failed", entityId, err);
-  }
+/** A reading the meter gave: into the device path (live value, history for Charts panels). */
+function reportOctopusReading(capabilityId: string, entityId: string, kind: string, value: number): void {
+  devicePath.reportItem(capabilityId, value, {
+    kind,
+    retained: false,
+    history: { deviceSlug: OCTOPUS_DEVICE_SLUG, entityId },
+  });
 }
 
-/** Keep API-polled Octopus values fresh between partial polls (daily is every Nth poll). */
+/**
+ * Keep the meter's values current between partial polls (usage today is read every 5th poll): the
+ * meter answered, so what it said last still stands. Not written to history again.
+ */
 function refreshCachedOctopusStates(caps: {
   powerCapabilityId: string | null;
   energyTodayCapabilityId: string | null;
   gasTodayCapabilityId: string | null;
 }): void {
-  for (const id of [
-    caps.powerCapabilityId,
-    caps.energyTodayCapabilityId,
-    caps.gasTodayCapabilityId,
-  ]) {
+  for (const [id, kind] of [
+    [caps.powerCapabilityId, "power"],
+    [caps.energyTodayCapabilityId, "energy"],
+    [caps.gasTodayCapabilityId, "energy"],
+  ] as const) {
     if (!id) continue;
     const cached = getLiveState(id);
-    if (!cached || cached.value === null || cached.value === undefined) continue;
-    setLiveState(id, cached.value, { quality: "good" });
+    if (!cached || cached.value === null || cached.value === undefined || cached.quality === "good") continue;
+    devicePath.reportItem(id, cached.value, { kind, retained: false, history: null });
   }
 }
 
@@ -212,8 +208,7 @@ async function runOctopusPoll(force: boolean, options?: PollOptions): Promise<Oc
       const live = await fetchLiveDemandW(settings.api_key, elecId);
       liveDemandW = live.demandW;
       if (live.demandW !== null) {
-        setLiveState(caps.powerCapabilityId, live.demandW, { quality: "good" });
-        await persistOctopusInfluxReading("live_power", live.demandW);
+        reportOctopusReading(caps.powerCapabilityId, "live_power", "power", live.demandW);
       }
     }
 
@@ -225,8 +220,7 @@ async function runOctopusPoll(force: boolean, options?: PollOptions): Promise<Oc
       const daily = await fetchTodayConsumptionKwh(settings.api_key, elecId, range);
       electricityTodayKwh = daily.kwh;
       if (daily.kwh !== null) {
-        setLiveState(caps.energyTodayCapabilityId, daily.kwh, { quality: "good" });
-        await persistOctopusInfluxReading("energy_today", daily.kwh);
+        reportOctopusReading(caps.energyTodayCapabilityId, "energy_today", "energy", daily.kwh);
       }
     }
 
@@ -239,8 +233,7 @@ async function runOctopusPoll(force: boolean, options?: PollOptions): Promise<Oc
       );
       gasTodayKwh = gasDaily.kwh;
       if (gasDaily.kwh !== null) {
-        setLiveState(caps.gasTodayCapabilityId, gasDaily.kwh, { quality: "good" });
-        await persistOctopusInfluxReading("gas_today", gasDaily.kwh);
+        reportOctopusReading(caps.gasTodayCapabilityId, "gas_today", "energy", gasDaily.kwh);
       }
     }
 

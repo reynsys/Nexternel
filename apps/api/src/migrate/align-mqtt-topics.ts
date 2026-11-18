@@ -78,15 +78,16 @@ export async function alignInstallationMqttTopics(): Promise<{
 
   const relays = await pool.query<{
     id: string;
-    mqtt_state_topic: string;
-    mqtt_command_topic: string;
+    mqtt_state_topic: string | null;
+    mqtt_command_topic: string | null;
   }>(
     `SELECT id, mqtt_state_topic, mqtt_command_topic FROM relays
      WHERE mqtt_state_topic IS NOT NULL AND mqtt_state_topic <> ''`
   );
   for (const r of relays.rows) {
-    const nextState = remapTopicForLegacyRoots(r.mqtt_state_topic, currentRoot, legacyRoots);
-    const nextCmd = remapTopicForLegacyRoots(r.mqtt_command_topic, currentRoot, legacyRoots);
+    const remap = (t: string | null) => (t === null ? null : remapTopicForLegacyRoots(t, currentRoot, legacyRoots));
+    const nextState = remap(r.mqtt_state_topic);
+    const nextCmd = remap(r.mqtt_command_topic);
     if (nextState === r.mqtt_state_topic && nextCmd === r.mqtt_command_topic) continue;
     await pool.query(
       `UPDATE relays SET mqtt_state_topic = $2, mqtt_command_topic = $3, updated_at = NOW() WHERE id = $1::uuid`,

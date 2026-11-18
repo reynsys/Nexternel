@@ -1,25 +1,28 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { api, type DeviceConnection } from "../../../api";
+import { api, type DeviceConnection, type DeviceRecord } from "../../../api";
 import { Box, ListItemButton, Typography, useTheme } from "@mui/material";
 import type { SvgIconComponent } from "@mui/icons-material";
 import MemoryRoundedIcon from "@mui/icons-material/MemoryRounded";
 import ToggleOnOutlinedIcon from "@mui/icons-material/ToggleOnOutlined";
 import VideocamOutlinedIcon from "@mui/icons-material/VideocamOutlined";
 import CloudOutlinedIcon from "@mui/icons-material/CloudOutlined";
+import DeveloperBoardOutlinedIcon from "@mui/icons-material/DeveloperBoardOutlined";
 import { ICON_SIZE } from "../../../lib/appearance/type";
 import { insetSx } from "../../../skins/surfaceStyles";
 import type { StatusTone } from "./device-summary";
 import { devicesActionGroupSx, devicesNavItemSx } from "./devices-panel-styles";
 
 /** The kinds of thing on the Devices page, each with its picture and its name in words. */
-export type DeviceKind = "board" | "switch" | "camera" | "service";
+export type DeviceKind = "zherodius" | "board" | "switch" | "camera" | "service";
 export const KIND_ICON: Record<DeviceKind, SvgIconComponent> = {
+  zherodius: DeveloperBoardOutlinedIcon,
   board: MemoryRoundedIcon,
   switch: ToggleOnOutlinedIcon,
   camera: VideocamOutlinedIcon,
   service: CloudOutlinedIcon,
 };
 export const KIND_WORD: Record<DeviceKind, string> = {
+  zherodius: "Zherodius device",
   board: "ESPHome board",
   switch: "Shelly switch",
   camera: "Camera",
@@ -34,6 +37,12 @@ const TONE_COLOUR: Record<StatusTone, string> = {
 };
 
 /** A device's picture in a small tile (the list, the device's header). */
+/** What kind of thing a device is (its picture and name on the Devices page). */
+export function deviceKind(device: Pick<DeviceRecord, "firmwareType" | "connection">): DeviceKind {
+  if (device.connection === "zherodius") return "zherodius";
+  return device.firmwareType === "shelly" ? "switch" : "board";
+}
+
 export function KindTile({ kind, size = 40 }: { kind: DeviceKind; size?: number }) {
   const Icon = KIND_ICON[kind];
   return (

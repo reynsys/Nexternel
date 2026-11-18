@@ -1,13 +1,13 @@
 import type { PoolClient } from "pg";
 import { getPool } from "../db.js";
 import { syncCapabilitiesFromLegacy } from "../capabilities/sync.js";
+import { devicePath } from "../devices/device-path-store.js";
 import {
   clearOctopusTokenCache,
   discoverElectricityDeviceId,
   discoverGasDeviceId,
 } from "./client.js";
 
-export const OCTOPUS_MQTT_PREFIX = "octopus/home-mini";
 export const OCTOPUS_DEVICE_SLUG = "octopus-home-mini";
 
 export type OctopusSettingsRow = {
@@ -186,24 +186,25 @@ export async function ensureOctopusDeviceAndSensors(): Promise<void> {
     if (!deviceId) {
       const inserted = await client.query<{ id: string }>(
         `INSERT INTO devices (
-           name, slug, mqtt_topic_prefix, firmware_type, is_enabled, is_online
+           name, slug, firmware_type, is_enabled, is_online, connection
          ) VALUES (
-           'Octopus Home Mini', $1, $2, 'octopus', TRUE, FALSE
+           'Octopus Home Mini', $1, 'octopus', TRUE, FALSE, 'octopus'
          )
          RETURNING id`,
-        [OCTOPUS_DEVICE_SLUG, OCTOPUS_MQTT_PREFIX]
+        [OCTOPUS_DEVICE_SLUG]
       );
       deviceId = inserted.rows[0]!.id;
     } else {
       await client.query(
         `UPDATE devices SET
            name = 'Octopus Home Mini',
-           mqtt_topic_prefix = $2,
+           mqtt_topic_prefix = NULL,
            firmware_type = 'octopus',
+           connection = 'octopus',
            is_enabled = TRUE,
            updated_at = NOW()
          WHERE id = $1`,
-        [deviceId, OCTOPUS_MQTT_PREFIX]
+        [deviceId]
       );
     }
 
@@ -249,16 +250,15 @@ async function upsertOctopusSensor(
     entityId: string;
   }
 ): Promise<void> {
-  const stateTopic = `${OCTOPUS_MQTT_PREFIX}/sensor/${sensor.entityId}/state`;
   await client.query(
     `INSERT INTO sensors (
-       device_id, name, slug, sensor_type, unit, mqtt_state_topic, esphome_entity_id
-     ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+       device_id, name, slug, sensor_type, unit, esphome_entity_id
+     ) VALUES ($1, $2, $3, $4, $5, $6)
      ON CONFLICT (device_id, slug) DO UPDATE SET
        name = EXCLUDED.name,
        sensor_type = EXCLUDED.sensor_type,
        unit = EXCLUDED.unit,
-       mqtt_state_topic = EXCLUDED.mqtt_state_topic,
+       mqtt_state_topic = NULL,
        esphome_entity_id = EXCLUDED.esphome_entity_id,
        updated_at = NOW()`,
     [
@@ -267,7 +267,6 @@ async function upsertOctopusSensor(
       sensor.slug,
       sensor.sensorType,
       sensor.unit,
-      stateTopic,
       sensor.entityId,
     ]
   );
@@ -309,13 +308,6 @@ export async function recordOctopusPollResult(opts: {
          updated_at = NOW()
        WHERE id = 1`
     );
-    await getPool().query(
-      `UPDATE devices
-       SET mqtt_availability = 'online',
-           last_seen_at = NOW()
-       WHERE slug = $1`,
-      [OCTOPUS_DEVICE_SLUG]
-    );
   } else {
     await getPool().query(
       `UPDATE octopus_settings SET
@@ -324,11 +316,10 @@ export async function recordOctopusPollResult(opts: {
        WHERE id = 1`,
       [opts.error?.slice(0, 500) ?? "Poll failed"]
     );
-    await getPool().query(
-      `UPDATE devices
-       SET mqtt_availability = 'offline'
-       WHERE slug = $1`,
-      [OCTOPUS_DEVICE_SLUG]
-    );
   }
+  // The meter answered (online) or not (offline, its readings no longer current).
+  const device = await getPool().query<{ id: string }>(`SELECT id FROM devices WHERE slug = $1`, [OCTOPUS_DEVICE_SLUG]);
+  const ids = device.rows.map((r) => r.id);
+  if (opts.ok) devicePath.deviceOnline(ids);
+  else devicePath.deviceOffline(ids);
 }

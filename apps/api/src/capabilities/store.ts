@@ -1,4 +1,5 @@
 import { getPool } from "../db.js";
+import type { Connection } from "../devices/device-path.js";
 import { installationMqttRoot } from "../migrate/align-mqtt-topics.js";
 import {
   esphomeDevicePrefixAliases,
@@ -27,6 +28,8 @@ export type CapabilityRow = {
   state_topic: string | null;
   command_topic: string | null;
   firmware_type: string;
+  /** How Nexternel reaches the item's device. */
+  connection: Connection;
   system_id: string | null;
   area_id: string | null;
   group_id: string | null;
@@ -42,7 +45,7 @@ export async function listCapabilities(): Promise<CapabilityRow[]> {
             c.unit, c.source_type, c.source_id, c.is_enabled,
             c.system_id, c.area_id, c.group_id, c.service_id,
             b.state_topic, b.command_topic,
-            COALESCE(d.firmware_type, 'esphome') AS firmware_type,
+            COALESCE(d.firmware_type, 'esphome') AS firmware_type, d.connection,
             dc.features
      FROM capabilities c
      JOIN devices d ON d.id = c.device_id
@@ -63,7 +66,7 @@ export async function getCapabilityById(id: string): Promise<CapabilityRow | nul
             c.unit, c.source_type, c.source_id, c.is_enabled,
             c.system_id, c.area_id, c.group_id, c.service_id,
             b.state_topic, b.command_topic,
-            COALESCE(d.firmware_type, 'esphome') AS firmware_type
+            COALESCE(d.firmware_type, 'esphome') AS firmware_type, d.connection
      FROM capabilities c
      JOIN devices d ON d.id = c.device_id
      LEFT JOIN rooms r ON r.id = d.room_id
@@ -89,18 +92,19 @@ export async function listStateTopicBindings(): Promise<
      JOIN devices d ON d.id = c.device_id
      WHERE b.state_topic IS NOT NULL AND b.state_topic <> ''
        AND c.is_enabled = TRUE
-       AND COALESCE(d.firmware_type, 'esphome') NOT IN ('octopus', 'plugin')`
+       AND d.connection = 'mqtt'`
   );
   return result.rows;
 }
 
-export async function listDevicePrefixes(): Promise<string[]> {
-  const result = await getPool().query<{ mqtt_topic_prefix: string }>(
-    `SELECT DISTINCT mqtt_topic_prefix FROM devices
+/** Devices reached over MQTT, with their topic prefix. */
+export async function listMqttDevices(): Promise<{ id: string; prefix: string }[]> {
+  const result = await getPool().query<{ id: string; prefix: string }>(
+    `SELECT id, mqtt_topic_prefix AS prefix FROM devices
      WHERE mqtt_topic_prefix IS NOT NULL AND mqtt_topic_prefix <> ''
-       AND COALESCE(firmware_type, 'esphome') NOT IN ('octopus', 'plugin')`
+       AND connection = 'mqtt'`
   );
-  return result.rows.map((r) => r.mqtt_topic_prefix);
+  return result.rows;
 }
 
 /** Shelly relays: prefix + switch:N → capability id (for events/rpc ingest). */

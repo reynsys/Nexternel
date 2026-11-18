@@ -21,6 +21,7 @@ import MemoryOutlinedIcon from "@mui/icons-material/MemoryOutlined";
 import HubOutlinedIcon from "@mui/icons-material/HubOutlined";
 import DeviceHubOutlinedIcon from "@mui/icons-material/DeviceHubOutlined";
 import ExtensionOutlinedIcon from "@mui/icons-material/ExtensionOutlined";
+import DeveloperBoardOutlinedIcon from "@mui/icons-material/DeveloperBoardOutlined";
 import { useMediaQuery, useTheme, ButtonBase, Chip } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import type { FoundDevice } from "@nexternel/domain";
@@ -29,6 +30,7 @@ import { ButtonRow } from "../../../components/ButtonRow";
 import { insetSx } from "../../../skins/surfaceStyles";
 import { DevicesWifiExplainer, DevicesWifiForm } from "../../../components/DevicesWifi";
 import { ShellyGuide, type ShellyGuideStep } from "./ShellyGuide";
+import { ZherodiusPaired, ZherodiusPairing, type Paired } from "./ZherodiusPairing";
 
 /** What happens to one device while it is being brought in. */
 export type BringInState = { status: "working" | "done" | "failed" | "password" | "wifi"; message?: string };
@@ -38,7 +40,7 @@ export type AddDeviceDialogProps = {
   onClose: () => void;
   /** Areas a new device can be put in. */
   areas: { id: string; name: string }[];
-  /** A camera: opens the camera window (with the address when Search my home found one). */
+  /** A camera: opens the camera window (with the address when Search this network found one). */
   onAddCamera: (host?: string) => void;
   /** A device was added from a guide: show it. */
   onDeviceAdded: (deviceId: string) => void;
@@ -52,7 +54,7 @@ export type AddDeviceDialogProps = {
   ) => Promise<void>;
 };
 
-type Stage = "start" | "searching" | "results" | "shelly" | "soon" | "more";
+type Stage = "start" | "searching" | "results" | "shelly" | "zherodius" | "paired" | "soon" | "more";
 
 /** Kinds that have a tile but can't be added yet. */
 type SoonKind = "board" | "zigbee" | "matter";
@@ -68,6 +70,8 @@ const SOON: Record<SoonKind, { title: string; sentence: string }> = {
 /** The plain sentence that says what bringing this device in does. */
 export function bringInSentence(d: FoundDevice): string {
   switch (d.kind) {
+    case "zherodius":
+      return "Pair it with the code shown on its own page.";
     case "board":
       return "Nexternel puts its own board software on it once (about 2 minutes). After that, other systems no longer see it.";
     case "shelly":
@@ -199,7 +203,7 @@ function Group(props: { title: string; note?: string; children: React.ReactNode 
 }
 
 /**
- * Devices → Add device. "Search my home" looks around the home network and lists what it finds,
+ * Devices → Add device. "Search this network" looks for devices on Nexternel's network and lists what it finds,
  * grouped by what bringing it in takes; below it, the ways to add one yourself.
  */
 export function AddDeviceDialog(props: AddDeviceDialogProps) {
@@ -212,17 +216,24 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
   const [showExisting, setShowExisting] = useState(false);
   const [shellyStep, setShellyStep] = useState<ShellyGuideStep>(1);
   const [soon, setSoon] = useState<SoonKind>("board");
+  const [pairing, setPairing] = useState<FoundDevice | null>(null);
+  const [paired, setPaired] = useState<Paired | null>(null);
+  /** Found devices added in this window (by key → the new device's id). */
+  const [added, setAdded] = useState<Record<string, string>>({});
   const navigate = useNavigate();
   const theme = useTheme();
   const phone = useMediaQuery(theme.breakpoints.down("sm"));
 
   const groups = useMemo(() => {
     const ready = found.filter(canBringIn);
+    const zherodius = found.filter((d) => d.kind === "zherodius" && !d.alreadyIn);
     const cameras = found.filter((d) => d.kind === "camera" && !d.alreadyIn);
     const existing = found.filter((d) => d.alreadyIn);
-    const others = found.filter((d) => !d.alreadyIn && !canBringIn(d) && d.kind !== "camera");
-    return { ready, cameras, existing, others };
+    // Devices Nexternel cannot do anything with (a TV, a speaker) are not listed.
+    return { ready, zherodius, cameras, existing };
   }, [found]);
+
+  const shownCount = groups.ready.length + groups.zherodius.length + groups.cameras.length + groups.existing.length;
 
   const chosen = groups.ready.filter(
     (d) => ticked.has(d.key) && (!states[d.key] || states[d.key].status === "failed")
@@ -236,12 +247,15 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
     setStates({});
     setShowExisting(false);
     setShellyStep(1);
+    setPairing(null);
+    setPaired(null);
+    setAdded({});
   }
 
-  /** Closing keeps the window where it was: it opens again at the same step. */
+  /** Closing ends what was going on: the window opens again at the start. */
   function close() {
     if (bringing) return;
-    props.onClose();
+    finish();
   }
 
   /** Close and start fresh next time (the job is done, or another window takes over). */
@@ -260,7 +274,7 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
       setTicked(new Set(res.devices.filter(canBringIn).map((d) => d.key)));
       setStage("results");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "The search of your home network didn't finish. Try again.");
+      setError(err instanceof Error ? err.message : "The search of this network didn't finish. Try again.");
       setStage("start");
     }
   }
@@ -316,6 +330,14 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
       <Typography variant="subtitle1">Or pick what you have in your hand</Typography>
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))" }, gap: 1.25 }}>
         {tile({
+          key: "zherodius",
+          title: "Zherodius",
+          text: "A Zherodius device that is already on your Wi-Fi",
+          icon: <DeveloperBoardOutlinedIcon />,
+          ready: true,
+          go: () => void search(),
+        })}
+        {tile({
           key: "shelly",
           title: "Shelly",
           text: "A new Shelly switch, plug or dimmer, still in its box",
@@ -329,7 +351,7 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
         {tile({
           key: "camera",
           title: "Camera or doorbell",
-          text: "One that gives a live picture on your home network",
+          text: "One that gives a live picture over the network",
           icon: <VideocamOutlinedIcon />,
           ready: true,
           go: () => {
@@ -367,8 +389,17 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
   );
 
   return (
-    <Dialog open={props.open} onClose={close} fullWidth fullScreen={phone} maxWidth="sm">
-      <DialogTitle>{stage === "shelly" ? "Add a Shelly" : "Add a device"}</DialogTitle>
+    <Dialog
+      open={props.open}
+      // Only its own buttons close it: a click beside it must not lose what was going on.
+      onClose={(_, reason) => {
+        if (reason !== "backdropClick") close();
+      }}
+      fullWidth
+      fullScreen={phone}
+      maxWidth="sm"
+    >
+      <DialogTitle>{stage === "shelly" ? "Add a Shelly" : stage === "zherodius" ? "Add a Zherodius device" : "Add a device"}</DialogTitle>
       <DialogContent>
         <Stack gap={2.5} sx={{ mt: 0.5 }}>
           {error ? <Alert severity="error">{error}</Alert> : null}
@@ -383,15 +414,14 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
                 sx={(t) => ({ p: 2, borderRadius: "var(--nx-control-radius, 12px)", border: `1px solid ${t.palette.primary.main}` })}
               >
                 <Box sx={{ minWidth: 0 }}>
-                  <Typography fontWeight="fontWeightMedium">Already working at home?</Typography>
+                  <Typography fontWeight="fontWeightMedium">Devices already on this network</Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Devices already on your Wi-Fi, set up with another system or their own phone program. Nexternel finds them and
-                    brings them in. Nothing changes until you choose.
+                    Nexternel looks for devices on the network it's connected to and lists them. Nothing changes until you choose.
                   </Typography>
                 </Box>
                 <ButtonRow sx={{ flexShrink: 0 }}>
                   <Button variant="contained" startIcon={<SearchIcon />} onClick={() => void search()}>
-                    Search my home
+                    Search this network
                   </Button>
                 </ButtonRow>
               </Stack>
@@ -412,17 +442,48 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
             />
           ) : null}
 
+          {stage === "zherodius" && pairing ? (
+            <ZherodiusPairing
+              device={pairing}
+              areas={props.areas}
+              onBack={() => {
+                setPairing(null);
+                setStage("results");
+              }}
+              onPaired={(p) => {
+                setPaired(p);
+                setAdded((a) => ({ ...a, [pairing.key]: p.deviceId }));
+                setStage("paired");
+              }}
+            />
+          ) : null}
+
+          {stage === "paired" && paired ? (
+            <ZherodiusPaired
+              paired={paired}
+              onOpen={() => {
+                finish();
+                props.onDeviceAdded(paired.deviceId);
+              }}
+              onAddAnother={() => {
+                setPaired(null);
+                setPairing(null);
+                setStage("results");
+              }}
+            />
+          ) : null}
+
           {stage === "soon" ? (
             <Stack gap={2}>
               <Typography variant="h6">{SOON[soon].title}: coming soon</Typography>
               <Typography>{SOON[soon].sentence}</Typography>
               <Typography color="text.secondary">
-                If it already works on your Wi-Fi, Search my home may be able to bring it in.
+                If it is already on this network, Search this network may be able to bring it in.
               </Typography>
               <ButtonRow justifyContent="space-between">
                 <Button onClick={reset}>Back</Button>
                 <Button variant="contained" startIcon={<SearchIcon />} onClick={() => void search()}>
-                  Search my home
+                  Search this network
                 </Button>
               </ButtonRow>
             </Stack>
@@ -453,16 +514,16 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
           {stage === "searching" ? (
             <Stack direction="row" gap={1.5} alignItems="center" sx={{ py: 3 }}>
               <CircularProgress size={22} />
-              <Typography>Looking around your home network… this takes about 5 seconds.</Typography>
+              <Typography>Looking for devices on this network… this takes about 5 seconds.</Typography>
             </Stack>
           ) : null}
 
           {stage === "results" ? (
             <>
               <Typography variant="body2" color="text.secondary">
-                {found.length === 0
-                  ? "Nothing answered on your home network. Devices that are switched off, or on a different Wi-Fi network, can't be found."
-                  : `Found ${found.length === 1 ? "1 device" : `${found.length} devices`}.`}
+                {shownCount === 0
+                  ? "Nexternel found nothing it can add on this network. Devices that are switched off, or on a different network, can't be found."
+                  : `Found ${shownCount === 1 ? "1 device" : `${shownCount} devices`}.`}
               </Typography>
 
               {groups.ready.length ? (
@@ -482,6 +543,43 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
                           else next.delete(d.key);
                           return next;
                         })
+                      }
+                    />
+                  ))}
+                </Group>
+              ) : null}
+
+              {groups.zherodius.length ? (
+                <Group title="Zherodius devices">
+                  {groups.zherodius.map((d) => (
+                    <Row
+                      key={d.key}
+                      device={d}
+                      state={added[d.key] ? { status: "done", message: "✓ Added" } : undefined}
+                      action={
+                        added[d.key] ? (
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => {
+                              finish();
+                              props.onDeviceAdded(added[d.key]!);
+                            }}
+                          >
+                            Open
+                          </Button>
+                        ) : (
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => {
+                              setPairing(d);
+                              setStage("zherodius");
+                            }}
+                          >
+                            Add
+                          </Button>
+                        )
                       }
                     />
                   ))}
@@ -510,15 +608,6 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
                   ))}
                 </Group>
               ) : null}
-
-              {groups.others.length ? (
-                <Group title="Also on your network" note="Listed so nothing is hidden. They stay as they are.">
-                  {groups.others.map((d) => (
-                    <Row key={d.key} device={d} dim />
-                  ))}
-                </Group>
-              ) : null}
-
               {groups.existing.length ? (
                 <Stack gap={1}>
                   <ButtonRow>
@@ -574,14 +663,13 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
                     : `Bring in ${chosen.length} devices`}
               </Button>
             ) : (
-              <Button variant="contained" onClick={finish}>
-                Done
-              </Button>
+              // Nothing to bring in from here: each device is added on its own row, so Close is not the main step.
+              <Button onClick={finish}>Close</Button>
             )}
           </>
         ) : stage === "start" ? (
           <Button onClick={finish}>Cancel</Button>
-        ) : (
+        ) : stage === "zherodius" || stage === "paired" ? null : (
           <Button onClick={close}>Close</Button>
         )}
       </DialogActions>

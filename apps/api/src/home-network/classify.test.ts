@@ -106,3 +106,29 @@ test("helpers", () => {
   assert.equal(shellyModelName("shellyplus1pm-a8032ab12345"), "Shelly Plus 1PM");
   assert.equal(shellyModelName("shellyunknown-1"), "Shelly switch");
 });
+
+test("a Zherodius device is named, and one already paired is known by its serial number", () => {
+  const found = classifySearch(
+    {
+      services: [
+        svc("_zherodius._tcp", "Garden Relays", "10.0.0.70", { board: "esp32-relay-x2", version: "1.10.2", serial: "ZH-50E4-6792" }),
+        svc("_http._tcp", "Garden Relays", "10.0.0.70"),
+        svc("_zherodius._tcp", "Shed Sensor", "10.0.0.71", { serial: "ZH-1111-2222" }),
+      ],
+      cameras: [],
+    },
+    {
+      devices: [
+        { id: "d1", name: "Garden", firmwareType: "zherodius", esphomeName: null, mqttTopicPrefix: null, ipAddress: "10.0.0.99", macAddress: null, zherodiusSerial: "ZH-50E4-6792" },
+      ],
+      cameras: [],
+    }
+  );
+  assert.deepEqual(
+    found.map((f) => [f.kind, f.name, f.what, f.address, f.deviceId, f.alreadyIn?.id ?? null]),
+    [
+      ["zherodius", "Garden Relays", "Zherodius device", "10.0.0.70", "ZH-50E4-6792", "d1"],
+      ["zherodius", "Shed Sensor", "Zherodius device", "10.0.0.71", "ZH-1111-2222", null],
+    ]
+  );
+});

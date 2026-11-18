@@ -5,7 +5,7 @@ export type HomeInventoryDevice = {
   slug: string;
   name: string;
   firmwareType: string;
-  mqttTopicPrefix: string;
+  mqttTopicPrefix: string | null;
   areaId: string | null;
   sensorCount: number;
   relayCount: number;

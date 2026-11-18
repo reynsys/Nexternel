@@ -1,3 +1,4 @@
+import type { Connection } from "../devices/device-path.js";
 import JSZip from "jszip";
 import { getPool } from "../db.js";
 import { config } from "../config.js";
@@ -40,13 +41,14 @@ async function loadDevices(): Promise<ExportedDevice[]> {
     name: string;
     slug: string;
     esphome_name: string | null;
-    mqtt_topic_prefix: string;
+    mqtt_topic_prefix: string | null;
     ip_address: string | null;
     mac_address: string | null;
     firmware_type: string;
+    connection: Connection;
     is_enabled: boolean;
   }>(
-    `SELECT id, room_id, name, slug, esphome_name, mqtt_topic_prefix,
+    `SELECT id, room_id, name, slug, esphome_name, mqtt_topic_prefix, connection,
             host(ip_address)::text AS ip_address, mac_address,
             COALESCE(firmware_type, 'esphome') AS firmware_type,
             COALESCE(is_enabled, TRUE) AS is_enabled
@@ -63,7 +65,7 @@ async function loadDevices(): Promise<ExportedDevice[]> {
     slug: string;
     sensor_type: string;
     unit: string | null;
-    mqtt_state_topic: string;
+    mqtt_state_topic: string | null;
     esphome_entity_id: string | null;
     gpio_pin: number | null;
     is_enabled: boolean;
@@ -78,8 +80,8 @@ async function loadDevices(): Promise<ExportedDevice[]> {
     device_id: string;
     name: string;
     slug: string;
-    mqtt_command_topic: string;
-    mqtt_state_topic: string;
+    mqtt_command_topic: string | null;
+    mqtt_state_topic: string | null;
     esphome_entity_id: string | null;
     gpio_pin: number | null;
     is_enabled: boolean;
@@ -159,6 +161,7 @@ async function loadDevices(): Promise<ExportedDevice[]> {
     ipAddress: d.ip_address,
     macAddress: d.mac_address,
     firmwareType: d.firmware_type,
+    connection: d.connection,
     isEnabled: d.is_enabled,
     sensors: sensorsByDev.get(d.id) ?? [],
     relays: relaysByDev.get(d.id) ?? [],

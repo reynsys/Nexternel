@@ -23,6 +23,7 @@ export const SERVICE_TYPES = [
   "_hue._tcp.local",
   "_ewelink._tcp.local",
   "_rtsp._tcp.local",
+  "_zherodius._tcp.local",
 ];
 
 const KEEP_MS = 30 * 60 * 1000; // forget what was last heard over half an hour ago

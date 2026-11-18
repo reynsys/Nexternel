@@ -15,7 +15,7 @@ export type CapabilityCandidate = {
 export type DriverManifest = {
   driverId: "esphome";
   deviceName: string;
-  mqttTopicPrefix: string;
+  mqttTopicPrefix: string | null;
   esphomeName: string;
   yamlFile: string;
   candidates: CapabilityCandidate[];

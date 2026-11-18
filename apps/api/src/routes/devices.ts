@@ -1,3 +1,4 @@
+import { replaceCandidates, replaceDevice, ReplaceRefusedError } from "../devices/replace.js";
 import type { FastifyPluginAsync } from "fastify";
 import { deviceConnection } from "../devices/connection-history.js";
 import { requirePermission } from "../auth/rbac.js";
@@ -110,7 +111,7 @@ export const devicesRoutes: FastifyPluginAsync = async (app) => {
     const registered = await getPool().query<{
       esphome_name: string | null;
       slug: string;
-      mqtt_topic_prefix: string;
+      mqtt_topic_prefix: string | null;
       esphome_yaml_path: string | null;
     }>(`SELECT esphome_name, slug, mqtt_topic_prefix, esphome_yaml_path FROM devices`);
 
@@ -346,6 +347,27 @@ export const devicesRoutes: FastifyPluginAsync = async (app) => {
       return reply.code(400).send({
         error: { code: "validation_error", message },
       });
+    }
+  });
+
+  /** Devices this one may replace (same name): which items keep their panels, which go. */
+  app.get<{ Params: { id: string } }>("/api/v1/devices/:id/replaces", async (request, reply) => {
+    if (!requirePermission(request, reply, "editDevices")) return;
+    return { candidates: await replaceCandidates(request.params.id) };
+  });
+
+  /** This device replaces an earlier one: the earlier one's items, panels and names move here, then it is removed. */
+  app.post<{ Params: { id: string }; Body: { oldDeviceId?: unknown } }>("/api/v1/devices/:id/replaces", async (request, reply) => {
+    if (!requirePermission(request, reply, "editDevices")) return;
+    const oldDeviceId = request.body?.oldDeviceId;
+    if (typeof oldDeviceId !== "string" || !oldDeviceId) {
+      return reply.code(400).send({ error: { code: "validation_error", message: "Say which device this one replaces." } });
+    }
+    try {
+      return { ok: true, ...(await replaceDevice(request.params.id, oldDeviceId)) };
+    } catch (err) {
+      if (err instanceof ReplaceRefusedError) return reply.code(400).send({ error: { code: "replace_refused", message: err.message } });
+      throw err;
     }
   });
 

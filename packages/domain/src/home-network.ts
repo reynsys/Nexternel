@@ -12,7 +12,7 @@
  * - camera: a camera or doorbell with its own video stream
  * - other: on the network, but Nexternel can't control it yet
  */
-export type FoundDeviceKind = "board" | "shelly" | "matterNew" | "matterShared" | "camera" | "other";
+export type FoundDeviceKind = "zherodius" | "board" | "shelly" | "matterNew" | "matterShared" | "camera" | "other";
 
 export type FoundDevice = {
   key: string;
@@ -22,7 +22,7 @@ export type FoundDevice = {
   what: string;
   address: string | null;
   mac: string | null;
-  /** ESPHome: the board's own name; Shelly: its device id (e.g. shelly1minig3-aabbccddeeff). */
+  /** ESPHome: the board's own name; Shelly: its device id (e.g. shelly1minig3-aabbccddeeff); Zherodius: its serial number. */
   deviceId: string | null;
   /** Shelly generation (1 = original, 2+ = Plus/Pro/Gen 3/Gen 4). */
   shellyGen: number | null;

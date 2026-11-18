@@ -1,3 +1,4 @@
+import { clearNonMqttAddresses, connectionFromFirmwareSql } from "../devices/ensure-schema.js";
 import path from "path";
 import JSZip from "jszip";
 import type { PoolClient } from "pg";
@@ -46,7 +47,7 @@ export type AdoptResult = {
     brokerIp: string;
     topicRoot: string;
     esphomeUrl: string;
-    devices: { name: string; slug: string; yamlHint: string | null; topicPrefix: string }[];
+    devices: { name: string; slug: string; yamlHint: string | null; topicPrefix: string | null }[];
     steps: string[];
   };
 };
@@ -167,11 +168,11 @@ export async function upsertDevice(
     await client.query(
       `INSERT INTO devices (
          id, room_id, name, slug, esphome_name, mqtt_topic_prefix,
-         ip_address, mac_address, firmware_type, is_enabled, is_online
+         ip_address, mac_address, firmware_type, is_enabled, is_online, connection
        ) VALUES (
          $1::uuid, $2::uuid, $3, $4, $5, $6,
          NULLIF($7, '')::inet, NULLIF($8, ''), COALESCE($9, 'esphome'),
-         COALESCE($10, TRUE), FALSE
+         COALESCE($10, TRUE), FALSE, COALESCE($11, ${connectionFromFirmwareSql("$9::text")})
        )
        ON CONFLICT (id) DO UPDATE SET
          room_id = EXCLUDED.room_id,
@@ -182,6 +183,7 @@ export async function upsertDevice(
          ip_address = EXCLUDED.ip_address,
          mac_address = EXCLUDED.mac_address,
          firmware_type = EXCLUDED.firmware_type,
+         connection = EXCLUDED.connection,
          is_enabled = EXCLUDED.is_enabled,
          updated_at = NOW()`,
       [
@@ -195,6 +197,7 @@ export async function upsertDevice(
         d.macAddress ?? "",
         d.firmwareType,
         d.isEnabled,
+        d.connection ?? null,
       ]
     );
   } catch (err) {
@@ -435,7 +438,7 @@ async function writeEsphomeFiles(
       text = remapBrokerIpInYaml(text, oldIp, newBrokerIp);
       const stem = path.basename(rel, path.extname(rel)).toLowerCase();
       const device = byStem.get(stem);
-      if (device) {
+      if (device?.mqttTopicPrefix) {
         text = rewriteDeviceMqttYaml(text, {
           brokerIp: newBrokerIp,
           mqttUsername: mqttUser,
@@ -536,6 +539,7 @@ export async function adoptConfigArchive(
   );
 
   try {
+    await clearNonMqttAddresses();
     await syncCapabilitiesFromLegacy();
     await repairDashboardCapabilityBindings();
     await refreshTelemetrySubscriptions();

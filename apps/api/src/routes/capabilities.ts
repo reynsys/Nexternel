@@ -1,4 +1,3 @@
-import { ControlNotConfirmedError, ControlRefusedError, setControl } from "../devices/control-commands.js";
 import type { FastifyPluginAsync } from "fastify";
 import { requireUser } from "../auth/plugin.js";
 import { requirePermission } from "../auth/rbac.js";
@@ -13,10 +12,10 @@ import {
 } from "../capabilities/status-lights.js";
 import { getLiveState, getAllLiveStates } from "../telemetry/state-cache.js";
 import {
-  publishSwitchCommand,
-  SwitchNotConfirmedError,
   refreshTelemetrySubscriptions,
 } from "../telemetry/mqtt.js";
+import { devicePath } from "../devices/device-path-store.js";
+import { canCommand, ControlRefusedError, NotConfirmedError } from "../devices/device-path.js";
 
 export const capabilitiesRoutes: FastifyPluginAsync = async (app) => {
   app.get("/api/v1/capabilities", async (request, reply) => {
@@ -44,7 +43,7 @@ export const capabilitiesRoutes: FastifyPluginAsync = async (app) => {
           unit: c.unit,
           sourceType: c.source_type,
           sourceId: c.source_id,
-          hasCommand: Boolean(c.command_topic),
+          hasCommand: canCommand(c),
           features: c.features,
           statusLight: statusEngine.get(c.id),
           state: state
@@ -157,12 +156,12 @@ export const capabilitiesRoutes: FastifyPluginAsync = async (app) => {
     }
     try {
       // Answers once the board reports the new position; who pressed it goes into the Activity log.
-      const result = await publishSwitchCommand(request.params.id, action as "on" | "off" | "toggle", request.user!.username);
+      const result = await devicePath.switchItem(request.params.id, action as "on" | "off" | "toggle", request.user!.username);
       return { ok: true, value: result.value };
     } catch (err) {
-      return reply.code(err instanceof SwitchNotConfirmedError ? 504 : 400).send({
+      return reply.code(err instanceof NotConfirmedError ? 504 : 400).send({
         error: {
-          code: err instanceof SwitchNotConfirmedError ? "no_answer" : "command_failed",
+          code: err instanceof NotConfirmedError ? "no_answer" : "command_failed",
           message: err instanceof Error ? err.message : "Command failed",
         },
       });
@@ -173,10 +172,10 @@ export const capabilitiesRoutes: FastifyPluginAsync = async (app) => {
   app.post<{ Params: { id: string }; Body: { change?: unknown } }>("/api/v1/capabilities/:id/control", async (request, reply) => {
     if (!requirePermission(request, reply, "controlRelays")) return;
     try {
-      return { ok: true, value: await setControl(request.params.id, request.body?.change, request.user!.username) };
+      return { ok: true, value: await devicePath.setControl(request.params.id, request.body?.change, request.user!.username) };
     } catch (err) {
       const message = err instanceof Error ? err.message : "Command failed";
-      if (err instanceof ControlNotConfirmedError) return reply.code(504).send({ error: { code: "no_answer", message } });
+      if (err instanceof NotConfirmedError) return reply.code(504).send({ error: { code: "no_answer", message } });
       if (err instanceof ControlRefusedError) return reply.code(400).send({ error: { code: "bad_request", message } });
       return reply.code(400).send({ error: { code: "command_failed", message } });
     }

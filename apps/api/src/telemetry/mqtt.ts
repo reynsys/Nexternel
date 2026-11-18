@@ -1,15 +1,16 @@
 import mqtt, { type MqttClient } from "mqtt";
 import { config } from "../config.js";
 import {
-  listDevicePrefixes,
+  listMqttDevices,
   listEsphomeLiveEntities,
   listShellySwitchBindings,
   listStateTopicBindings,
-  getCapabilityById,
+  type CapabilityRow,
 } from "../capabilities/store.js";
-import { getLiveState, isNoReading, parseMqttPayload, setLiveState, getAllLiveStates, sameLiveValue } from "./state-cache.js";
-import { LIVE_CAPABILITY_PRESENCE_MS } from "../devices/presence.js";
+import { parseMqttPayload } from "./state-cache.js";
 import { getPool } from "../db.js";
+import { devicePath } from "../devices/device-path-store.js";
+import type { HistoryKey, ItemSender } from "../devices/device-path.js";
 import { applyBoardHealthTopic, boardFingerprint } from "../devices/board-health.js";
 import { applyBrokerLog, BROKER_LOG_TOPIC } from "./broker-log.js";
 import { looksLikeShellyCommandTopic, isShellyGen1MqttPrefix } from "../shelly/topics.js";
@@ -27,7 +28,7 @@ import {
   collectMqttSubscriptionTopics,
   deviceSlugFromMqttPrefix,
 } from "./mqtt-subscriptions.js";
-import { persistMqttSensorHistory } from "../history/mqtt-persist.js";
+import { parseMqttSensorStateTopic } from "../history/mqtt-persist.js";
 import {
   clearLiveTopicMap,
   getLiveTopicBindings,
@@ -43,8 +44,7 @@ import {
   getBrokerSniffSamples,
   type MqttObservationKind,
 } from "./mqtt-observer.js";
-import { logActivity, logSensorAnswer, logSwitchChange, noteSwitchCommand } from "../activity/activity.js";
-import { UnansweredPresses } from "./unanswered-presses.js";
+import { logActivity } from "../activity/activity.js";
 
 let client: MqttClient | null = null;
 let status: "disconnected" | "connecting" | "connected" | "error" = "disconnected";
@@ -63,11 +63,18 @@ const topicIndex = new Map<string, { capabilityId: string; kind: string }[]>();
 const shellySwitchIndex = new Map<string, string>();
 const shellyPrefixes = new Set<string>();
 
-/** Debounce device online touches (prefix → last ms) */
-const lastOnlineTouch = new Map<string, number>();
-/** Debounce capability-driven presence (capability id → last ms) */
-const lastCapabilityOnlineTouch = new Map<string, number>();
 let cachedPrefixes: string[] = [];
+/**
+ * Topics Nexternel itself sends to (switch commands, status requests). The message service passes
+ * them back to Nexternel too: they are its own words, never a sign that a board is there.
+ */
+const sentTopics = new Set<string>();
+function noteSent(topic: string): string {
+  sentTopics.add(topic);
+  return topic;
+}
+/** MQTT topic prefix → the device(s) behind it: the device path knows devices, not topics. */
+const devicesByPrefix = new Map<string, string[]>();
 let mqttMessagesReceived = 0;
 let mqttCapabilityUpdates = 0;
 
@@ -178,7 +185,7 @@ async function rebuildTopicIndex() {
     }
   }
 
-  cachedPrefixes = await listDevicePrefixes();
+  setMqttDevices(await listMqttDevices());
 
   const shelly = await listShellySwitchBindings();
   for (const row of shelly) {
@@ -190,217 +197,65 @@ async function rebuildTopicIndex() {
   }
 }
 
+function setMqttDevices(devices: { id: string; prefix: string }[]) {
+  devicesByPrefix.clear();
+  for (const d of devices) devicesByPrefix.set(d.prefix, [...(devicesByPrefix.get(d.prefix) ?? []), d.id]);
+  cachedPrefixes = [...devicesByPrefix.keys()];
+}
+
+function devicesOf(prefix: string): string[] {
+  return devicesByPrefix.get(prefix) ?? [];
+}
+
+/** Where a reading on this topic is kept in history (Nexternel's own sensor topics only). */
+function historyKeyOf(topic: string, kind: string): HistoryKey | null {
+  if (kind === "switch") return null;
+  const parsed = parseMqttSensorStateTopic(topic);
+  return parsed ? { deviceSlug: parsed.deviceSlug, entityId: parsed.entityId } : null;
+}
+
+function reportFromTopic(topic: string, capabilityId: string, value: unknown, retained: boolean, kind: string) {
+  devicePath.reportItem(capabilityId, value, { kind, retained, history: historyKeyOf(topic, kind) });
+}
+
 /** Device presence: explicit MQTT availability + last_seen; Offline derived at read time. */
-
-function markDeviceOnline(prefix: string) {
-  void getPool()
-    .query(
-      `UPDATE devices
-       SET mqtt_availability = 'online',
-           last_seen_at = NOW()
-       WHERE mqtt_topic_prefix = $1`,
-      [prefix]
-    )
-    .catch(() => {
-      /* ignore */
-    });
-  void import("../esphome/lifecycle.js")
-    .then((m) => m.syncEsphomeLifecycleForPrefix(prefix, true))
-    .catch(() => {
-      /* ignore */
-    });
-}
-
-function markDeviceOffline(prefix: string) {
-  void getPool()
-    .query(
-      `UPDATE devices
-       SET mqtt_availability = 'offline'
-       WHERE mqtt_topic_prefix = $1`,
-      [prefix]
-    )
-    .catch(() => {
-      /* ignore */
-    });
-  void import("../esphome/lifecycle.js")
-    .then((m) => m.syncEsphomeLifecycleForPrefix(prefix, false))
-    .catch(() => {
-      /* ignore */
-    });
-}
-
-async function staleCapabilitiesForPrefix(prefix: string) {
-  const caps = await getPool().query<{ id: string }>(
-    `SELECT c.id FROM capabilities c
-     JOIN devices d ON d.id = c.device_id
-     WHERE d.mqtt_topic_prefix = $1
-       AND COALESCE(d.firmware_type, 'esphome') NOT IN ('octopus', 'plugin')`,
-    [prefix]
-  );
-  for (const row of caps.rows) {
-    const s = getLiveState(row.id);
-    if (s && s.quality === "good") {
-      setLiveState(row.id, s.value, { quality: "stale", retained: s.retained });
-    }
-  }
-}
-
-function applyDeviceRootStatusTopic(
-  topic: string,
-  payload: string,
-  retained: boolean
-): boolean {
+function applyDeviceRootStatusTopic(topic: string, payload: string): boolean {
   const prefix = longestPrefixForTopic(topic);
   if (!prefix || topic !== `${prefix}/status`) return false;
   const state = payload.trim().toLowerCase();
   if (state === "online" || state === "true" || state === "1") {
-    markDeviceOnline(prefix);
+    devicePath.deviceOnline(devicesOf(prefix));
     return true;
   }
   if (state === "offline" || state === "false" || state === "0") {
-    markDeviceOffline(prefix);
-    void staleCapabilitiesForPrefix(prefix);
+    devicePath.deviceOffline(devicesOf(prefix));
     return true;
   }
   return false;
 }
 
 /** Shelly Gen1: {prefix}/online → true|false */
-function applyDeviceShellyOnlineTopic(
-  topic: string,
-  payload: string,
-  retained: boolean
-): boolean {
+function applyDeviceShellyOnlineTopic(topic: string, payload: string): boolean {
   const match = /^(.+)\/online$/i.exec(topic);
   if (!match) return false;
   const prefix = longestPrefixForTopic(topic);
   if (!prefix || prefix !== match[1]) return false;
   const state = payload.trim().toLowerCase();
   if (/^(true|1|online)$/.test(state)) {
-    markDeviceOnline(prefix);
+    devicePath.deviceOnline(devicesOf(prefix));
     return true;
   }
   if (/^(false|0|offline)$/.test(state)) {
-    markDeviceOffline(prefix);
-    void staleCapabilitiesForPrefix(prefix);
+    devicePath.deviceOffline(devicesOf(prefix));
     return true;
   }
   return false;
 }
 
-function touchDeviceOnlineByCapability(capabilityId: string) {
-  const now = Date.now();
-  const prev = lastCapabilityOnlineTouch.get(capabilityId) ?? 0;
-  if (now - prev < 15_000) return;
-  lastCapabilityOnlineTouch.set(capabilityId, now);
-  void getPool()
-    .query(
-      `UPDATE devices d
-       SET mqtt_availability = 'online',
-           last_seen_at = NOW()
-       FROM capabilities c
-       WHERE c.id = $1 AND c.device_id = d.id`,
-      [capabilityId]
-    )
-    .catch(() => {
-      /* ignore */
-    });
-}
-
 function touchDeviceOnlineFromTopic(topic: string, retained: boolean) {
   if (retained) return;
   const prefix = longestPrefixForTopic(topic);
-  if (!prefix) return;
-  const now = Date.now();
-  const prev = lastOnlineTouch.get(prefix) ?? 0;
-  if (now - prev < 15_000) return;
-  lastOnlineTouch.set(prefix, now);
-  markDeviceOnline(prefix);
-}
-
-/**
- * Switch commands waiting for the board to report the new position (publishSwitchCommand). A command
- * is only done when the board says so: one sent while the board is cut off is otherwise lost unseen.
- */
-const switchWaiters = new Map<string, { value: boolean; done: () => void }[]>();
-const SWITCH_ANSWER_MS = 6_000;
-/** A press that got no answer but then came through after all (see unanswered-presses.ts). */
-const unansweredPresses = new UnansweredPresses();
-const SWITCH_BACK_RETRY_MS = 5_000;
-
-function confirmSwitch(capabilityId: string, value: boolean) {
-  const waiting = switchWaiters.get(capabilityId);
-  if (!waiting) return;
-  const left = waiting.filter((w) => {
-    if (w.value !== value) return true;
-    w.done();
-    return false;
-  });
-  if (left.length) switchWaiters.set(capabilityId, left);
-  else switchWaiters.delete(capabilityId);
-}
-
-function waitForSwitch(capabilityId: string, value: boolean, ms: number): Promise<boolean> {
-  return new Promise((resolve) => {
-    const entry = { value, done: () => {} };
-    const timer = setTimeout(() => {
-      const left = (switchWaiters.get(capabilityId) ?? []).filter((w) => w !== entry);
-      if (left.length) switchWaiters.set(capabilityId, left);
-      else switchWaiters.delete(capabilityId);
-      resolve(false);
-    }, ms);
-    entry.done = () => {
-      clearTimeout(timer);
-      resolve(true);
-    };
-    switchWaiters.set(capabilityId, [...(switchWaiters.get(capabilityId) ?? []), entry]);
-  });
-}
-
-function applyLiveCapability(
-  capabilityId: string,
-  value: unknown,
-  retained: boolean,
-  kind = "switch"
-) {
-  const sensorLike = kind !== "switch";
-  const previous = getLiveState(capabilityId);
-  if (!retained || kind === "switch") {
-    touchDeviceOnlineByCapability(capabilityId);
-  }
-  // On connecting, the message service replays each board's last message. When Nexternel already
-  // holds that same reading (kept over a restart), the replay tells nothing new: keep the held one with
-  // its own time, so a current reading does not turn into "no recent reading" on every update.
-  if (retained && sensorLike && previous && sameLiveValue(previous.value, value)) return;
-  // A board that cannot read its sensor sends "nan": no value, and the reading says so.
-  const noReading = sensorLike && isNoReading(value);
-  setLiveState(capabilityId, noReading ? null : value, {
-    quality: noReading ? "error" : retained && sensorLike ? "stale" : "good",
-    retained,
-  });
-  if (sensorLike && !retained && (noReading ? previous?.quality !== "error" : previous?.quality === "error")) {
-    void logSensorAnswer(capabilityId, !noReading);
-  }
-  if (kind === "switch" && typeof value === "boolean") {
-    confirmSwitch(capabilityId, value);
-    if (!retained && unansweredPresses.takeLateOn(capabilityId, value, Date.now())) void switchBackLateOn(capabilityId);
-    // A real change from the board (not the kept value replayed on connecting): into the Activity log.
-    const before = previous?.value;
-    if (!retained && typeof before === "boolean" && before !== value) void logSwitchChange(capabilityId, value);
-    void getPool()
-      .query(
-        `UPDATE relays r
-         SET last_state = $1, updated_at = NOW()
-         FROM capabilities c
-         WHERE c.id = $2
-           AND c.source_type = 'relay'
-           AND r.id = c.source_id`,
-        [value ? "ON" : "OFF", capabilityId]
-      )
-      .catch(() => {
-        /* ignore */
-      });
-  }
+  if (prefix) devicePath.deviceHeard(devicesOf(prefix));
 }
 
 function applyShellyTopicUpdates(
@@ -420,11 +275,11 @@ function applyShellyTopicUpdates(
       shellyIndexKey(prefix, u.componentKey)
     );
     if (!capabilityId) continue;
-    applyLiveCapability(capabilityId, u.output, retained, "switch");
+    devicePath.reportItem(capabilityId, u.output, { kind: "switch", retained });
     applied = true;
   }
   if (applied) {
-    markDeviceOnline(prefix);
+    devicePath.deviceOnline(devicesOf(prefix));
   }
   return applied;
 }
@@ -562,11 +417,7 @@ async function tryHealEsphomeSensorTopic(
   }
 
   registerTopicBinding(topic, row.capability_id, row.kind);
-  const value = parseMqttPayload(row.kind, payload);
-  applyLiveCapability(row.capability_id, value, retained, row.kind);
-  if (row.kind !== "switch" && !retained) {
-    persistMqttSensorHistory(topic, value);
-  }
+  reportFromTopic(topic, row.capability_id, parseMqttPayload(row.kind, payload), retained, row.kind);
   return true;
 }
 
@@ -649,8 +500,7 @@ async function tryHealEsphomeSwitchTopic(
   }
 
   registerTopicBinding(topic, row.capability_id, "switch");
-  const value = parseMqttPayload("switch", payload);
-  applyLiveCapability(row.capability_id, value, retained, "switch");
+  reportFromTopic(topic, row.capability_id, parseMqttPayload("switch", payload), retained, "switch");
   return true;
 }
 
@@ -691,11 +541,14 @@ async function handleMessage(
     return;
   }
 
+  // Nexternel's own message coming back: says nothing about the board.
+  if (sentTopics.has(topic)) return;
+
   notifyDiscoveryCollectors(topic, payload);
 
   const presenceHandled =
-    applyDeviceRootStatusTopic(topic, payload, retained) ||
-    applyDeviceShellyOnlineTopic(topic, payload, retained);
+    applyDeviceRootStatusTopic(topic, payload) ||
+    applyDeviceShellyOnlineTopic(topic, payload);
   if (presenceHandled) {
     observationKind = "device_presence";
     finishObservation();
@@ -753,11 +606,7 @@ async function handleMessage(
   observationKind = "capability_binding";
   for (const { capabilityId, kind } of entries) {
     observationCapabilityIds.push(capabilityId);
-    const value = parseMqttPayload(kind, payload);
-    applyLiveCapability(capabilityId, value, retained, kind);
-    if (kind !== "switch" && !retained) {
-      persistMqttSensorHistory(topic, value);
-    }
+    reportFromTopic(topic, capabilityId, parseMqttPayload(kind, payload), retained, kind);
     mqttCapabilityUpdates += 1;
   }
   finishObservation();
@@ -773,14 +622,14 @@ function requestShellyStatusUpdates() {
       continue;
     }
     try {
-      client.publish(`${prefix}/command`, "status_update", { qos: 0 });
+      client.publish(noteSent(`${prefix}/command`), "status_update", { qos: 0 });
     } catch {
       /* ignore */
     }
   }
   if (hasGen1) {
     try {
-      client.publish("shellies/command", "update", { qos: 0 });
+      client.publish(noteSent("shellies/command"), "update", { qos: 0 });
     } catch {
       /* ignore */
     }
@@ -789,10 +638,7 @@ function requestShellyStatusUpdates() {
 
 function startPresenceSweeper() {
   if (presenceTimer) return;
-  presenceTimer = setInterval(() => {
-    void sweepLiveCapabilityFreshness();
-    void sweepSilentBoards();
-  }, 15_000);
+  presenceTimer = setInterval(() => void sweepSilentBoards(), 15_000);
   presenceTimer.unref?.();
 }
 
@@ -807,58 +653,18 @@ const BOARD_SILENT_MS = 3 * 60_000;
  */
 async function sweepSilentBoards() {
   try {
-    const r = await getPool().query<{ prefix: string }>(
-      `SELECT mqtt_topic_prefix AS prefix FROM devices
-        WHERE is_enabled AND COALESCE(firmware_type, 'esphome') = 'esphome' AND mqtt_availability = 'online'
+    const r = await getPool().query<{ id: string; prefix: string }>(
+      `SELECT id, mqtt_topic_prefix AS prefix FROM devices
+        WHERE is_enabled AND connection = 'mqtt' AND COALESCE(firmware_type, 'esphome') = 'esphome' AND availability = 'online'
           AND last_seen_at < NOW() - make_interval(secs => $1)`,
       [BOARD_SILENT_MS / 1000]
     );
-    for (const { prefix } of r.rows) {
+    for (const { id, prefix } of r.rows) {
       if (!prefix || !boardFingerprint(prefix)) continue;
-      markDeviceOffline(prefix);
-      void staleCapabilitiesForPrefix(prefix);
+      devicePath.deviceOffline([id]);
     }
   } catch {
     /* next sweep */
-  }
-}
-
-/** Mark in-memory live values stale when they age out — device Offline is derived at read time. */
-async function sweepLiveCapabilityFreshness() {
-  const staleMs = LIVE_CAPABILITY_PRESENCE_MS;
-  const octopusCapIds = await getOctopusCapabilityIdsForPresence();
-  for (const state of getAllLiveStates()) {
-    if (state.quality !== "good") continue;
-    if (octopusCapIds.has(state.capabilityId)) continue;
-    const age = Date.now() - Date.parse(state.updatedAt);
-    if (age > staleMs) {
-      setLiveState(state.capabilityId, state.value, {
-        quality: "stale",
-        retained: state.retained,
-      });
-    }
-  }
-}
-
-let octopusCapIdsCache: Set<string> | null = null;
-let octopusCapIdsCacheAt = 0;
-
-async function getOctopusCapabilityIdsForPresence(): Promise<Set<string>> {
-  const now = Date.now();
-  if (octopusCapIdsCache && now - octopusCapIdsCacheAt < 60_000) {
-    return octopusCapIdsCache;
-  }
-  try {
-    const result = await getPool().query<{ id: string }>(
-      `SELECT c.id FROM capabilities c
-       JOIN devices d ON d.id = c.device_id
-       WHERE d.slug = 'octopus-home-mini'`
-    );
-    octopusCapIdsCache = new Set(result.rows.map((r) => r.id));
-    octopusCapIdsCacheAt = now;
-    return octopusCapIdsCache;
-  } catch {
-    return octopusCapIdsCache ?? new Set();
   }
 }
 
@@ -905,11 +711,9 @@ export async function startTelemetry(): Promise<void> {
     lastError = null;
     try {
       await rebuildTopicIndex();
-      const prefixes = await listDevicePrefixes();
-      cachedPrefixes = prefixes;
       const topics = collectMqttSubscriptionTopics({
         installationRoot: installationMqttRoot(),
-        devicePrefixes: prefixes,
+        devicePrefixes: cachedPrefixes,
         bindingStateTopics: [...topicIndex.keys()],
       });
       for (const topic of topics) {
@@ -950,11 +754,9 @@ export async function startTelemetry(): Promise<void> {
 export async function refreshTelemetrySubscriptions(): Promise<void> {
   await rebuildTopicIndex();
   if (!client?.connected) return;
-  const prefixes = await listDevicePrefixes();
-  cachedPrefixes = prefixes;
   const topics = collectMqttSubscriptionTopics({
     installationRoot: installationMqttRoot(),
-    devicePrefixes: prefixes,
+    devicePrefixes: cachedPrefixes,
     bindingStateTopics: [...topicIndex.keys()],
   });
   for (const topic of topics) {
@@ -968,11 +770,9 @@ export async function refreshTelemetrySubscriptions(): Promise<void> {
 /** Ask a board for a health report now (presses its Health check button over MQTT); false = not connected. */
 export function requestHealthReport(prefix: string): boolean {
   if (!client?.connected) return false;
-  client.publish(`${prefix}/button/health_check/command`, "PRESS", { qos: 0 });
+  client.publish(noteSent(`${prefix}/button/health_check/command`), "PRESS", { qos: 0 });
   return true;
 }
-
-export class SwitchNotConfirmedError extends Error {}
 
 /** What a board understands as on or off on its command topic. */
 function switchPayload(cap: { firmware_type: string | null; command_topic: string | null }, on: boolean): string {
@@ -981,95 +781,20 @@ function switchPayload(cap: { firmware_type: string | null; command_topic: strin
   return on ? "ON" : "OFF";
 }
 
-/** The board reported "on" after its press was given up on: switch it off again, and say so. */
-async function switchBackLateOn(capabilityId: string): Promise<void> {
-  const cap = await getCapabilityById(capabilityId);
-  if (!cap?.command_topic) return;
-  const send = () => {
-    noteSwitchCommand(capabilityId, false, "Nexternel");
-    client?.publish(cap.command_topic!, switchPayload(cap, false), { qos: 1 });
-  };
-  send();
-  // The board may still be cut off: one more try if it has not gone off.
-  setTimeout(() => {
-    if (getLiveState(capabilityId)?.value === true) send();
-  }, SWITCH_BACK_RETRY_MS);
-  void logActivity({
-    kind: "device",
-    deviceId: cap.device_id,
-    text: `${cap.device_name ?? "A board"} · ${cap.name} came on after its press had got no answer, so Nexternel switched it off again`,
-  });
-}
-
-/**
- * Sends a switch command and waits for the board to report the new position. `who` goes into the
- * Activity log with the change. Throws SwitchNotConfirmedError when the board does not answer in time.
- */
-export async function publishSwitchCommand(
-  capabilityId: string,
-  action: "on" | "off" | "toggle",
-  who?: string
-): Promise<{ value: boolean }> {
-  const cap = await getCapabilityById(capabilityId);
-  if (!cap) throw new Error("Item not found");
-  if (cap.kind !== "switch") throw new Error("This item is not a switch");
-  if (!cap.command_topic) throw new Error("This item cannot be switched");
-
-  let next: boolean;
-  if (action === "toggle") {
-    const current = getLiveState(capabilityId);
-    next = current?.value !== true;
-  } else {
-    next = action === "on";
-  }
-
-  // A new press decides: an earlier unanswered one no longer counts.
-  unansweredPresses.clear(capabilityId);
-
-  // Noted before sending: the board's answer can arrive before the send has finished.
-  if (who) noteSwitchCommand(capabilityId, next, who);
-
-  if (cap.firmware_type === "plugin") {
-    const { sendPluginSwitchCommand } = await import("../plugins/devices.js");
-    await sendPluginSwitchCommand(capabilityId, next);
-    // Optimistic; the plugin confirms by sending the switch's new state.
-    applyLiveCapability(capabilityId, next, false, "switch");
-    return { value: next };
-  }
-
-  const payload = switchPayload(cap, next);
-  const mqttClient = client;
-  if (!mqttClient?.connected) {
-    throw new Error("MQTT not connected");
-  }
-
-  // Already in that position: nothing to wait for (a board need not repeat an unchanged state).
-  const alreadyThere = getLiveState(capabilityId)?.value === next;
-  const answer = alreadyThere ? Promise.resolve(true) : waitForSwitch(capabilityId, next, SWITCH_ANSWER_MS);
-
-  await new Promise<void>((resolve, reject) => {
-    mqttClient.publish(cap.command_topic!, payload, { qos: 1 }, (err) => {
-      if (err) reject(err);
-      else resolve();
+/** How a switch press goes out over MQTT; the board's report on its state topic confirms it. */
+export const mqttItemSender: ItemSender = {
+  unavailable: () => (client?.connected ? null : "MQTT not connected"),
+  send(item: CapabilityRow, on: boolean) {
+    const mqttClient = client;
+    if (!mqttClient || !item.command_topic) return Promise.reject(new Error("MQTT not connected"));
+    return new Promise<void>((resolve, reject) => {
+      mqttClient.publish(noteSent(item.command_topic!), switchPayload(item, on), { qos: 1 }, (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
     });
-  });
-
-  // Only the board's own report counts (state topic / events/rpc): no assumed position.
-  if (!(await answer)) {
-    const board = cap.device_name ?? "the board";
-    if (next) unansweredPresses.note(capabilityId, Date.now());
-    void logActivity({
-      kind: "device",
-      deviceId: cap.device_id,
-      text: `${board} · ${cap.name}: ${next ? "on" : "off"} press got no answer${next ? ", so it was cancelled" : ""}`,
-      who,
-    });
-    throw new SwitchNotConfirmedError(
-      next ? `No answer from ${board}, so this press was cancelled.` : `No answer from ${board}: it may not have switched.`
-    );
-  }
-  return { value: next };
-}
+  },
+};
 
 export function stopTelemetry() {
   client?.end(true);
@@ -1150,7 +875,7 @@ export async function discoverShellyDevices(opts?: {
     });
 
     await new Promise<void>((resolve, reject) => {
-      mqttClient.publish("shellies/command", "announce", { qos: 0 }, (err) => {
+      mqttClient.publish(noteSent("shellies/command"), "announce", { qos: 0 }, (err) => {
         if (err) reject(err);
         else resolve();
       });
@@ -1227,7 +952,7 @@ function probeShellySwitchCountMqtt(
       src: DISCOVER_SRC,
       method: "Shelly.GetStatus",
     });
-    mqttClient.publish(`${topicPrefix}/rpc`, body, { qos: 0 }, () => {
+    mqttClient.publish(noteSent(`${topicPrefix}/rpc`), body, { qos: 0 }, () => {
       /* fire and forget */
     });
     setTimeout(() => finish(null), waitMs);

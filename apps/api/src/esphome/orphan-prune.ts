@@ -32,7 +32,7 @@ async function yamlExistsForStem(stem: string): Promise<boolean> {
 export async function yamlExistsForDevice(device: {
   esphomeName: string | null;
   slug: string;
-  mqttTopicPrefix: string;
+  mqttTopicPrefix: string | null;
   esphomeYamlPath?: string | null;
 }): Promise<boolean> {
   const pathStem = device.esphomeYamlPath?.trim().replace(/\.yaml$/, "").replace(/^devices\//, "");

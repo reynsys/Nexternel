@@ -130,7 +130,7 @@ function StepPowerOn() {
         ]}
       </Steps>
       <Typography variant="body2" color="text.secondary">
-        Used before, or set up with Shelly's app? If it's already on your home Wi-Fi, go back and use Search my home instead. To
+        Used before, or set up with Shelly's app? If it's already on this network, go back and use Search this network instead. To
         start a Shelly fresh, hold its button for 10 seconds.
       </Typography>
     </Stack>
@@ -187,7 +187,7 @@ function StepGiveHomeWifi() {
 
   return (
     <Stack gap={2}>
-      <Typography variant="h6">Give the Shelly your home Wi-Fi</Typography>
+      <Typography variant="h6">Give the Shelly the Wi-Fi it will use</Typography>
       <Typography color="text.secondary">Open this address in your phone's browser:</Typography>
       <Stack direction="row" gap={1.5} alignItems="center" flexWrap="wrap" sx={[{ px: 1.75, py: 1.25 }, insetSx()]}>
         <Typography component="code" variant="h5">
@@ -207,7 +207,7 @@ function StepGiveHomeWifi() {
             Choose <b>{wifi.ssid}</b> and type its password. That's the Wi-Fi set for your devices (Devices → Wi-Fi for devices).
           </>,
           <>
-            Press <b>Save</b>. Then put your phone back on your home Wi-Fi.
+            Press <b>Save</b>. Then put your phone back on your usual Wi-Fi.
           </>,
         ]}
       </Steps>
@@ -253,7 +253,7 @@ function StepFind(props: { areas: { id: string; name: string }[]; onRestart: () 
           }
         } catch (err) {
           if (run.current !== mine) return;
-          setError(err instanceof Error ? err.message : "Nexternel couldn't look on your home network.");
+          setError(err instanceof Error ? err.message : "Nexternel couldn't look on this network.");
         }
         await new Promise((r) => setTimeout(r, 3000));
       }
@@ -301,7 +301,7 @@ function StepFind(props: { areas: { id: string; name: string }[]; onRestart: () 
         <Typography variant="h6">Finding your new Shelly</Typography>
         <Stack direction="row" gap={1.5} alignItems="center">
           <CircularProgress size={22} />
-          <Typography color="text.secondary">Looking on your home Wi-Fi… usually under a minute.</Typography>
+          <Typography color="text.secondary">Looking for it on this network… usually under a minute.</Typography>
         </Stack>
         {error ? <Alert severity="warning">{error}</Alert> : null}
       </Stack>
@@ -346,7 +346,7 @@ function StepFind(props: { areas: { id: string; name: string }[]; onRestart: () 
           <Box sx={{ minWidth: 0 }}>
             <Typography fontWeight="fontWeightMedium">{chosen.what}</Typography>
             <Typography variant="body2" color="text.secondary">
-              On your home Wi-Fi now
+              On this network now
             </Typography>
           </Box>
         </Stack>

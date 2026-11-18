@@ -10,7 +10,7 @@ import {
 const base: ConnectivityInput = {
   firmwareType: "esphome",
   isEnabled: true,
-  mqttAvailability: "unknown",
+  availability: "unknown",
   lastSeenAt: null,
   sensorCount: 0,
   relayCount: 1,
@@ -21,7 +21,7 @@ test("explicit MQTT offline → offline", () => {
   assert.equal(
     deriveDeviceConnectivityState({
       ...base,
-      mqttAvailability: "offline",
+      availability: "offline",
       lastSeenAt: new Date().toISOString(),
     }),
     "offline"
@@ -85,7 +85,7 @@ test("a quiet ESPHome or Shelly board that says it is online → online", () => 
       deriveDeviceConnectivityState({
         ...base,
         firmwareType,
-        mqttAvailability: "online",
+        availability: "online",
         lastSeenAt: new Date(Date.now() - 2 * 60 * 60_000).toISOString(),
       }),
       "online"
@@ -98,7 +98,7 @@ test("other devices online but quiet 2h → no_recent_data (they do not announce
     deriveDeviceConnectivityState({
       ...base,
       firmwareType: "plugin",
-      mqttAvailability: "online",
+      availability: "online",
       lastSeenAt: new Date(Date.now() - 2 * 60 * 60_000).toISOString(),
     }),
     "no_recent_data"

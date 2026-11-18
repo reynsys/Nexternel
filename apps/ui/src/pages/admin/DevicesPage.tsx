@@ -413,7 +413,7 @@ export function DevicesPage() {
     <Stack spacing={2}>
       <PageHeader
         title="Devices"
-        hint="Everything Nexternel talks to: ESPHome boards, Shelly switches, cameras and online services. Pick one to see its readings, switches and settings."
+        hint="Everything Nexternel talks to: Zherodius devices, ESPHome boards, Shelly switches, cameras and online services. Pick one to see its readings, switches and settings."
         actions={
           isAdmin ? (
             <ButtonRow>
@@ -651,8 +651,8 @@ export function DevicesPage() {
         onClose={() => setAddDeviceChooserOpen(false)}
         areas={areas}
         onDeviceAdded={(id) => {
-          void load();
-          setSelection({ kind: "device", deviceId: id });
+          // Select it once the list has it (selecting a device the list does not have yet clears the choice).
+          void load().then(() => setSelection({ kind: "device", deviceId: id }));
         }}
         onAddCamera={(host) => {
           setNewCameraHost(host);
@@ -703,6 +703,12 @@ export function DevicesPage() {
               Delete <strong>{deleteTarget?.name}</strong> and all its sensors/relays? This cannot be
               undone.
             </Typography>
+            {deleteTarget?.zherodius ? (
+              <Typography variant="body2" color="text.secondary">
+                Nexternel stops talking to it. The device still lists this Nexternel as paired: to remove that too, open the
+                device's page, go to Settings → Nexternel and press Unpair {deleteTarget.zherodius.hubName ?? "Nexternel"}.
+              </Typography>
+            ) : null}
             {deleteTarget &&
               (deleteTarget.firmwareType || "esphome") === "esphome" &&
               deleteTarget.esphomeManagementMode === "managed" && (

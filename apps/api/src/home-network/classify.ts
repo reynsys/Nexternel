@@ -36,11 +36,14 @@ export type KnownDevice = {
   mqttTopicPrefix: string | null;
   ipAddress: string | null;
   macAddress: string | null;
+  /** A paired Zherodius device's serial number. */
+  zherodiusSerial?: string | null;
 };
 
 export type KnownCamera = { id: string; name: string; host: string | null };
 
 const KIND_ORDER: Record<FoundKind, number> = {
+  zherodius: -1,
   board: 0,
   shelly: 1,
   matterNew: 2,
@@ -96,6 +99,15 @@ function blank(kind: FoundKind, name: string, what: string, address: string | nu
 function fromService(s: RawService): Candidate | null {
   const t = s.txt ?? {};
   switch (s.type) {
+    case "_zherodius._tcp": {
+      // A device that answers on another port than the usual 80 is reached there.
+      const address = s.address && s.port && s.port !== 80 ? `${s.address}:${s.port}` : s.address;
+      const c = blank("zherodius", s.instance || t.serial || "Zherodius device", "Zherodius device", address);
+      c.deviceId = t.serial || null;
+      c.version = t.version || null;
+      c.board = t.board || null;
+      return c;
+    }
     case "_esphomelib._tcp": {
       const platform = (t.platform || "").toUpperCase();
       const c = blank("board", t.friendly_name || s.instance, platform ? `ESPHome board · ${platform}` : "ESPHome board", s.address);
@@ -198,6 +210,10 @@ function matchKnown(
   }
   const id = c.deviceId?.toLowerCase() ?? null;
   for (const d of devices) {
+    if (c.kind === "zherodius") {
+      if (c.deviceId && d.zherodiusSerial === c.deviceId) return { kind: "device", id: d.id, name: d.name };
+      continue;
+    }
     const mac = normaliseMac(d.macAddress);
     if (c.mac && mac && mac === c.mac) return { kind: "device", id: d.id, name: d.name };
     if (c.kind === "board" && id && d.esphomeName?.toLowerCase() === id) return { kind: "device", id: d.id, name: d.name };

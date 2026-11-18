@@ -218,7 +218,7 @@ async function waitBackOnline(deviceId: string, since: Date): Promise<boolean> {
   const end = Date.now() + BACK_ONLINE_MS;
   while (Date.now() < end) {
     const r = await getPool().query(
-      `SELECT 1 FROM devices WHERE id = $1 AND mqtt_availability = 'online' AND last_seen_at >= $2`,
+      `SELECT 1 FROM devices WHERE id = $1 AND availability = 'online' AND last_seen_at >= $2`,
       [deviceId, since]
     );
     if (r.rowCount) return true;

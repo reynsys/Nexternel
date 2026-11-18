@@ -245,6 +245,22 @@ export async function runRestoreBackupJob(
     }
     phases.push({ name: "Home configuration", ok: true });
 
+    // Zherodius devices know this home by its line key: put it back with their pairings, then open the lines.
+    if (operational?.zherodius) {
+      try {
+        const { restoreZherodius } = await import("../zherodius/store.js");
+        const kept = await restoreZherodius(operational.zherodius);
+        const { zherodius } = await import("../zherodius/service.js");
+        zherodius.stop();
+        await zherodius.start();
+        phases.push({ name: "Zherodius devices", ok: true, message: `${kept} paired device${kept === 1 ? "" : "s"} kept` });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        errors.push(`Zherodius devices: ${msg}`);
+        phases.push({ name: "Zherodius devices", ok: false, message: msg });
+      }
+    }
+
     // Devices still carry the old server's MQTT login in their firmware: keep using it here.
     let carriedMqttLogin = false;
     const oldMqttUser = operational?.mqttUsername?.trim() ?? "";
