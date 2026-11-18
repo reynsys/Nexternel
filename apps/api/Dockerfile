@@ -9,13 +9,13 @@ COPY packages/plugin-sdk ./packages/plugin-sdk
 COPY apps/api ./apps/api
 
 WORKDIR /app/packages/domain
-RUN npm install && npm run build
+RUN npm install --no-audit --no-fund && npm run build
 
 WORKDIR /app/packages/plugin-sdk
-RUN npm install && npm run build
+RUN npm install --no-audit --no-fund && npm run build
 
 WORKDIR /app/apps/api
-RUN npm install && npm run build
+RUN npm install --no-audit --no-fund && npm run build
 
 FROM node:22.23.3-alpine AS runner
 

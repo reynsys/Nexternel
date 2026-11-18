@@ -2,6 +2,12 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting at 1. Newest first.
 
+## V5.4.4
+
+- **App settings has a Back button** at the top.
+- **Check for update** in App settings no longer makes the page flicker.
+- **Update details are calmer:** the long build log no longer shows warnings meant for Nexternel's makers. Those checks are now done before each release.
+
 ## V5.4.3
 
 - **The menu's bottom is simpler:** Nexternel Anywhere, App settings and Sign out. Your name, role and Nexternel's version are in Settings (Users → My profile, and System).

@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import {
+  Box,
   Button,
   Card,
   CardContent,
@@ -15,6 +16,7 @@ import {
   Typography,
 } from "@mui/material";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import { PageHeader } from "../components/PageHeader";
 import { ButtonRow } from "../components/ButtonRow";
 import { useAppUpdate, type AppBridge } from "../components/AppFrame";
@@ -27,14 +29,31 @@ import { useContentSurfaceSx } from "../skins/useSurfaceStyles";
 export function AppSettingsPage() {
   const surfaceSx = useContentSurfaceSx();
   const { bridge, state, busy, check } = useAppUpdate();
+  const navigate = useNavigate();
+  // Came from another Nexternel page: go back to it; opened straight in: the start dashboard.
+  const goBack = () => ((window.history.state as { idx?: number } | null)?.idx ? navigate(-1) : navigate("/"));
   if (!bridge) return <Navigate to="/" replace />;
 
   const latest = state.latest ?? null;
-  let note: string | null = null;
-  if (!busy && state.checked && !latest) note = state.failed ? "Could not check. Check the internet connection." : "This is the newest version.";
+  // One line that is always there and only changes its words, so nothing below jumps while checking.
+  const note = busy
+    ? "Checking for an update…"
+    : latest
+      ? `Version ${latest} is ready to install.`
+      : state.checked
+        ? state.failed
+          ? "Could not check. Check the internet connection."
+          : "This is the newest version."
+        : "\u00a0";
 
   return (
     <Stack spacing={3}>
+      {/* A page with no place in the main menu needs its own way out: back to where you came from. */}
+      <Box>
+        <Button variant="outlined" startIcon={<ArrowBackRoundedIcon />} onClick={goBack}>
+          Back
+        </Button>
+      </Box>
       <PageHeader title="App settings" hint="Settings for the app on this phone or tablet. Nexternel's own settings are in Settings." />
 
       <Card sx={surfaceSx}>
@@ -51,15 +70,13 @@ export function AppSettingsPage() {
                 </Button>
               ) : (
                 <Button variant="outlined" disabled={busy} onClick={check}>
-                  {busy ? "Checking…" : "Check for update"}
+                  Check for update
                 </Button>
               )}
             </ButtonRow>
-            {note ? (
-              <Typography variant="body2" color="text.secondary">
-                {note}
-              </Typography>
-            ) : null}
+            <Typography variant="body2" color="text.secondary" aria-live="polite">
+              {note}
+            </Typography>
           </Stack>
         </CardContent>
       </Card>
