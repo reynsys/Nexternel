@@ -93,7 +93,7 @@ export function WallDisplayFields({ value, onChange }: { value: WallPrefs | unde
           <Box>
             <Typography>Light effects</Typography>
             <Typography variant="caption" color="text.secondary" display="block">
-              No blur, glows or background effects; smooth on small computers such as a Raspberry Pi.
+              No blur, glows or background effects (the background effect chosen in Appearance is not shown); smooth on small computers such as a Raspberry Pi.
             </Typography>
           </Box>
         }

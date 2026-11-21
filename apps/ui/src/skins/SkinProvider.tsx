@@ -99,44 +99,6 @@ export function SkinProvider({ children }: { children: ReactNode }) {
   const [themePrefs, setThemePrefsState] = useState<ThemePrefs>(() => (onPhone ? getPhoneLook() : null) ?? getThemePrefs());
   const skins = useMemo(() => listSkins(), []);
   const skin = useMemo(() => getSkin(skinId), [skinId]);
-  const lookVer = useSyncExternalStore(subscribeLooks, looksVersion, looksVersion);
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- lookVer: a Look from an add-on may arrive later
-  const look = useMemo(() => resolveLook(themePrefs.lookId), [themePrefs.lookId, lookVer]);
-  const deviceDark = useDeviceDark();
-  // The mode in use: a Look that only works in one mode (HUD) wins, then Automatic (the device's),
-  // then the choice. The saved choice is kept.
-  const shownPrefs = useMemo(() => {
-    const mode = look.forceMode ?? shownMode(themePrefs, deviceDark);
-    return mode !== themePrefs.mode ? { ...themePrefs, mode } : themePrefs;
-  }, [look, themePrefs, deviceDark]);
-  // Every colour by role (lib/appearance): the person's colours, mode and the Look's surfaces.
-  const scheme = useMemo(() => schemeForPrefs(shownPrefs, shownPrefs.mode, Boolean(look.frosted)), [shownPrefs, look]);
-  const theme = useMemo(() => {
-    // The skin gives the layout's colours from the scheme; the Look styles every building block from its roles.
-    const base = createTheme(skin.createTheme(shownPrefs, scheme), { nxScheme: scheme.roles });
-    const tokens = resolveTokens(look, base, shownPrefs.lookFont);
-    return createTheme(
-      base,
-      lookThemeOptions(base, tokens, {
-        gradientActive: isGradientActive(shownPrefs),
-        solidContentPanels: Boolean(shownPrefs.solidContentPanels),
-      })
-    );
-  }, [skin, shownPrefs, look, scheme]);
-  // Text size: all text is measured in rem, so the page's base size scales it everywhere.
-  const display = useDisplayMode();
-  const textScale = (display.active ? display.textSize : (themePrefs.textSize ?? 100)) / 100;
-  // A wide or narrow font is scaled to take about the same room as the default one.
-  const fontScale = look.fonts?.some((f) => f.id === themePrefs.lookFont) ? 1 : (coreFont(themePrefs.lookFont)?.scale ?? 1);
-  useEffect(() => {
-    const size = (display.active ? display.textSize : (themePrefs.textSize ?? 100)) * fontScale;
-    document.documentElement.style.fontSize = `${Math.round(size * 10) / 10}%`;
-  }, [themePrefs.textSize, display.active, display.textSize, fontScale]);
-  // Animations: the person's choice, and off when the device asks apps to reduce motion.
-  useEffect(() => {
-    const reduce = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    document.documentElement.setAttribute("data-nx-motion", themePrefs.motion !== false && !reduce ? "on" : "off");
-  }, [themePrefs.motion]);
   const persistServerRef = useRef(true);
   // How Appearance was before the first tried change (null when nothing is being tried).
   const [trial, setTrial] = useState<{ prefs: ThemePrefs; skinId: string } | null>(null);
@@ -297,6 +259,89 @@ export function SkinProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("beforeunload", warn);
   }, [trial]);
 
+  // What this page's Appearance controls can do (saving, trying); the Look itself is drawn by LookLayer.
+  const controls = useMemo(
+    () => ({
+      skins,
+      setSkinId,
+      setThemePrefs,
+      tryThemePrefs,
+      trySkinId,
+      trying: trial !== null,
+      applyTrial,
+      cancelTrial,
+      applyAccountPrefs,
+      onPhone,
+      phoneOwnLook,
+      dropPhoneLook,
+    }),
+    [skins, setSkinId, setThemePrefs, tryThemePrefs, trySkinId, trial, applyTrial, cancelTrial, applyAccountPrefs, onPhone, phoneOwnLook, dropPhoneLook]
+  );
+
+  return (
+    <LookLayer skin={skin} themePrefs={themePrefs} controls={controls}>
+      {children}
+    </LookLayer>
+  );
+}
+
+/** What the Appearance controls give; a page that only shows a Look (the Appearance preview) has none. */
+export type SkinControls = Omit<SkinContextValue, "skin" | "themePrefs" | "looksVersion" | "textScale" | "scheme">;
+
+/**
+ * Draws one Appearance on this page: the theme every part is styled with, the Look's CSS, the page
+ * background and the background effect. The app draws its own with it, and so does the Appearance
+ * preview (its own little page), so the preview is drawn exactly like the real screens.
+ */
+export function LookLayer({
+  skin,
+  themePrefs,
+  controls,
+  children,
+}: {
+  skin: UiSkin;
+  themePrefs: ThemePrefs;
+  controls: SkinControls;
+  children: ReactNode;
+}) {
+  const lookVer = useSyncExternalStore(subscribeLooks, looksVersion, looksVersion);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- lookVer: a Look from an add-on may arrive later
+  const look = useMemo(() => resolveLook(themePrefs.lookId), [themePrefs.lookId, lookVer]);
+  const deviceDark = useDeviceDark();
+  // The mode in use: a Look that only works in one mode (HUD) wins, then Automatic (the device's),
+  // then the choice. The saved choice is kept.
+  const shownPrefs = useMemo(() => {
+    const mode = look.forceMode ?? shownMode(themePrefs, deviceDark);
+    return mode !== themePrefs.mode ? { ...themePrefs, mode } : themePrefs;
+  }, [look, themePrefs, deviceDark]);
+  // Every colour by role (lib/appearance): the person's colours, mode and the Look's surfaces.
+  const scheme = useMemo(() => schemeForPrefs(shownPrefs, shownPrefs.mode, Boolean(look.frosted)), [shownPrefs, look]);
+  const theme = useMemo(() => {
+    // The skin gives the layout's colours from the scheme; the Look styles every building block from its roles.
+    const base = createTheme(skin.createTheme(shownPrefs, scheme), { nxScheme: scheme.roles });
+    const tokens = resolveTokens(look, base, shownPrefs.lookFont);
+    return createTheme(
+      base,
+      lookThemeOptions(base, tokens, {
+        gradientActive: isGradientActive(shownPrefs),
+        solidContentPanels: Boolean(shownPrefs.solidContentPanels),
+      })
+    );
+  }, [skin, shownPrefs, look, scheme]);
+  // Text size: all text is measured in rem, so the page's base size scales it everywhere.
+  const display = useDisplayMode();
+  const textScale = (display.active ? display.textSize : (themePrefs.textSize ?? 100)) / 100;
+  // A wide or narrow font is scaled to take about the same room as the default one.
+  const fontScale = look.fonts?.some((f) => f.id === themePrefs.lookFont) ? 1 : (coreFont(themePrefs.lookFont)?.scale ?? 1);
+  useEffect(() => {
+    const size = (display.active ? display.textSize : (themePrefs.textSize ?? 100)) * fontScale;
+    document.documentElement.style.fontSize = `${Math.round(size * 10) / 10}%`;
+  }, [themePrefs.textSize, display.active, display.textSize, fontScale]);
+  // Animations: the person's choice, and off when the device asks apps to reduce motion.
+  useEffect(() => {
+    const reduce = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    document.documentElement.setAttribute("data-nx-motion", themePrefs.motion !== false && !reduce ? "on" : "off");
+  }, [themePrefs.motion]);
   // With a plain background, a Look may bring its own (e.g. the HUD's grid).
   // A background made from the person's own colours, else a ready-made one, else the Look's own.
   const mine = isMineBackground(shownPrefs.gradientId) ? mineBackground(scheme, shownPrefs.gradientId!) : null;
@@ -310,26 +355,8 @@ export function SkinProvider({ children }: { children: ReactNode }) {
     scheme.roles.surfaceSolid.background;
 
   const value = useMemo(
-    () => ({
-      skin,
-      skins,
-      setSkinId,
-      themePrefs,
-      setThemePrefs,
-      tryThemePrefs,
-      trySkinId,
-      trying: trial !== null,
-      applyTrial,
-      cancelTrial,
-      applyAccountPrefs,
-      looksVersion: lookVer,
-      textScale,
-      scheme,
-      onPhone,
-      phoneOwnLook,
-      dropPhoneLook,
-    }),
-    [skin, skins, setSkinId, themePrefs, setThemePrefs, tryThemePrefs, trySkinId, trial, applyTrial, cancelTrial, applyAccountPrefs, lookVer, textScale, scheme, onPhone, phoneOwnLook, dropPhoneLook]
+    () => ({ ...controls, skin, themePrefs, looksVersion: lookVer, textScale, scheme }),
+    [controls, skin, themePrefs, lookVer, textScale, scheme]
   );
 
   return (

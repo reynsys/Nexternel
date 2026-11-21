@@ -47,6 +47,8 @@ type Props = {
   footnote?: string;
   /** Shown on a phone: the Dashboard menu offers the phone's own choices (lib/room-nav.ts). */
   onPhone?: boolean;
+  /** A wall screen with Light effects on (Users → Edit → Wall display): its screen shows no background effect. */
+  wallLight?: boolean;
 };
 
 const TABS = [
@@ -154,7 +156,7 @@ function Swatch({ colour, label, selected, onClick }: { colour: string; label: s
  * Appearance engine (lib/appearance), which keeps all text readable. Every colour choice is on the
  * Colours tab; Style is how things are drawn and what moves.
  */
-export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, onSkinChange, footnote, onPhone = false }: Props) {
+export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, onSkinChange, footnote, onPhone = false, wallLight = false }: Props) {
   const [customHex, setCustomHex] = useState(themePrefs.primary);
   const [kind, setKind] = useState<BackgroundKind>(() => kindOf(themePrefs.gradientId));
   const reducedMotion = useReducedMotion();
@@ -290,6 +292,11 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
       {reducedMotion && (
         <Alert severity="info" sx={{ mb: 1.5 }}>
           This device asks apps to reduce motion, so effects stay still here.
+        </Alert>
+      )}
+      {wallLight && (
+        <Alert severity="info" sx={{ mb: 1.5 }}>
+          Not shown on the wall screen while Light effects is on (Wall display tab).
         </Alert>
       )}
       <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 1 }}>
@@ -577,7 +584,7 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
           <Typography variant="subtitle1" sx={{ mb: 1 }}>
             Preview
           </Typography>
-          <AppearancePreview prefs={themePrefs} deviceDark={deviceDark} />
+          <AppearancePreview prefs={themePrefs} skinId={skinId} deviceDark={deviceDark} />
           <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5, fontFamily: fontFamilyFor(look, themePrefs.lookFont) }}>
             Font: {CORE_FONTS.find((f) => f.id === fontId)?.label ?? look.fonts?.find((f) => f.id === fontId)?.label ?? "Inter"}
           </Typography>

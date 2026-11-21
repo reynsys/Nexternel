@@ -265,7 +265,7 @@ export function lookThemeOptions(
                   width: "auto",
                   alignSelf: "flex-start",
                   "& .MuiTab-root": { alignItems: "flex-start", textAlign: "left" },
-                  "& .MuiTab-root + .MuiTab-root::before": { left: "12%", top: 0, width: "76%", height: 1 },
+                  "& .MuiTab-root + .MuiTab-root": { backgroundSize: "76% 1px", backgroundPosition: "center top" },
                 }
               : {}),
           }),
@@ -295,17 +295,15 @@ export function lookThemeOptions(
             opacity: 0.78,
             borderRadius: t.radiusControl,
             transition: "opacity .15s, color .15s",
-            // The thin line between two tabs; none next to the open one.
-            "& + &::before": {
-              content: '""',
-              position: "absolute",
-              left: 0,
-              top: "25%",
-              height: "50%",
-              width: 1,
-              backgroundColor: t.line || base.palette.divider,
+            // The thin line between two tabs; none next to the open one. Drawn as the tab's background
+            // (not ::before / ::after, which a Look's button style may use for its own fill and edges).
+            "& + &": {
+              backgroundImage: `linear-gradient(${t.line || base.palette.divider}, ${t.line || base.palette.divider})`,
+              backgroundRepeat: "no-repeat",
+              backgroundSize: "1px 50%",
+              backgroundPosition: "left center",
             },
-            "&.Mui-selected::before, &.Mui-selected + &::before": { opacity: 0 },
+            "&.Mui-selected, &.Mui-selected + &": { backgroundImage: "none" },
             "&:hover": { opacity: 1 },
             "&.Mui-selected": { opacity: 1, color: primary.main, fontWeight: 700 },
             "&.Mui-focusVisible": { outline: `2px solid ${primary.main}`, outlineOffset: -2 },

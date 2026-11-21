@@ -529,7 +529,7 @@ function UsersAdminPage() {
                   <Typography variant="body2" color="text.secondary">
                     How Nexternel looks on this wall screen.
                   </Typography>
-                  <ThemeOptionsFields themePrefs={theme} skinId={skinId} skins={skins} onThemeChange={setTheme} onSkinChange={setSkinId} />
+                  <ThemeOptionsFields themePrefs={theme} skinId={skinId} skins={skins} onThemeChange={setTheme} onSkinChange={setSkinId} wallLight={normalizeWallPrefs(theme.wall).light} />
                 </Stack>
               ) : null}
               {shownTab === "wall" ? (

@@ -9,6 +9,8 @@ import { SkinProvider } from "./skins/SkinProvider";
 import { installErrorRing } from "./diagnostics/errorRing";
 import { bootstrapV5PanelRegistry } from "./panels/registry";
 import { loadCoreContributions } from "./plugins/loadContributions";
+import { LookPreviewPage } from "./pages/LookPreviewPage";
+import { LOOK_PREVIEW_PATH } from "./lib/look-preview-messages";
 
 // Inside Nexternel for Android the page does not pinch-zoom (like other phone apps), so the dock stays
 // on screen; bigger text comes from Settings → Appearance → Text size and the phone's own text size.
@@ -28,7 +30,19 @@ if ("serviceWorker" in navigator && window.isSecureContext) {
   });
 }
 
+// The Appearance preview is a page of its own (inside Settings → Appearance), drawn with the Look it is sent.
+const lookPreview = window.location.pathname === LOOK_PREVIEW_PATH;
+
 createRoot(document.getElementById("root")!).render(
+  lookPreview ? (
+    <StrictMode>
+      <AppErrorBoundary>
+        <BrowserRouter>
+          <LookPreviewPage />
+        </BrowserRouter>
+      </AppErrorBoundary>
+    </StrictMode>
+  ) : (
   <StrictMode>
     <AppErrorBoundary>
       <SkinProvider>
@@ -40,4 +54,5 @@ createRoot(document.getElementById("root")!).render(
       </SkinProvider>
     </AppErrorBoundary>
   </StrictMode>
+  )
 );

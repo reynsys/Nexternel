@@ -3,8 +3,6 @@ import { setLeaveGuard } from "../lib/leave-guard";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { type Layout } from "react-grid-layout";
 import {
-  Accordion,
-  AccordionDetails,
   Alert,
   Box,
   Button,
@@ -25,8 +23,6 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import AddIcon from "@mui/icons-material/Add";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import {
@@ -95,9 +91,6 @@ import { DashboardErrorBoundary } from "../components/DashboardErrorBoundary";
 import { getDashboardIcon } from "../lib/dashboard-icons";
 import { useShellAuth } from "../skins/useShellAuth";
 import { hasPermission } from "../lib/permissions";
-import { sectionSx } from "../skins/surfaceStyles";
-import { LookDecor } from "../skins/looks/LookDecor";
-import { useGradientActive } from "../skins/useSurfaceStyles";
 import { resolveHomeDashboardId } from "../lib/home-dashboard";
 import { dashboardIdForSlug, dashboardPaths } from "../lib/dashboard-path";
 import { GAUGE_WIDGET_TYPE } from "../widgets/gauge";
@@ -114,17 +107,12 @@ import {
   useDashboardDataRuntime,
 } from "../lib/dashboard-data-runtime";
 import { ButtonRow } from "../components/ButtonRow";
+import { DashboardSectionFrame } from "../components/DashboardSectionFrame";
 import { useLiveChanges } from "../lib/live-changes";
 import { displayPath, useDisplayMode } from "../lib/display-mode";
 import { useSkin } from "../skins/SkinProvider";
 import { normalizePhoneRoomNav, normalizeRoomNav, roomNavAtTop, shownRoomNav } from "../lib/room-nav";
 import { arrangeInRows, currentPanelsPerRow, DASHBOARD_MAX_WIDTH_PX, panelsPerRowChoices, rearrangeForColumns } from "../panels/flow-layout";
-
-function sectionContentSummary(panels: RuntimePanelInstance[]): string {
-  const count = panels.length;
-  if (!count) return "";
-  return `${count} panel${count === 1 ? "" : "s"}`;
-}
 
 function DashboardPageContent() {
   /** `/dashboards/<id>` (old links) or `/d/<slug>` (readable); neither means the default. */
@@ -145,7 +133,6 @@ function DashboardPageContent() {
   );
   const theme = useTheme();
   const isNarrow = useMediaQuery(theme.breakpoints.down("md"));
-  const gradientActive = useGradientActive();
   const [name, setName] = useState("Dashboard");
   const [tabIcon, setTabIcon] = useState("dashboard");
   const [showTabLabel, setShowTabLabel] = useState(true);
@@ -1228,124 +1215,75 @@ function DashboardPageContent() {
             // The section's place in the grid; the Look's section frame is drawn over its edges
             // (inside the room the section keeps for it with sectionInset).
             <Box key={section.id} sx={{ gridColumn: `span ${span}`, minWidth: 0, position: "relative", scrollMarginTop: 16 }}>
-            <Accordion
-              id={`dash-section-${section.id}`}
-              expanded={titleHidden || !section.collapsed}
-              onChange={(_e, expanded) =>
-                updateSection(section.id, { collapsed: !expanded })
-              }
-              disableGutters
-              data-nx-role="section"
-              sx={[
-                {
-                  overflow: "hidden",
-                  "&:before": { display: "none" },
-                  minWidth: 0,
-                },
-                // The Look's dashboard section (border, corners, fill, shadow) and the room it keeps for a frame.
-                sectionSx(gradientActive),
-                // The section whose settings are open is outlined.
+            <DashboardSectionFrame
+              id={section.id}
+              title={section.title || (editMode ? "Untitled section" : "")}
+              icon={SecIcon}
+              panelCount={sectionPanels(section).length}
+              collapsed={Boolean(section.collapsed)}
+              titleHidden={titleHidden}
+              onCollapsedChange={(collapsed) => updateSection(section.id, { collapsed })}
+              // The section whose settings are open is outlined.
+              outlineSx={
                 settingsPanel?.type === "section" && settingsPanel.id === section.id
                   ? (t) => ({ boxShadow: `0 0 0 2px ${t.palette.primary.main}` })
-                  : {},
-              ]}
+                  : undefined
+              }
+              tools={
+                editMode ? (
+                  <ButtonRow
+                    data-nx-section-tools=""
+                    direction="row"
+                    flexWrap="nowrap"
+                    sx={{ flexShrink: 0 }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Tooltip title="Add a panel to this section">
+                      <Button variant="outlined" startIcon={<AddIcon />} onClick={() => openAddPanel(section.id)} sx={{ whiteSpace: "nowrap" }}>
+                        Add panel
+                      </Button>
+                    </Tooltip>
+                    <Tooltip title="Name, icon, width, position, delete">
+                      <Button
+                        variant={settingsPanel?.type === "section" && settingsPanel.id === section.id ? "contained" : "outlined"}
+                        startIcon={<SettingsOutlinedIcon />}
+                        onClick={() => setSettingsPanel({ type: "section", id: section.id })}
+                        sx={{ whiteSpace: "nowrap" }}
+                      >
+                        Section settings
+                      </Button>
+                    </Tooltip>
+                  </ButtonRow>
+                ) : null
+              }
             >
-              {/* The section's header (the Accordion's first child): name, panel count, and its buttons. */}
-              <Box sx={{ display: titleHidden ? "none" : "block", px: 2, py: 1.25, containerType: "inline-size" }}>
-                <Stack
-                  direction="row"
-                  alignItems="center"
-                  useFlexGap
-                  spacing={1.25}
-                  sx={{
-                    width: "100%",
-                    minWidth: 0,
-                    // A narrow section (phone): Add panel and Section settings, with their words, on a line of their own.
-                    "@container (max-width: 520px)": {
-                      flexWrap: "wrap",
-                      "& [data-nx-section-name]": { flex: "1 1 0" },
-                      "& [data-nx-section-tools]": { order: 10, flexBasis: "100%", "& > *": { flex: "1 1 0", minWidth: 0 } },
-                    },
-                  }}
-                >
-                  <SecIcon color="primary" fontSize="small" />
-                  <Typography data-nx-section-name="" variant="h6" noWrap sx={{ minWidth: 0 }}>
-                    {section.title || (editMode ? "Untitled section" : "")}
-                  </Typography>
-                  <Typography variant="caption" sx={{ flexShrink: 0, color: "text.secondary" }}>
-                    {sectionContentSummary(sectionPanels(section))}
-                  </Typography>
-                  <Box sx={{ flex: 1 }} />
-                  {editMode && (
-                    <ButtonRow
-                      data-nx-section-tools=""
-                      direction="row"
-                      flexWrap="nowrap"
-                      sx={{ flexShrink: 0 }}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Tooltip title="Add a panel to this section">
-                        <Button variant="outlined" startIcon={<AddIcon />} onClick={() => openAddPanel(section.id)} sx={{ whiteSpace: "nowrap" }}>
-                          Add panel
-                        </Button>
-                      </Tooltip>
-                      <Tooltip title="Name, icon, width, position, delete">
-                        <Button
-                          variant={settingsPanel?.type === "section" && settingsPanel.id === section.id ? "contained" : "outlined"}
-                          startIcon={<SettingsOutlinedIcon />}
-                          onClick={() => setSettingsPanel({ type: "section", id: section.id })}
-                          sx={{ whiteSpace: "nowrap" }}
-                        >
-                          Section settings
-                        </Button>
-                      </Tooltip>
-                    </ButtonRow>
-                  )}
-                  {/* Fold / open: a real button like every other, with its name. */}
-                  <Tooltip title={section.collapsed ? "Open this section" : "Fold this section"}>
-                    <Button
-                      variant="outlined"
-                      aria-label={section.collapsed ? "Open this section" : "Fold this section"}
-                      aria-expanded={!section.collapsed}
-                      aria-controls={`dash-section-body-${section.id}`}
-                      onClick={() => updateSection(section.id, { collapsed: !section.collapsed })}
-                      sx={{ minWidth: 36, width: 36, height: 36, p: 0, flexShrink: 0 }}
-                    >
-                      {section.collapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
-                    </Button>
-                  </Tooltip>
-                </Stack>
-              </Box>
-              <AccordionDetails id={`dash-section-body-${section.id}`} sx={{ pt: titleHidden ? 2 : 0, px: 2, pb: 2 }}>
-                <SectionGrid
-                  gridCols={gridCols}
-                  sectionId={section.id}
-                  sectionRoomId={section.roomId ?? null}
-                  sectionTitle={section.title}
-                  panels={sectionPanels(section)}
-                  capabilities={capabilities}
-                  cameras={cameras}
-                  editMode={editMode}
-                  onAddPanel={() => openAddPanel(section.id)}
-                  onStartAdding={
-                    canEditDashboards && !display.active
-                      ? () => {
-                          enterEditMode();
-                          openAddPanel(section.id);
-                        }
-                      : undefined
-                  }
-                  activity={section.collapsed ? "collapsed" : "visible"}
-                  onLayoutChange={onLayoutChange}
-                  onRemovePanel={removePanel}
-                  onUpdatePanel={updatePanel}
-                  onMovePanel={movePanelToSection}
-                  moveTargets={ordered.filter((x) => x.id !== section.id).map((x) => ({ id: x.id, title: x.title }))}
-                  onCapabilityState={applyLive}
-                />
-              </AccordionDetails>
-            </Accordion>
-            <LookDecor slot="section" />
+              <SectionGrid
+                gridCols={gridCols}
+                sectionId={section.id}
+                sectionRoomId={section.roomId ?? null}
+                sectionTitle={section.title}
+                panels={sectionPanels(section)}
+                capabilities={capabilities}
+                cameras={cameras}
+                editMode={editMode}
+                onAddPanel={() => openAddPanel(section.id)}
+                onStartAdding={
+                  canEditDashboards && !display.active
+                    ? () => {
+                        enterEditMode();
+                        openAddPanel(section.id);
+                      }
+                    : undefined
+                }
+                activity={section.collapsed ? "collapsed" : "visible"}
+                onLayoutChange={onLayoutChange}
+                onRemovePanel={removePanel}
+                onUpdatePanel={updatePanel}
+                onMovePanel={movePanelToSection}
+                moveTargets={ordered.filter((x) => x.id !== section.id).map((x) => ({ id: x.id, title: x.title }))}
+                onCapabilityState={applyLive}
+              />
+            </DashboardSectionFrame>
             </Box>
           );
         })}

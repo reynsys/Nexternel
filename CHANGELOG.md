@@ -2,6 +2,13 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting at 1. Newest first.
 
+## V5.4.5
+
+- **The Appearance preview now shows a real dashboard:** a section with real panels (clock, readings with status lights, a gauge, light switches) in exactly the look being chosen, with sample readings. It also shows a wall screen's own look properly.
+- **Wall screens:** when Light effects is on, Appearance says the background effect is not shown on the wall screen.
+- **Tabs keep their words in every look.** In HUD with some button styles, tabs showed as empty filled boxes.
+- **HUD Glass:** Delete buttons are easier to read (HUD pack 1.10.1).
+
 ## V5.4.4
 
 - **App settings has a Back button** at the top.

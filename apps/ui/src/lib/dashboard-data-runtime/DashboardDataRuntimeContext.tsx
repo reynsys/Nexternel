@@ -14,6 +14,7 @@ import {
   DashboardDataRuntime,
   type LiveConnectionFactory,
 } from "./runtime";
+import type { PanelResolveBatchFetch } from "./panel-resolver-batcher";
 import type {
   CapabilityStateSnapshot,
   PanelActivity,
@@ -27,22 +28,26 @@ const DashboardDataRuntimeContext =
 type Props = {
   children: ReactNode;
   connectLive?: LiveConnectionFactory;
+  /** Where panels learn what they show (default: the server). The Appearance preview answers itself. */
+  resolvePanels?: PanelResolveBatchFetch;
+  /** Status lights to start with (the Appearance preview's sample readings). */
+  statuses?: readonly CapabilityStatus[];
 };
+
+const resolveOnServer: PanelResolveBatchFetch = async (requests, signal) =>
+  (await api.resolvePanelsBatch([...requests], { signal })).results;
 
 export function DashboardDataRuntimeProvider({
   children,
   connectLive = connectLiveSocket,
+  resolvePanels = resolveOnServer,
+  statuses,
 }: Props) {
-  const [runtime] = useState(
-    () =>
-      new DashboardDataRuntime(
-        connectLive,
-        async (requests, signal) =>
-          (
-            await api.resolvePanelsBatch([...requests], { signal })
-          ).results
-      )
-  );
+  const [runtime] = useState(() => {
+    const next = new DashboardDataRuntime(connectLive, resolvePanels);
+    if (statuses) next.statuses.setMany(statuses);
+    return next;
+  });
 
   useEffect(() => {
     runtime.start();
