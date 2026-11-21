@@ -614,7 +614,7 @@ export function DevicesPage() {
                     setDeleteTarget(editing);
                   }}
                 >
-                  Delete device
+                  Remove device
                 </Button>
               </Box>
             </Stack>
@@ -696,12 +696,12 @@ export function DevicesPage() {
         fullWidth
         maxWidth="xs"
       >
-        <DialogTitle>Delete device</DialogTitle>
+        <DialogTitle>Remove device</DialogTitle>
         <DialogContent>
           <Stack spacing={2}>
             <Typography>
-              Delete <strong>{deleteTarget?.name}</strong> and all its sensors/relays? This cannot be
-              undone.
+              Remove <strong>{deleteTarget?.name}</strong> from Nexternel? Its readings and switches are removed with it, and
+              panels that show them lose them. This cannot be undone.
             </Typography>
             {deleteTarget?.zherodius ? (
               <Typography variant="body2" color="text.secondary">
@@ -713,7 +713,7 @@ export function DevicesPage() {
               (deleteTarget.firmwareType || "esphome") === "esphome" &&
               deleteTarget.esphomeManagementMode === "managed" && (
                 <Typography variant="body2" color="text.secondary">
-                  The managed ESPHome YAML file on the server will also be deleted.
+                  Nexternel's settings file for this board is removed too.
                 </Typography>
               )}
             {deleteTarget &&
@@ -726,7 +726,7 @@ export function DevicesPage() {
                       onChange={(e) => setDeleteYamlToo(e.target.checked)}
                     />
                   }
-                  label="Also delete ESPHome YAML file on server"
+                  label="Also remove this board's ESPHome settings file from the server"
                 />
               )}
           </Stack>
@@ -741,7 +741,7 @@ export function DevicesPage() {
             disabled={busy}
             onClick={() => void onDelete()}
           >
-            {busy ? "Deleting…" : "Delete"}
+            {busy ? "Removing…" : "Remove"}
           </Button>
         </DialogActions>
       </Dialog>

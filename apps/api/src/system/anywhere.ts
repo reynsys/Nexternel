@@ -91,6 +91,8 @@ export async function writeAnywhereSettings(settings: AnywhereSettings): Promise
   const tmp = SETTINGS_FILE() + ".tmp";
   await writeFile(tmp, JSON.stringify(settings, null, 1), { mode: 0o600 });
   await rename(tmp, SETTINGS_FILE());
+  // Zherodius devices list Nexternel by the home's name (zherodius/service.ts hubName).
+  void import("../zherodius/service.js").then(({ zherodius }) => zherodius.tellNames()).catch(() => undefined);
 }
 
 /**

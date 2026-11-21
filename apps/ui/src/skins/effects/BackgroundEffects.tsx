@@ -95,11 +95,12 @@ export function BackgroundEffects({ prefs }: { prefs: ThemePrefs }) {
 }
 
 /**
- * A small moving picture of one effect (the effect tiles in Settings → Appearance): a miniature of the
- * real background, drawn by the same engine with the person's colours, amount and speed.
+ * A moving picture of one effect, drawn by the same engine with the person's colours, amount and speed:
+ * a miniature of the real background (the effect tiles in Settings → Appearance), or at full size in a
+ * box (`full`: the Appearance preview).
  */
-export function EffectPicture({ options: given }: { options: EffectOptions }) {
-  const options = useMemo(() => ({ ...given, miniature: true }), [given]);
+export function EffectPicture({ options: given, full = false }: { options: EffectOptions; full?: boolean }) {
+  const options = useMemo(() => ({ ...given, miniature: !full }), [given, full]);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const runningRef = useRef<{ update: (o: EffectOptions) => void; stop: () => void } | null>(null);
   const reducedMotion = useReducedMotion();

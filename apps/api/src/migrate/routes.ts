@@ -3,13 +3,11 @@ import { requireAdmin } from "../auth/rbac.js";
 import { config } from "../config.js";
 import { isDirectory, esphomeDir } from "./paths.js";
 import { createConfigExport } from "./export-config.js";
-import { adoptConfigArchive } from "./adopt-config.js";
 import { createFlashReadyYamlForStem } from "./flash-yaml.js";
 import { repairDashboardCapabilityBindings } from "./repair-dashboard-bindings.js";
 import { refreshTelemetrySubscriptions } from "../telemetry/mqtt.js";
 import { syncCapabilitiesFromLegacy } from "../capabilities/sync.js";
 
-const MAX_CONFIG_BYTES = 50 * 1024 * 1024; // 50 MB — enforced in adopt handler if needed
 
 export const migrateRoutes: FastifyPluginAsync = async (app) => {
   app.get("/api/v1/system/config/status", async (request, reply) => {
@@ -86,61 +84,4 @@ export const migrateRoutes: FastifyPluginAsync = async (app) => {
       }
     }
   );
-
-  app.post("/api/v1/system/config/adopt", async (request, reply) => {
-    if (!requireAdmin(request, reply)) return;
-
-    try {
-      let newBrokerIp = config.serverIp() || "";
-      let newTopicRoot = (process.env.MQTT_TOPIC_PREFIX || "nexternel").trim();
-      let wifiSsid = "";
-      let wifiPassword = "";
-      let confirm = "";
-      let fileBuffer: Buffer | null = null;
-
-      const parts = request.parts();
-      for await (const part of parts) {
-        if (part.type === "file") {
-          if (part.fieldname !== "file") {
-            await part.toBuffer();
-            continue;
-          }
-          fileBuffer = await part.toBuffer();
-        } else {
-          const value = String(part.value ?? "");
-          if (part.fieldname === "newBrokerIp") newBrokerIp = value;
-          if (part.fieldname === "newTopicRoot") newTopicRoot = value;
-          if (part.fieldname === "wifiSsid") wifiSsid = value;
-          if (part.fieldname === "wifiPassword") wifiPassword = value;
-          if (part.fieldname === "confirm") confirm = value;
-        }
-      }
-
-      if (!fileBuffer?.length) {
-        return reply.code(400).send({
-          error: {
-            code: "bad_request",
-            message: "Configuration .nexcfg file is required",
-          },
-        });
-      }
-
-      const result = await adoptConfigArchive(fileBuffer, {
-        newBrokerIp,
-        newTopicRoot,
-        wifiSsid: wifiSsid || undefined,
-        wifiPassword: wifiPassword || undefined,
-        confirm,
-      });
-      return result;
-    } catch (err) {
-      request.log.error({ err }, "config adopt failed");
-      return reply.code(400).send({
-        error: {
-          code: "adopt_failed",
-          message: err instanceof Error ? err.message : "Adopt failed",
-        },
-      });
-    }
-  });
 };

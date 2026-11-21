@@ -9,7 +9,7 @@ import { readAnywhereSettings } from "../system/anywhere.js";
 import { devicePath } from "../devices/device-path-store.js";
 import { createZherodiusConnections } from "./connections.js";
 import { LineError, pairDevice } from "./line.js";
-import { findAddress, getPairing, hubKey, itemsOf, listPairings, savePairedDevice, saveSeen, syncItems } from "./store.js";
+import { findAddress, getPairing, hubKey, itemsOf, listPairings, savePairedDevice, saveHubName, saveSeen, syncItems } from "./store.js";
 
 export const zherodius = createZherodiusConnections({
   hubKey,
@@ -17,6 +17,8 @@ export const zherodius = createZherodiusConnections({
   itemsOf,
   syncItems,
   saveSeen,
+  hubName: () => hubName(),
+  saveHubName,
   findAddress,
   path: devicePath,
   logActivity: (e) => void logActivity({ kind: "device", deviceId: e.deviceId, text: e.text }),

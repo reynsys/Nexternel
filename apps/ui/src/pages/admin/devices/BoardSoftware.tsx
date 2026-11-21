@@ -62,7 +62,9 @@ export function BoardSoftware({ device, canEdit, busy, onUsb, showHistory = true
       : board.updateState === "update"
         ? `An update is ready. Why: ${board.updateReason ? `${board.updateReason.charAt(0).toLowerCase()}${board.updateReason.slice(1)}` : "the board runs older software than the newest build of its settings"}.`
         : board.updateState === "unknown"
-          ? "Not known yet: this board does not report which software it runs. One update from Nexternel starts it."
+          ? board.reachable
+            ? "Nexternel can't tell which software version this board runs. An update installs the newest version; after that Nexternel checks it by itself."
+            : "This board is not answering, so Nexternel can't check its software. It checks again when the board answers."
           : `Up to date — it runs the newest build${board.deployedVersion ? ` (ESPHome ${board.deployedVersion})` : ""}.`;
 
   return (

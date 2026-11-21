@@ -2,6 +2,14 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting at 1. Newest first.
 
+## V5.4.11
+
+- **The Appearance preview shows straight away:** it is drawn in the page itself instead of starting a second copy of Nexternel.
+- **Removing is easy to find:** a "Remove device" button on each device's page, and "Remove this dashboard" in Dashboard settings. If you remove the dashboard that opens first, the next one opens first instead.
+- **Clearer board messages** on the Devices page; a board that does not answer is not offered an update.
+- **Zherodius devices follow a new home name** (with Zherodius 1.11.2).
+- Tidier inside: an unused part removed; the Nexternel Anywhere link reports its real version.
+
 ## V5.4.10
 
 - **Charts carry on when a device is replaced:** when a new device takes the place of an earlier one (for example a board moved from ESPHome to Zherodius), its readings go on in the same charts, after the earlier ones. Before, the charts started empty.

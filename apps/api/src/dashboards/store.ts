@@ -110,6 +110,12 @@ export async function updateDashboard(
 
 export async function deleteDashboard(id: string): Promise<boolean> {
   const result = await getPool().query(`DELETE FROM v3_dashboards WHERE id = $1`, [id]);
+  // The dashboard that opens first was removed: the next one in the Dock's order opens first now.
+  await getPool().query(
+    `UPDATE v3_dashboards SET is_default = TRUE, updated_at = NOW()
+     WHERE id = (SELECT id FROM v3_dashboards ORDER BY tab_order, created_at LIMIT 1)
+       AND NOT EXISTS (SELECT 1 FROM v3_dashboards WHERE is_default)`
+  );
   return (result.rowCount ?? 0) > 0;
 }
 

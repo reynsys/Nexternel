@@ -22,7 +22,17 @@ import path from "node:path";
 const env = process.env;
 const SETTINGS_FILE = env.LINK_SETTINGS_FILE || "";
 const DOOR_PORT = Number(env.LINK_DOOR_PORT || 7443);
-const VERSION = env.LINK_VERSION || "dev";
+/** The Nexternel version this link was built with (apps/ui/src/version.ts, copied in by its Dockerfile). */
+function builtVersion() {
+  try {
+    const m = /APP_VERSION = "([^"]+)"/.exec(fs.readFileSync(new URL("./version.ts", import.meta.url), "utf8"));
+    if (m) return m[1];
+  } catch {
+    /* run straight from the source folder (tests) */
+  }
+  return "unknown";
+}
+const VERSION = env.LINK_VERSION || builtVersion();
 const DOOR_CA = env.LINK_DOOR_CA ? fs.readFileSync(env.LINK_DOOR_CA) : undefined; // only for testing
 const STATUS_FILE = env.LINK_STATUS_FILE || "";
 const NAME_RE = /^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$/;

@@ -10,6 +10,12 @@ import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
 import { ICON_SIZE } from "../../../lib/appearance/type";
 import { BoardUpdateDetailsButton } from "./BoardUpdateDetails";
 
+/** "Kids Room", "Kids Room and Garden", "Kids Room, Garden and Hallway". */
+function names(list: { name: string }[]): string {
+  const n = list.map((b) => b.name);
+  return n.length > 1 ? `${n.slice(0, -1).join(", ")} and ${n[n.length - 1]}` : (n[0] ?? "");
+}
+
 export function StepIcon({ step }: { step: BoardUpdateStep }) {
   if (step === "done") return <CheckCircleRoundedIcon color="success" sx={{ fontSize: ICON_SIZE.title }} />;
   if (step === "failed") return <ErrorRoundedIcon color="error" sx={{ fontSize: ICON_SIZE.title }} />;
@@ -30,7 +36,10 @@ export function BoardUpdatesCard({ canEdit }: { canEdit: boolean }) {
   const [error, setError] = useState<string | null>(null);
   if (!boards) return null;
   const behind = boards.filter((b) => b.updateState === "update");
-  const unknown = boards.filter((b) => b.known && b.updateState === "unknown");
+  // Not known: only boards that answer can be updated; one that does not answer is checked when it answers again.
+  const unknownAll = boards.filter((b) => b.known && b.updateState === "unknown");
+  const unknown = unknownAll.filter((b) => b.reachable);
+  const silent = unknownAll.filter((b) => !b.reachable);
   const unsteady = [...behind, ...unknown].filter((b) => b.recentDrops >= UNSTEADY_DROPS);
   const showRun = run && run.items.length > 0 && (run.running || run.items.some((i) => i.finishedAt && Date.now() - Date.parse(i.finishedAt) < 30 * 60_000));
   if (preparing?.running) {
@@ -52,7 +61,7 @@ export function BoardUpdatesCard({ canEdit }: { canEdit: boolean }) {
       </Card>
     );
   }
-  if (!behind.length && !unknown.length && !showRun) return null;
+  if (!behind.length && !unknown.length && !silent.length && !showRun) return null;
   const start = (ids: string[]) => {
     setError(null);
     updateBoards(ids).catch((err) => setError(err instanceof Error ? err.message : "Could not start"));
@@ -69,8 +78,8 @@ export function BoardUpdatesCard({ canEdit }: { canEdit: boolean }) {
                 ? "Updating boards…"
                 : behind.length
                   ? `${behind.length} board${behind.length === 1 ? " needs" : "s need"} an update`
-                  : unknown.length
-                    ? "Board software not known yet"
+                  : unknown.length || silent.length
+                    ? "Board software to check"
                     : "Board updates finished"}
             </Typography>
             {run?.running ? (
@@ -89,11 +98,17 @@ export function BoardUpdatesCard({ canEdit }: { canEdit: boolean }) {
                 ))}
                 {unknown.length ? (
                   <Typography variant="body2" color="text.secondary">
-                    Not known yet: {unknown.map((b) => b.name).join(", ")}. {unknown.length === 1 ? "It does" : "They do"} not report which
-                    software {unknown.length === 1 ? "it runs" : "they run"} yet; one update from Nexternel starts it.
+                    Nexternel can't tell which software version {names(unknown)} {unknown.length === 1 ? "runs" : "run"}. Update boards
+                    installs the newest version; after that Nexternel checks it by itself.
                   </Typography>
                 ) : null}
-                {!behind.length && !unknown.length ? (
+                {silent.length ? (
+                  <Typography variant="body2" color="text.secondary">
+                    {names(silent)} {silent.length === 1 ? "is" : "are"} not answering, so Nexternel can't check {silent.length === 1 ? "its" : "their"} software.
+                    It checks again when {silent.length === 1 ? "it answers" : "they answer"}.
+                  </Typography>
+                ) : null}
+                {!behind.length && !unknown.length && !silent.length ? (
                   <Typography variant="body2" color="text.secondary">
                     Every board is up to date.
                   </Typography>

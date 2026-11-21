@@ -4,7 +4,8 @@
  * - the line open = online; the line closed (or silent too long) = offline, then it is opened again;
  * - every status the device sends (at once after each change, and at least every 30 s) = its readings;
  * - a changed `cfg` (names or parts changed on the device) = its items are read again (Zh.GetInfo);
- * - a press = Relay.Set over the line; the device's answer confirms it.
+ * - a press = Relay.Set over the line; the device's answer confirms it;
+ * - Nexternel's name on the device follows the home's name: told when the line opens and when it changes.
  * A device that moved to another address is found again by its serial number on the home network.
  */
 import type { CapabilityRow } from "../capabilities/store.js";
@@ -22,6 +23,8 @@ export type Pairing = {
   deviceKey: string;
   /** The device's cfg mark when its items were last read (null: not read yet). */
   cfg: number | null;
+  /** The name the device knows Nexternel by (null: not known). */
+  hubName: string | null;
 };
 
 export type ConnectionsDeps = {
@@ -31,6 +34,9 @@ export type ConnectionsDeps = {
   /** Make the device's items match what it says it is made of; gives the items as they are now. */
   syncItems(deviceId: string, info: DeviceInfo): Promise<ItemMap>;
   saveSeen(deviceId: string, seen: { address: string; cfg: number | null; version: string }): void;
+  /** How Nexternel names itself to devices now. */
+  hubName(): Promise<string>;
+  saveHubName(deviceId: string, name: string): void;
   /** The device's address on the home network now, found by its serial number (null: not seen). */
   findAddress(serial: string): Promise<string | null>;
   path: Pick<DevicePath, "reportItem" | "deviceOnline" | "deviceOffline" | "deviceHeard">;
@@ -136,6 +142,23 @@ export function createZherodiusConnections(deps: ConnectionsDeps) {
     apply(entry, status);
   }
 
+  /**
+   * Tell the device Nexternel's name when it knows another one. A device older than Zherodius 1.11.2
+   * does not understand the ask: it keeps the earlier name, and nothing else changes (tried again on
+   * the next line opening).
+   */
+  async function tellName(entry: Entry, line: Line) {
+    const name = await deps.hubName().catch(() => "");
+    if (!name || name === entry.p.hubName) return;
+    try {
+      await line.call("Zh.SetHubName", { name });
+    } catch {
+      return;
+    }
+    entry.p.hubName = name;
+    deps.saveHubName(entry.p.deviceId, name);
+  }
+
   async function open(entry: Entry, hub: X25519Key): Promise<Line> {
     const opts = (address: string) => ({
       address,
@@ -181,6 +204,7 @@ export function createZherodiusConnections(deps: ConnectionsDeps) {
         deps.saveSeen(entry.p.deviceId, { address: entry.p.address, cfg: entry.p.cfg, version: opened.hello.version });
         deps.path.deviceOnline([entry.p.deviceId]);
         apply(entry, status);
+        await tellName(entry, opened);
       });
       if (entry.line === line) {
         entry.attempt = 0;
@@ -289,6 +313,13 @@ export function createZherodiusConnections(deps: ConnectionsDeps) {
     add,
     forget,
     refreshItems,
+    /** Nexternel's name changed: tell every device on an open line. */
+    tellNames() {
+      for (const e of entries.values()) {
+        const line = e.line;
+        if (line) void queue(e, () => tellName(e, line)).catch(() => undefined);
+      }
+    },
     sender,
     /** Whether the line to this device is open (for the device page). */
     isOpen: (deviceId: string) => Boolean(entries.get(deviceId)?.line),

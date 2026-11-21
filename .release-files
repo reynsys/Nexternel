@@ -163,7 +163,6 @@ apps/api/src/lib/host-metrics.ts
 apps/api/src/lib/server-temperature.ts
 apps/api/src/live/changes.test.ts
 apps/api/src/live/changes.ts
-apps/api/src/migrate/adopt-config.ts
 apps/api/src/migrate/align-mqtt-topics.test.ts
 apps/api/src/migrate/align-mqtt-topics.ts
 apps/api/src/migrate/detect-esphome-mqtt-credentials.test.ts
@@ -173,6 +172,7 @@ apps/api/src/migrate/ensure-mosquitto-credentials.ts
 apps/api/src/migrate/esphome-rewrite.ts
 apps/api/src/migrate/export-config.ts
 apps/api/src/migrate/flash-yaml.ts
+apps/api/src/migrate/home-upserts.ts
 apps/api/src/migrate/paths.ts
 apps/api/src/migrate/repair-dashboard-bindings.ts
 apps/api/src/migrate/routes.ts
@@ -324,7 +324,6 @@ apps/ui/src/components/AddPanelSteps.tsx
 apps/ui/src/components/AddPanelTypePicker.tsx
 apps/ui/src/components/AnywhereStatus.tsx
 apps/ui/src/components/appearance/AppearancePreview.tsx
-apps/ui/src/components/appearance/LookFrame.tsx
 apps/ui/src/components/appearance/LookSampleBox.tsx
 apps/ui/src/components/appearance/LookSample.tsx
 apps/ui/src/components/AppErrorBoundary.tsx
@@ -461,7 +460,6 @@ apps/ui/src/lib/look-choice.ts
 apps/ui/src/lib/look-css.test.ts
 apps/ui/src/lib/look-font.test.ts
 apps/ui/src/lib/look-font.ts
-apps/ui/src/lib/look-preview-messages.ts
 apps/ui/src/lib/look-roles-guard.test.ts
 apps/ui/src/lib/map-panel-content.test.ts
 apps/ui/src/lib/map-panel-content.ts
@@ -515,6 +513,7 @@ apps/ui/src/lib/permissions.ts
 apps/ui/src/lib/phone-screen.ts
 apps/ui/src/lib/room-nav.test.ts
 apps/ui/src/lib/room-nav.ts
+apps/ui/src/lib/sample-data.tsx
 apps/ui/src/lib/slot-bindings.ts
 apps/ui/src/lib/status-light-show.test.ts
 apps/ui/src/lib/status-light-show.ts
@@ -596,7 +595,6 @@ apps/ui/src/pages/AppSettingsPage.tsx
 apps/ui/src/pages/DashboardPage.tsx
 apps/ui/src/pages/DisplayPage.tsx
 apps/ui/src/pages/LoginPage.tsx
-apps/ui/src/pages/LookPreviewPage.tsx
 apps/ui/src/pages/SetupPage.tsx
 apps/ui/src/panels/CalendarPanel.tsx
 apps/ui/src/panels/CameraPanel.tsx

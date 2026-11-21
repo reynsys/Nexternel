@@ -13,7 +13,7 @@ import {
   upsertDashboards,
   upsertDevice,
   upsertRooms,
-} from "../migrate/adopt-config.js";
+} from "../migrate/home-upserts.js";
 import type { DomainExport } from "./domain-export.js";
 import { sanitizeDomainForRestore } from "./domain-sanitize.js";
 import { readAnywhereSettings, validAnywhereName, writeAnywhereSettings } from "../system/anywhere.js";

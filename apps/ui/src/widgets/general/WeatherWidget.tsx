@@ -1,6 +1,6 @@
 import { PANEL_TEXT } from "../../lib/appearance/type";
 import { Box, Stack, Typography } from "@mui/material";
-import { api, type WeatherResponse, type WidgetInstance } from "../../api";
+import type { WeatherResponse, WidgetInstance } from "../../api";
 import { parseWeatherConfig, widgetTitleOr } from "./config";
 import { useDashboardTileChrome } from "../../lib/dashboard-tile-context";
 import { panelContentRootSx } from "../../components/DashboardTileBody";
@@ -8,6 +8,7 @@ import { useMetricAppearance } from "../../skins/useMetricAppearance";
 import { HumidityMark, WeatherIcon, WindMark } from "./WeatherIcon";
 import { usePanelPoll } from "../../lib/usePanelPoll";
 import { PanelNotice } from "../../components/PanelNotice";
+import { usePanelData } from "../../lib/sample-data";
 
 /** Weather type: sized by the tile's width and height (cqi / cqb), so it fits any tile shape. */
 const WX_READING = PANEL_TEXT.valueShared;
@@ -27,10 +28,11 @@ function weekdayShort(isoDate: string): string {
 export function WeatherWidget({ widget }: { widget: WidgetInstance }) {
   const cfg = parseWeatherConfig(widget.config);
   // Every 15 minutes; quickly again after a failure, and when the screen wakes.
+  const panelData = usePanelData();
   const { data, error } = usePanelPoll<WeatherResponse>(
-    () => api.weather(cfg.weatherLat, cfg.weatherLon),
+    () => panelData.weather(cfg.weatherLat, cfg.weatherLon),
     900_000,
-    [cfg.weatherLat, cfg.weatherLon]
+    [cfg.weatherLat, cfg.weatherLon, panelData]
   );
 
   const { showBodyHeading, showItemContext } = useDashboardTileChrome();

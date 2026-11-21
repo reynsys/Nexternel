@@ -25,6 +25,7 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
+import { useConfirm } from "../components/confirm";
 import {
   api,
   type CameraRecord,
@@ -428,6 +429,29 @@ function DashboardPageContent() {
   // A dashboard just created opens ready to edit (Add panel at hand), not as an empty page.
   const location = useLocation();
   const navigate = useNavigate();
+  const { confirm } = useConfirm();
+
+  /** Remove the open dashboard (after asking), then show the dashboard that opens first. */
+  async function removeDashboard() {
+    if (!dashboardId) return;
+    const ok = await confirm({
+      title: "Remove this dashboard?",
+      message: `Remove “${name}” with its sections and panels? Your devices and their readings stay. This cannot be undone.`,
+      confirmLabel: "Remove",
+    });
+    if (!ok) return;
+    try {
+      await api.deleteDashboard(dashboardId);
+      setEditMode(false);
+      setEditBaseline(null);
+      setSettingsPanel(null);
+      setAddPanelOpen(false);
+      setTabRefreshKey((k) => k + 1);
+      navigate("/", { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not remove the dashboard");
+    }
+  }
   useEffect(() => {
     if (pageLoading || !dashboardId || editMode) return;
     if ((location.state as { startEditing?: boolean } | null)?.startEditing) {
@@ -1122,6 +1146,7 @@ function DashboardPageContent() {
         sectionShortcuts={showSectionNav}
         onSectionShortcuts={setShowSectionNav}
         onDashboardsChanged={() => setTabRefreshKey((k) => k + 1)}
+        onRemove={dashboardId ? () => void removeDashboard() : undefined}
         onCurrentMeta={(meta) => {
           // Renamed under All dashboards: already kept, so Cancel must not put the old name back.
           setMenuBefore((b) => (b ? { ...b, name: meta.name, tabIcon: meta.tabIcon, showTabLabel: meta.showTabLabel } : b));

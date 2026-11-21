@@ -98,7 +98,7 @@ export function ManageDashboardsPanel({ compact, currentDashboardId, onDashboard
       await load();
       onDashboardsChanged?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not delete the dashboard");
+      setError(err instanceof Error ? err.message : "Could not remove the dashboard");
     } finally {
       setBusy(false);
     }
@@ -256,14 +256,14 @@ export function ManageDashboardsPanel({ compact, currentDashboardId, onDashboard
               {mode === "delete" ? (
                 <Box sx={{ mt: 1.5 }}>
                   <Typography variant="body2">
-                    Delete “{d.name}” and everything on it? This cannot be undone.
+                    Remove “{d.name}” with its sections and panels? Your devices and their readings stay. This cannot be undone.
                   </Typography>
                   <ButtonRow direction="row" justifyContent="flex-end" sx={{ mt: 1 }}>
                     <Button variant="outlined" onClick={() => setRowMode(null)}>
                       Cancel
                     </Button>
                     <Button startIcon={<DeleteOutlineIcon />} variant="contained" color="error" disabled={busy} onClick={() => void remove(d.id)}>
-                      Delete
+                      Remove
                     </Button>
                   </ButtonRow>
                 </Box>
@@ -316,7 +316,7 @@ export function ManageDashboardsPanel({ compact, currentDashboardId, onDashboard
                   setRowMode({ id: d.id, mode: "delete" });
                 }}
               >
-                Delete…
+                Remove…
               </MenuItem>,
             ]
           : null}

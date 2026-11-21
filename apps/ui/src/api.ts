@@ -241,21 +241,7 @@ export const SERVER_UNREACHABLE = "Can't reach Nexternel right now. Trying again
 export const CLIENT_ID =
   typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `c${Date.now()}${Math.random().toString(36).slice(2)}`;
 
-/**
- * The Appearance preview (pages/LookPreviewPage.tsx) answers some questions itself with sample
- * readings (history for charts, weather), so it looks the same on every Nexternel and asks the server
- * nothing. Returns undefined for anything it does not answer.
- */
-let sampleAnswers: ((path: string) => unknown) | null = null;
-export function answerWithSamples(answer: (path: string) => unknown): void {
-  sampleAnswers = answer;
-}
-
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  if (sampleAnswers) {
-    const answer = sampleAnswers(path);
-    if (answer !== undefined) return answer as T;
-  }
   const headers = new Headers(init?.headers);
   if (!headers.has("Content-Type") && init?.body && !(init.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
@@ -1639,57 +1625,6 @@ export const api = {
     return { blob, filename };
   },
 
-  adoptConfig: async (opts: {
-    file: File;
-    newBrokerIp: string;
-    newTopicRoot: string;
-    wifiSsid?: string;
-    wifiPassword?: string;
-  }) => {
-    const buildForm = () => {
-      const form = new FormData();
-      form.append("file", opts.file);
-      form.append("newBrokerIp", opts.newBrokerIp);
-      form.append("newTopicRoot", opts.newTopicRoot);
-      if (opts.wifiSsid) form.append("wifiSsid", opts.wifiSsid);
-      if (opts.wifiPassword) form.append("wifiPassword", opts.wifiPassword);
-      form.append("confirm", "ADOPT");
-      return form;
-    };
-
-    const authHeaders = () => {
-      const headers = new Headers();
-      const access = getStoredAccessToken();
-      if (access) {
-        headers.set("Authorization", `Bearer ${access}`);
-        headers.set("X-Nexternel-Token", access);
-      }
-      return headers;
-    };
-
-    let res = await fetch(apiUrl("/api/v1/system/config/adopt"), {
-      method: "POST",
-      credentials: "include",
-      headers: authHeaders(),
-      body: buildForm(),
-    });
-    if (res.status === 401) {
-      const refreshed = await tryRefreshSession();
-      if (refreshed === "ok") {
-        res = await fetch(apiUrl("/api/v1/system/config/adopt"), {
-          method: "POST",
-          credentials: "include",
-          headers: authHeaders(),
-          body: buildForm(),
-        });
-      }
-    }
-    if (!res.ok) {
-      throw new Error(await parseErrorMessage(res));
-    }
-    return res.json() as Promise<AdoptConfigResponse>;
-  },
-
   downloadFlashReadyYaml: async (stem: string) => {
     const headers = new Headers();
     const access = getStoredAccessToken();
@@ -2262,36 +2197,6 @@ export type ConfigStatusResponse = {
   mqttTopicPrefix?: string;
   esphomeMounted: boolean;
   ready: boolean;
-};
-
-export type AdoptConfigResponse = {
-  ok: true;
-  manifest: {
-    format: string;
-    formatVersion: number;
-    appVersion: string;
-    createdAt: string;
-    serverIp: string;
-  };
-  counts: {
-    rooms: number;
-    devices: number;
-    dashboards: number;
-    cameras: number;
-    esphomeFiles: number;
-  };
-  adoptChecklist: {
-    brokerIp: string;
-    topicRoot?: string;
-    esphomeUrl: string;
-    devices: {
-      name: string;
-      slug: string;
-      yamlHint: string | null;
-      topicPrefix?: string;
-    }[];
-    steps: string[];
-  };
 };
 
 export type WeatherForecastDay = {

@@ -4,7 +4,6 @@ import ReactECharts from "echarts-for-react";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
 import { ICON_SIZE } from "../lib/appearance/type";
 import type { HistoryPoint, HistoryRange, ResolvedPanelCapability } from "../api";
-import { api } from "../api";
 import { echartsInitTheme, echartsPaletteFromTheme } from "../widgets/echarts/chart-theme";
 import { applySafeChartTooltip } from "../widgets/echarts/chart-tooltip";
 import { defaultRangeForKind } from "../widgets/echarts/config";
@@ -19,6 +18,7 @@ import { PanelValueSummary } from "./PanelValueSummary";
 import { usePanelResponsiveSemanticState } from "./responsive";
 import { parseCapabilityReading } from "./parse-capability-reading";
 import { useSkin } from "../skins/SkinProvider";
+import { usePanelData } from "../lib/sample-data";
 
 /** History came back empty (no readings in the chart's period). */
 export const NO_READINGS = "No data";
@@ -177,6 +177,7 @@ export function CapabilityHistoryChart({
   const [error, setError] = useState<string | null>(prefetched?.error ?? null);
   const [points, setPoints] = useState<HistoryPoint[]>(prefetched?.points ?? []);
 
+  const data = usePanelData();
   useEffect(() => {
     if (prefetched) {
       setLoading(prefetched.loading);
@@ -188,7 +189,7 @@ export function CapabilityHistoryChart({
     let cancelled = false;
     setLoading(true);
     setError(null);
-    void api
+    void data
       .history(capability.id, range)
       .then((res) => {
         if (cancelled) return;
@@ -209,7 +210,7 @@ export function CapabilityHistoryChart({
     return () => {
       cancelled = true;
     };
-  }, [capability.id, range, prefetched]);
+  }, [capability.id, range, prefetched, data]);
 
   const { state: responsiveState } = usePanelResponsiveSemanticState();
   const showSummary =

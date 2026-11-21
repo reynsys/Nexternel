@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Box, Typography, useTheme } from "@mui/material";
 import ReactECharts from "echarts-for-react";
 import type { Capability, HistoryRange, WidgetInstance } from "../../api";
-import { api } from "../../api";
 import { liveValue, parseEchartsConfig, resolveMinMax } from "./config";
 import { SENSOR_NOT_ANSWERING } from "../../panels/parse-capability-reading";
 import { primaryCapabilityId } from "../../lib/widget-bindings";
@@ -14,6 +13,7 @@ import type { EchartsBuildCtx, HistoryPoint } from "./types";
 import { useDashboardTileChrome } from "../../lib/dashboard-tile-context";
 import { useEChartsHost } from "./EChartsHost";
 import { useSkin } from "../../skins/SkinProvider";
+import { usePanelData } from "../../lib/sample-data";
 
 function capabilityIdOf(widget: WidgetInstance): string | null {
   const id = primaryCapabilityId(widget.bindings);
@@ -52,6 +52,7 @@ export function EChartsWidgetBody({
 
   const needsHistory = preset.dataMode === "history";
 
+  const data = usePanelData();
   useEffect(() => {
     if (!needsHistory) {
       setPoints([]);
@@ -66,7 +67,7 @@ export function EChartsWidgetBody({
     let cancelled = false;
     setLoading(true);
     setError(null);
-    void api
+    void data
       .history(capabilityId, range)
       .then((res) => {
         if (cancelled) return;
@@ -86,7 +87,7 @@ export function EChartsWidgetBody({
     return () => {
       cancelled = true;
     };
-  }, [needsHistory, capabilityId, range]);
+  }, [needsHistory, capabilityId, range, data]);
 
   const { min, max } = resolveMinMax(config, cap);
   const live = liveValue(cap);

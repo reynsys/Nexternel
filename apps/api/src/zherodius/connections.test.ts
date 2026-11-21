@@ -43,6 +43,7 @@ function setup(over: Partial<ConnectionsDeps> = {}) {
     activity: [] as string[],
     syncs: 0,
     seen: [] as { address: string; cfg: number | null; version: string }[],
+    hubNames: [] as string[],
   };
   const pairing: Pairing = {
     deviceId: `dev-${run}`,
@@ -52,6 +53,7 @@ function setup(over: Partial<ConnectionsDeps> = {}) {
     address: device.address,
     deviceKey: hex(device.key.pub),
     cfg: null,
+    hubName: "Old home",
   };
   const deps: ConnectionsDeps = {
     hubKey: async () => hub,
@@ -64,6 +66,8 @@ function setup(over: Partial<ConnectionsDeps> = {}) {
       return map;
     },
     saveSeen: (_id, seen) => calls.seen.push(seen),
+    hubName: async () => "Old home",
+    saveHubName: (_id, name) => calls.hubNames.push(name),
     findAddress: async () => null,
     path: {
       reportItem: (itemId, value, o) => calls.reports.push({ itemId, value, kind: o.kind, history: o.history }),
@@ -212,4 +216,31 @@ test("a press the device does not answer is cancelled, as for every device", asy
   await assert.rejects(path.switchItem(pump, "on", "rey"), (e: unknown) => e instanceof NotConfirmedError);
   assert.match(activity.at(-1)!, /on press got no answer, so it was cancelled/);
   conns.stop();
+});
+
+test("the device is told Nexternel's new name when the line opens, and when it changes", async () => {
+  let name = "New home";
+  const { conns, calls, pairing } = setup({ hubName: async () => name });
+  await conns.add(pairing);
+  await waitFor(() => calls.hubNames.length === 1);
+  assert.deepEqual(calls.hubNames, ["New home"]);
+  name = "Newer home";
+  conns.tellNames();
+  await waitFor(() => calls.hubNames.length === 2);
+  assert.equal(calls.hubNames[1], "Newer home");
+  conns.stop();
+});
+
+test("a device that does not know the name ask keeps working", async () => {
+  device.knowsHubName = false;
+  try {
+    const { conns, calls, pairing } = setup({ hubName: async () => "New home" });
+    await conns.add(pairing);
+    assert.ok(conns.isOpen(pairing.deviceId));
+    await new Promise((r) => setTimeout(r, 100));
+    assert.deepEqual(calls.hubNames, []);
+    conns.stop();
+  } finally {
+    device.knowsHubName = true;
+  }
 });

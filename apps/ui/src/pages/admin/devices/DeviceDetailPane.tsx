@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Alert, Box, Button, Stack, Tab, Tabs, Typography, useTheme } from "@mui/material";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import DevicesOtherRoundedIcon from "@mui/icons-material/DevicesOtherRounded";
 import DownloadRoundedIcon from "@mui/icons-material/DownloadRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
@@ -166,9 +167,14 @@ export function DeviceDetailPane({ selection, device, isAdmin, busy, hostname, s
           </Box>
           <StatusWord word={status.word} since={since} tone={status.tone} emphasis />
           {isAdmin ? (
-            <Button {...devicesOutlinedButton} startIcon={<TuneRoundedIcon />} onClick={() => actions.onEdit(device)}>
-              Device settings
-            </Button>
+            <ButtonRow direction="row">
+              <Button {...devicesOutlinedButton} startIcon={<TuneRoundedIcon />} onClick={() => actions.onEdit(device)}>
+                Device settings
+              </Button>
+              <Button {...devicesOutlinedButton} color="error" startIcon={<DeleteOutlineIcon />} onClick={() => actions.onDelete(device)}>
+                Remove device
+              </Button>
+            </ButtonRow>
           ) : null}
         </Stack>
       </Box>

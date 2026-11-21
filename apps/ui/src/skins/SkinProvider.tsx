@@ -379,7 +379,7 @@ export function LookLayer({
             lookId={themePrefs.lookId}
             buttonsId={themePrefs.lookButtons}
             looksVersion={lookVer}
-            style={background ? { backgroundColor: pageBaseColour, backgroundImage: pageGradient ?? undefined, backgroundSize: size } : undefined}
+            style={{ height: "100%", ...(background ? { backgroundColor: pageBaseColour, backgroundImage: pageGradient ?? undefined, backgroundSize: size } : {}) }}
           >
             {children}
           </LookBox>

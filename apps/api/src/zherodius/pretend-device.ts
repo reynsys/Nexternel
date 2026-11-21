@@ -24,6 +24,8 @@ export class PretendDevice {
   sensors = new Map<number, { t?: number; h?: number; p?: number }>([[3, { t: 21.5, h: 48 }]]);
   /** Asks received, in order (method names). */
   readonly asked: string[] = [];
+  /** Whether it understands Zh.SetHubName (Zherodius 1.11.2+). */
+  knowsHubName = true;
   /** When false, Relay.Set is not answered (a device cut off mid-press). */
   answers = true;
   private readonly conns = new Set<Conn>();
@@ -149,7 +151,7 @@ export class PretendDevice {
     });
   }
 
-  private answer(conn: Conn, ask: { id: number; method: string; params?: { id?: number; on?: boolean } }) {
+  private answer(conn: Conn, ask: { id: number; method: string; params?: { id?: number; on?: boolean; name?: string } }) {
     const reply = (body: object) => this.secret(conn, { id: ask.id, ...body });
     if (ask.method === "Zh.GetInfo") return reply({ result: this.info });
     if (ask.method === "Zh.GetStatus") return reply({ result: this.status() });
@@ -163,7 +165,13 @@ export class PretendDevice {
       this.notify();
       return;
     }
-    reply({ error: { code: 400, message: "Unknown ask." } });
+    if (ask.method === "Zh.SetHubName" && this.knowsHubName) {
+      // The hub on this line has a new name: only that hub's entry changes.
+      const key = [...this.pairedHubs.keys()][0];
+      if (key && ask.params?.name) this.pairedHubs.set(key, ask.params.name);
+      return reply({ result: {} });
+    }
+    reply({ error: { code: 400, message: "Unknown method." } });
   }
 
   private secret(conn: Conn, body: object) {

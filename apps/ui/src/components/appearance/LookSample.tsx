@@ -1,6 +1,7 @@
 import { Box, Button } from "@mui/material";
 import WeekendOutlinedIcon from "@mui/icons-material/WeekendOutlined";
-import type { Capability, PanelInstance, PanelResolveResult, ResolvedPanelCapability } from "../../api";
+import type { Capability, HistoryRange, PanelInstance, PanelResolveResult, ResolvedPanelCapability } from "../../api";
+import { SampleDataProvider, type PanelData } from "../../lib/sample-data";
 import { DashboardDataRuntimeProvider } from "../../lib/dashboard-data-runtime/DashboardDataRuntimeContext";
 import type { PanelResolveBatchFetch } from "../../lib/dashboard-data-runtime/panel-resolver-batcher";
 import type { CapabilityStatus } from "../../lib/dashboard-data-runtime/status-store";
@@ -107,9 +108,32 @@ const TILE_PANELS = PANELS.filter((p) => p.id === "p-heating" || p.id === "p-gau
   layout: { ...p.layout, x: i * 12, y: 0, w: 12, h: 2 },
 }));
 
-/** The sample readings' details, for the preview page's sample history. */
-export const sampleCapability = (id: string) => CAPABILITIES.find((c) => c.id === id);
-export const SAMPLE_ENERGY = ENERGY;
+/** Sample history for the charts and a sample forecast: the previews ask the server nothing. */
+const HOUR = 3600_000;
+function samplePoints(range: HistoryRange, cap: string): { t: string; v: number }[] {
+  const end = Date.now();
+  if (cap === ENERGY || range === "7d")
+    return [8.2, 11.4, 9.1, 12.8, 10.3, 7.6, 9.6].map((v, i) => ({ t: new Date(end - (6 - i) * 24 * HOUR).toISOString(), v }));
+  return Array.from({ length: 25 }, (_, i) => {
+    const h = i - 24;
+    return { t: new Date(end + h * HOUR).toISOString(), v: Math.round((20 + 1.6 * Math.sin(((h + 9) / 24) * 2 * Math.PI) + 0.3 * Math.sin(i * 1.7)) * 10) / 10 };
+  });
+}
+function sampleSeries(id: string, range: HistoryRange) {
+  const cap = CAPABILITIES.find((c) => c.id === id);
+  return { capabilityId: id, name: cap?.name ?? id, unit: cap?.unit ?? null, aggregateEvery: range === "7d" ? "1d" : "1h", points: samplePoints(range, id) };
+}
+const day = (d: number, code: number, description: string, max: number, min: number) => ({
+  date: new Date(Date.now() + d * 24 * HOUR).toISOString().slice(0, 10), weatherCode: code, description, tempMax: max, tempMin: min, precipProbability: code > 50 ? 60 : 5,
+});
+const SAMPLE_DATA: PanelData = {
+  history: async (id, range) => ({ ...sampleSeries(id, range), range }),
+  historyBatch: async (ids, range) => ({ range, series: ids.map((id) => sampleSeries(id, range)) }),
+  weather: async () => ({
+    temperature: 14, humidity: 62, windSpeed: 11, weatherCode: 1, description: "Mainly clear", time: new Date().toISOString(), source: "sample",
+    forecast: [day(0, 1, "Mainly clear", 15, 8), day(1, 3, "Cloudy", 13, 7), day(2, 61, "Light rain", 12, 6), day(3, 2, "Partly cloudy", 14, 7), day(4, 0, "Clear", 16, 8)],
+  }),
+};
 
 /** Panels ask what they show; the preview answers with its sample readings. */
 const resolveSamples: PanelResolveBatchFetch = async (requests) =>
@@ -175,6 +199,7 @@ export function LookSample({ show }: { show: LookSampleShow }) {
   }
   const panels = show === "look" ? TILE_PANELS : PANELS;
   return (
+    <SampleDataProvider data={SAMPLE_DATA}>
     <DashboardDataRuntimeProvider connectLive={noLive} resolvePanels={resolveSamples} statuses={STATUSES}>
       <Box sx={{ p: 2, pointerEvents: "none", userSelect: "none" }} aria-hidden>
         <DashboardSectionFrame id="look-preview" title={AREA} icon={WeekendOutlinedIcon} panelCount={panels.length} collapsed={false} onCollapsedChange={nothing}>
@@ -192,5 +217,6 @@ export function LookSample({ show }: { show: LookSampleShow }) {
         </DashboardSectionFrame>
       </Box>
     </DashboardDataRuntimeProvider>
+    </SampleDataProvider>
   );
 }

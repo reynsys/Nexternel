@@ -54,13 +54,13 @@ export function forgetHubKeyCache(): void {
   hubCache = null;
 }
 
-type PairingRow = { device_id: string; name: string; slug: string; serial: string; address: string; device_key: string; cfg: string | null };
+type PairingRow = { device_id: string; name: string; slug: string; serial: string; address: string; device_key: string; cfg: string | null; hub_name: string | null };
 
 function toPairing(r: PairingRow): Pairing {
-  return { deviceId: r.device_id, deviceName: r.name, deviceSlug: r.slug, serial: r.serial, address: r.address, deviceKey: r.device_key, cfg: r.cfg === null ? null : Number(r.cfg) };
+  return { deviceId: r.device_id, deviceName: r.name, deviceSlug: r.slug, serial: r.serial, address: r.address, deviceKey: r.device_key, cfg: r.cfg === null ? null : Number(r.cfg), hubName: r.hub_name };
 }
 
-const PAIRING_SELECT = `SELECT p.device_id, d.name, d.slug, p.serial, p.address, p.device_key, p.cfg
+const PAIRING_SELECT = `SELECT p.device_id, d.name, d.slug, p.serial, p.address, p.device_key, p.cfg, p.hub_name
   FROM zherodius_pairings p JOIN devices d ON d.id = p.device_id`;
 
 export async function listPairings(): Promise<Pairing[]> {
@@ -145,6 +145,11 @@ export function saveSeen(deviceId: string, seen: { address: string; cfg: number 
       .query(`UPDATE devices SET ip_address = $2::inet WHERE id = $1 AND ip_address IS DISTINCT FROM $2::inet`, [deviceId, seen.address])
       .catch(() => undefined);
   }
+}
+
+/** The device now knows Nexternel by this name. */
+export function saveHubName(deviceId: string, name: string): void {
+  void getPool().query(`UPDATE zherodius_pairings SET hub_name = $2 WHERE device_id = $1`, [deviceId, name]).catch(() => undefined);
 }
 
 /** The device's address now, from what the home network search has heard (Zherodius devices announce their serial). */

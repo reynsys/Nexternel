@@ -2,11 +2,11 @@ import { isDeviceControlKind } from "../widgets/control/control-view";
 import { useEffect, useState } from "react";
 import { Typography } from "@mui/material";
 import type { HistoryPoint, HistoryRange, ResolvedPanelCapability } from "../api";
-import { api } from "../api";
 import { PanelItemGrid } from "../components/PanelItemGrid";
 import { PanelTile } from "../components/PanelTile";
 import type { PanelAppearanceLayout } from "../lib/panel-appearance";
 import { CapabilityHistoryChart, NO_READINGS } from "./CapabilityHistoryChart";
+import { usePanelData } from "../lib/sample-data";
 
 const MAX_CHARTS = 12;
 
@@ -49,6 +49,7 @@ export function ChartsPanel({
 
   const [historyByCap, setHistoryByCap] = useState<Record<string, HistoryLoadState>>({});
 
+  const data = usePanelData();
   useEffect(() => {
     if (shown.length === 0) {
       setHistoryByCap({});
@@ -63,7 +64,7 @@ export function ChartsPanel({
       )
     );
 
-    void api
+    void data
       .historyBatch(ids, range)
       .then((batch) => {
         if (cancelled) return;
@@ -100,7 +101,7 @@ export function ChartsPanel({
     return () => {
       cancelled = true;
     };
-  }, [shownIdsKey, range]);
+  }, [shownIdsKey, range, data]);
 
   const overflow = chartCaps.length - shown.length;
   const hideItemTitle = Boolean(panelTitle?.trim()) && shown.length <= 1;

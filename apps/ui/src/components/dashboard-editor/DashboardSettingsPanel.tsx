@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Box, Button, FormControlLabel, Stack, Switch, Tab, Tabs, TextField, Typography } from "@mui/material";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { Segmented } from "../Segmented";
 import { SidePanel } from "../side-panel/SidePanel";
 import { SidePanelButtons } from "../side-panel/SidePanelButtons";
@@ -30,6 +31,8 @@ type Props = {
   sectionShortcuts: boolean;
   onSectionShortcuts: (v: boolean) => void;
   onDashboardsChanged: () => void;
+  /** Remove this dashboard (asks first). */
+  onRemove?: () => void;
   onCurrentMeta: (meta: { name: string; tabIcon: string; showTabLabel: boolean }) => void;
 };
 
@@ -108,6 +111,13 @@ export function DashboardSettingsPanel(p: Props) {
               label="Show section shortcuts"
             />
           </SettingBlock>
+          {p.onRemove ? (
+            <SettingBlock label="Remove this dashboard" help="Removes the dashboard and its sections and panels. Your devices and their readings stay.">
+              <Button variant="outlined" color="error" startIcon={<DeleteOutlineIcon />} onClick={p.onRemove}>
+                Remove this dashboard
+              </Button>
+            </SettingBlock>
+          ) : null}
         </Stack>
       ) : (
         <ManageDashboardsPanel
