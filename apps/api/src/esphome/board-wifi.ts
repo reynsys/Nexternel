@@ -52,7 +52,7 @@ export function ensureEsphomeSecretsFile(dir = esphomeDir()): boolean {
   fs.mkdirSync(dir, { recursive: true });
   let text =
     "# Nexternel's settings for boards (made by Nexternel; change them on screen, not here).\n" +
-    "# Wi-Fi for your devices: Settings → System.\n";
+    "# Wi-Fi for your devices: Devices → Wi-Fi for devices.\n";
   text = writeSecretValue(text, "mqtt_broker", config.serverIp() || "");
   text = writeSecretValue(text, "mqtt_username", config.mqttUsername());
   text = writeSecretValue(text, "mqtt_password", config.mqttPassword());

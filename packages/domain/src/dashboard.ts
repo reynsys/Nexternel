@@ -347,7 +347,7 @@ export function emptyDashboardDocument(name = "Dashboard"): PersistedDashboardDo
     sections: [
       {
         id: "section-main",
-        title: "Main",
+        title: "Section 1",
         order: 0,
         collapsed: false,
         icon: DEFAULT_SECTION_ICON,

@@ -876,16 +876,6 @@ export const api = {
       body: JSON.stringify(body),
     }),
 
-  shellyModels: () =>
-    apiFetch<{
-      models: {
-        id: string;
-        label: string;
-        switchCount: number;
-        hint: string;
-      }[];
-    }>("/api/v1/shelly/models"),
-
   /** Wi-Fi for your devices: the Wi-Fi boards join (the password is never sent back). */
   devicesWifi: () => apiFetch<{ ssid: string | null; passwordSet: boolean }>("/api/v1/devices-wifi"),
   saveDevicesWifi: (body: { ssid: string; password: string }) =>
@@ -894,7 +884,6 @@ export const api = {
       body: JSON.stringify(body),
     }),
 
-  /** Devices → Add device → Search my home (only listens; changes nothing). */
   /** Pair a Zherodius device with the code shown on its own page; it becomes a device in Nexternel. */
   zherodiusPair: (body: { address: string; code: string; roomId: string | null }) =>
     apiFetch<{ ok: true; deviceId: string; name: string; online: boolean; switches: number; readings: number }>("/api/v1/zherodius/pair", {
@@ -913,6 +902,7 @@ export const api = {
       body: JSON.stringify({ oldDeviceId }),
     }),
 
+  /** Devices → Add device → Search my home (only listens; changes nothing). */
   homeNetworkSearch: () =>
     apiFetch<{ devices: FoundDevice[] }>("/api/v1/home-network/search", { method: "POST", body: "{}" }),
 
@@ -921,27 +911,6 @@ export const api = {
     apiFetch<{ deviceId: string; name: string; message: string }>("/api/v1/home-network/bring-in", {
       method: "POST",
       body: JSON.stringify({ device, ...extra }),
-    }),
-
-  shellyDiscover: (body?: { timeoutMs?: number }) =>
-    apiFetch<{
-      devices: {
-        topicPrefix: string;
-        model: string | null;
-        app: string | null;
-        mac: string | null;
-        gen: number | null;
-        version: string | null;
-        ip: string | null;
-        suggestedSwitchCount: number;
-        suggestedModelId: string;
-        suggestedGen: 1 | 2;
-        switchCountProbed: boolean;
-        alreadyRegistered: boolean;
-      }[];
-    }>("/api/v1/shelly/discover", {
-      method: "POST",
-      body: JSON.stringify(body ?? {}),
     }),
 
   octopusSettings: () =>
@@ -1077,12 +1046,6 @@ export const api = {
       };
       pruned?: { id: string; name: string }[];
     }>("/api/v1/devices/esphome-catalog"),
-
-  deleteEsphomeYaml: (yamlPath: string) =>
-    apiFetch<{ ok: boolean; yamlPath: string }>(
-      `/api/v1/devices/esphome-yaml?path=${encodeURIComponent(yamlPath)}`,
-      { method: "DELETE" }
-    ),
 
   esphomeSuggest: (name: string) =>
     apiFetch<EsphomeImportSuggestion>(
@@ -1725,42 +1688,6 @@ export const api = {
       throw new Error(await parseErrorMessage(res));
     }
     return res.json() as Promise<AdoptConfigResponse>;
-  },
-
-  downloadEsphomeCutoverPack: async () => {
-    const headers = new Headers();
-    const access = getStoredAccessToken();
-    if (access) {
-      headers.set("Authorization", `Bearer ${access}`);
-      headers.set("X-Nexternel-Token", access);
-    }
-    let res = await fetch(apiUrl("/api/v1/system/config/esphome-pack"), {
-      credentials: "include",
-      headers,
-    });
-    if (res.status === 401) {
-      const refreshed = await tryRefreshSession();
-      if (refreshed === "ok") {
-        const next = getStoredAccessToken();
-        const retryHeaders = new Headers();
-        if (next) {
-          retryHeaders.set("Authorization", `Bearer ${next}`);
-          retryHeaders.set("X-Nexternel-Token", next);
-        }
-        res = await fetch(apiUrl("/api/v1/system/config/esphome-pack"), {
-          credentials: "include",
-          headers: retryHeaders,
-        });
-      }
-    }
-    if (!res.ok) {
-      throw new Error(await parseErrorMessage(res));
-    }
-    const blob = await res.blob();
-    const disposition = res.headers.get("Content-Disposition") || "";
-    const match = /filename="([^"]+)"/.exec(disposition);
-    const filename = match?.[1] || "esphome-flash-ready.zip";
-    return { blob, filename };
   },
 
   downloadFlashReadyYaml: async (stem: string) => {

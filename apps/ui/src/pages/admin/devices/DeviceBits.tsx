@@ -151,8 +151,6 @@ export function useDeviceConnection(deviceId: string | null, refresh?: unknown):
   return c;
 }
 
-/** "10:53" today, else "Fri 19:52". */
-
 /** "fair (-61 dBm)"; a reading that stopped being renewed says when it is from. */
 export function wifiSignalWords(c: { wifiDbm: number | null; wifiQuality: string | null; wifiAt?: string | null }): string {
   const old = c.wifiAt && Date.now() - Date.parse(c.wifiAt) > 3 * 60_000;

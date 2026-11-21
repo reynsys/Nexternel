@@ -62,27 +62,3 @@ export function shellyPresetIdForSwitchCount(count: number): string {
   return `switch_${n}`;
 }
 
-/** Guess Shelly firmware generation from announce / model strings. */
-export function guessShellyGen(opts: {
-  gen?: number | null;
-  model?: string | null;
-  app?: string | null;
-  topicPrefix?: string | null;
-}): 1 | 2 {
-  if (opts.gen === 1) return 1;
-  if (opts.gen === 2 || opts.gen === 3) return 2;
-
-  const blob = `${opts.model ?? ""} ${opts.app ?? ""}`.toLowerCase();
-  if (/plus|mini|pro|gen3|gen2|shellyplus|shsp-|1pm\s*gen|2pm\s*gen|3em\s*gen/.test(blob)) {
-    return 2;
-  }
-  if (/shsw-|shelly-plug|shellyplug|shellyem|shelly\s*rgbw2|shelly\s*i3/.test(blob)) {
-    return 1;
-  }
-
-  const id = (opts.topicPrefix ?? "").toLowerCase();
-  if (/^shelly1-/.test(id) && !/plus|mini|gen/.test(id)) return 1;
-  if (/^shelly2-/.test(id) && !/plus|mini|gen/.test(id)) return 1;
-
-  return 2;
-}

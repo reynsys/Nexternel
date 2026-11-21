@@ -220,12 +220,10 @@ apps/api/src/routes/roles.ts
 apps/api/src/routes/rooms.ts
 apps/api/src/routes/second-check.ts
 apps/api/src/routes/setup.ts
-apps/api/src/routes/shelly.ts
 apps/api/src/routes/system.ts
 apps/api/src/routes/users.ts
 apps/api/src/routes/weather.ts
 apps/api/src/routes/zherodius.ts
-apps/api/src/shelly/discover.ts
 apps/api/src/shelly/migrate-prefixes.ts
 apps/api/src/shelly/models.ts
 apps/api/src/shelly/notify.ts
@@ -374,7 +372,6 @@ apps/ui/src/components/PlaceSearch.tsx
 apps/ui/src/components/ReadingList.tsx
 apps/ui/src/components/RoomMenu.tsx
 apps/ui/src/components/SectionGrid.tsx
-apps/ui/src/components/SegmentButtonNav.tsx
 apps/ui/src/components/Segmented.tsx
 apps/ui/src/components/side-panel/SidePanelButtons.tsx
 apps/ui/src/components/side-panel/SidePanel.tsx
@@ -527,6 +524,7 @@ apps/ui/src/lib/tracking-format.test.ts
 apps/ui/src/lib/tracking-format.ts
 apps/ui/src/lib/use-arrange-dashboards.ts
 apps/ui/src/lib/use-dashboard-swipe.ts
+apps/ui/src/lib/use-fit-text.ts
 apps/ui/src/lib/usePanelPoll.ts
 apps/ui/src/lib/user-display.ts
 apps/ui/src/lib/user-events.ts

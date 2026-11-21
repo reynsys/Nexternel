@@ -54,7 +54,7 @@ async function warnOutsideFail(userId: string, username: string, ip: string) {
       level: "alert",
       title: `"${name}" is locked for signing in from outside`,
       body:
-        `Someone outside the home typed ${OUTSIDE_LOCK_AFTER} wrong passwords for this account. ` +
+        `Someone outside Nexternel's network typed ${OUTSIDE_LOCK_AFTER} wrong passwords for this account. ` +
         "Nobody can sign in with it from outside until it is unlocked in Users (or with the email link). " +
         `At home it still works. Last try came from ${ip}.`,
     }).catch(() => undefined);
@@ -65,7 +65,7 @@ async function warnOutsideFail(userId: string, username: string, ip: string) {
       level: "warning",
       title: `Someone outside is trying to sign in as "${name}"`,
       body:
-        `${fails} wrong passwords from outside the home. After ${OUTSIDE_LOCK_AFTER}, the account is locked for ` +
+        `${fails} wrong passwords from outside Nexternel's network. After ${OUTSIDE_LOCK_AFTER}, the account is locked for ` +
         `signing in from outside. Last try came from ${ip}. If this was not you, change the password.`,
     }).catch(() => undefined);
   }
@@ -186,7 +186,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
               code: "second_check_reset",
               message:
                 "The second check has to be set up again (Nexternel was moved to another server). " +
-                "Sign in at home and set it up again in My profile.",
+                "Sign in on the same network as Nexternel and set it up again in My profile.",
             },
           });
         }
@@ -203,8 +203,8 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
             error: {
               code: "password_too_weak_outside",
               message:
-                "Your password is too simple for signing in from outside the home. " +
-                `Sign in at home and choose a new one (at least ${MIN_PASSWORD_LENGTH} characters) in My profile.`,
+                "Your password is too simple for signing in from outside Nexternel's network. " +
+                `Sign in on the same network as Nexternel and choose a new one (at least ${MIN_PASSWORD_LENGTH} characters) in My profile.`,
             },
           });
         }

@@ -6,14 +6,10 @@
 
 import fs from "fs";
 import path from "path";
-import JSZip from "jszip";
 import { getPool } from "../db.js";
 import { config } from "../config.js";
 import { esphomeDir, isDirectory, listEsphomeFiles, pathExists } from "./paths.js";
-import {
-  rewriteDeviceMqttYaml,
-  rewriteEsphomeSecretsYaml,
-} from "./esphome-rewrite.js";
+import { rewriteDeviceMqttYaml } from "./esphome-rewrite.js";
 
 function quoteYamlScalar(value: string): string {
   if (value.startsWith("!secret ")) return value;
@@ -305,55 +301,3 @@ export async function createFlashReadyYamlForStem(stem: string): Promise<{
   };
 }
 
-/** Zip of all device YAMLs with this server’s settings inlined. */
-export async function createFlashReadyPack(): Promise<{
-  buffer: Buffer;
-  filename: string;
-}> {
-  if (!isDirectory(esphomeDir())) {
-    throw new Error("ESPHome folder is not mounted on the API");
-  }
-  const secrets = loadSecretsMerged();
-  const settings = requireFlashSettings(secrets);
-  const zip = new JSZip();
-  let n = 0;
-
-  for (const { rel, data } of listEsphomeFiles()) {
-    if (!/\.ya?ml$/i.test(rel)) continue;
-    const base = path.basename(rel, path.extname(rel)).toLowerCase();
-    if (base === "secrets") {
-      // Also include an updated secrets.yaml for server-side ESPHome (optional)
-      const updated = rewriteEsphomeSecretsYaml(data.toString("utf8"), {
-        brokerIp: settings.brokerIp,
-        mqttUsername: settings.mqttUsername,
-        mqttPassword: settings.mqttPassword,
-        wifiSsid: settings.wifiSsid,
-        wifiPassword: settings.wifiPassword,
-      });
-      zip.file("secrets.yaml", updated);
-      continue;
-    }
-    const stem = path.basename(rel, path.extname(rel));
-    const topicPrefix = await topicPrefixForStem(stem);
-    const yaml = buildFlashReadyYaml(data.toString("utf8"), {
-      ...settings,
-      topicPrefix,
-    });
-    zip.file(`flash-ready/${stem}-flash-ready.yaml`, yaml);
-    n += 1;
-  }
-
-  if (n === 0) {
-    throw new Error("No device YAML files in /esphome — run Adopt or add YAML first");
-  }
-
-  const buffer = Buffer.from(
-    await zip.generateAsync({
-      type: "nodebuffer",
-      compression: "DEFLATE",
-      compressionOptions: { level: 6 },
-    })
-  );
-  const day = new Date().toISOString().slice(0, 10);
-  return { buffer, filename: `esphome-flash-ready-${day}.zip` };
-}

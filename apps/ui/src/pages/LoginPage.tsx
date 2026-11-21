@@ -201,7 +201,7 @@ export function LoginPage() {
           {ticket ? (
             <>
               <Typography variant="body2" color="text.secondary">
-                You are signing in from outside the home. Type the 6-digit code from your Authenticator app.
+                You are signing in from outside Nexternel's network. Type the 6-digit code from your Authenticator app.
               </Typography>
               <TextField
                 label="Code"
@@ -269,7 +269,7 @@ export function LoginPage() {
           />
           <FormControlLabel
             control={<Checkbox checked={keep} onChange={(e) => setKeep(e.target.checked)} disabled={busy} />}
-            label="Keep me signed in on this device"
+            label="Stay signed in"
           />
           <Button type="submit" variant="contained" size="large" disabled={busy} fullWidth>
             {busy ? "Signing in…" : "Sign in"}

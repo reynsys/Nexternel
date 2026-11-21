@@ -91,7 +91,7 @@ export function SecondCheckSection() {
     try {
       await api.secondCheckConfirm(code);
       setSetup(null);
-      setMsg("The second check is on. Next time you sign in from outside the home, Nexternel asks for the code.");
+      setMsg("The second check is on. Next time you sign in from outside Nexternel's network, Nexternel asks for the code.");
       await load();
     } catch (e) {
       setErr(e instanceof Error ? e.message : "That code is not right");
@@ -158,7 +158,7 @@ export function SecondCheckSection() {
             />
           </Stack>
           <Typography variant="body2" color="text.secondary">
-            When you sign in from outside the home, Nexternel also asks for a 6-digit code from the Authenticator app on
+            When you sign in from outside Nexternel's network, Nexternel also asks for a 6-digit code from the Authenticator app on
             your phone. Someone who guesses your password still cannot get in. At home nothing changes.
           </Typography>
           {state === "broken" && (
@@ -293,7 +293,7 @@ export function SecondCheckSection() {
                     fullWidth
                   />
                   <TextField
-                    label="Code from the app (needed when you are outside the home)"
+                    label="Code from the app (needed when you are outside Nexternel's network)"
                     value={code}
                     onChange={(e) => setCode(e.target.value.replace(/[^\d ]/g, "").slice(0, 7))}
                     autoComplete="one-time-code"

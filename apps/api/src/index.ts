@@ -49,7 +49,6 @@ import { backupRoutes } from "./backup/routes.js";
 import { setupRoutes } from "./routes/setup.js";
 import { weatherRoutes } from "./routes/weather.js";
 import { homeRoutes } from "./routes/home.js";
-import { shellyRoutes } from "./routes/shelly.js";
 import { homeNetworkRoutes } from "./routes/home-network.js";
 import { devicesWifiRoutes } from "./routes/devices-wifi.js";
 import { octopusRoutes } from "./routes/octopus.js";
@@ -185,7 +184,6 @@ await app.register(async (api) => {
   await api.register(setupRoutes);
   await api.register(weatherRoutes);
   await api.register(homeRoutes);
-  await api.register(shellyRoutes);
   await api.register(homeNetworkRoutes);
   await api.register(devicesWifiRoutes);
   await api.register(octopusRoutes);

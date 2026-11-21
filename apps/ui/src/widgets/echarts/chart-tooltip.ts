@@ -1,9 +1,11 @@
+import { fullDateTime } from "../../lib/full-date";
+
 /**
  * Every chart's pop-up (touching or pointing at a moment on a chart):
  * - it stays inside its own chart, at the top, beside the finger, so it never lands on other panels or
  *   under the dashboards row at the bottom of a phone (it used to be placed on the page itself, which put
  *   it below lower charts);
- * - the value is written as the chart's own axis writes it (same unit, e.g. "0.017 kW"), with a short time.
+ * - the value is written as the chart's own axis writes it (same unit, e.g. "0.017 kW"), with the full date and time.
  */
 type AxisLabel = { formatter?: unknown };
 type ParamsItem = { axisValue?: unknown; value?: unknown; seriesName?: string; marker?: string };
@@ -19,13 +21,6 @@ function axisFormatter(option: Record<string, unknown>): ((v: number) => string)
 function isTimeAxis(option: Record<string, unknown>): boolean {
   const x = Array.isArray(option.xAxis) ? option.xAxis[0] : option.xAxis;
   return (x as { type?: string } | undefined)?.type === "time";
-}
-
-function shortTime(ms: number): string {
-  const d = new Date(ms);
-  // Today: the time only. Another day: its name too ("Sun 23:48"), so yesterday evening is not read as tonight.
-  const today = d.toDateString() === new Date().toDateString();
-  return d.toLocaleString(undefined, today ? { hour: "2-digit", minute: "2-digit" } : { weekday: "short", hour: "2-digit", minute: "2-digit" });
 }
 
 /** At the top of the chart, centred on the finger but never past the chart's sides. */
@@ -56,7 +51,7 @@ export function applySafeChartTooltip(option: Record<string, unknown>): Record<s
               const shown = Number.isFinite(raw) ? (fmt ? fmt(raw) : String(raw)) : "—";
               return `${p.marker ?? ""}${escape(p.seriesName ?? "")} <b>${escape(shown)}</b>`;
             });
-            return `${Number.isFinite(at) ? `<div>${escape(shortTime(at))}</div>` : ""}${lines.join("<br/>")}`;
+            return `${Number.isFinite(at) ? `<div>${escape(fullDateTime(at))}</div>` : ""}${lines.join("<br/>")}`;
           },
         }
       : fmt && !base.valueFormatter

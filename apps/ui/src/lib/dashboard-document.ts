@@ -43,7 +43,7 @@ export function emptyDocument(name = "Dashboard"): DashboardDocument {
     sections: [
       {
         id: "section-main",
-        title: "Main",
+        title: "Section 1",
         order: 0,
         collapsed: false,
         icon: DEFAULT_SECTION_ICON,

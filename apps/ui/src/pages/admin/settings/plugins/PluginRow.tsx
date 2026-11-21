@@ -101,15 +101,16 @@ export function InstalledPlugin({
       </Stack>
 
       <ButtonRow sx={{ mt: 1.5 }}>
-        {p.settingsFields.length > 0 && canManage && page ? (
+        {/* A setup page is opened from here; other own pages hold their settings and are opened from the side menu (Rey 21/11). */}
+        {p.settingsFields.length > 0 && canManage && page?.block === "setup" ? (
           <Button
             size="small"
             variant="outlined"
             disabled={!p.enabled}
             component={RouterLink}
-            to={`/plugin-page/${encodeURIComponent(p.id)}/${encodeURIComponent(page.id)}${page.block === "setup" ? "" : "?tab=settings"}`}
+            to={`/plugin-page/${encodeURIComponent(p.id)}/${encodeURIComponent(page.id)}`}
           >
-            {page.block === "setup" ? "Open" : `Open ${p.name} settings`}
+            Open
           </Button>
         ) : null}
         {p.settingsFields.length > 0 && canManage && !page ? tabButton("settings", "Settings") : null}

@@ -64,7 +64,7 @@ export const secondCheckRoutes: FastifyPluginAsync = async (app) => {
       if (!isFromHome(request) && (await secondCheckState(id)) === "on") {
         if (!(await checkSignInCode(id, String(request.body?.code ?? "")))) {
           return reply.code(400).send({
-            error: { code: "wrong_code", message: "From outside the home, also type the code from the app." },
+            error: { code: "wrong_code", message: "From outside Nexternel's network, also type the code from the app." },
           });
         }
       }

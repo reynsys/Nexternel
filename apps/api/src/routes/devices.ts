@@ -7,7 +7,6 @@ import { refreshTelemetrySubscriptions } from "../telemetry/mqtt.js";
 import { installationMqttRoot } from "../migrate/align-mqtt-topics.js";
 import { getPool } from "../db.js";
 import {
-  deleteEsphomeYamlByRelativePath,
   listEsphomeYamlFileEntries,
   suggestFromEsphome,
   type EsphomeImportSuggestion,
@@ -149,25 +148,6 @@ export const devicesRoutes: FastifyPluginAsync = async (app) => {
       /** @deprecated use yamlStatus.markedMissing */
       pruned: yamlStatus.markedMissing,
     };
-  });
-
-  app.delete("/api/v1/devices/esphome-yaml", async (request, reply) => {
-    if (!requirePermission(request, reply, "editDevices")) return;
-    const q = request.query as { path?: string };
-    const yamlPath = typeof q.path === "string" ? q.path.trim() : "";
-    if (!yamlPath) {
-      return reply.code(400).send({
-        error: { code: "validation_error", message: "path query is required" },
-      });
-    }
-
-    const removed = await deleteEsphomeYamlByRelativePath(yamlPath);
-    if (!removed) {
-      return reply.code(404).send({
-        error: { code: "not_found", message: "YAML file not found on server" },
-      });
-    }
-    return { ok: true, yamlPath };
   });
 
   app.get("/api/v1/devices/esphome-suggest", async (request, reply) => {

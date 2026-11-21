@@ -39,7 +39,7 @@ export function RoomsPanel() {
     >
       {rooms.length === 0 ? (
         <Typography variant="caption" color="text.secondary">
-          Loading rooms…
+          Loading areas…
         </Typography>
       ) : null}
       {rooms.map((d) => {

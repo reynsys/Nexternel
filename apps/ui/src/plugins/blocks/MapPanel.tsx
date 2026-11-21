@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Box, IconButton, Stack, Tooltip, Typography, useTheme } from "@mui/material";
+import { Alert, Box, IconButton, Stack, Tooltip, Typography, useTheme } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import MyLocationIcon from "@mui/icons-material/MyLocation";
 import L from "leaflet";
@@ -167,10 +167,14 @@ export function MapPanel({ pluginId, panelId, extensionName }: { pluginId: strin
           </Box>
         ))}
         {warning ? (
-          <Box sx={{ px: 1, py: 0.5, bgcolor: "warning.main", color: "warning.contrastText" }}>
-            <Typography variant="caption" component="div">
-              {warning}
-            </Typography>
+          // The Look's own message box; it sits on the same backdrop as the tracker lines, because a
+          // Look's box fill may be see-through and the words would stand on the map.
+          <Box sx={{ p: 0.5, bgcolor: (t) => alpha(t.palette.background.paper, 0.85), borderTop: 1, borderColor: "divider" }}>
+            <Alert severity="warning" sx={{ py: 0, px: 1, "& .MuiAlert-icon, & .MuiAlert-message": { py: 0.5 } }}>
+              <Typography variant="caption" component="div">
+                {warning}
+              </Typography>
+            </Alert>
           </Box>
         ) : null}
       </Stack>

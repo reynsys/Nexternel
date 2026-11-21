@@ -8,6 +8,7 @@ import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
 import SettingsSuggestRoundedIcon from "@mui/icons-material/SettingsSuggestRounded";
 import { api, type ActivityEntry, type ActivityKind } from "../api";
 import { useLiveChanges } from "../lib/live-changes";
+import { fullDate } from "../lib/full-date";
 import { ICON_SIZE } from "../lib/appearance/type";
 
 const KIND: Record<ActivityKind, { label: string; icon: SvgIconComponent }> = {
@@ -21,13 +22,9 @@ const KIND: Record<ActivityKind, { label: string; icon: SvgIconComponent }> = {
 /** Words that mean something went wrong, shown in the warning colour. */
 const BAD = /offline|failed|lost|restarted|could not/i;
 
+/** The day heading in full ("Saturday 21 November 2026"), never "Today": see lib/full-date. */
 function dayLabel(iso: string): string {
-  const d = new Date(iso);
-  const today = new Date();
-  const yesterday = new Date(today.getTime() - 86_400_000);
-  if (d.toDateString() === today.toDateString()) return "Today";
-  if (d.toDateString() === yesterday.toDateString()) return "Yesterday";
-  return d.toLocaleDateString([], { weekday: "long", day: "numeric", month: "long" });
+  return fullDate(iso);
 }
 
 /**

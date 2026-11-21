@@ -409,7 +409,7 @@ export function SetupPage() {
                 <DevicesWifiExplainer />
                 <DevicesWifiFields idPrefix="setup-devices-wifi" value={devicesWifi} onChange={setDevicesWifi} />
                 <Typography variant="caption" color="text.secondary">
-                  You can skip this and set it later in Settings → System. Nexternel asks again when you add your first board.
+                  You can skip this and set it later on the Devices page (Wi-Fi for devices). Nexternel asks again when you add your first board.
                 </Typography>
                 {error && <Alert severity="error">{error}</Alert>}
                 <ButtonRow direction="row" justifyContent="space-between">

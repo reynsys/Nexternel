@@ -15,7 +15,7 @@ import {
   rewriteEsphomeSecretsYaml,
 } from "./esphome-rewrite.js";
 import { applyTopicRootToPayload } from "./topic-remap.js";
-import { ensureDir, esphomeDir, isDirectory, listEsphomeFiles, writeFileEnsured } from "./paths.js";
+import { ensureDir, esphomeDir, isDirectory, writeFileEnsured } from "./paths.js";
 import type {
   ConfigManifest,
   ConfigPayload,
@@ -451,32 +451,6 @@ async function writeEsphomeFiles(
     count += 1;
   }
   return count;
-}
-
-/** Zip current /esphome YAML after Adopt — copy onto the OLD server and OTA there. */
-export async function createEsphomeCutoverPack(): Promise<{
-  buffer: Buffer;
-  filename: string;
-}> {
-  const zip = new JSZip();
-  let n = 0;
-  for (const { rel, data } of listEsphomeFiles()) {
-    if (!/\.ya?ml$/i.test(rel)) continue;
-    zip.file(rel, data);
-    n += 1;
-  }
-  if (n === 0) {
-    throw new Error("No ESPHome YAML on this server yet — run Adopt first");
-  }
-  const buffer = Buffer.from(
-    await zip.generateAsync({
-      type: "nodebuffer",
-      compression: "DEFLATE",
-      compressionOptions: { level: 6 },
-    })
-  );
-  const day = new Date().toISOString().slice(0, 10);
-  return { buffer, filename: `esphome-cutover-${day}.zip` };
 }
 
 export async function adoptConfigArchive(

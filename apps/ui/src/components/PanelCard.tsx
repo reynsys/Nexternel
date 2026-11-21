@@ -10,6 +10,7 @@ import { PanelHost } from "../panels/PanelHost";
 import { WidgetErrorBoundary } from "./WidgetErrorBoundary";
 import { DashboardTileContext } from "../lib/dashboard-tile-context";
 import { readPanelItemDisplay } from "../lib/panel-item-display";
+import { useFitText } from "../lib/use-fit-text";
 import { panelTitleIcon } from "../lib/panel-title-icon";
 import { ItemIcon } from "../lib/icons/ItemIcon";
 import { chartRangeLabel, readPanelChartRange } from "../lib/panel-chart-config";
@@ -64,7 +65,10 @@ function PanelTitleTile({
   icon: { iconId: string | null; kind: string | null };
 }) {
   const titleLine = tileTitle?.trim() || null;
+  // A long name or area is written smaller before it is cut (Rey 21/11).
+  const titleRef = useFitText<HTMLDivElement>(titleLine ?? "");
   const areaLine = areaLabel?.trim() || null;
+  const areaRef = useFitText<HTMLDivElement>(areaLine ?? "");
   const showAreaRow = Boolean(areaLine || (isChartsPanel && rangeNote));
   const inline = Boolean(actions && toolsInline);
   // The name gets the whole first line: a status light sits at the end of the area line when there is one.
@@ -122,6 +126,7 @@ function PanelTitleTile({
       {titleLine ? (
         <Box
           component="div"
+          ref={titleRef}
           title={titleLine}
           sx={{ ...panelTitleNameSx, height: `${PANEL_TITLE_NAME_LINE_PX}px` }}
         >
@@ -142,6 +147,7 @@ function PanelTitleTile({
           {areaLine ? (
             <Box
               component="div"
+              ref={areaRef}
               title={areaLine}
               sx={{
                 ...panelTitleAreaSx,

@@ -215,6 +215,13 @@ async function upsertUsers(
       [user.id, user.username, ...values]
     );
   }
+
+  // Email addresses, by username (every branch above leaves the account under its backup username).
+  // A backup made before they were saved has none: the address already here stays.
+  for (const user of domain.users) {
+    if (user.email === undefined) continue;
+    await client.query(`UPDATE users SET email = $2 WHERE username = $1`, [user.username, user.email]);
+  }
 }
 
 async function upsertGroups(client: PoolClient, domain: DomainExport) {

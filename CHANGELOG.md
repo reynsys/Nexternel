@@ -2,6 +2,18 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting at 1. Newest first.
 
+## V5.4.9
+
+- **Long panel names fit better:** a name or area that is too long for its panel is written a little smaller first, and only cut with "…" if it still does not fit.
+- **Exact words:** "Stay signed in" on the sign-in page; "on the same network as Nexternel" and "outside Nexternel's network" instead of "at home" and "outside the home"; the Dashboard Menu says "Loading areas…"; the board Wi-Fi is found on the Devices page (Wi-Fi for devices), and setup says so.
+- **Full dates:** the Activity list's day headings and chart pop-ups give the full date and time, never "Today" or "Yesterday".
+- **Clear board message:** the Devices page says "Nexternel can't find the software file for these boards" instead of "YAML missing".
+- **A new dashboard's first section** is called "Section 1".
+- **Extensions:** an extension with its own page keeps its settings there; the extra "Open … settings" button is gone.
+- **Map panel:** the "Not updating" warning matches your Look.
+- **Backups now include people's email addresses** (used for warnings and the unlock link), and a restore puts them back.
+- Tidier inside: old parts nobody used are removed.
+
 ## V5.4.8
 
 - **Settings → System looks like every other page:** the tabs sit at the top of one card and are easy to see, and nothing sits in boxes of other colours.

@@ -1,7 +1,7 @@
 import { getPool } from "../db.js";
 
 /**
- * Lock from outside: wrong passwords for an account typed from outside the home are counted.
+ * Lock from outside: wrong passwords for an account typed from outside Nexternel's network are counted.
  * Waiting does not reset the count; only a right sign-in from outside does. At OUTSIDE_LOCK_AFTER
  * the account is locked for signing in from outside until it is unlocked: by the link in the email
  * (when the account has an email address and email sending is set up) or by the home's own

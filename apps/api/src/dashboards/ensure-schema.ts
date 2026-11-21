@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS v3_dashboards (
     id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     owner_user_id  UUID REFERENCES users(id) ON DELETE SET NULL,
     name           VARCHAR(150) NOT NULL,
-    document       JSONB NOT NULL DEFAULT '{"schemaVersion":3,"name":"Dashboard","sections":[{"id":"section-main","title":"Main","order":0,"collapsed":false,"panels":[]}]}'::jsonb,
+    document       JSONB NOT NULL DEFAULT '{"schemaVersion":3,"name":"Dashboard","sections":[{"id":"section-main","title":"Section 1","order":0,"collapsed":false,"panels":[]}]}'::jsonb,
     is_default     BOOLEAN NOT NULL DEFAULT FALSE,
     created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()

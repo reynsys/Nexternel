@@ -150,15 +150,15 @@ export function DevicesPage() {
       setCatalog(catRes.configs);
       if (catRes.yamlStatus?.markedMissing?.length) {
         setInfo(
-          `YAML missing on server for ${catRes.yamlStatus.markedMissing.length} device(s): ${catRes.yamlStatus.markedMissing.map((p) => p.name).join(", ")}`
+          `Nexternel can't find the software file for these boards: ${catRes.yamlStatus.markedMissing.map((p) => p.name).join(", ")}.`
         );
       } else if (catRes.yamlStatus?.restored?.length) {
         setInfo(
-          `YAML restored for ${catRes.yamlStatus.restored.length} device(s): ${catRes.yamlStatus.restored.map((p) => p.name).join(", ")}`
+          `The software file is back for: ${catRes.yamlStatus.restored.map((p) => p.name).join(", ")}.`
         );
       } else if (catRes.pruned?.length) {
         setInfo(
-          `YAML missing on server for ${catRes.pruned.length} device(s): ${catRes.pruned.map((p) => p.name).join(", ")}`
+          `Nexternel can't find the software file for these boards: ${catRes.pruned.map((p) => p.name).join(", ")}.`
         );
       }
       setError(null);

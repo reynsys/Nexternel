@@ -3,14 +3,8 @@ import { requireAdmin } from "../auth/rbac.js";
 import { config } from "../config.js";
 import { isDirectory, esphomeDir } from "./paths.js";
 import { createConfigExport } from "./export-config.js";
-import {
-  adoptConfigArchive,
-  createEsphomeCutoverPack,
-} from "./adopt-config.js";
-import {
-  createFlashReadyPack,
-  createFlashReadyYamlForStem,
-} from "./flash-yaml.js";
+import { adoptConfigArchive } from "./adopt-config.js";
+import { createFlashReadyYamlForStem } from "./flash-yaml.js";
 import { repairDashboardCapabilityBindings } from "./repair-dashboard-bindings.js";
 import { refreshTelemetrySubscriptions } from "../telemetry/mqtt.js";
 import { syncCapabilitiesFromLegacy } from "../capabilities/sync.js";
@@ -62,35 +56,6 @@ export const migrateRoutes: FastifyPluginAsync = async (app) => {
         error: {
           code: "export_failed",
           message: err instanceof Error ? err.message : "Export failed",
-        },
-      });
-    }
-  });
-
-  app.get("/api/v1/system/config/esphome-pack", async (request, reply) => {
-    if (!requireAdmin(request, reply)) return;
-    try {
-      // Prefer flash-ready (IP/Wi‑Fi inlined). Fall back to raw YAML zip.
-      try {
-        const { buffer, filename } = await createFlashReadyPack();
-        return reply
-          .header("Content-Type", "application/zip")
-          .header("Content-Disposition", `attachment; filename="${filename}"`)
-          .send(buffer);
-      } catch (flashErr) {
-        request.log.warn({ err: flashErr }, "flash-ready pack failed; raw cutover");
-        const { buffer, filename } = await createEsphomeCutoverPack();
-        return reply
-          .header("Content-Type", "application/zip")
-          .header("Content-Disposition", `attachment; filename="${filename}"`)
-          .send(buffer);
-      }
-    } catch (err) {
-      request.log.error({ err }, "esphome pack failed");
-      return reply.code(400).send({
-        error: {
-          code: "esphome_pack_failed",
-          message: err instanceof Error ? err.message : "ESPHome pack failed",
         },
       });
     }

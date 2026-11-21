@@ -1,5 +1,5 @@
 import { humanizeTechnicalId } from "../devices/display-name.js";
-import { access, readFile, readdir, unlink } from "fs/promises";
+import { access, readFile, readdir } from "fs/promises";
 import { join } from "path";
 
 export interface EsphomeImportSuggestion {
@@ -567,24 +567,6 @@ export async function listEsphomeYamlFiles(): Promise<string[]> {
 }
 
 /** Delete an unregistered YAML file from the server esphome/ folder. */
-export async function deleteEsphomeYamlByRelativePath(relativePath: string): Promise<boolean> {
-  const clean = relativePath.trim().replace(/^\/+/, "").replace(/\\/g, "/");
-  if (!clean || clean.includes("..") || /^secrets\.yaml$/i.test(clean)) {
-    return false;
-  }
-  const fileName = clean.endsWith(".yaml") ? clean : `${clean}.yaml`;
-
-  for (const dir of ESPHOME_DIRS) {
-    try {
-      await unlink(join(dir, fileName));
-      return true;
-    } catch {
-      /* try next path */
-    }
-  }
-  return false;
-}
-
 export async function loadEsphomeYaml(esphomeName: string): Promise<string | null> {
   return (await findEsphomeYaml(esphomeName))?.text ?? null;
 }

@@ -15,14 +15,6 @@ import { applyBoardHealthTopic, boardFingerprint } from "../devices/board-health
 import { applyBrokerLog, BROKER_LOG_TOPIC } from "./broker-log.js";
 import { looksLikeShellyCommandTopic, isShellyGen1MqttPrefix } from "../shelly/topics.js";
 import { parseShellyMqttSwitchUpdates } from "../shelly/notify.js";
-import {
-  countSwitchesInStatusResult,
-  enrichDiscoveredShelly,
-  parseShellyAnnouncePayload,
-  type DiscoveredShelly,
-  type DiscoveredShellyBase,
-} from "../shelly/discover.js";
-import { guessShellyGen } from "../shelly/models.js";
 import { installationMqttRoot } from "../migrate/align-mqtt-topics.js";
 import {
   collectMqttSubscriptionTopics,
@@ -77,20 +69,6 @@ function noteSent(topic: string): string {
 const devicesByPrefix = new Map<string, string[]>();
 let mqttMessagesReceived = 0;
 let mqttCapabilityUpdates = 0;
-
-/** Phase 3 discovery temporary listeners (announce / RPC probe replies). */
-type DiscoveryCollector = (topic: string, payload: string) => void;
-const discoveryCollectors = new Set<DiscoveryCollector>();
-
-function notifyDiscoveryCollectors(topic: string, payload: string) {
-  for (const fn of discoveryCollectors) {
-    try {
-      fn(topic, payload);
-    } catch {
-      /* ignore */
-    }
-  }
-}
 
 export function getMqttStatus() {
   return { status, lastError, broker: config.mqttBroker() };
@@ -544,8 +522,6 @@ async function handleMessage(
   // Nexternel's own message coming back: says nothing about the board.
   if (sentTopics.has(topic)) return;
 
-  notifyDiscoveryCollectors(topic, payload);
-
   const presenceHandled =
     applyDeviceRootStatusTopic(topic, payload) ||
     applyDeviceShellyOnlineTopic(topic, payload);
@@ -800,161 +776,4 @@ export function stopTelemetry() {
   client?.end(true);
   client = null;
   status = "disconnected";
-}
-
-const DISCOVER_SRC = "nexternel/discover";
-
-/**
- * Phase 3: MQTT announce discovery (no LAN RPC/WebSocket driver).
- * Publishes `announce` on shellies/command, collects announce payloads,
- * then optionally probes Shelly.GetStatus over MQTT RPC for switch count.
- */
-export async function discoverShellyDevices(opts?: {
-  timeoutMs?: number;
-}): Promise<{ devices: DiscoveredShelly[]; mqttConnected: boolean }> {
-  const mqttClient = client;
-  if (!mqttClient?.connected) {
-    return { devices: [], mqttConnected: false };
-  }
-
-  const timeoutMs = Math.min(15_000, Math.max(2_000, opts?.timeoutMs ?? 5_000));
-  const found = new Map<string, DiscoveredShellyBase>();
-
-  const collector: DiscoveryCollector = (topic, payload) => {
-    if (
-      topic === "shellies/announce" ||
-      topic.endsWith("/announce") ||
-      /\/announce$/i.test(topic)
-    ) {
-      const parsed = parseShellyAnnouncePayload(payload);
-      if (parsed) found.set(parsed.topicPrefix, parsed);
-      return;
-    }
-    // Online presence: shellyxxx/online (Gen2+) or shellies/shelly1-xxx/online (Gen1)
-    const gen1Online = /^shellies\/([^/]+)\/online$/i.exec(topic);
-    if (gen1Online && /^(true|1|online)$/i.test(payload.trim())) {
-      const deviceId = gen1Online[1]!;
-      if (!found.has(deviceId)) {
-        found.set(deviceId, {
-          topicPrefix: deviceId,
-          model: null,
-          app: null,
-          mac: null,
-          gen: 1,
-          version: null,
-          ip: null,
-        });
-      }
-      return;
-    }
-    const onlineMatch = /^([^/]+)\/online$/i.exec(topic);
-    if (onlineMatch && /^(true|1|online)$/i.test(payload.trim())) {
-      const prefix = onlineMatch[1]!;
-      if (!found.has(prefix) && /^shelly/i.test(prefix)) {
-        found.set(prefix, {
-          topicPrefix: prefix,
-          model: null,
-          app: null,
-          mac: null,
-          gen: null,
-          version: null,
-          ip: null,
-        });
-      }
-    }
-  };
-
-  discoveryCollectors.add(collector);
-  try {
-    await new Promise<void>((resolve) => {
-      mqttClient.subscribe(
-        ["shellies/announce", "shellies/#", "+/announce", `${DISCOVER_SRC}/rpc`],
-        { qos: 0 },
-        () => resolve()
-      );
-    });
-
-    await new Promise<void>((resolve, reject) => {
-      mqttClient.publish(noteSent("shellies/command"), "announce", { qos: 0 }, (err) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
-
-    await new Promise((r) => setTimeout(r, timeoutMs));
-
-    // Probe switch counts in parallel via MQTT RPC GetStatus.
-    const devices: DiscoveredShelly[] = await Promise.all(
-      [...found.values()].map(async (base) => {
-        const suggestedGen = guessShellyGen({
-          gen: base.gen,
-          model: base.model,
-          app: base.app,
-          topicPrefix: base.topicPrefix,
-        });
-        if (suggestedGen === 1) {
-          return enrichDiscoveredShelly(base, { suggestedGen: 1 });
-        }
-        const probed = await probeShellySwitchCountMqtt(base.topicPrefix, 2_000);
-        if (probed != null) {
-          return enrichDiscoveredShelly(base, {
-            switchCount: probed,
-            probed: true,
-            suggestedGen: 2,
-          });
-        }
-        return enrichDiscoveredShelly(base, { suggestedGen: 2 });
-      })
-    );
-
-    devices.sort((a, b) => a.topicPrefix.localeCompare(b.topicPrefix));
-    return { devices, mqttConnected: true };
-  } finally {
-    discoveryCollectors.delete(collector);
-  }
-}
-
-function probeShellySwitchCountMqtt(
-  topicPrefix: string,
-  waitMs: number
-): Promise<number | null> {
-  const mqttClient = client;
-  if (!mqttClient?.connected) return Promise.resolve(null);
-
-  return new Promise((resolve) => {
-    let settled = false;
-    const finish = (n: number | null) => {
-      if (settled) return;
-      settled = true;
-      discoveryCollectors.delete(onRpc);
-      resolve(n);
-    };
-
-    const onRpc: DiscoveryCollector = (topic, payload) => {
-      if (topic !== `${DISCOVER_SRC}/rpc`) return;
-      try {
-        const msg = JSON.parse(payload) as {
-          result?: unknown;
-          src?: string;
-        };
-        // Only accept replies from the device we probed.
-        if (msg.src && msg.src !== topicPrefix) return;
-        const n = countSwitchesInStatusResult(msg.result);
-        if (n != null) finish(n);
-      } catch {
-        /* ignore */
-      }
-    };
-
-    discoveryCollectors.add(onRpc);
-    const body = JSON.stringify({
-      id: 1,
-      src: DISCOVER_SRC,
-      method: "Shelly.GetStatus",
-    });
-    mqttClient.publish(noteSent(`${topicPrefix}/rpc`), body, { qos: 0 }, () => {
-      /* fire and forget */
-    });
-    setTimeout(() => finish(null), waitMs);
-  });
 }

@@ -147,7 +147,7 @@ export function anywhereLight(
   now = Date.now()
 ): Pick<AnywhereView, "light" | "text"> {
   if (!settings.name || !settings.key) return { light: "off", text: "Not set up yet." };
-  if (!settings.enabled) return { light: "off", text: "Off. Nexternel can only be opened at home." };
+  if (!settings.enabled) return { light: "off", text: "Off. Nexternel can only be opened on the same network." };
   const alive = status && typeof status.seen === "number" && now - status.seen < LINK_SILENT_MS;
   if (!alive) {
     return { light: "red", text: "Nexternel Anywhere is not running on this server. Try Restart under Help & troubleshooting." };

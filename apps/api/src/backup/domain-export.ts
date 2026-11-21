@@ -58,6 +58,8 @@ export type ExportedUser = {
   role: string;
   themePrefs: unknown;
   avatarData: string | null;
+  /** For warnings and the unlock link (Users). Backups made before 21/11/2026 have none. */
+  email?: string | null;
 };
 
 export type ExportedRole = {
@@ -232,8 +234,9 @@ async function loadUsers(): Promise<ExportedUser[]> {
     role: string;
     theme_prefs: unknown;
     avatar_data: string | null;
+    email: string | null;
   }>(
-    `SELECT id, username, password_hash, display_name, is_active, role, theme_prefs, avatar_data
+    `SELECT id, username, password_hash, display_name, is_active, role, theme_prefs, avatar_data, email
      FROM users ORDER BY username`
   );
   return r.rows.map((row) => ({
@@ -245,6 +248,7 @@ async function loadUsers(): Promise<ExportedUser[]> {
     role: row.role,
     themePrefs: row.theme_prefs ?? {},
     avatarData: row.avatar_data,
+    email: row.email,
   }));
 }
 
