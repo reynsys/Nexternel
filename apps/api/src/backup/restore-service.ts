@@ -349,6 +349,9 @@ export async function runRestoreBackupJob(
 
     try {
       await syncCapabilitiesFromLegacy();
+      // Items from a backup made before places in history were kept get the place their charts read.
+      const { fillHistoryKeys } = await import("../history/keys.js");
+      await fillHistoryKeys();
       await repairDashboardCapabilityBindings();
       await refreshTelemetrySubscriptions();
       phases.push({ name: "Live telemetry sync", ok: true });

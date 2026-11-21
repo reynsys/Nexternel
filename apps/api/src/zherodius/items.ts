@@ -1,15 +1,17 @@
 /**
  * A Zherodius device's parts (Zh.GetInfo) as Nexternel items: each relay is a switch, and each sensor
- * gives one item per reading it takes (temperature, humidity, pressure).
+ * gives one item per reading it takes (temperature, humidity, pressure, CO2).
  */
 import type { DeviceInfo, DeviceStatus } from "./line.js";
 
-export type Reading = "t" | "h" | "p";
+export type Reading = "t" | "h" | "p" | "c";
+const READINGS: readonly Reading[] = ["t", "h", "p", "c"];
 
 const READING: Record<Reading, { sensorType: string; unit: string; word: string }> = {
   t: { sensorType: "temperature", unit: "°C", word: "temperature" },
   h: { sensorType: "humidity", unit: "%", word: "humidity" },
   p: { sensorType: "pressure", unit: "hPa", word: "pressure" },
+  c: { sensorType: "co2", unit: "ppm", word: "CO2" },
 };
 
 /**
@@ -24,6 +26,7 @@ const MODEL_READS: Record<string, Reading[]> = {
   SHT3X: ["t", "h"],
   SHT4X: ["t", "h"],
   AHT20: ["t", "h"],
+  SCD4X: ["c", "t", "h"],
 };
 
 export type ItemPlan =
@@ -34,7 +37,7 @@ export const relaySlug = (partId: number) => `relay_${partId}`;
 export const sensorSlug = (partId: number, reading: Reading) => `sensor_${partId}_${reading}`;
 
 function readsOf(part: DeviceInfo["parts"][number]): Reading[] {
-  if (Array.isArray(part.reads)) return part.reads.filter((r): r is Reading => r === "t" || r === "h" || r === "p");
+  if (Array.isArray(part.reads)) return part.reads.filter((r): r is Reading => (READINGS as readonly string[]).includes(r));
   return MODEL_READS[(part.model ?? "").toUpperCase()] ?? [];
 }
 
@@ -74,7 +77,7 @@ export function readStatus(status: DeviceStatus, items: ItemMap): ItemReport[] {
     if (item && typeof r.on === "boolean") out.push({ itemId: item.itemId, value: r.on, kind: item.kind, slug: relaySlug(r.id) });
   }
   for (const s of status.sensors ?? []) {
-    for (const reading of ["t", "h", "p"] as const) {
+    for (const reading of READINGS) {
       const slug = sensorSlug(s.id, reading);
       const item = items.get(slug);
       if (!item) continue;

@@ -56,7 +56,8 @@ export type DevicePathDeps = {
   /** Items whose freshness is not judged by age (they report on their own schedule). */
   itemsExemptFromFreshness(): Promise<Set<string>>;
   saveSwitchPosition(itemId: string, on: boolean): void;
-  writeHistory(key: HistoryKey, value: number): void;
+  /** Keep a reading in the item's history (the item's own place; `suggested` = where its connection would put it). */
+  writeHistory(itemId: string, suggested: HistoryKey, value: number): void;
   logSwitchChange(itemId: string, on: boolean): void;
   logSensorAnswer(itemId: string, answering: boolean): void;
   noteSwitchCommand(itemId: string, on: boolean, who: string): void;
@@ -64,7 +65,7 @@ export type DevicePathDeps = {
   now(): number;
 };
 
-/** Where a reading is kept in history: the device and the item's own name on it. */
+/** Where a reading is kept in history: the device and the item's own name on it (history/keys.ts). */
 export type HistoryKey = { deviceSlug: string; entityId: string };
 
 /** The device did not confirm a press or change in time. */
@@ -179,7 +180,7 @@ export function createDevicePath(deps: DevicePathDeps) {
     }
     if (sensorLike && !retained && opts.history) {
       const num = typeof value === "number" ? value : typeof value === "string" ? Number(value.trim()) : Number.NaN;
-      if (Number.isFinite(num)) deps.writeHistory(opts.history, num);
+      if (Number.isFinite(num)) deps.writeHistory(itemId, opts.history, num);
     }
     if (kind === "switch" && typeof value === "boolean") {
       confirm(itemId, value);

@@ -46,7 +46,7 @@ function setup(
     activity: [] as string[],
     switchChanges: [] as { id: string; on: boolean }[],
     sensorAnswers: [] as { id: string; answering: boolean }[],
-    history: [] as { deviceSlug: string; entityId: string; value: number }[],
+    history: [] as { itemId: string; deviceSlug: string; entityId: string; value: number }[],
     positions: [] as { id: string; on: boolean }[],
     touchedItems: [] as string[],
     online: [] as { ids: string[]; online: boolean }[],
@@ -72,7 +72,7 @@ function setup(
     itemsToStaleOnOffline: async () => [...items.keys()],
     itemsExemptFromFreshness: async () => new Set(),
     saveSwitchPosition: (id, on) => calls.positions.push({ id, on }),
-    writeHistory: (key, value) => calls.history.push({ ...key, value }),
+    writeHistory: (itemId, key, value) => calls.history.push({ itemId, ...key, value }),
     logSwitchChange: (id, on) => calls.switchChanges.push({ id, on }),
     logSensorAnswer: (id, answering) => calls.sensorAnswers.push({ id, answering }),
     noteSwitchCommand: (id, on, who) => calls.notes.push({ id, on, who }),
@@ -275,7 +275,7 @@ test("a sensor reading: live value, history, device heard from", () => {
   path.reportItem(id, 21.5, { kind: "temperature", retained: false, history: { deviceSlug: "hall", entityId: "temp" } });
   assert.equal(getLiveState(id)?.value, 21.5);
   assert.equal(getLiveState(id)?.quality, "good");
-  assert.deepEqual(calls.history, [{ deviceSlug: "hall", entityId: "temp", value: 21.5 }]);
+  assert.deepEqual(calls.history, [{ itemId: id, deviceSlug: "hall", entityId: "temp", value: 21.5 }]);
   assert.deepEqual(calls.touchedItems, [id]);
 });
 

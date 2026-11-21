@@ -6,6 +6,7 @@ import { logActivity, logSensorAnswer, logSwitchChange, noteSwitchCommand } from
 import { getCapabilityById } from "../capabilities/store.js";
 import { getPool } from "../db.js";
 import { writeSensorReading } from "../history/influx.js";
+import { historyKeyForReading } from "../history/keys.js";
 import { isControlType, type ControlFeatures } from "./controls.js";
 import { createDevicePath, type Connection, type ControlInfo, type ItemSender } from "./device-path.js";
 
@@ -104,9 +105,11 @@ export const devicePath = createDevicePath({
       )
       .catch(ignore);
   },
-  writeHistory(key, value) {
+  writeHistory(itemId, suggested, value) {
     // History is best-effort; the live value still works.
-    void writeSensorReading({ deviceSlug: key.deviceSlug, entityId: key.entityId, value }).catch(ignore);
+    void historyKeyForReading(itemId, suggested)
+      .then((key) => (key ? writeSensorReading({ deviceSlug: key.deviceSlug, entityId: key.entityId, value }) : undefined))
+      .catch(ignore);
   },
   logSwitchChange: (itemId, on) => void logSwitchChange(itemId, on),
   logSensorAnswer: (itemId, answering) => void logSensorAnswer(itemId, answering),

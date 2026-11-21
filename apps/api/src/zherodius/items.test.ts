@@ -63,3 +63,17 @@ test("Nexternel's name for the device fits in 32 bytes without cutting a letter"
   assert.equal(Buffer.byteLength(fitHubName("Ж".repeat(40))), 32);
   assert.equal(fitHubName("The Taylors' house in the country, Devon"), "The Taylors' house in the countr");
 });
+
+test("a CO2 sensor (SCD4x) gives CO2, temperature and humidity", () => {
+  const plan = planItems(info([{ id: 2, type: "sensor", name: "Hallway Monitor", model: "SCD4x", reads: ["c", "t", "h"] }]));
+  assert.deepEqual(
+    plan.map((p) => [p.slug, p.name, p.kind === "sensor" ? `${p.sensorType} ${p.unit}` : ""]),
+    [
+      ["sensor_2_c", "Hallway Monitor CO2", "co2 ppm"],
+      ["sensor_2_t", "Hallway Monitor temperature", "temperature °C"],
+      ["sensor_2_h", "Hallway Monitor humidity", "humidity %"],
+    ]
+  );
+  const items: ItemMap = new Map([["sensor_2_c", { itemId: "c1", kind: "co2" }]]);
+  assert.deepEqual(readStatus({ sensors: [{ id: 2, c: 612, t: 21.4, h: 48 }] }, items), [{ itemId: "c1", value: 612, kind: "co2", slug: "sensor_2_c" }]);
+});

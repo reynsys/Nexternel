@@ -39,7 +39,8 @@ export type DeviceInfo = {
 /** What the device reports now (Zh.GetStatus and NotifyStatus). */
 export type DeviceStatus = {
   relays?: { id: number; on: boolean }[];
-  sensors?: { id: number; t?: number; h?: number; p?: number }[];
+  /** t °C, h %, p hPa, c CO2 ppm. */
+  sensors?: { id: number; t?: number; h?: number; p?: number; c?: number }[];
   rssi?: number;
   uptime?: number;
   cfg?: number;

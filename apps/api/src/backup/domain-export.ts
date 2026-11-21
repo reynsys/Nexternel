@@ -27,6 +27,9 @@ export type ExportedCapability = {
   /** Your own name and icon (absent in backups made before V5.2.79). */
   customName?: string | null;
   icon?: string | null;
+  /** Where its readings are kept in history (absent in backups before V5.4.10: worked out again). */
+  historyDevice?: string | null;
+  historyEntity?: string | null;
   /** Changed status light limits; absent = the starting limits (and in backups before V5.2.91). */
   statusLight?: StatusLightSettings;
 };
@@ -149,10 +152,13 @@ async function loadCapabilities(): Promise<ExportedCapability[]> {
     service_id: string | null;
     custom_name: string | null;
     icon: string | null;
+    history_device: string | null;
+    history_entity: string | null;
   }>(
     `SELECT c.id, c.device_id, c.kind, c.name, c.unit, c.source_type, c.source_id,
             COALESCE(c.is_enabled, TRUE) AS is_enabled,
-            c.system_id, c.group_id, c.area_id, c.service_id, c.custom_name, c.icon
+            c.system_id, c.group_id, c.area_id, c.service_id, c.custom_name, c.icon,
+            c.history_device, c.history_entity
      FROM capabilities c
      INNER JOIN devices d ON d.id = c.device_id
      ORDER BY c.name`
@@ -173,6 +179,8 @@ async function loadCapabilities(): Promise<ExportedCapability[]> {
     serviceId: row.service_id,
     customName: row.custom_name,
     icon: row.icon,
+    historyDevice: row.history_device,
+    historyEntity: row.history_entity,
     ...(statusLights.has(row.id) ? { statusLight: statusLights.get(row.id) } : {}),
   }));
 }

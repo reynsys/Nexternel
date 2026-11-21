@@ -6,6 +6,7 @@ import multipart from "@fastify/multipart";
 import { config } from "./config.js";
 import { attachUser } from "./auth/plugin.js";
 import { ensureCapabilitySchema } from "./capabilities/ensure-schema.js";
+import { ensureHistoryKeySchema, fillHistoryKeys } from "./history/keys.js";
 import { ensureStatusLightSchema, statusEngine } from "./capabilities/status-lights.js";
 import { ensureV4DomainSchema } from "./systems/ensure-schema.js";
 import { ensureDashboardSchema } from "./dashboards/ensure-schema.js";
@@ -214,6 +215,9 @@ try {
   await ensureEsphomeBuilderSchema();
   await ensureCapabilitySchema();
   await clearNonMqttAddresses();
+  // Each item keeps one place in history; items from before get the place their charts read.
+  await ensureHistoryKeySchema();
+  await fillHistoryKeys();
   await ensureStatusLightSchema();
   await ensureLiveStateSchema();
   const v4Domain = await ensureV4DomainSchema();

@@ -2,6 +2,12 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting at 1. Newest first.
 
+## V5.4.10
+
+- **Charts carry on when a device is replaced:** when a new device takes the place of an earlier one (for example a board moved from ESPHome to Zherodius), its readings go on in the same charts, after the earlier ones. Before, the charts started empty.
+- **Replacing a device keeps more:** a reading that is the only one of its kind on both devices (one CO2 reading, for example) is kept even when the new device names it differently.
+- **Zherodius CO2 sensors:** CO2, temperature and humidity from a Zherodius device with an SCD40 or SCD41 sensor (needs Zherodius 1.11.1).
+
 ## V5.4.9
 
 - **Long panel names fit better:** a name or area that is too long for its panel is written a little smaller first, and only cut with "…" if it still does not fit.

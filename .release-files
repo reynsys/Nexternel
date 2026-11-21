@@ -143,6 +143,7 @@ apps/api/src/history/backfill-entity-ids.ts
 apps/api/src/history/entity-id.test.ts
 apps/api/src/history/entity-id.ts
 apps/api/src/history/influx.ts
+apps/api/src/history/keys.ts
 apps/api/src/history/mqtt-persist.test.ts
 apps/api/src/history/mqtt-persist.ts
 apps/api/src/history/pipeline.test.ts

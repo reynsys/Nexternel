@@ -254,10 +254,10 @@ async function upsertCapabilities(client: PoolClient, domain: DomainExport) {
       await client.query(
         `INSERT INTO capabilities (
            id, device_id, kind, name, unit, source_type, source_id, is_enabled,
-           system_id, group_id, area_id, service_id, custom_name, icon
+           system_id, group_id, area_id, service_id, custom_name, icon, history_device, history_entity
          ) VALUES (
            $1::uuid, $2::uuid, $3, $4, $5, $6, $7, $8,
-           $9, $10::uuid, $11::uuid, $12, $13, $14
+           $9, $10::uuid, $11::uuid, $12, $13, $14, $15, $16
          )
          ON CONFLICT (id) DO UPDATE SET
            device_id = EXCLUDED.device_id,
@@ -273,6 +273,8 @@ async function upsertCapabilities(client: PoolClient, domain: DomainExport) {
            service_id = EXCLUDED.service_id,
            custom_name = EXCLUDED.custom_name,
            icon = EXCLUDED.icon,
+           history_device = EXCLUDED.history_device,
+           history_entity = EXCLUDED.history_entity,
            updated_at = NOW()`,
         [
           cap.id,
@@ -289,6 +291,8 @@ async function upsertCapabilities(client: PoolClient, domain: DomainExport) {
           cap.serviceId,
           cap.customName ?? null,
           cap.icon ?? null,
+          cap.historyDevice ?? null,
+          cap.historyEntity ?? null,
         ]
       );
       if (cap.statusLight) {

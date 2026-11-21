@@ -2,25 +2,41 @@
  * A new device replaces an old one (for example a board moved from ESPHome to Zherodius, or a broken
  * switch swapped): the old device's items keep their identity and are joined to the new device's
  * switches and readings, so everything that used them (panels, the names and icons people gave them,
- * status-light limits, extension permissions) goes on working. Then the old device is removed.
+ * status-light limits, extension permissions, history) goes on working. Then the old device is removed.
+ * History: each item keeps its place in history (history/keys.ts), so new readings carry on its chart.
  */
 import { logActivity } from "../activity/activity.js";
+import { fillHistoryKeys } from "../history/keys.js";
 import { syncCapabilitiesFromLegacy } from "../capabilities/sync.js";
 import { getPool } from "../db.js";
 import type { Connection } from "./device-path.js";
 
 export type ReplaceItem = { id: string; name: string; kind: string };
 
-/** Old items matched to new ones: same kind and the same name the device gives it (letter case aside). */
+/**
+ * Old items matched to new ones: first the same kind and the same name the device gives it (letter case
+ * aside). Then, of what is left, an old item whose kind is the only one of its kind on both devices goes
+ * to that new item whatever their names (a board's one CO2 reading is the same reading under a new name).
+ */
 export function matchItems(oldItems: ReplaceItem[], newItems: ReplaceItem[]) {
   const key = (i: ReplaceItem) => `${i.kind}\u0000${i.name.trim().toLowerCase()}`;
   const free = new Map<string, ReplaceItem[]>();
   for (const n of newItems) free.set(key(n), [...(free.get(key(n)) ?? []), n]);
   const moves: { from: ReplaceItem; to: ReplaceItem }[] = [];
-  const missing: ReplaceItem[] = [];
+  const unmatched: ReplaceItem[] = [];
   for (const o of oldItems) {
     const hit = free.get(key(o))?.shift();
     if (hit) moves.push({ from: o, to: hit });
+    else unmatched.push(o);
+  }
+  const taken = new Set(moves.map((m) => m.to.id));
+  const leftNew = newItems.filter((n) => !taken.has(n.id));
+  const ofKind = (list: ReplaceItem[], kind: string) => list.filter((i) => i.kind === kind);
+  const missing: ReplaceItem[] = [];
+  for (const o of unmatched) {
+    const olds = ofKind(unmatched, o.kind);
+    const news = ofKind(leftNew, o.kind);
+    if (olds.length === 1 && news.length === 1) moves.push({ from: o, to: news[0]! });
     else missing.push(o);
   }
   return { moves, missing };
@@ -83,6 +99,8 @@ export async function replaceDevice(newDeviceId: string, oldDeviceId: string): P
   const old = both.rows.find((d) => d.id === oldDeviceId);
   if (!fresh || !old) throw new ReplaceRefusedError("One of the two devices is no longer there.");
 
+  // The old items' places in history are fixed before their sources change (the chart goes on).
+  await fillHistoryKeys(oldDeviceId);
   const { moves, missing } = matchItems(await itemsOfDevice(oldDeviceId), await itemsOfDevice(newDeviceId));
   const client = await getPool().connect();
   try {
@@ -127,7 +145,7 @@ export async function replaceDevice(newDeviceId: string, oldDeviceId: string): P
   void logActivity({
     kind: "device",
     deviceId: newDeviceId,
-    text: `${fresh.name} replaced the earlier ${old.name}: ${moves.length === 1 ? "1 item kept its" : `${moves.length} items kept their`} panels and names${missing.length ? `, ${missing.length} removed with the earlier device` : ""}`,
+    text: `${fresh.name} replaced the earlier ${old.name}: ${moves.length === 1 ? "1 item kept its" : `${moves.length} items kept their`} panels, names and history${missing.length ? `, ${missing.length} removed with the earlier device` : ""}`,
   });
   return { moved: moves.length, removed: missing.length };
 }

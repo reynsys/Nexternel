@@ -30,3 +30,30 @@ test("each new item takes only one old one", () => {
   assert.equal(moves.length, 1);
   assert.equal(missing.length, 1);
 });
+
+test("the only item of its kind on both devices moves even under another name", () => {
+  const { moves, missing } = matchItems(
+    [item("o1", "Hallway Monitor CO2", "co2"), item("o2", "Hallway Monitor Temperature", "temperature")],
+    [item("n1", "Hallway CO2", "co2"), item("n2", "Hallway temperature", "temperature")]
+  );
+  assert.deepEqual(moves.map((m) => [m.from.id, m.to.id]).sort(), [["o1", "n1"], ["o2", "n2"]]);
+  assert.deepEqual(missing, []);
+});
+
+test("two of a kind with other names are not guessed", () => {
+  const { moves, missing } = matchItems(
+    [item("o1", "Front", "temperature"), item("o2", "Back", "temperature")],
+    [item("n1", "Shed", "temperature"), item("n2", "Garage", "temperature")]
+  );
+  assert.equal(moves.length, 0);
+  assert.equal(missing.length, 2);
+});
+
+test("a name match comes first, the kind match only takes what is left", () => {
+  const { moves, missing } = matchItems(
+    [item("o1", "Relay 1"), item("o2", "Pump")],
+    [item("n1", "Relay 1"), item("n2", "Water pump")]
+  );
+  assert.deepEqual(moves.map((m) => [m.from.id, m.to.id]), [["o1", "n1"], ["o2", "n2"]]);
+  assert.deepEqual(missing, []);
+});

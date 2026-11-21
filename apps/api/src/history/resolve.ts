@@ -11,10 +11,13 @@ export type HistorySeriesTarget = {
 };
 
 /**
- * Map capabilityId → Influx tags (device slug + entity_id) via sensors/relays.
+ * Map capabilityId → Influx tags (device slug + entity_id). An item's own kept place (history/keys.ts)
+ * wins; without one the place is worked out from its device and its sensor or relay.
+ * `ignoreKept` = work it out even when the item has a kept place.
  */
 export async function resolveHistoryTarget(
-  capabilityId: string
+  capabilityId: string,
+  opts: { ignoreKept?: boolean } = {}
 ): Promise<
   | { ok: true; target: HistorySeriesTarget }
   | { ok: false; status: 404 | 400; message: string }
@@ -28,8 +31,11 @@ export async function resolveHistoryTarget(
     source_type: string;
     source_id: string;
     device_slug: string;
+    history_device: string | null;
+    history_entity: string | null;
   }>(
-    `SELECT c.id, COALESCE(NULLIF(c.custom_name, ''), c.name) AS name, c.unit, c.source_type, c.source_id, d.slug AS device_slug
+    `SELECT c.id, COALESCE(NULLIF(c.custom_name, ''), c.name) AS name, c.unit, c.source_type, c.source_id, d.slug AS device_slug,
+            c.history_device, c.history_entity
      FROM capabilities c
      JOIN devices d ON d.id = c.device_id
      WHERE c.id = $1
@@ -40,6 +46,20 @@ export async function resolveHistoryTarget(
   const row = cap.rows[0];
   if (!row) {
     return { ok: false, status: 404, message: "Item not found" };
+  }
+
+  if (!opts.ignoreKept && row.history_device && row.history_entity) {
+    return {
+      ok: true,
+      target: {
+        capabilityId: row.id,
+        name: row.name,
+        unit: row.unit,
+        deviceSlug: row.history_device,
+        entityId: row.history_entity,
+        sourceType: row.source_type,
+      },
+    };
   }
 
   if (row.source_type === "sensor") {
