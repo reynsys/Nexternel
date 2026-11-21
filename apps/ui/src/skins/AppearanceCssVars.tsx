@@ -1,29 +1,21 @@
-import { useEffect, useMemo } from "react";
-import { GlobalStyles } from "@mui/material";
-import { useTheme, alpha } from "@mui/material/styles";
+import { useEffect, useMemo, type CSSProperties, type ReactNode } from "react";
+import { Box, GlobalStyles } from "@mui/material";
+import { useTheme, alpha, type Theme } from "@mui/material/styles";
 import { metricValueColorFromTheme } from "./metricColors";
-import { resolveLook } from "./looks/registry";
+import { listLooks, resolveLook } from "./looks/registry";
+import { lookStyleSheet } from "./looks/look-css";
+import type { UiLook } from "./looks/types";
 import { chosenLookButtons } from "../lib/look-font";
 
 /**
  * Appearance tokens as CSS variables — any widget/plugin can use these without
  * importing MUI (clock, future plugins, SVG, canvas). The Look's shape tokens are here too
- * (--nx-panel-radius and friends), and its id is on <html data-nx-look>.
+ * (--nx-panel-radius and friends). A Look is placed on a box: the page (<html data-nx-look>), or a
+ * LookBox inside it (the Look tiles in Settings → Appearance), each with its own Look.
  */
-export function AppearanceCssVars({
-  lookId,
-  buttonsId,
-  looksVersion = 0,
-}: {
-  lookId?: string;
-  /** The person's button style choice (used when the Look offers button styles). */
-  buttonsId?: string;
-  looksVersion?: number;
-}) {
-  const theme = useTheme();
-  // looksVersion: a Look from an add-on may arrive after the first draw.
-  const look = useMemo(() => resolveLook(lookId), [lookId, looksVersion]);
-  const vars = useMemo(() => {
+function useLookVars(theme: Theme, look: UiLook): Record<string, string> {
+  return useMemo(() => {
+
     const accent = theme.palette.primary.main;
     const metricValue = metricValueColorFromTheme(theme);
     const t = theme.nx;
@@ -110,6 +102,24 @@ export function AppearanceCssVars({
       ...(t.tileShadow ? { "--nx-tile-shadow": t.tileShadow } : {}),
     } as Record<string, string>;
   }, [theme, look]);
+}
+
+/** The page's Look: its values on :root, its id and button style on <html>, and every Look's own CSS. */
+export function AppearanceCssVars({
+  lookId,
+  buttonsId,
+  looksVersion = 0,
+}: {
+  lookId?: string;
+  /** The person's button style choice (used when the Look offers button styles). */
+  buttonsId?: string;
+  looksVersion?: number;
+}) {
+  const theme = useTheme();
+  // looksVersion: a Look from an add-on may arrive after the first draw.
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- looksVersion
+  const look = useMemo(() => resolveLook(lookId), [lookId, looksVersion]);
+  const vars = useLookVars(theme, look);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-nx-look", look.id);
@@ -122,11 +132,13 @@ export function AppearanceCssVars({
     else document.documentElement.removeAttribute("data-nx-buttons");
   }, [buttons]);
 
-  // The Look's own CSS (fonts, frames, per-Look switch details) in one <style>, replaced on change.
+  // Every Look's own CSS (fonts, frames, button styles) in one <style>, each limited to the boxes
+  // drawn in that Look (looks/look-css.ts), so a Look tile can show another Look than the page.
   useEffect(() => {
     const id = "nx-look-css";
     let el = document.getElementById(id) as HTMLStyleElement | null;
-    if (!look.css) {
+    const css = lookStyleSheet(listLooks(), look.id);
+    if (!css) {
       el?.remove();
       return;
     }
@@ -135,8 +147,44 @@ export function AppearanceCssVars({
       el.id = id;
       document.head.appendChild(el);
     }
-    el.textContent = look.css;
-  }, [look.css]);
+    el.textContent = css;
+  }, [look.id, looksVersion]);
 
   return <GlobalStyles styles={{ ":root": vars }} />;
+}
+
+/**
+ * A box drawn in a Look of its own inside the page (the Look and button style tiles): the Look's
+ * values, id and button style on the box instead of the page, and the text colour and font the page
+ * would give. Its theme comes from the LookLayer around it (LookLayer scoped).
+ */
+export function LookBox({
+  lookId,
+  buttonsId,
+  looksVersion = 0,
+  style,
+  children,
+}: {
+  lookId?: string;
+  buttonsId?: string;
+  looksVersion?: number;
+  /** The box's own background and size, if any. */
+  style?: CSSProperties;
+  children: ReactNode;
+}) {
+  const theme = useTheme();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- looksVersion
+  const look = useMemo(() => resolveLook(lookId), [lookId, looksVersion]);
+  const vars = useLookVars(theme, look);
+  const buttons = chosenLookButtons(look, buttonsId)?.id;
+  return (
+    <Box
+      data-nx-look={look.id}
+      data-nx-buttons={buttons}
+      style={{ ...vars, ...style } as CSSProperties}
+      sx={{ color: "text.primary", fontFamily: theme.typography.fontFamily, ...theme.typography.body1 }}
+    >
+      {children}
+    </Box>
+  );
 }

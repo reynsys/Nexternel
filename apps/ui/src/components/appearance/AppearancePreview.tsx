@@ -5,8 +5,12 @@ import { resolveLook } from "../../skins/looks/registry";
 import { schemeForPrefs } from "../../skins/appearance-scheme";
 import { LookFrame } from "./LookFrame";
 
-/** The preview is drawn as wide as a laptop's dashboard (five panels in a row), then shrunk to fit. */
+/**
+ * The preview is drawn as wide as a laptop's dashboard (five panels in a row), in one shape for every
+ * Look (a Look with a taller frame is fitted inside, so the preview never changes size), then shrunk to fit.
+ */
 const DRAWN_WIDTH = 1160;
+const DRAWN_HEIGHT = 880;
 
 /**
  * The settings being chosen (not necessarily the ones in use, e.g. when an admin sets a wall screen's
@@ -22,7 +26,7 @@ export function AppearancePreview({ prefs, skinId, deviceDark = true }: { prefs:
   return (
     <Box>
       <Box sx={(t) => ({ borderRadius: 2, overflow: "hidden", border: `1px solid ${t.nxScheme.line.edge}` })}>
-        <LookFrame prefs={prefs} skinId={skinId} show="dashboard" drawnWidth={DRAWN_WIDTH} startHeight={420} title="Preview of these settings" />
+        <LookFrame prefs={prefs} skinId={skinId} drawnWidth={DRAWN_WIDTH} drawnHeight={DRAWN_HEIGHT} title="Preview of these settings" />
       </Box>
       <Typography variant="caption" sx={{ display: "block", mt: 0.75, color: allReadable ? "success.main" : "warning.main" }}>
         {allReadable

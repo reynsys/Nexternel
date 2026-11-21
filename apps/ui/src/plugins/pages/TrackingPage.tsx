@@ -7,6 +7,8 @@ import {
   Button,
   FormControlLabel,
   MenuItem,
+  Card,
+  CardContent,
   Paper,
   Slider,
   Stack,
@@ -72,9 +74,10 @@ function useMessage() {
   return { message, guard };
 }
 
+/** One part of a tab (a list, a map, a report): a box inside the page's card, as the Look draws it. */
 function Section({ children }: { children: React.ReactNode }) {
   return (
-    <Paper variant="outlined" sx={{ ...contentSurfaceSx(false), p: 2 }}>
+    <Paper variant="inset" sx={{ p: 2 }}>
       {children}
     </Paper>
   );
@@ -593,6 +596,10 @@ export function TrackingPage({ pluginId, pageId, title, mapPanelId }: PageProps)
   return (
     <Stack spacing={2} sx={{ width: "100%" }}>
       <PageHeader title={title} hint="Where your trackers are now, the journeys they made and reports of time and distance." />
+      {/* One card like every other page: the tabs at its top switch what the card shows below them. */}
+      <Card sx={contentSurfaceSx()}>
+        <CardContent>
+          <Stack spacing={2}>
       {message ? <Alert severity="error">{message}</Alert> : null}
       {overview && overview.trackers.length === 0 && overview.admin ? <AddTracker call={call} onAdded={load} /> : null}
       <Tabs value={shownTab} onChange={(_, v) => setTab(v as number)} variant="scrollable" allowScrollButtonsMobile>
@@ -621,6 +628,9 @@ export function TrackingPage({ pluginId, pageId, title, mapPanelId }: PageProps)
           onSaved={reloadAfterSave}
         />
       ) : null}
+          </Stack>
+        </CardContent>
+      </Card>
     </Stack>
   );
 }

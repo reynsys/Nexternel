@@ -46,7 +46,13 @@ export function ThemeOptionsPanel() {
             sx={(t) => ({
               pointerEvents: "auto",
               width: { xs: "100%", sm: 260 },
-              p: 1,
+              // One outer size in every Look (its edge counts inside it), so switching Look never moves what is below.
+              boxSizing: "border-box",
+              height: 58,
+              display: "flex",
+              alignItems: "center",
+              "& > *": { flex: 1 },
+              px: 1,
               borderRadius: `${t.nx.radiusUnit}px`,
               bgcolor: t.nx.popupFill || "background.paper",
               border: t.nx.popupBorder || undefined,

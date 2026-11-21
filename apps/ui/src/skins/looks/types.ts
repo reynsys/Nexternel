@@ -171,8 +171,8 @@ export type LookTokens = {
 export type LookFont = { id: string; label: string; family: string };
 
 /**
- * A button style a Look offers. While chosen, <html data-nx-buttons="id"> is set and the Look's css
- * draws Nexternel's buttons for it (:root[data-nx-buttons="id"] .MuiButton-root …).
+ * A button style a Look offers. While chosen, the Look's box (the page, or a Look tile) has
+ * data-nx-buttons="id" and the Look's css draws Nexternel's buttons for it (:scope[data-nx-buttons="id"] .MuiButton-root …).
  */
 export type LookButtonStyle = { id: string; label: string; description?: string };
 
@@ -210,8 +210,11 @@ export type UiLook = {
     size?: string;
   };
   /**
-   * Extra CSS while this Look is chosen (may start with @import for fonts). Decorations attach to
-   * roles: [data-nx-role="card" | "section" | "chrome" | "popup"], [data-nx-tabbar], [data-nx-panel-body].
+   * The Look's own CSS. Written from the Look's box, so it reaches only what is drawn in this Look
+   * (looks/look-css.ts): `:scope[data-nx-look="id"] …`, `:scope[data-nx-buttons="id"] …`; @font-face and
+   * @keyframes may sit among the rules. Decorations attach to roles: [data-nx-role="card" | "section" |
+   * "chrome" | "popup"], [data-nx-tabbar], [data-nx-panel-body]. (CSS written for the whole page,
+   * `:root[data-nx-look=…]`, from packs made before 22/11/2026, is used only while its Look is the page's.)
    */
   css?: string;
   /** Fonts the person can choose from in Settings → Appearance; the first is the default. Overrides tokens.font. */

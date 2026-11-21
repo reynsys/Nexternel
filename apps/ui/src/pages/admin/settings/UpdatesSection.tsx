@@ -4,8 +4,6 @@ import {
   Alert,
   Box,
   Button,
-  Card,
-  CardContent,
   CircularProgress,
   Collapse,
   Stack,
@@ -15,7 +13,6 @@ import { api, type UpdateStatus } from "../../../api";
 import { useConfirm } from "../../../components/confirm";
 import { useShellAuth } from "../../../skins/useShellAuth";
 import { hasPermission } from "../../../lib/permissions";
-import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
 import { ButtonRow } from "../../../components/ButtonRow";
 
 const when = (iso: string) =>
@@ -42,8 +39,8 @@ function Notes({ text }: { text: string }) {
 }
 
 /** Settings → System: see whether a newer Nexternel exists, download it and install it. */
-export function UpdatesCard() {
-  const surfaceSx = useContentSurfaceSx();
+/** Settings → System → Overview: the Updates part (a section of the System card). */
+export function UpdatesSection() {
   const { confirm } = useConfirm();
   const { isAdmin, permissions } = useShellAuth();
   const canManage = hasPermission(permissions, "manageUsers", Boolean(isAdmin));
@@ -119,8 +116,6 @@ export function UpdatesCard() {
   if (run_?.target) target.current = run_.target;
 
   return (
-    <Card sx={surfaceSx}>
-      <CardContent>
         <Stack spacing={2}>
           <Typography variant="h6">Updates</Typography>
           {!status ? (
@@ -228,7 +223,5 @@ export function UpdatesCard() {
             </>
           )}
         </Stack>
-      </CardContent>
-    </Card>
   );
 }

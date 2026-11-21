@@ -30,7 +30,7 @@ import { ButtonRow } from "../components/ButtonRow";
 import { PHONE_ROOM_NAVS, ROOM_NAVS } from "../lib/room-nav";
 import { Segmented } from "../components/Segmented";
 import { AppearancePreview } from "../components/appearance/AppearancePreview";
-import { LookFrame } from "../components/appearance/LookFrame";
+import { LookSampleBox } from "../components/appearance/LookSampleBox";
 import { HARMONIES } from "../lib/appearance/scale";
 import { CORE_FONTS, FONT_GROUPS, DEFAULT_FONT_ID } from "../lib/appearance/fonts";
 import { THEME_PRESETS } from "../lib/appearance/presets";
@@ -64,6 +64,8 @@ const TABS = [
 const TAB_KEY = "nexternel.appearance.tab";
 /** Width of the editor's own space from which the preview sits beside the settings. */
 const WIDE_PX = 880;
+/** A Look tile's sample is laid out this wide (two panels at their dashboard size), then shrunk to fit. */
+const LOOK_TILE_DRAWN_WIDTH = 540;
 function readStored(key: string): string | null {
   try {
     return localStorage.getItem(key);
@@ -489,20 +491,22 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
       <Section title="Look" hint="How panels, frames, buttons and switches are drawn. Each tile shows the real thing in your colours.">
         <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 1 }}>
           {listLooks().map((l) => (
-            <ChoiceTile key={l.id} holdsFrame selected={look.id === l.id} onClick={() => onThemeChange(withLook(themePrefs, l.id))} title={l.label}>
+            <ChoiceTile key={l.id} holdsSample selected={look.id === l.id} onClick={() => onThemeChange(withLook(themePrefs, l.id))} title={l.label}>
               <Box sx={{ width: "100%", mb: 0.5, borderRadius: 1, overflow: "hidden" }}>
-                <LookFrame prefs={{ ...withLook(themePrefs, l.id), effectId: "off" }} skinId={skinId} show="look" drawnWidth={600} startHeight={330} title={`${l.label}: how it looks`} />
+                <LookSampleBox prefs={{ ...withLook(themePrefs, l.id), effectId: "off" }} skinId={skinId} show="look" drawnWidth={LOOK_TILE_DRAWN_WIDTH} />
               </Box>
             </ChoiceTile>
           ))}
         </Box>
         {(look.buttonStyles?.length ?? 0) > 1 ? (
           <Row label="Buttons" hint={`how buttons are drawn while ${look.label} is chosen`}>
-            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: 1 }}>
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 1 }}>
               {look.buttonStyles!.map((b) => (
-                <ChoiceTile key={b.id} holdsFrame selected={chosenLookButtons(look, themePrefs.lookButtons)?.id === b.id} onClick={() => set({ lookButtons: b.id })} title={b.label}>
-                  <Box sx={{ width: "100%", mb: 0.5, borderRadius: 1, overflow: "hidden" }}>
-                    <LookFrame prefs={{ ...themePrefs, lookButtons: b.id, effectId: "off" }} skinId={skinId} show="buttons" drawnWidth={160} startHeight={72} title={`${b.label}: how buttons look`} />
+                // Just the button on the tile, in this style; pointing at it shows its real hover.
+                <ChoiceTile key={b.id} holdsSample selected={chosenLookButtons(look, themePrefs.lookButtons)?.id === b.id} onClick={() => set({ lookButtons: b.id })} title={b.label}>
+                  {/* Shown a little bigger than buttons are (every button is one size), so its details read. */}
+                  <Box sx={{ py: 1, mb: 0.25, zoom: 1.2 }}>
+                    <LookSampleBox prefs={{ ...themePrefs, lookButtons: b.id, effectId: "off" }} skinId={skinId} show="buttons" background={false} />
                   </Box>
                 </ChoiceTile>
               ))}
@@ -519,7 +523,7 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
   };
 
   const settings = (
-    <Box sx={{ minWidth: 0 }}>
+    <Box sx={{ minWidth: 0, position: "relative" }}>
       <Tabs
         value={tab}
         onChange={(_, v: string) => {
@@ -536,8 +540,15 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
         ))}
       </Tabs>
       {tab !== "style" ? (tabContent[tab] ?? tabContent.theme) : null}
-      {/* The Look tab is always there (hidden until opened), so its live samples are drawn by the time it is opened. */}
-      <Box hidden={tab !== "style"}>{tabContent.style}</Box>
+      {/* The Look tab is always there, laid out at its real width but unseen until opened (not display:
+          none, which has no width to lay panels out in), so its live samples are drawn by the time it is opened. */}
+      <Box
+        inert={tab !== "style"}
+        aria-hidden={tab !== "style"}
+        sx={tab === "style" ? undefined : { visibility: "hidden", position: "absolute", top: 0, left: 0, right: 0, height: 0, overflow: "hidden" }}
+      >
+        {tabContent.style}
+      </Box>
       {footnote ? (
         <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 3 }}>
           {footnote}

@@ -7,8 +7,8 @@ import { api, type SystemInfo } from "../../../api";
 import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
 import { SystemDiagnosticsSection } from "./SystemDiagnosticsSection";
 import { DiagnosticReportCard } from "./DiagnosticReportCard";
-import { UpdatesCard } from "./UpdatesCard";
-import { HttpsCard } from "./HttpsCard";
+import { UpdatesSection } from "./UpdatesSection";
+import { AddressesSection } from "./AddressesSection";
 import { ButtonRow } from "../../../components/ButtonRow";
 import { ActivityList } from "../../../components/ActivityList";
 import { hasPermission } from "../../../lib/permissions";
@@ -92,95 +92,83 @@ export function SystemStatusPage() {
   const health = info ? healthLine(info) : null;
 
   return (
-    <Stack spacing={2}>
-      <Tabs value={tab} onChange={(_, v: SystemTab) => openTab(v)} variant="scrollable" allowScrollButtonsMobile aria-label="System">
-        {tabs.map((t) => (
-          <Tab key={t.id} value={t.id} label={t.label} />
-        ))}
-      </Tabs>
+    // One card like every other page: the tabs at its top switch what the card shows below them.
+    <Card sx={surfaceSx}>
+      <CardContent>
+        <Tabs value={tab} onChange={(_, v: SystemTab) => openTab(v)} variant="scrollable" allowScrollButtonsMobile aria-label="System" sx={{ mb: 3 }}>
+          {tabs.map((t) => (
+            <Tab key={t.id} value={t.id} label={t.label} />
+          ))}
+        </Tabs>
 
-      {tab === "addresses" ? (
-        <>
-          <HttpsCard />
-        </>
-      ) : null}
+        {tab === "addresses" ? <AddressesSection /> : null}
 
-      {tab === "activity" ? (
-        <Card sx={surfaceSx}>
-          <CardContent>
-            <ActivityList />
-          </CardContent>
-        </Card>
-      ) : null}
+        {tab === "activity" ? <ActivityList /> : null}
 
-      {tab === "overview" ? (
-      <>
-      <Card sx={surfaceSx}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Health
-          </Typography>
-          {error ? <Alert severity="error">{error}</Alert> : null}
-          {info && health ? (
-            <Stack spacing={2}>
-              <Alert
-                severity={health.ok ? "success" : "warning"}
-                icon={health.ok ? <CheckCircleRoundedIcon /> : <ErrorRoundedIcon />}
-                action={
-                  !health.ok ? (
-                    <Button color="inherit" size="small" onClick={() => openTab("help")}>
-                      Help
-                    </Button>
-                  ) : undefined
-                }
-              >
-                <Typography fontWeight="fontWeightBold">{health.title}</Typography>
-                <Typography variant="body2">{health.text}</Typography>
-              </Alert>
-              <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 2 }}>
-                <Box>
-                  <Typography variant="subtitle2">Computer</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {info.cpu.model} · {info.cpu.cores} cores · busy {info.cpu.loadPercent}%
-                    {info.temperatureC != null ? ` · ${Math.round(info.temperatureC)}°C` : ""}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="subtitle2">Memory</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {gb(info.memory.usedMb)} of {gb(info.memory.totalMb)} GB in use
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="subtitle2">Network</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Home address {info.lanIp ?? "—"}
-                    {info.wanIp ? ` · internet address ${info.wanIp}` : ""}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="subtitle2">Version</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Nexternel {info.version}
-                  </Typography>
-                </Box>
-              </Box>
-            </Stack>
-          ) : null}
-        </CardContent>
-      </Card>
+        {tab === "overview" ? (
+          <Stack spacing={3} divider={<Divider flexItem />}>
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                Health
+              </Typography>
+              {error ? <Alert severity="error">{error}</Alert> : null}
+              {info && health ? (
+                <Stack spacing={2}>
+                  <Alert
+                    severity={health.ok ? "success" : "warning"}
+                    icon={health.ok ? <CheckCircleRoundedIcon /> : <ErrorRoundedIcon />}
+                    action={
+                      !health.ok ? (
+                        <Button color="inherit" size="small" onClick={() => openTab("help")}>
+                          Help
+                        </Button>
+                      ) : undefined
+                    }
+                  >
+                    <Typography fontWeight="fontWeightBold">{health.title}</Typography>
+                    <Typography variant="body2">{health.text}</Typography>
+                  </Alert>
+                  <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 2 }}>
+                    <Box>
+                      <Typography variant="subtitle2">Computer</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {info.cpu.model} · {info.cpu.cores} cores · busy {info.cpu.loadPercent}%
+                        {info.temperatureC != null ? ` · ${Math.round(info.temperatureC)}°C` : ""}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="subtitle2">Memory</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {gb(info.memory.usedMb)} of {gb(info.memory.totalMb)} GB in use
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="subtitle2">Network</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Home address {info.lanIp ?? "—"}
+                        {info.wanIp ? ` · internet address ${info.wanIp}` : ""}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="subtitle2">Version</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Nexternel {info.version}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Stack>
+              ) : null}
+            </Box>
+            <UpdatesSection />
+          </Stack>
+        ) : null}
 
-      <UpdatesCard />
-      </>
-      ) : null}
-
-      {tab === "help" ? (
-      <Card sx={surfaceSx}>
-        <CardContent>
-          <Typography variant="h6">Help &amp; troubleshooting</Typography>
-          <Typography variant="body2" color="text.secondary">
-            Tools for when something is not working, or when someone is helping you.
-          </Typography>
+        {tab === "help" ? (
+          <>
+            <Typography variant="h6">Help &amp; troubleshooting</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Tools for when something is not working, or when someone is helping you.
+            </Typography>
             <Stack spacing={3} divider={<Divider flexItem />} sx={{ pt: 3 }}>
               <DiagnosticReportCard />
               <SystemDiagnosticsSection />
@@ -207,9 +195,9 @@ export function SystemStatusPage() {
                 ) : null}
               </Box>
             </Stack>
-        </CardContent>
-      </Card>
-      ) : null}
-    </Stack>
+          </>
+        ) : null}
+      </CardContent>
+    </Card>
   );
 }

@@ -2,6 +2,16 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting at 1. Newest first.
 
+## V5.4.8
+
+- **Settings → System looks like every other page:** the tabs sit at the top of one card and are easy to see, and nothing sits in boxes of other colours.
+- **Messages match your Look everywhere:** "Everything is running", warnings and errors are drawn like the rest of the page, with a coloured symbol and edge instead of a dark coloured box. The GPS Tracker page is tidier in the same way.
+- **The Look tiles appear straight away,** also on slower computers.
+- **The two panels in each Look tile** are drawn at their normal size, like on a dashboard.
+- **Button style tiles** show just the button, a little bigger, in smaller tiles. Point at it to see what it does.
+- **The Appearance preview keeps the same size** when you switch between Looks.
+- **HUD pack 1.11.1** is needed for the HUD Look tiles to show every detail.
+
 ## V5.4.7
 
 - **Every choice looks the same way:** short word choices (like Light / Dark / Automatic) are buttons in your Look's style with the chosen one filled; choices with a picture are all the same tile.

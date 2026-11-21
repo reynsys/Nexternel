@@ -26,7 +26,7 @@ import {
   type ThemePrefs,
   DEFAULT_THEME_PREFS,
 } from "./themePrefs";
-import { AppearanceCssVars } from "./AppearanceCssVars";
+import { AppearanceCssVars, LookBox } from "./AppearanceCssVars";
 import { MOTION_CSS } from "../lib/motion";
 import { BackgroundEffects } from "./effects/BackgroundEffects";
 import { looksVersion, resolveLook, subscribeLooks } from "./looks/registry";
@@ -292,16 +292,25 @@ export type SkinControls = Omit<SkinContextValue, "skin" | "themePrefs" | "looks
  * Draws one Appearance on this page: the theme every part is styled with, the Look's CSS, the page
  * background and the background effect. The app draws its own with it, and so does the Appearance
  * preview (its own little page), so the preview is drawn exactly like the real screens.
+ *
+ * `box`: draws the Appearance in a box inside the page instead (a Look or button style tile): the
+ * same theme and Look on the box only (LookBox), with the background as the box's own when
+ * `background` is set; the page's text size, animations and background effect stay the page's.
  */
 export function LookLayer({
   skin,
   themePrefs,
   controls,
+  box = false,
+  background = true,
   children,
 }: {
   skin: UiSkin;
   themePrefs: ThemePrefs;
   controls: SkinControls;
+  box?: boolean;
+  /** In a box: show the background behind its content. */
+  background?: boolean;
   children: ReactNode;
 }) {
   const lookVer = useSyncExternalStore(subscribeLooks, looksVersion, looksVersion);
@@ -334,14 +343,16 @@ export function LookLayer({
   // A wide or narrow font is scaled to take about the same room as the default one.
   const fontScale = look.fonts?.some((f) => f.id === themePrefs.lookFont) ? 1 : (coreFont(themePrefs.lookFont)?.scale ?? 1);
   useEffect(() => {
+    if (box) return;
     const size = (display.active ? display.textSize : (themePrefs.textSize ?? 100)) * fontScale;
     document.documentElement.style.fontSize = `${Math.round(size * 10) / 10}%`;
-  }, [themePrefs.textSize, display.active, display.textSize, fontScale]);
+  }, [box, themePrefs.textSize, display.active, display.textSize, fontScale]);
   // Animations: the person's choice, and off when the device asks apps to reduce motion.
   useEffect(() => {
+    if (box) return;
     const reduce = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     document.documentElement.setAttribute("data-nx-motion", themePrefs.motion !== false && !reduce ? "on" : "off");
-  }, [themePrefs.motion]);
+  }, [box, themePrefs.motion]);
   // With a plain background, a Look may bring its own (e.g. the HUD's grid).
   // A background made from the person's own colours, else a ready-made one, else the Look's own.
   const mine = isMineBackground(shownPrefs.gradientId) ? mineBackground(scheme, shownPrefs.gradientId!) : null;
@@ -358,6 +369,24 @@ export function LookLayer({
     () => ({ ...controls, skin, themePrefs, looksVersion: lookVer, textScale, scheme }),
     [controls, skin, themePrefs, lookVer, textScale, scheme]
   );
+
+  if (box) {
+    const size = mine || gradientCss(shownPrefs.gradientId) ? "100% 100%" : (lookBackground?.size ?? "100% 100%");
+    return (
+      <SkinContext.Provider value={value}>
+        <ThemeProvider theme={theme}>
+          <LookBox
+            lookId={themePrefs.lookId}
+            buttonsId={themePrefs.lookButtons}
+            looksVersion={lookVer}
+            style={background ? { backgroundColor: pageBaseColour, backgroundImage: pageGradient ?? undefined, backgroundSize: size } : undefined}
+          >
+            {children}
+          </LookBox>
+        </ThemeProvider>
+      </SkinContext.Provider>
+    );
+  }
 
   return (
     <SkinContext.Provider value={value}>

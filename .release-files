@@ -326,6 +326,8 @@ apps/ui/src/components/AddPanelTypePicker.tsx
 apps/ui/src/components/AnywhereStatus.tsx
 apps/ui/src/components/appearance/AppearancePreview.tsx
 apps/ui/src/components/appearance/LookFrame.tsx
+apps/ui/src/components/appearance/LookSampleBox.tsx
+apps/ui/src/components/appearance/LookSample.tsx
 apps/ui/src/components/AppErrorBoundary.tsx
 apps/ui/src/components/AppFrame.tsx
 apps/ui/src/components/ArrangeControls.tsx
@@ -458,6 +460,7 @@ apps/ui/src/lib/leave-guard.ts
 apps/ui/src/lib/live-changes.ts
 apps/ui/src/lib/look-choice.test.ts
 apps/ui/src/lib/look-choice.ts
+apps/ui/src/lib/look-css.test.ts
 apps/ui/src/lib/look-font.test.ts
 apps/ui/src/lib/look-font.ts
 apps/ui/src/lib/look-preview-messages.ts
@@ -572,12 +575,12 @@ apps/ui/src/pages/admin/sections/BackupRestoreSection.tsx
 apps/ui/src/pages/admin/sections/ProfileSection.tsx
 apps/ui/src/pages/admin/sections/SecondCheckSection.tsx
 apps/ui/src/pages/admin/settings/addon-status.ts
+apps/ui/src/pages/admin/settings/AddressesSection.tsx
 apps/ui/src/pages/admin/settings/AnywhereCard.tsx
 apps/ui/src/pages/admin/settings/AppearanceSettingsPage.tsx
 apps/ui/src/pages/admin/settings/BackupSettingsPage.tsx
 apps/ui/src/pages/admin/settings/DiagnosticReportCard.tsx
 apps/ui/src/pages/admin/settings/ExtensionsSettingsPage.tsx
-apps/ui/src/pages/admin/settings/HttpsCard.tsx
 apps/ui/src/pages/admin/settings/NotificationsSettingsPage.tsx
 apps/ui/src/pages/admin/settings/plugins/PluginActivityView.tsx
 apps/ui/src/pages/admin/settings/plugins/PluginPermissionsForm.tsx
@@ -588,7 +591,7 @@ apps/ui/src/pages/admin/settings/SettingsLayout.tsx
 apps/ui/src/pages/admin/settings/settings-nav.ts
 apps/ui/src/pages/admin/settings/SystemDiagnosticsSection.tsx
 apps/ui/src/pages/admin/settings/SystemStatusPage.tsx
-apps/ui/src/pages/admin/settings/UpdatesCard.tsx
+apps/ui/src/pages/admin/settings/UpdatesSection.tsx
 apps/ui/src/pages/admin/UsersPage.tsx
 apps/ui/src/pages/AppSettingsPage.tsx
 apps/ui/src/pages/DashboardPage.tsx
@@ -696,6 +699,7 @@ apps/ui/src/skins/local/.gitkeep
 apps/ui/src/skins/local/README.md
 apps/ui/src/skins/looks/addon-loader.ts
 apps/ui/src/skins/looks/builtin.ts
+apps/ui/src/skins/looks/look-css.ts
 apps/ui/src/skins/looks/LookDecor.tsx
 apps/ui/src/skins/looks/registry.ts
 apps/ui/src/skins/looks/resolve.ts

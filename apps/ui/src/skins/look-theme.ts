@@ -88,6 +88,25 @@ export function lookThemeOptions(
         styleOverrides: { root: { backgroundImage: "none" } },
         variants: [{ props: { variant: "inset" }, style: insetStyle(t) }],
       },
+      // A message ("Everything is running", "Could not save…") is a box inside a card like any other:
+      // the Look's inset fill and corners, words in the normal text colour; only its icon and edge
+      // carry the status colour. (Left alone, the building block drew its own solid dark green, orange
+      // or red box that matched no Look.)
+      MuiAlert: {
+        styleOverrides: {
+          root: ({ ownerState, theme }) => {
+            if (ownerState.variant && ownerState.variant !== "standard") return {};
+            const s = theme.nxScheme;
+            const tone = { success: s.status.ok, warning: s.status.watch, error: s.status.alert, info: s.main }[ownerState.severity ?? "success"];
+            return {
+              ...insetStyle(t),
+              border: `1px solid ${tone.edge}`,
+              color: s.text.main,
+              "& .MuiAlert-icon": { color: tone.text },
+            };
+          },
+        },
+      },
       MuiCard: {
         defaultProps: role("card"),
         styleOverrides: {

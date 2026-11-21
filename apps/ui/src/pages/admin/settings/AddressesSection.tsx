@@ -1,15 +1,13 @@
 import { useEffect, useState } from "react";
-import { Alert, Box, Card, CardContent, CircularProgress, Link, Stack, Typography } from "@mui/material";
+import { Alert, Box, CircularProgress, Link, Stack, Typography } from "@mui/material";
 import { api, type HttpsStatus } from "../../../api";
-import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
 
 /**
- * Settings → System: how to reach Nexternel at home. A secure address that every device trusts
+ * Settings → System → Addresses (a section of the System card): how to reach Nexternel at home. A secure address that every device trusts
  * without installing anything (an automatic name per home) is being prepared; until then the
  * plain addresses are the normal ones.
  */
-export function HttpsCard() {
-  const surfaceSx = useContentSurfaceSx();
+export function AddressesSection() {
   const [status, setStatus] = useState<HttpsStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,8 +19,6 @@ export function HttpsCard() {
   }, []);
 
   return (
-    <Card sx={surfaceSx}>
-      <CardContent>
         <Stack spacing={2}>
           <Typography variant="h6">Addresses</Typography>
           {error ? <Alert severity="error">{error}</Alert> : null}
@@ -62,7 +58,5 @@ export function HttpsCard() {
             </>
           ) : null}
         </Stack>
-      </CardContent>
-    </Card>
   );
 }
