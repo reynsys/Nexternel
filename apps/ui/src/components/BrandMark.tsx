@@ -14,13 +14,17 @@ const OUTER = "32,15.5 46.29,23.75 46.29,40.25 32,48.5 17.71,40.25 17.71,23.75";
 const BODY = "32,11.8 49.49,21.9 49.49,42.1 32,52.2 14.51,42.1 14.51,21.9";
 const CORE = "32,23 39.79,27.5 39.79,36.5 32,41 24.21,36.5 24.21,27.5";
 const N = "M29.1 35.44V28.56L34.9 35.44V28.56";
+/** Nexternel Anywhere's logo (Rey's pick, 21/11/2026): the ring is a thin orbit with a satellite on it. */
+const ORBIT = "M1.6 30.8A30.4 9.15 0 1 0 62.4 30.8A30.4 9.15 0 1 0 1.6 30.8Z";
+const SATELLITE = { cx: 58.6, cy: 21.2, r: 4.1, gap: 6.4 };
 
 /**
  * The Nexternel logo at the top of the menu, the phone bar and the sign-in page. The ring and core
  * take the Look's main colour, the outer hexagon its quiet text colour, so it suits every Look.
- * With `colour` the whole logo is drawn in that one colour (Nexternel Anywhere's light).
+ * With `colour` the whole logo is drawn in that one colour. `anywhere`: Nexternel Anywhere's logo
+ * (the same planet with a thin orbit and a satellite).
  */
-export function BrandMark({ size = 28, colour }: { size?: number; colour?: string }) {
+export function BrandMark({ size = 28, colour, anywhere = false }: { size?: number; colour?: string; anywhere?: boolean }) {
   const t = useTheme();
   // Two logos on one page need their own mask names (and no ":" in a url(#…) reference).
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, "");
@@ -33,10 +37,15 @@ export function BrandMark({ size = 28, colour }: { size?: number; colour?: strin
           <rect width="64" height="64" fill="#fff" />
           <g transform="rotate(-20 32 32)">
             {/* Where the ring passes in front, a thin gap in the hexagons behind it. */}
-            <path d={RING} fill="#000" fillRule="evenodd" stroke="#000" strokeWidth="3.2" />
+            {anywhere ? (
+              <path d={ORBIT} fill="none" stroke="#000" strokeWidth="4.4" />
+            ) : (
+              <path d={RING} fill="#000" fillRule="evenodd" stroke="#000" strokeWidth="3.2" />
+            )}
             <rect x="-10" y="-10" width="84" height="41.99" fill="#fff" />
           </g>
           <path d={N} fill="none" stroke="#000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          {anywhere ? <circle cx={SATELLITE.cx} cy={SATELLITE.cy} r={SATELLITE.gap} fill="#000" /> : null}
         </mask>
         <mask id={`nx-back-${id}`} maskUnits="userSpaceOnUse" x="0" y="0" width="64" height="64">
           <rect width="64" height="64" fill="#fff" />
@@ -44,6 +53,7 @@ export function BrandMark({ size = 28, colour }: { size?: number; colour?: strin
           <g transform="rotate(-20 32 32)">
             <rect x="-10" y="32" width="84" height="42" fill="#fff" />
           </g>
+          {anywhere ? <circle cx={SATELLITE.cx} cy={SATELLITE.cy} r={SATELLITE.gap} fill="#000" /> : null}
         </mask>
       </defs>
       <g mask={`url(#nx-front-${id})`}>
@@ -52,9 +62,10 @@ export function BrandMark({ size = 28, colour }: { size?: number; colour?: strin
       </g>
       <g mask={`url(#nx-back-${id})`}>
         <g transform="rotate(-20 32 32)">
-          <path d={RING} fill={main} fillRule="evenodd" />
+          {anywhere ? <path d={ORBIT} fill="none" stroke={main} strokeWidth="1.6" /> : <path d={RING} fill={main} fillRule="evenodd" />}
         </g>
       </g>
+      {anywhere ? <circle cx={SATELLITE.cx} cy={SATELLITE.cy} r={SATELLITE.r} fill={main} /> : null}
     </Box>
   );
 }

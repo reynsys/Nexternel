@@ -325,6 +325,7 @@ apps/ui/src/components/AddPanelSteps.tsx
 apps/ui/src/components/AddPanelTypePicker.tsx
 apps/ui/src/components/AnywhereStatus.tsx
 apps/ui/src/components/appearance/AppearancePreview.tsx
+apps/ui/src/components/appearance/LookFrame.tsx
 apps/ui/src/components/AppErrorBoundary.tsx
 apps/ui/src/components/AppFrame.tsx
 apps/ui/src/components/ArrangeControls.tsx

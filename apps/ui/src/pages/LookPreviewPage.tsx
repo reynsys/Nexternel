@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Box } from "@mui/material";
+import { Box, Button, Stack, Tab, Tabs } from "@mui/material";
 import WeekendOutlinedIcon from "@mui/icons-material/WeekendOutlined";
 import type { Capability, PanelInstance, PanelResolveResult, ResolvedPanelCapability } from "../api";
 import { LookLayer, type SkinControls } from "../skins/SkinProvider";
@@ -17,7 +17,9 @@ import {
   LOOK_PREVIEW_PREFS,
   LOOK_PREVIEW_READY,
   type LookPreviewMessage,
+  type LookPreviewShow,
 } from "../lib/look-preview-messages";
+import { ButtonRow } from "../components/ButtonRow";
 
 /**
  * The Appearance preview's own page (/look-preview), shown inside Settings → Appearance and
@@ -79,13 +81,44 @@ const card = { layout: "card", direction: "across", itemStyle: "auto" };
 
 const PANELS = (
   [
-    { id: "p-clock", type: "panel.clock", config: { clockFace: "digital", clockColor: "accent", clockFont: "theme", appearance: { layout: "card" }, panelScope: scope([]), configSchemaVersion: 1 }, layout: { i: "p-clock", x: 0, y: 0, w: 20, h: 2 }, bindings: {} },
-    { id: "p-climate", type: "panel.status", title: "Climate", config: { appearance: card, panelScope: scope(["look-preview-temperature", "look-preview-humidity"]), configSchemaVersion: 1 }, layout: { i: "p-climate", x: 20, y: 0, w: 20, h: 2 }, bindings: {} },
-    { id: "p-gauge", type: "panel.gauge", title: "Temperature", config: { max: 40, presetId: "gauge-double", panelScope: scope([]), configSchemaVersion: 1 }, layout: { i: "p-gauge", x: 40, y: 0, w: 20, h: 2 }, bindings: { sourceType: "sensor", sourceId: "look-preview", capabilityId: "look-preview-temperature" } },
-    { id: "p-lights", type: "panel.controls", title: "Lights", config: { appearance: card, panelScope: scope(["look-preview-light", "look-preview-lamp"]), configSchemaVersion: 1 }, layout: { i: "p-lights", x: 0, y: 2, w: 30, h: 1 }, bindings: {} },
-    { id: "p-air", type: "panel.status", title: "Air quality", config: { appearance: card, panelScope: scope(["look-preview-co2"]), configSchemaVersion: 1 }, layout: { i: "p-air", x: 30, y: 2, w: 30, h: 1 }, bindings: {} },
+    { id: "p-clock", type: "panel.clock", config: { clockFace: "digital", clockColor: "accent", clockFont: "theme", appearance: { layout: "card" }, panelScope: scope([]), configSchemaVersion: 1 }, layout: { i: "p-clock", x: 0, y: 0, w: 12, h: 2 }, bindings: {} },
+    { id: "p-calendar", type: "panel.calendar", config: { appearance: { layout: "card" }, panelScope: scope([]), configSchemaVersion: 1 }, layout: { i: "p-calendar", x: 12, y: 0, w: 12, h: 2 }, bindings: {} },
+    { id: "p-climate", type: "panel.status", title: "Climate", config: { appearance: card, panelScope: scope(["look-preview-temperature", "look-preview-humidity"]), configSchemaVersion: 1 }, layout: { i: "p-climate", x: 24, y: 0, w: 12, h: 2 }, bindings: {} },
+    { id: "p-gauge", type: "panel.gauge", title: "Temperature", config: { max: 40, presetId: "gauge-double", panelScope: scope([]), configSchemaVersion: 1 }, layout: { i: "p-gauge", x: 36, y: 0, w: 12, h: 2 }, bindings: { sourceType: "sensor", sourceId: "look-preview", capabilityId: "look-preview-temperature" } },
+    { id: "p-lights", type: "panel.controls", title: "Lights", config: { appearance: card, panelScope: scope(["look-preview-light", "look-preview-lamp"]), configSchemaVersion: 1 }, layout: { i: "p-lights", x: 48, y: 0, w: 12, h: 1 }, bindings: {} },
+    { id: "p-air", type: "panel.status", title: "Air quality", config: { appearance: card, panelScope: scope(["look-preview-co2"]), configSchemaVersion: 1 }, layout: { i: "p-air", x: 48, y: 1, w: 12, h: 1 }, bindings: {} },
   ] as unknown as PanelInstance[]
 ).map(decodePanelInstance);
+
+/** A Look's tile: two panels side by side. */
+const LOOK_PANELS = PANELS.filter((p) => p.id === "p-clock" || p.id === "p-climate").map((p, i) => ({
+  ...p,
+  layout: { ...p.layout, x: i * 12, y: 0, w: 12, h: 2 },
+}));
+
+const SHOWS: LookPreviewShow[] = ["dashboard", "look", "buttons"];
+const show: LookPreviewShow = (() => {
+  const v = new URLSearchParams(window.location.search).get("show") as LookPreviewShow | null;
+  return v && SHOWS.includes(v) ? v : "dashboard";
+})();
+
+/** The buttons every page uses: the main one, an outlined one, and tabs (button style tiles, Look tiles). */
+function SampleButtons({ tabs = true }: { tabs?: boolean }) {
+  return (
+    <Stack spacing={1.5} alignItems="flex-start">
+      <ButtonRow direction="row" flexWrap="nowrap">
+        <Button variant="contained">Apply</Button>
+        <Button variant="outlined">Cancel</Button>
+      </ButtonRow>
+      {tabs ? (
+        <Tabs value="a" aria-label="Sample tabs">
+          <Tab value="a" label="Theme" />
+          <Tab value="b" label="Look" />
+        </Tabs>
+      ) : null}
+    </Stack>
+  );
+}
 
 /** Panels ask what they show; the preview answers with its sample readings. */
 const resolveSamples: PanelResolveBatchFetch = async (requests) =>
@@ -171,20 +204,34 @@ export function LookPreviewPage() {
     <LookLayer skin={skin} themePrefs={shown.prefs} controls={NO_CONTROLS}>
       <DashboardDataRuntimeProvider connectLive={noLive} resolvePanels={resolveSamples} statuses={STATUSES}>
         {/* Only to look at: a switch in the preview must not do anything. */}
-        <Box ref={contentRef} sx={{ p: 2, pointerEvents: "none", userSelect: "none" }} aria-hidden>
-          <DashboardSectionFrame id="look-preview" title={AREA} icon={WeekendOutlinedIcon} panelCount={PANELS.length} collapsed={false} onCollapsedChange={nothing}>
-            <SectionGrid
-              gridCols={60}
-              sectionId="look-preview"
-              sectionTitle={AREA}
-              panels={PANELS}
-              capabilities={CAPABILITIES}
-              editMode={false}
-              onLayoutChange={nothing}
-              onRemovePanel={nothing}
-              onUpdatePanel={nothing}
-            />
-          </DashboardSectionFrame>
+        <Box ref={contentRef} sx={{ p: 2, pointerEvents: "none", userSelect: "none", display: show === "buttons" ? "inline-block" : "block" }} aria-hidden>
+          {show === "buttons" ? (
+            <SampleButtons />
+          ) : (
+            <Stack spacing={2}>
+              <DashboardSectionFrame
+                id="look-preview"
+                title={AREA}
+                icon={WeekendOutlinedIcon}
+                panelCount={show === "look" ? LOOK_PANELS.length : PANELS.length}
+                collapsed={false}
+                onCollapsedChange={nothing}
+              >
+                <SectionGrid
+                  gridCols={60}
+                  sectionId="look-preview"
+                  sectionTitle={AREA}
+                  panels={show === "look" ? LOOK_PANELS : PANELS}
+                  capabilities={CAPABILITIES}
+                  editMode={false}
+                  onLayoutChange={nothing}
+                  onRemovePanel={nothing}
+                  onUpdatePanel={nothing}
+                />
+              </DashboardSectionFrame>
+              {show === "look" ? <SampleButtons tabs={false} /> : null}
+            </Stack>
+          )}
         </Box>
       </DashboardDataRuntimeProvider>
     </LookLayer>

@@ -30,6 +30,7 @@ import { ButtonRow } from "../components/ButtonRow";
 import { PHONE_ROOM_NAVS, ROOM_NAVS } from "../lib/room-nav";
 import { Segmented } from "../components/Segmented";
 import { AppearancePreview } from "../components/appearance/AppearancePreview";
+import { LookFrame } from "../components/appearance/LookFrame";
 import { HARMONIES } from "../lib/appearance/scale";
 import { CORE_FONTS, FONT_GROUPS, DEFAULT_FONT_ID } from "../lib/appearance/fonts";
 import { THEME_PRESETS } from "../lib/appearance/presets";
@@ -516,17 +517,25 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
     ),
     style: (
       <Stack spacing={3.5} divider={<Divider flexItem />}>
-      <Section title="Look" hint="How panels, frames, buttons and switches are drawn. Standard is solid; Glass is see-through over the background.">
-        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 1 }}>
+      <Section title="Look" hint="How panels, frames, buttons and switches are drawn. Each tile shows the real thing in your colours.">
+        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 1 }}>
           {listLooks().map((l) => (
-            <ChoiceTile key={l.id} selected={look.id === l.id} onClick={() => onThemeChange(withLook(themePrefs, l.id))} title={l.label} text={l.description} />
+            <ChoiceTile key={l.id} holdsFrame selected={look.id === l.id} onClick={() => onThemeChange(withLook(themePrefs, l.id))} title={l.label}>
+              <Box sx={{ width: "100%", mb: 0.5, borderRadius: 1, overflow: "hidden" }}>
+                <LookFrame prefs={{ ...withLook(themePrefs, l.id), effectId: "off" }} skinId={skinId} show="look" drawnWidth={600} startHeight={330} title={`${l.label}: how it looks`} />
+              </Box>
+            </ChoiceTile>
           ))}
         </Box>
         {(look.buttonStyles?.length ?? 0) > 1 ? (
           <Row label="Buttons" hint={`how buttons are drawn while ${look.label} is chosen`}>
             <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: 1 }}>
               {look.buttonStyles!.map((b) => (
-                <ChoiceTile key={b.id} selected={chosenLookButtons(look, themePrefs.lookButtons)?.id === b.id} onClick={() => set({ lookButtons: b.id })} title={b.label} text={b.description} />
+                <ChoiceTile key={b.id} holdsFrame selected={chosenLookButtons(look, themePrefs.lookButtons)?.id === b.id} onClick={() => set({ lookButtons: b.id })} title={b.label}>
+                  <Box sx={{ width: "100%", mb: 0.5, borderRadius: 1, overflow: "hidden" }}>
+                    <LookFrame prefs={{ ...themePrefs, lookButtons: b.id, effectId: "off" }} skinId={skinId} show="buttons" drawnWidth={260} startHeight={120} title={`${b.label}: how buttons look`} />
+                  </Box>
+                </ChoiceTile>
               ))}
             </Box>
           </Row>

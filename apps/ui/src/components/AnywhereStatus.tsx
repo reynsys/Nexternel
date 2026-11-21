@@ -52,7 +52,7 @@ export function AnywhereStatus({
   const word = SHORT[light];
   return (
     <Box role="status" aria-label={`Nexternel Anywhere: ${word}`} sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
-      <BrandMark size={28} />
+      <BrandMark size={28} anywhere />
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography component="div" variant="body2" noWrap sx={{ fontWeight: "fontWeightBold", lineHeight: 1.3 }}>
           Nexternel Anywhere

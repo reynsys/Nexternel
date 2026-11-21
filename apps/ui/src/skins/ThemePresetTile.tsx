@@ -10,9 +10,11 @@ import { CORE_FONTS } from "../lib/appearance/fonts";
 import type { ThemePreset } from "../lib/appearance/presets";
 
 /** A choice tile: a name and a line about it (Looks, effects, menus, ready-made themes…). */
-export function ChoiceTile({ selected, onClick, title, text, children, sx, disabled }: { selected: boolean; onClick: () => void; title: ReactNode; text?: ReactNode; children?: ReactNode; sx?: object; disabled?: boolean }) {
+/** `holdsFrame`: the tile shows a live sample in a frame, which a <button> may not hold, so it is a div with the button role. */
+export function ChoiceTile({ selected, onClick, title, text, children, sx, disabled, holdsFrame = false }: { selected: boolean; onClick: () => void; title: ReactNode; text?: ReactNode; children?: ReactNode; sx?: object; disabled?: boolean; holdsFrame?: boolean }) {
   return (
     <ButtonBase
+      component={holdsFrame ? "div" : "button"}
       onClick={onClick}
       disabled={disabled}
       aria-pressed={selected}

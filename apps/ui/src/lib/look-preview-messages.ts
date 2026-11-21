@@ -13,3 +13,6 @@ export type LookPreviewMessage =
   | { type: typeof LOOK_PREVIEW_READY }
   | { type: typeof LOOK_PREVIEW_PREFS; prefs: ThemePrefs; skinId: string }
   | { type: typeof LOOK_PREVIEW_HEIGHT; height: number };
+
+/** What the page draws (?show=…): a dashboard section, a Look's sample (Look tiles) or buttons (button style tiles). */
+export type LookPreviewShow = "dashboard" | "look" | "buttons";
