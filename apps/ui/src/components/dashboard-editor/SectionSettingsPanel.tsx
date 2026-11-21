@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Box, Button, FormControlLabel, Stack, Switch, TextField, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
+import { Box, Button, FormControlLabel, Stack, Switch, TextField, Typography } from "@mui/material";
+import { Segmented } from "../Segmented";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
@@ -70,13 +71,7 @@ export function SectionSettingsPanel({ section, onCancel, onApply, onChange, onM
             label="Section width"
             help="How much of the page width this section takes. Narrower sections sit side by side; on phones every section is full width."
           >
-            <ToggleButtonGroup exclusive size="small" aria-label="Section width" value={s.colSpan} onChange={(_e, v: SectionColSpan | null) => v && onChange({ colSpan: v })}>
-              {WIDTHS.map((w) => (
-                <ToggleButton key={w} value={w}>
-                  {sectionColSpanLabel(w)}
-                </ToggleButton>
-              ))}
-            </ToggleButtonGroup>
+            <Segmented<SectionColSpan> label="Section width" value={s.colSpan} onChange={(v) => onChange({ colSpan: v })} options={WIDTHS.map((w) => ({ value: w, label: sectionColSpanLabel(w) }))} />
             {/* A small picture of the page width the section takes. */}
             <Box aria-hidden sx={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: "3px", mt: 1, maxWidth: 260 }}>
               {Array.from({ length: 12 }, (_, i) => (
@@ -91,19 +86,7 @@ export function SectionSettingsPanel({ section, onCancel, onApply, onChange, onM
                 s.perRow.choices.some((c) => !c.fits) ? " Greyed-out choices would make some panels here narrower than they can be." : ""
               }`}
             >
-              <ToggleButtonGroup
-                exclusive
-                size="small"
-                aria-label="Panels per row"
-                value={s.perRow.current}
-                onChange={(_e, v: number | null) => v && onPanelsPerRow(v)}
-              >
-                {s.perRow.choices.map((c) => (
-                  <ToggleButton key={c.n} value={c.n} disabled={!c.fits}>
-                    {c.n}
-                  </ToggleButton>
-                ))}
-              </ToggleButtonGroup>
+              <Segmented<number> label="Panels per row" value={s.perRow.current} onChange={onPanelsPerRow} options={s.perRow.choices.map((c) => ({ value: c.n, label: String(c.n), disabled: !c.fits }))} />
             </SettingBlock>
           ) : null}
           <SettingBlock label="Position on the page">

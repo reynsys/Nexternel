@@ -73,6 +73,14 @@ export function WeatherWidget({ widget }: { widget: WidgetInstance }) {
           rowGap: "6px",
           // A short tile drops the small forecast icons first, never the temperatures.
           "@container (max-height: 150px)": { "& .wx-day-icon": { display: "none" } },
+          // A tall, narrow tile: today's weather top to bottom (icon, temperature, details), so it fills the tile.
+          "@container (orientation: portrait) and (min-height: 260px)": {
+            "& .wx-now": { flexDirection: "column", gap: "clamp(6px, 3cqh, 16px)" },
+            "& .wx-now-icon": { maxWidth: "none" },
+            "& .wx-now-icon svg": { width: "clamp(28px, 22cqi, 64px)", height: "clamp(28px, 22cqi, 64px)" },
+            "& .wx-now-temp": { fontSize: PANEL_TEXT.value },
+            "& .wx-now-details": { flexDirection: "row", gap: "12px", flexWrap: "wrap", justifyContent: "center" },
+          },
         })}
       >
         {place && (
@@ -83,6 +91,7 @@ export function WeatherWidget({ widget }: { widget: WidgetInstance }) {
 
         {/* Now: icon with its description, the temperature, then today's high / low, humidity and wind. */}
         <Box
+          className="wx-now"
           sx={{
             minHeight: 0,
             display: "flex",
@@ -91,7 +100,7 @@ export function WeatherWidget({ widget }: { widget: WidgetInstance }) {
             gap: "clamp(8px, 4cqi, 28px)",
           }}
         >
-          <Stack alignItems="center" spacing={0.25} sx={{ minWidth: 0, maxWidth: "30%" }}>
+          <Stack className="wx-now-icon" alignItems="center" spacing={0.25} sx={{ minWidth: 0, maxWidth: "30%" }}>
             <WeatherIcon code={code} size={WX_ICON} />
             {data?.description && (
               <Typography
@@ -110,10 +119,10 @@ export function WeatherWidget({ widget }: { widget: WidgetInstance }) {
               </Typography>
             )}
           </Stack>
-          <Typography sx={{ ...valueSx, fontSize: WX_READING, lineHeight: 1, whiteSpace: "nowrap" }}>
+          <Typography className="wx-now-temp" sx={{ ...valueSx, fontSize: WX_READING, lineHeight: 1, whiteSpace: "nowrap" }}>
             {data?.temperature !== undefined ? `${Math.round(data.temperature)}°C` : "—"}
           </Typography>
-          <Stack spacing={0.25} sx={{ minWidth: 0 }}>
+          <Stack className="wx-now-details" spacing={0.25} useFlexGap sx={{ minWidth: 0 }}>
             {(todayMax || todayMin) && (
               <Typography sx={{ fontSize: WX_LABEL, lineHeight: 1.2, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>
                 {todayMax ?? "—"}

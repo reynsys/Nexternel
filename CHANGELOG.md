@@ -2,6 +2,14 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting at 1. Newest first.
 
+## V5.4.7
+
+- **Every choice looks the same way:** short word choices (like Light / Dark / Automatic) are buttons in your Look's style with the chosen one filled; choices with a picture are all the same tile.
+- **The Appearance preview shows a real showcase:** heating, a light, a gauge, a chart, the weather, power, energy and blinds.
+- **Appearance is tidier:** Cancel and Apply sit in a small box at the top right, the Look tab shows its pictures straight away, and button styles show one button each.
+- **Heating panel in HUD:** the − and + buttons are back either side of the dial.
+- **Weather** fills a tall, narrow panel.
+
 ## V5.4.6
 
 - **Appearance → Look shows the real thing:** each Look and each button style is shown drawn in that style, in your colours, instead of a description.

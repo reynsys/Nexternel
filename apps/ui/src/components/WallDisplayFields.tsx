@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Box, FormControl, FormControlLabel, InputLabel, MenuItem, Select, Stack, Switch, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
+import { Box, FormControl, FormControlLabel, InputLabel, MenuItem, Select, Stack, Switch, Typography } from "@mui/material";
+import { Segmented } from "./Segmented";
 import { api, type DashboardSummary } from "../api";
 import { normalizeWallPrefs, type WallPrefs } from "../lib/display-mode";
 
@@ -66,13 +67,7 @@ export function WallDisplayFields({ value, onChange }: { value: WallPrefs | unde
         <Typography variant="body2" sx={{ mb: 0.75 }}>
           Text size
         </Typography>
-        <ToggleButtonGroup exclusive size="small" value={wall.textSize} onChange={(_, v: number | null) => v && set({ textSize: v })} aria-label="Wall text size">
-          {TEXT.map((t) => (
-            <ToggleButton key={t.value} value={t.value}>
-              {t.label}
-            </ToggleButton>
-          ))}
-        </ToggleButtonGroup>
+        <Segmented<number> label="Wall text size" value={wall.textSize} onChange={(v) => set({ textSize: v })} options={TEXT.map((t) => ({ value: t.value, label: t.label }))} />
       </div>
       <FormControlLabel control={<Switch checked={wall.tabs} onChange={(e) => set({ tabs: e.target.checked })} />} label="Show the Dashboard Menu" />
       <FormControlLabel

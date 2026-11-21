@@ -176,17 +176,20 @@ function Panel({ cap, ctl, colour, stage, children }: View & { colour: string; s
 }
 
 function StepButton({ side, label, disabled, onClick }: { side: "left" | "right"; label: string; disabled: boolean; onClick: () => void }) {
+  // The holder is placed, not the button: a Look may give every button its own position to draw its frame.
   return (
-    <Button
-      variant="outlined"
-      color="inherit"
-      disabled={disabled}
-      aria-label={label}
-      onClick={onClick}
-      sx={{ position: "absolute", bottom: 0, [side]: 0, zIndex: 1, minWidth: 0, minHeight: 0, width: 40, height: 40, p: 0, fontSize: CONTROL_TEXT.stepSign, lineHeight: 1 }}
-    >
-      {side === "left" ? "−" : "+"}
-    </Button>
+    <Box sx={{ position: "absolute", bottom: 0, [side]: 0, zIndex: 1 }}>
+      <Button
+        variant="outlined"
+        color="inherit"
+        disabled={disabled}
+        aria-label={label}
+        onClick={onClick}
+        sx={{ minWidth: 0, minHeight: 0, width: 40, height: 40, p: 0, fontSize: CONTROL_TEXT.stepSign, lineHeight: 1 }}
+      >
+        {side === "left" ? "−" : "+"}
+      </Button>
+    </Box>
   );
 }
 
@@ -513,9 +516,11 @@ function LineTile({ cap, ctl, onOpen }: View & { onOpen: () => void }) {
       sx={{ position: "relative", width: "100%", height: "100%", minHeight: 0, display: "grid", gridTemplateColumns: "30px minmax(0, 1fr) 56px", alignItems: "center", gap: "8px", px: "4px", color: "text.primary" }}
       style={{ "--c": deviceColour(cap.kind, state, features, theme.palette.primary.main), "--nx-ctrl-hole": theme.palette.background.paper } as CSSProperties}
     >
-      <Button variant="outlined" color="inherit" aria-label={`Open ${cap.name}`} onClick={onOpen} sx={{ position: "absolute", top: 10, left: 10, zIndex: 1, minWidth: 0, minHeight: 0, width: 26, height: 26, p: 0 }}>
-        <TuneRoundedIcon fontSize="small" />
-      </Button>
+      <Box sx={{ position: "absolute", top: 10, left: 10, zIndex: 1 }}>
+        <Button variant="outlined" color="inherit" aria-label={`Open ${cap.name}`} onClick={onOpen} sx={{ minWidth: 0, minHeight: 0, width: 26, height: 26, p: 0 }}>
+          <TuneRoundedIcon fontSize="small" />
+        </Button>
+      </Box>
       {features.internet ? <NeedsInternet sx={{ bottom: 10, left: 14 }} /> : null}
       <Box sx={{ gridColumn: 2, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: "8px", opacity: off ? 0.34 : 1, pointerEvents: off ? "none" : undefined }}>
         {ctl.error ? <Typography variant="caption" color="error" role="status" textAlign="center" sx={{ fontWeight: "fontWeightBold" }}>No answer</Typography> : null}

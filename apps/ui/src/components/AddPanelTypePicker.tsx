@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Box, ButtonBase, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import type { SvgIconComponent } from "@mui/icons-material";
 import SpeedIcon from "@mui/icons-material/Speed";
 import SensorsIcon from "@mui/icons-material/Sensors";
@@ -19,7 +19,7 @@ import MapOutlinedIcon from "@mui/icons-material/MapOutlined";
 import { pluginPanelBlock } from "../plugins/loadContributions";
 import { groupAddPanelDiscovery, type AddPanelDiscoveryItem } from "../lib/add-panel-discovery";
 import { ICON_SIZE } from "../lib/appearance/type";
-import { choiceSx } from "../skins/surfaceStyles";
+import { ChoiceTile } from "../skins/ThemePresetTile";
 
 type Props = {
   catalog: AddPanelDiscoveryItem[];
@@ -68,31 +68,9 @@ export function AddPanelTypePicker({ catalog, value, onChange }: Props) {
               const Icon = TYPE_ICON[item.id] ?? BLOCK_ICON[pluginPanelBlock(item.id) ?? ""] ?? ExtensionOutlinedIcon;
               const chosen = value === item.id;
               return (
-                <ButtonBase
-                  key={item.id}
-                  aria-pressed={chosen}
-                  title={item.description}
-                  onClick={() => onChange(item.id)}
-                  sx={[
-                    {
-                      minHeight: 92,
-                      p: 1,
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 0.75,
-                      color: chosen ? "primary.main" : "text.primary",
-                      textAlign: "center",
-                      "&.Mui-focusVisible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 2 },
-                    },
-                    // The Look's choice: its border, fill and shadow, and its chosen state.
-                    choiceSx(chosen, { hover: true }),
-                  ]}
-                >
-                  <Icon sx={{ fontSize: ICON_SIZE.feature }} />
-                  <Typography variant="body2" fontWeight={chosen ? "fontWeightBold" : undefined}>
-                    {item.label}
-                  </Typography>
-                </ButtonBase>
+                <ChoiceTile key={item.id} selected={chosen} onClick={() => onChange(item.id)} title={item.label}>
+                  <Icon color="primary" sx={{ fontSize: ICON_SIZE.feature, mb: 0.25 }} />
+                </ChoiceTile>
               );
             })}
           </Box>

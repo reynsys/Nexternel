@@ -23,6 +23,7 @@ import { TERMS_SECTIONS, TERMS_SUMMARY } from "@nexternel/domain";
 import { api, rememberAuth, type BackupInspectResult, type BackupJob, type PasswordCheck, type SetupStatusResponse } from "../api";
 import { useSkin } from "../skins/SkinProvider";
 import { choiceSx, insetSx } from "../skins/surfaceStyles";
+import { ChoiceTile } from "../skins/ThemePresetTile";
 import { toAccountThemePrefs } from "../skins/themePrefs";
 import { THEME_PRESETS } from "../lib/appearance/presets";
 import { ThemePresetTile, prefsWithPreset, presetIsChosen } from "../skins/ThemePresetTile";
@@ -54,20 +55,9 @@ const formatWhen = (iso: string) =>
 
 function Choice({ icon, title, text, selected, onClick }: { icon: ReactNode; title: string; text: string; selected: boolean; onClick: () => void }) {
   return (
-    <ButtonBase
-      onClick={onClick}
-      aria-pressed={selected}
-      sx={[
-        { flex: 1, display: "block", textAlign: "left", p: 2.5, "&:hover": { borderColor: "primary.main", bgcolor: "action.hover" } },
-        choiceSx(selected),
-      ]}
-    >
-      <Box sx={{ color: "primary.main", mb: 1, "& svg": { fontSize: ICON_SIZE.feature } }}>{icon}</Box>
-      <Typography variant="subtitle1">{title}</Typography>
-      <Typography variant="body2" color="text.secondary">
-        {text}
-      </Typography>
-    </ButtonBase>
+    <ChoiceTile selected={selected} onClick={onClick} title={title} text={text} sx={{ flex: 1, p: 2 }}>
+      <Box sx={{ color: "primary.main", mb: 0.5, "& svg": { fontSize: ICON_SIZE.feature } }}>{icon}</Box>
+    </ChoiceTile>
   );
 }
 

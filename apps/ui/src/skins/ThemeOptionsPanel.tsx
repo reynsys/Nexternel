@@ -38,24 +38,21 @@ export function ThemeOptionsPanel() {
   return (
     <Card sx={[surfaceSx, { overflow: "visible" }]}>
       <CardContent>
-        <Box
-          sx={(t) => ({
-            position: "sticky",
-            top: "var(--nx-top-bar, 0px)",
-            zIndex: t.zIndex.appBar,
-            display: "flex",
-            flexWrap: "wrap",
-            alignItems: "center",
-            gap: 1.5,
-            mb: 1,
-            py: 1,
-            bgcolor: t.nxScheme.surfaceSolid.panel,
-          })}
-        >
-          <Typography variant="body2" color={trying ? "text.primary" : "text.secondary"} sx={{ flex: "1 1 260px", display: { xs: "none", sm: "block" } }}>
-            {trying ? "You can see your changes. Press Apply to keep them, or Cancel to put back how it was." : "Your changes show straight away. Press Apply to keep them."}
-          </Typography>
-          <Box sx={{ flex: "0 0 auto", width: { xs: "100%", sm: 240 } }}>
+        {/* Cancel and Apply stay in reach while scrolling: a small floating holder at the right (only as
+            wide as the buttons, so it never draws a band across the page). */}
+        <Box sx={(t) => ({ position: "sticky", top: "var(--nx-top-bar, 0px)", zIndex: t.zIndex.appBar, display: "flex", justifyContent: "flex-end", mb: 1, pointerEvents: "none" })}>
+          <Box
+            data-nx-role="popup"
+            sx={(t) => ({
+              pointerEvents: "auto",
+              width: { xs: "100%", sm: 260 },
+              p: 1,
+              borderRadius: `${t.nx.radiusUnit}px`,
+              bgcolor: t.nx.popupFill || "background.paper",
+              border: t.nx.popupBorder || undefined,
+              boxShadow: t.nx.popupShadow || undefined,
+            })}
+          >
             <SidePanelButtons onCancel={cancelTrial} onApply={applyTrial} applyDisabled={!trying} cancelDisabled={!trying} />
           </Box>
         </Box>

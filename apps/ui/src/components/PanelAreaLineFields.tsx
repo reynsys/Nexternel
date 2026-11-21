@@ -1,5 +1,6 @@
 import { createContext, useContext } from "react";
-import { FormControl, FormControlLabel, InputLabel, MenuItem, Radio, RadioGroup, Select, Stack, Typography } from "@mui/material";
+import { FormControl, InputLabel, MenuItem, Select, Stack, Typography } from "@mui/material";
+import { Segmented } from "./Segmented";
 import type { PanelAreaLine } from "@nexternel/domain";
 
 /** The area line choice of the panel being edited (provided by the dashboard grid, saved with the panel). */
@@ -22,53 +23,48 @@ export function PanelAreaLineFields() {
   if (!ctx) return null;
   const { value, onChange, automatic, areas } = ctx;
   return (
-    <Stack spacing={0.5}>
+    <Stack spacing={1}>
       <Typography variant="subtitle2">Area shown under the title</Typography>
-      <RadioGroup
+      <Segmented<PanelAreaLine["mode"]>
+        label="Area shown under the title"
         value={value.mode}
-        onChange={(e) => {
-          const mode = e.target.value as PanelAreaLine["mode"];
+        onChange={(mode) => {
           if (mode === "area") {
             const first = value.mode === "area" ? value : areas[0] ? { mode: "area" as const, areaId: areas[0].id, name: areas[0].name } : null;
             if (first) onChange(first);
           } else onChange({ mode });
         }}
-      >
-        <FormControlLabel
-          value="auto"
-          control={<Radio size="small" />}
-          label={
-            <span>
-              From what it shows{" "}
-              <Typography component="span" variant="body2" color="text.secondary">
-                ({automatic ?? "nothing with an area"})
-              </Typography>
-            </span>
-          }
-        />
-        <FormControlLabel value="area" control={<Radio size="small" />} label="Choose an area" disabled={areas.length === 0} />
-        {value.mode === "area" ? (
-          <FormControl size="small" sx={{ ml: 4, mb: 0.5, maxWidth: 280 }}>
-            <InputLabel id="panel-area-line">Area</InputLabel>
-            <Select
-              labelId="panel-area-line"
-              label="Area"
-              value={value.areaId}
-              onChange={(e) => {
-                const a = areas.find((x) => x.id === e.target.value);
-                if (a) onChange({ mode: "area", areaId: a.id, name: a.name });
-              }}
-            >
-              {areas.map((a) => (
-                <MenuItem key={a.id} value={a.id}>
-                  {a.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        ) : null}
-        <FormControlLabel value="none" control={<Radio size="small" />} label="Don't show an area" />
-      </RadioGroup>
+        options={[
+          { value: "auto", label: "From what it shows" },
+          { value: "area", label: "Choose an area", disabled: areas.length === 0 },
+          { value: "none", label: "Don't show an area" },
+        ]}
+      />
+      {value.mode === "auto" ? (
+        <Typography variant="body2" color="text.secondary">
+          Shows: {automatic ?? "nothing with an area"}
+        </Typography>
+      ) : null}
+      {value.mode === "area" ? (
+        <FormControl size="small" sx={{ mt: 1, maxWidth: 280 }}>
+          <InputLabel id="panel-area-line">Area</InputLabel>
+          <Select
+            labelId="panel-area-line"
+            label="Area"
+            value={value.areaId}
+            onChange={(e) => {
+              const a = areas.find((x) => x.id === e.target.value);
+              if (a) onChange({ mode: "area", areaId: a.id, name: a.name });
+            }}
+          >
+            {areas.map((a) => (
+              <MenuItem key={a.id} value={a.id}>
+                {a.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      ) : null}
     </Stack>
   );
 }

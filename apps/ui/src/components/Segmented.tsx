@@ -1,6 +1,12 @@
-import { ToggleButton, ToggleButtonGroup } from "@mui/material";
+import type { ReactNode } from "react";
+import { Button } from "@mui/material";
+import { ButtonRow } from "./ButtonRow";
 
-/** One choice out of a few, as a row of buttons (the chosen one filled). */
+/**
+ * One choice out of a few short words (Light / Dark / Automatic, Few / Normal / Many…): separate
+ * buttons in the Look's own button shape, the chosen one filled. Every word choice in Nexternel uses
+ * this, so they all look alike; choices with a picture use ChoiceTile, and tabs stay a bar.
+ */
 export function Segmented<T extends string | number>({
   value,
   options,
@@ -8,19 +14,30 @@ export function Segmented<T extends string | number>({
   disabled,
   label,
 }: {
-  value: T;
-  options: readonly { value: T; label: string }[];
+  /** null: none chosen yet (e.g. panels of different widths). */
+  value: T | null;
+  options: readonly { value: T; label: ReactNode; icon?: ReactNode; disabled?: boolean }[];
   onChange: (value: T) => void;
   disabled?: boolean;
   label: string;
 }) {
   return (
-    <ToggleButtonGroup exclusive size="small" value={value} disabled={disabled} aria-label={label} onChange={(_, v: T | null) => v !== null && onChange(v)} sx={{ flexWrap: "wrap" }}>
-      {options.map((o) => (
-        <ToggleButton key={String(o.value)} value={o.value} sx={{ px: 1.5 }}>
-          {o.label}
-        </ToggleButton>
-      ))}
-    </ToggleButtonGroup>
+    <ButtonRow role="group" aria-label={label}>
+      {options.map((o) => {
+        const chosen = o.value === value;
+        return (
+          <Button
+            key={String(o.value)}
+            variant={chosen ? "contained" : "outlined"}
+            aria-pressed={chosen}
+            startIcon={o.icon}
+            disabled={disabled || o.disabled}
+            onClick={() => !chosen && onChange(o.value)}
+          >
+            {o.label}
+          </Button>
+        );
+      })}
+    </ButtonRow>
   );
 }

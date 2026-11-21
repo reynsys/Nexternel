@@ -5,18 +5,16 @@ import {
   Button,
   CircularProgress,
   FormControl,
-  FormControlLabel,
   InputLabel,
   LinearProgress,
   MenuItem,
-  Radio,
-  RadioGroup,
   Select,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import { ChoiceTile } from "../../../skins/ThemePresetTile";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import type { FoundDevice } from "@nexternel/domain";
 import { api } from "../../../api";
@@ -351,21 +349,25 @@ function StepFind(props: { areas: { id: string; name: string }[]; onRestart: () 
           </Box>
         </Stack>
       ) : (
-        <RadioGroup
-          value={chosenKey ?? ""}
-          onChange={(e) => {
-            const d = found.find((x) => x.key === e.target.value);
-            setChosenKey(e.target.value);
-            if (d) setName(d.name);
-          }}
-        >
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+        <Box>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
             Pick the new one. The others are already on your Wi-Fi but not in Nexternel.
           </Typography>
-          {found.map((d) => (
-            <FormControlLabel key={d.key} value={d.key} control={<Radio />} label={`${d.what} · ${d.name}`} />
-          ))}
-        </RadioGroup>
+          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 1 }}>
+            {found.map((d) => (
+              <ChoiceTile
+                key={d.key}
+                selected={chosenKey === d.key}
+                onClick={() => {
+                  setChosenKey(d.key);
+                  setName(d.name);
+                }}
+                title={d.name}
+                text={d.what}
+              />
+            ))}
+          </Box>
+        </Box>
       )}
       <TextField
         id="shelly-guide-name"

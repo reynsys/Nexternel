@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Stack, ToggleButton, ToggleButtonGroup, Typography, useTheme } from "@mui/material";
+import { Stack, Typography, useTheme } from "@mui/material";
+import { Segmented } from "../../../components/Segmented";
 import ReactECharts from "echarts-for-react";
 import { api, type BoardHealthHistory } from "../../../api";
 import { InfoCard } from "./DeviceBits";
@@ -73,13 +74,7 @@ export function BoardSignalHistory({ deviceId }: { deviceId: string }) {
     <InfoCard
       title="Wi‑Fi signal history"
       action={
-        <ToggleButtonGroup size="small" exclusive value={hours} onChange={(_, v: number | null) => v && setHours(v)} aria-label="Period shown">
-          {RANGES.map((r) => (
-            <ToggleButton key={r.hours} value={r.hours}>
-              {r.label}
-            </ToggleButton>
-          ))}
-        </ToggleButtonGroup>
+        <Segmented<number> label="Period shown" value={hours} onChange={setHours} options={RANGES.map((r) => ({ value: r.hours, label: r.label }))} />
       }
     >
       {history && history.received ? (

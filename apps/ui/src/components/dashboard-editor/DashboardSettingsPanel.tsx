@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { Box, Button, FormControlLabel, Stack, Switch, Tab, Tabs, TextField, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
+import { Box, Button, FormControlLabel, Stack, Switch, Tab, Tabs, TextField, Typography } from "@mui/material";
+import { Segmented } from "../Segmented";
 import { SidePanel } from "../side-panel/SidePanel";
 import { SidePanelButtons } from "../side-panel/SidePanelButtons";
 import { DashboardIconPicker } from "../DashboardIconPicker";
@@ -91,16 +92,15 @@ export function DashboardSettingsPanel(p: Props) {
             label="Panels across"
             help="How many standard panels fit side by side in a full-width section. 4 makes every panel bigger."
           >
-            <ToggleButtonGroup
-              exclusive
-              size="small"
-              aria-label="Panels across"
+            <Segmented<DashboardGridCols>
+              label="Panels across"
               value={p.gridCols === 48 ? 48 : 60}
-              onChange={(_e, v: DashboardGridCols | null) => v && p.onGridCols(v)}
-            >
-              <ToggleButton value={60}>5</ToggleButton>
-              <ToggleButton value={48}>4</ToggleButton>
-            </ToggleButtonGroup>
+              onChange={p.onGridCols}
+              options={[
+                { value: 60, label: "5" },
+                { value: 48, label: "4" },
+              ]}
+            />
           </SettingBlock>
           <SettingBlock label="Section shortcuts" help="A row of buttons above the sections; one tap jumps to a section. Handy on long dashboards.">
             <FormControlLabel

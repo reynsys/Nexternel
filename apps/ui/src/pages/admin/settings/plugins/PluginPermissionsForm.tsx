@@ -4,12 +4,11 @@ import {
   Box,
   Checkbox,
   FormControlLabel,
-  Radio,
-  RadioGroup,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
+import { Segmented } from "../../../../components/Segmented";
 import { api, type Capability, type PluginGrants, type PluginPermissionKey } from "../../../../api";
 
 const LABELS: Record<PluginPermissionKey, string> = {
@@ -96,14 +95,15 @@ export function PluginPermissionsForm({ requested, grants, onChange, controlPick
 
             {key === "read" && grants.read !== null ? (
               <Box sx={{ pl: 4, pt: 0.5 }}>
-                <RadioGroup
-                  row
+                <Segmented<"all" | "chosen">
+                  label="Which areas"
                   value={grants.read === "all" ? "all" : "chosen"}
-                  onChange={(e) => onChange({ ...grants, read: e.target.value === "all" ? "all" : [] })}
-                >
-                  <FormControlLabel value="all" control={<Radio size="small" />} label="All areas" slotProps={{ typography: { variant: "body2" } }} />
-                  <FormControlLabel value="chosen" control={<Radio size="small" />} label="Only these areas" slotProps={{ typography: { variant: "body2" } }} />
-                </RadioGroup>
+                  onChange={(v) => onChange({ ...grants, read: v === "all" ? "all" : [] })}
+                  options={[
+                    { value: "all", label: "All areas" },
+                    { value: "chosen", label: "Only these areas" },
+                  ]}
+                />
                 {grants.read !== "all" ? (
                   <Autocomplete
                     multiple

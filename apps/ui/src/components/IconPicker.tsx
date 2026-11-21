@@ -159,9 +159,11 @@ export function IconPicker({ open, value, kind, autoIconId, autoLabel, allowNone
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" scroll="paper">
       <DialogTitle sx={{ pr: 6 }}>
         Choose an icon
-        <IconButton aria-label="Close" onClick={onClose} sx={{ position: "absolute", right: 8, top: 8 }}>
-          <CloseIcon />
-        </IconButton>
+        <Box sx={{ position: "absolute", right: 8, top: 8 }}>
+          <IconButton aria-label="Close" onClick={onClose}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
       </DialogTitle>
       <DialogContent dividers>{content}</DialogContent>
     </Dialog>

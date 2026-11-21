@@ -25,7 +25,7 @@ import { chosenLookButtons } from "../lib/look-font";
 import { BACKGROUND_EFFECTS, EFFECT_AMOUNTS, EFFECT_COLOURS, EFFECT_SPEEDS, type EffectColour } from "./effects/catalog";
 import { EffectPicture, useEffectOptions, useReducedMotion } from "./effects/BackgroundEffects";
 import type { UiSkin } from "./types";
-import { choiceSx, insetSx } from "./surfaceStyles";
+import { insetSx } from "./surfaceStyles";
 import { ButtonRow } from "../components/ButtonRow";
 import { PHONE_ROOM_NAVS, ROOM_NAVS } from "../lib/room-nav";
 import { Segmented } from "../components/Segmented";
@@ -202,29 +202,17 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
       title="Mode"
       hint={look.forceMode ? `${look.label} is always ${look.forceMode}. Your choice comes back with other styles.` : "Light, dark, or follow this device's own setting (light by day, dark by night if it does that)."}
     >
-      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 1 }}>
-        {([
-          ["light", "Light", <LightModeIcon key="l" fontSize="small" />],
-          ["dark", "Dark", <DarkModeIcon key="d" fontSize="small" />],
-          ["auto", "Automatic", <BrightnessAutoIcon key="a" fontSize="small" />],
-        ] as const).map(([value, label, icon]) => {
-          const on = value === "auto" ? Boolean(themePrefs.autoMode) : !themePrefs.autoMode && themePrefs.mode === value;
-          return (
-            <ChoiceTile
-              key={value}
-              selected={on}
-              disabled={Boolean(look.forceMode)}
-              onClick={() => set(value === "auto" ? { autoMode: true } : { mode: value, autoMode: false })}
-              title={
-                <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
-                  {icon}
-                  {label}
-                </Box>
-              }
-            />
-          );
-        })}
-      </Box>
+      <Segmented<"light" | "dark" | "auto">
+        label="Mode"
+        value={themePrefs.autoMode ? "auto" : themePrefs.mode}
+        disabled={Boolean(look.forceMode)}
+        onChange={(value) => set(value === "auto" ? { autoMode: true } : { mode: value, autoMode: false })}
+        options={[
+          { value: "light", label: "Light", icon: <LightModeIcon fontSize="small" /> },
+          { value: "dark", label: "Dark", icon: <DarkModeIcon fontSize="small" /> },
+          { value: "auto", label: "Automatic", icon: <BrightnessAutoIcon fontSize="small" /> },
+        ]}
+      />
     </Section>
   );
 
@@ -264,24 +252,17 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
         />
         <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 1, mt: 1.5 }}>
           {shownFonts.map((f) => (
-            <ButtonBase
+            <ChoiceTile
               key={f.id}
+              selected={fontId === f.id}
               onClick={() => set({ lookFont: f.id })}
-              aria-pressed={fontId === f.id}
-              sx={[{ width: "100%", display: "flex", alignItems: "center", gap: 1.5, px: 1.5, py: 1, textAlign: "left" }, choiceSx(fontId === f.id)]}
+              title={<Box component="span" sx={{ fontFamily: f.family }}>{f.label}</Box>}
+              text={f.text}
             >
-              <Typography aria-hidden variant="h6" sx={{ fontFamily: f.family, lineHeight: 1.1, color: "secondary.main", width: 72, flexShrink: 0 }}>
-                21.4°
+              <Typography aria-hidden variant="h5" sx={{ fontFamily: f.family, lineHeight: 1.1, color: "secondary.main", mb: 0.25 }}>
+                21.4° Living Room
               </Typography>
-              <Box sx={{ minWidth: 0, flex: 1 }}>
-                <Typography noWrap variant="body1" sx={{ fontFamily: f.family, fontWeight: "fontWeightBold" }}>
-                  {f.label}
-                </Typography>
-                <Typography noWrap variant="caption" color="text.secondary" component="div">
-                  {f.text}
-                </Typography>
-              </Box>
-            </ButtonBase>
+            </ChoiceTile>
           ))}
         </Box>
       </Section>
@@ -314,21 +295,18 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
         ))}
       </Box>
       {effectId !== "off" ? (
-        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 2, mt: 2 }}>
+        <>
           {(
             [
-              ["Amount", "effectAmount", EFFECT_AMOUNTS],
-              ["Speed", "effectSpeed", EFFECT_SPEEDS],
+              ["Amount", "how much of the effect there is", "effectAmount", EFFECT_AMOUNTS],
+              ["Speed", "how fast it moves", "effectSpeed", EFFECT_SPEEDS],
             ] as const
-          ).map(([label, key, options]) => (
-            <Box key={key}>
-              <Typography variant="body2" fontWeight="fontWeightBold" sx={{ mb: 1 }}>
-                {label}
-              </Typography>
+          ).map(([label, hint, key, options]) => (
+            <Row key={key} label={label} hint={hint}>
               <Segmented label={label} value={themePrefs[key] ?? 1} options={options} onChange={(v) => set({ [key]: v })} />
-            </Box>
+            </Row>
           ))}
-        </Box>
+        </>
       ) : null}
     </Section>
   );
@@ -426,18 +404,9 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
             {swatches.map((g) => {
               const selected = themePrefs.gradientId === g.id;
               return (
-                <ButtonBase
-                  key={g.id}
-                  onClick={() => set({ gradientId: g.id })}
-                  aria-pressed={selected}
-                  aria-label={g.label}
-                  sx={{ width: "100%", display: "grid", gridTemplateColumns: "minmax(0, 1fr)", justifyItems: "stretch", alignContent: "start", gap: 0.5, p: 0.5, borderRadius: 1.5, textAlign: "left", border: "2px solid", borderColor: selected ? "text.primary" : "transparent" }}
-                >
-                  <Box sx={[insetSx(), { width: "100%", height: 40, backgroundImage: gradientCss(g.id, mode) ?? undefined }]} />
-                  <Typography variant="caption" color={selected ? "text.primary" : "text.secondary"} sx={{ lineHeight: 1.2, px: 0.25 }}>
-                    {g.label}
-                  </Typography>
-                </ButtonBase>
+                <ChoiceTile key={g.id} selected={selected} onClick={() => set({ gradientId: g.id })} title={g.label}>
+                  <Box aria-hidden sx={[insetSx(), { width: "100%", height: 40, mb: 0.5, backgroundImage: gradientCss(g.id, mode) ?? undefined }]} />
+                </ChoiceTile>
               );
             })}
           </Box>
@@ -533,7 +502,7 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
               {look.buttonStyles!.map((b) => (
                 <ChoiceTile key={b.id} holdsFrame selected={chosenLookButtons(look, themePrefs.lookButtons)?.id === b.id} onClick={() => set({ lookButtons: b.id })} title={b.label}>
                   <Box sx={{ width: "100%", mb: 0.5, borderRadius: 1, overflow: "hidden" }}>
-                    <LookFrame prefs={{ ...themePrefs, lookButtons: b.id, effectId: "off" }} skinId={skinId} show="buttons" drawnWidth={260} startHeight={120} title={`${b.label}: how buttons look`} />
+                    <LookFrame prefs={{ ...themePrefs, lookButtons: b.id, effectId: "off" }} skinId={skinId} show="buttons" drawnWidth={160} startHeight={72} title={`${b.label}: how buttons look`} />
                   </Box>
                 </ChoiceTile>
               ))}
@@ -542,7 +511,7 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
         ) : null}
       </Section>
 
-        {effectTiles}
+        {tab === "style" ? effectTiles : null}
       </Stack>
     ),
     text: textTab,
@@ -566,7 +535,9 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
           <Tab key={t.id} value={t.id} label={t.label} sx={{ minWidth: 0, px: 1.75 }} />
         ))}
       </Tabs>
-      {tabContent[tab] ?? tabContent.theme}
+      {tab !== "style" ? (tabContent[tab] ?? tabContent.theme) : null}
+      {/* The Look tab is always there (hidden until opened), so its live samples are drawn by the time it is opened. */}
+      <Box hidden={tab !== "style"}>{tabContent.style}</Box>
       {footnote ? (
         <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 3 }}>
           {footnote}

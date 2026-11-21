@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Box, Button, Stack, Tab, Tabs } from "@mui/material";
+import { Box, Button, Stack } from "@mui/material";
 import WeekendOutlinedIcon from "@mui/icons-material/WeekendOutlined";
-import type { Capability, PanelInstance, PanelResolveResult, ResolvedPanelCapability } from "../api";
+import { answerWithSamples, type Capability, type HistoryRange, type PanelInstance, type PanelResolveResult, type ResolvedPanelCapability } from "../api";
 import { LookLayer, type SkinControls } from "../skins/SkinProvider";
 import { getSkin, listSkins } from "../skins/registry";
 import { normalizeThemePrefs, type ThemePrefs } from "../skins/themePrefs";
@@ -19,7 +19,6 @@ import {
   type LookPreviewMessage,
   type LookPreviewShow,
 } from "../lib/look-preview-messages";
-import { ButtonRow } from "../components/ButtonRow";
 
 /**
  * The Appearance preview's own page (/look-preview), shown inside Settings → Appearance and
@@ -53,19 +52,23 @@ function sample(id: string, kind: string, name: string, unit: string | null, val
   } as Capability;
 }
 
+const T = "look-preview-temperature";
+const POWER = "look-preview-power";
+const ENERGY = "look-preview-energy";
+const HEATING = "look-preview-heating";
+const LIGHT = "look-preview-light";
+const BLINDS = "look-preview-blinds";
+
 const CAPABILITIES: Capability[] = [
-  sample("look-preview-temperature", "temperature", "Temperature", "°C", 21.4),
-  sample("look-preview-humidity", "humidity", "Humidity", "%", 63),
-  sample("look-preview-co2", "co2", "Air quality (CO₂)", "ppm", 1180),
-  sample("look-preview-light", "switch", "Ceiling light", null, true, true),
-  sample("look-preview-lamp", "switch", "Lamp", null, false, true),
+  sample(T, "temperature", "Temperature", "°C", 21.4),
+  sample(POWER, "power", "Power now", "W", 1240),
+  sample(ENERGY, "energy", "Energy", "kWh", 9.6),
+  { ...sample(HEATING, "thermostat", "Heating", null, { on: true, target: 21.5, current: 20.8, heating: true, humidity: 48 }, true), features: { min: 10, max: 30, step: 0.5 } },
+  { ...sample(LIGHT, "light", "Ceiling light", null, { on: true, brightness: 70, color: { h: 32, s: 55 } }, true), features: { brightness: true, color: true } },
+  sample(BLINDS, "cover", "Blinds", null, { position: 60 }, true),
 ];
 
-const STATUSES: CapabilityStatus[] = [
-  { capabilityId: "look-preview-temperature", state: "ok", since: now, settings: null, custom: false },
-  { capabilityId: "look-preview-humidity", state: "watch", since: now, settings: null, custom: false },
-  { capabilityId: "look-preview-co2", state: "alert", since: now, settings: null, custom: false },
-];
+const STATUSES: CapabilityStatus[] = [{ capabilityId: T, state: "ok", since: now, settings: null, custom: false }];
 
 const scope = (capabilityIds: string[]) => ({
   areaIds: [],
@@ -78,23 +81,67 @@ const scope = (capabilityIds: string[]) => ({
 });
 
 const card = { layout: "card", direction: "across", itemStyle: "auto" };
+const at = (i: string, x: number, y: number, w: number, h: number) => ({ i, x, y, w, h });
+const control = (id: string, title: string, cap: string, layout: ReturnType<typeof at>) => ({
+  id, type: "panel.controls", title, config: { appearance: card, panelScope: scope([cap]), configSchemaVersion: 1 }, layout, bindings: {},
+});
+const gauge = (id: string, title: string, cap: string, presetId: string, max: number, layout: ReturnType<typeof at>) => ({
+  id, type: "panel.gauge", title, config: { max, presetId, panelScope: scope([]), configSchemaVersion: 1 }, layout, bindings: { sourceType: "sensor", sourceId: "look-preview", capabilityId: cap },
+});
+const chart = (id: string, title: string, cap: string, presetId: string, chartRange: string, layout: ReturnType<typeof at>) => ({
+  id, type: "panel.charts", title, config: { appearance: { layout: "card" }, chartRange, chartPresetId: presetId, panelScope: scope([cap]), configSchemaVersion: 1 }, layout, bindings: {},
+});
 
+/** A showcase of good-looking panels, five places to a row like a laptop dashboard: heating, a light, a gauge and a chart; the weather, power, energy and blinds below. */
 const PANELS = (
   [
-    { id: "p-clock", type: "panel.clock", config: { clockFace: "digital", clockColor: "accent", clockFont: "theme", appearance: { layout: "card" }, panelScope: scope([]), configSchemaVersion: 1 }, layout: { i: "p-clock", x: 0, y: 0, w: 12, h: 2 }, bindings: {} },
-    { id: "p-calendar", type: "panel.calendar", config: { appearance: { layout: "card" }, panelScope: scope([]), configSchemaVersion: 1 }, layout: { i: "p-calendar", x: 12, y: 0, w: 12, h: 2 }, bindings: {} },
-    { id: "p-climate", type: "panel.status", title: "Climate", config: { appearance: card, panelScope: scope(["look-preview-temperature", "look-preview-humidity"]), configSchemaVersion: 1 }, layout: { i: "p-climate", x: 24, y: 0, w: 12, h: 2 }, bindings: {} },
-    { id: "p-gauge", type: "panel.gauge", title: "Temperature", config: { max: 40, presetId: "gauge-double", panelScope: scope([]), configSchemaVersion: 1 }, layout: { i: "p-gauge", x: 36, y: 0, w: 12, h: 2 }, bindings: { sourceType: "sensor", sourceId: "look-preview", capabilityId: "look-preview-temperature" } },
-    { id: "p-lights", type: "panel.controls", title: "Lights", config: { appearance: card, panelScope: scope(["look-preview-light", "look-preview-lamp"]), configSchemaVersion: 1 }, layout: { i: "p-lights", x: 48, y: 0, w: 12, h: 1 }, bindings: {} },
-    { id: "p-air", type: "panel.status", title: "Air quality", config: { appearance: card, panelScope: scope(["look-preview-co2"]), configSchemaVersion: 1 }, layout: { i: "p-air", x: 48, y: 1, w: 12, h: 1 }, bindings: {} },
+    control("p-heating", "Heating", HEATING, at("p-heating", 0, 0, 12, 3)),
+    control("p-light", "Ceiling light", LIGHT, at("p-light", 12, 0, 12, 3)),
+    gauge("p-gauge", "Temperature", T, "gauge-temperature", 40, at("p-gauge", 24, 0, 12, 3)),
+    chart("p-chart", "Temperature today", T, "area-gradient", "24h", at("p-chart", 36, 0, 24, 3)),
+    { id: "p-weather", type: "panel.weather", config: { appearance: { layout: "card" }, panelScope: scope([]), weatherLat: 51.5, weatherLon: -0.12, weatherLocation: "London", configSchemaVersion: 1 }, layout: at("p-weather", 0, 3, 12, 3), bindings: {} },
+    gauge("p-power", "Power now", POWER, "gauge-progress", 3000, at("p-power", 12, 3, 12, 3)),
+    chart("p-energy", "Energy this week", ENERGY, "bar-rounded", "7d", at("p-energy", 24, 3, 24, 3)),
+    control("p-blinds", "Blinds", BLINDS, at("p-blinds", 48, 3, 12, 3)),
   ] as unknown as PanelInstance[]
 ).map(decodePanelInstance);
 
 /** A Look's tile: two panels side by side. */
-const LOOK_PANELS = PANELS.filter((p) => p.id === "p-clock" || p.id === "p-climate").map((p, i) => ({
+const LOOK_PANELS = PANELS.filter((p) => p.id === "p-heating" || p.id === "p-gauge").map((p, i) => ({
   ...p,
-  layout: { ...p.layout, x: i * 12, y: 0, w: 12, h: 2 },
+  layout: { ...p.layout, x: i * 12, y: 0, w: 12, h: 3 },
 }));
+
+/** Sample history for the charts and a sample forecast, so the preview asks the server nothing. */
+const HOUR = 3600_000;
+function samplePoints(range: string, cap: string): { t: string; v: number }[] {
+  const end = Date.now();
+  if (cap === ENERGY || range === "7d")
+    return [8.2, 11.4, 9.1, 12.8, 10.3, 7.6, 9.6].map((v, i) => ({ t: new Date(end - (6 - i) * 24 * HOUR).toISOString(), v }));
+  return Array.from({ length: 25 }, (_, i) => {
+    const h = i - 24;
+    return { t: new Date(end + h * HOUR).toISOString(), v: Math.round((20 + 1.6 * Math.sin(((h + 9) / 24) * 2 * Math.PI) + 0.3 * Math.sin(i * 1.7)) * 10) / 10 };
+  });
+}
+const nameOf = (id: string) => CAPABILITIES.find((c) => c.id === id);
+answerWithSamples((path) => {
+  const url = new URL(path, window.location.origin);
+  if (url.pathname === "/api/v1/history") {
+    const range = (url.searchParams.get("range") ?? "24h") as HistoryRange;
+    const one = url.searchParams.get("capabilityId");
+    const ids = one ? [one] : (url.searchParams.get("capabilityIds") ?? "").split(",").filter(Boolean);
+    const series = ids.map((id) => ({ capabilityId: id, name: nameOf(id)?.name ?? id, unit: nameOf(id)?.unit ?? null, aggregateEvery: range === "7d" ? "1d" : "1h", points: samplePoints(range, id) }));
+    return one ? { ...series[0], range } : { range, series };
+  }
+  if (url.pathname === "/api/v1/weather") {
+    const day = (d: number, code: number, description: string, max: number, min: number) => ({ date: new Date(Date.now() + d * 24 * HOUR).toISOString().slice(0, 10), weatherCode: code, description, tempMax: max, tempMin: min, precipProbability: code > 50 ? 60 : 5 });
+    return {
+      temperature: 14, humidity: 62, windSpeed: 11, weatherCode: 1, description: "Mainly clear", time: new Date().toISOString(), source: "sample",
+      forecast: [day(0, 1, "Mainly clear", 15, 8), day(1, 3, "Cloudy", 13, 7), day(2, 61, "Light rain", 12, 6), day(3, 2, "Partly cloudy", 14, 7), day(4, 0, "Clear", 16, 8)],
+    };
+  }
+  return undefined;
+});
 
 const SHOWS: LookPreviewShow[] = ["dashboard", "look", "buttons"];
 const show: LookPreviewShow = (() => {
@@ -102,22 +149,9 @@ const show: LookPreviewShow = (() => {
   return v && SHOWS.includes(v) ? v : "dashboard";
 })();
 
-/** The buttons every page uses: the main one, an outlined one, and tabs (button style tiles, Look tiles). */
-function SampleButtons({ tabs = true }: { tabs?: boolean }) {
-  return (
-    <Stack spacing={1.5} alignItems="flex-start">
-      <ButtonRow direction="row" flexWrap="nowrap">
-        <Button variant="contained">Apply</Button>
-        <Button variant="outlined">Cancel</Button>
-      </ButtonRow>
-      {tabs ? (
-        <Tabs value="a" aria-label="Sample tabs">
-          <Tab value="a" label="Theme" />
-          <Tab value="b" label="Look" />
-        </Tabs>
-      ) : null}
-    </Stack>
-  );
+/** One button in the chosen button style (button style tiles). */
+function SampleButton() {
+  return <Button variant="contained">Apply</Button>;
 }
 
 /** Panels ask what they show; the preview answers with its sample readings. */
@@ -206,7 +240,7 @@ export function LookPreviewPage() {
         {/* Only to look at: a switch in the preview must not do anything. */}
         <Box ref={contentRef} sx={{ p: 2, pointerEvents: "none", userSelect: "none", display: show === "buttons" ? "inline-block" : "block" }} aria-hidden>
           {show === "buttons" ? (
-            <SampleButtons />
+            <SampleButton />
           ) : (
             <Stack spacing={2}>
               <DashboardSectionFrame
@@ -229,7 +263,6 @@ export function LookPreviewPage() {
                   onUpdatePanel={nothing}
                 />
               </DashboardSectionFrame>
-              {show === "look" ? <SampleButtons tabs={false} /> : null}
             </Stack>
           )}
         </Box>

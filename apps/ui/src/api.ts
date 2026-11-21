@@ -241,7 +241,21 @@ export const SERVER_UNREACHABLE = "Can't reach Nexternel right now. Trying again
 export const CLIENT_ID =
   typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `c${Date.now()}${Math.random().toString(36).slice(2)}`;
 
+/**
+ * The Appearance preview (pages/LookPreviewPage.tsx) answers some questions itself with sample
+ * readings (history for charts, weather), so it looks the same on every Nexternel and asks the server
+ * nothing. Returns undefined for anything it does not answer.
+ */
+let sampleAnswers: ((path: string) => unknown) | null = null;
+export function answerWithSamples(answer: (path: string) => unknown): void {
+  sampleAnswers = answer;
+}
+
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  if (sampleAnswers) {
+    const answer = sampleAnswers(path);
+    if (answer !== undefined) return answer as T;
+  }
   const headers = new Headers(init?.headers);
   if (!headers.has("Content-Type") && init?.body && !(init.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
