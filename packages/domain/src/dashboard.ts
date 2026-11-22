@@ -24,8 +24,8 @@ export const PanelInstanceSchema = z.object({
   type: z.string().min(1),
   title: z.string().optional(),
   layout: PanelLayoutSchema,
-  bindings: z.record(z.unknown()).default({}),
-  config: z.record(z.unknown()).default({}),
+  bindings: z.record(z.string(), z.unknown()).default({}),
+  config: z.record(z.string(), z.unknown()).default({}),
 });
 
 export type PanelInstance = z.infer<typeof PanelInstanceSchema>;
@@ -96,7 +96,7 @@ export const DashboardSectionSchema = DashboardSectionV3Schema;
 /** Persisted dashboard document schema v3 (V5 panels). */
 export const DashboardDocumentV3Schema = z.object({
   schemaVersion: z.literal(3),
-  id: z.string().uuid().optional(),
+  id: z.guid().optional(),
   name: z.string().min(1),
   tabIcon: z.string().optional(),
   showTabLabel: z.boolean().optional().default(true),
@@ -117,7 +117,7 @@ export type PersistedDashboardDocument = Omit<DashboardDocumentV3, "gridCols"> &
 /** Legacy persisted dashboard document (PostgreSQL JSONB) — v2 compatibility read. */
 export const DashboardDocumentSchema = z.object({
   schemaVersion: z.literal(2),
-  id: z.string().uuid().optional(),
+  id: z.guid().optional(),
   name: z.string().min(1),
   /** Top tab bar icon catalog id. */
   tabIcon: z.string().optional(),
@@ -133,7 +133,7 @@ export type DashboardDocument = z.infer<typeof DashboardDocumentSchema>;
 /** Legacy flat document (schemaVersion 1). */
 export const DashboardDocumentV1Schema = z.object({
   schemaVersion: z.literal(1).optional(),
-  id: z.string().uuid().optional(),
+  id: z.guid().optional(),
   name: z.string().min(1),
   widgets: z.array(WidgetInstanceSchema).default([]),
 });

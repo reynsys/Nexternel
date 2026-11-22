@@ -88,3 +88,22 @@ export async function pairZherodius(o: {
     readings: Number(counts.rows[0]?.readings ?? 0),
   };
 }
+
+/**
+ * The owner removes a Zherodius device: it is asked to forget this Nexternel too, so it frees one of its
+ * 3 places. When it cannot be asked, the Activity log says where the owner can do it on the device.
+ */
+export async function unpairZherodius(deviceId: string): Promise<void> {
+  const pairing = await getPairing(deviceId).catch(() => null);
+  const name = pairing?.deviceName ?? "The device";
+  const result = await zherodius.unpair(deviceId);
+  const text =
+    result === "done"
+      ? `${name} was removed and no longer lists this Nexternel`
+      : result === "old"
+        ? `${name} was removed. Its firmware is too old to be told, so it still lists this Nexternel: on the device's page, open Settings, Nexternel and press Unpair (or update it to Zherodius 1.11.9 or newer first)`
+        : result === "unreachable"
+          ? `${name} was removed, but it did not answer, so it still lists this Nexternel: on the device's page, open Settings, Nexternel and press Unpair`
+          : null;
+  if (text) await logActivity({ kind: "device", deviceId, text }).catch(() => undefined);
+}

@@ -76,14 +76,14 @@ export type PanelContentMode = z.infer<typeof PanelContentModeSchema>;
  */
 export const PanelScopeSchema = z.object({
   inheritSectionArea: z.boolean().optional(),
-  areaIds: z.array(z.string().uuid()).default([]),
+  areaIds: z.array(z.guid()).default([]),
   systemIds: z.array(SystemIdSchema).default([]),
-  groupIds: z.array(z.string().uuid()).default([]),
+  groupIds: z.array(z.guid()).default([]),
   contentMode: PanelContentModeSchema.optional(),
   /** Manual mode only — order preserved for display. Ignored when contentMode is auto. */
-  capabilityIds: z.array(z.string().uuid()).default([]),
+  capabilityIds: z.array(z.guid()).default([]),
   /** Camera panel manual mode — order preserved. Ignored when contentMode is auto. */
-  cameraIds: z.array(z.string().uuid()).default([]),
+  cameraIds: z.array(z.guid()).default([]),
 });
 
 export type PanelScope = z.infer<typeof PanelScopeSchema>;

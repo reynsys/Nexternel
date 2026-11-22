@@ -164,6 +164,44 @@ test("a removed device's line ends and is not opened again", async () => {
   conns.stop();
 });
 
+test("a removed device is asked to forget Nexternel, and its line is not opened again", async () => {
+  const { conns, pairing } = setup();
+  await conns.add(pairing);
+  const before = device.asked.length;
+  assert.equal(await conns.unpair(pairing.deviceId), "done");
+  assert.ok(device.asked.slice(before).includes("Zh.Unpair"));
+  await new Promise((r) => setTimeout(r, 150));
+  assert.equal(device.openLines, 0);
+  conns.stop();
+});
+
+test("a removed device that is not connected right now: the line is opened once to ask it", async () => {
+  const { conns, pairing } = setup({ retryMs: [60_000] });
+  await conns.add({ ...pairing, address: "127.0.0.1:1" });
+  assert.equal(conns.isOpen(pairing.deviceId), false);
+  assert.equal(await conns.unpair(pairing.deviceId), "unreachable");
+  // reachable again at its own address: asked, then the line closes
+  await conns.add(pairing);
+  conns.forget(pairing.deviceId);
+  await conns.add({ ...pairing, address: device.address });
+  assert.equal(await conns.unpair(pairing.deviceId), "done");
+  await new Promise((r) => setTimeout(r, 150));
+  assert.equal(device.openLines, 0);
+  conns.stop();
+});
+
+test("a removed device with firmware older than 1.11.7 says it cannot be asked", async () => {
+  const { conns, pairing } = setup();
+  device.knowsUnpair = false;
+  try {
+    await conns.add(pairing);
+    assert.equal(await conns.unpair(pairing.deviceId), "old");
+  } finally {
+    device.knowsUnpair = true;
+    conns.stop();
+  }
+});
+
 /** The connection with the real shared device path: a press as a person makes it. */
 function pressSetup() {
   const holder: { conns?: ReturnType<typeof createZherodiusConnections> } = {};

@@ -55,24 +55,24 @@ export const CapabilityStateSchema = z.object({
   value: z.unknown().nullable(),
   unit: z.string().optional(),
   quality: CapabilityQualitySchema.default("unknown"),
-  updatedAt: z.string().datetime().optional(),
+  updatedAt: z.iso.datetime().optional(),
 });
 
 export type CapabilityState = z.infer<typeof CapabilityStateSchema>;
 
 /** Metadata for a capability (config plane — PostgreSQL). */
 export const CapabilityMetaSchema = z.object({
-  id: z.string().uuid(),
-  deviceId: z.string().uuid(),
+  id: z.guid(),
+  deviceId: z.guid(),
   kind: CapabilityKindSchema,
   name: z.string().min(1),
   unit: z.string().optional(),
   /** V4 — owning System (meaning layer). */
   systemId: SystemIdSchema.optional(),
   /** V4 — denormalised Area (rooms table). */
-  areaId: z.string().uuid().optional(),
+  areaId: z.guid().optional(),
   /** V4 — optional Group within Area + System. */
-  groupId: z.string().uuid().nullable().optional(),
+  groupId: z.guid().nullable().optional(),
   /** V4 — future Service subdivision within System. */
   serviceId: z.string().nullable().optional(),
 });
@@ -82,7 +82,7 @@ export type CapabilityMeta = z.infer<typeof CapabilityMetaSchema>;
 /** V4 capability row — all ownership fields required after classification. */
 export const V4CapabilityMetaSchema = CapabilityMetaSchema.extend({
   systemId: SystemIdSchema,
-  areaId: z.string().uuid().optional(),
+  areaId: z.guid().optional(),
 });
 
 export type V4CapabilityMeta = z.infer<typeof V4CapabilityMetaSchema>;

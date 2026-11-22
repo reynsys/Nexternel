@@ -2,6 +2,12 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting at 1. Newest first.
 
+## V5.4.12
+
+- **A Shelly is shown "online" only when it really answers:** each time Nexternel connects to the message service, it asks every Shelly to answer. A Shelly that stays silent for 30 seconds is shown as offline. Before, an old "online" could be shown for a Shelly that was switched off.
+- **Removing a Zherodius device also makes the device forget Nexternel** (with Zherodius 1.11.9). If the device cannot be asked, the Activity list says where to remove Nexternel on the device itself.
+- Safer inside: the part that checks saved dashboards is updated (a known weakness fixed). Every dashboard reads exactly as before.
+
 ## V5.4.11
 
 - **The Appearance preview shows straight away:** it is drawn in the page itself instead of starting a second copy of Nexternel.

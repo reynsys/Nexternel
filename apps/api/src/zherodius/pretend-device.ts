@@ -26,6 +26,8 @@ export class PretendDevice {
   readonly asked: string[] = [];
   /** Whether it understands Zh.SetHubName (Zherodius 1.11.2+). */
   knowsHubName = true;
+  /** Whether it understands Zh.Unpair (Zherodius 1.11.9+). It answers but keeps the hub, so other tests can go on. */
+  knowsUnpair = true;
   /** When false, Relay.Set is not answered (a device cut off mid-press). */
   answers = true;
   private readonly conns = new Set<Conn>();
@@ -171,6 +173,7 @@ export class PretendDevice {
       if (key && ask.params?.name) this.pairedHubs.set(key, ask.params.name);
       return reply({ result: {} });
     }
+    if (ask.method === "Zh.Unpair" && this.knowsUnpair) return reply({ result: {} });
     reply({ error: { code: 400, message: "Unknown method." } });
   }
 

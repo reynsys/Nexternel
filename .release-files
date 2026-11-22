@@ -228,6 +228,8 @@ apps/api/src/routes/zherodius.ts
 apps/api/src/shelly/migrate-prefixes.ts
 apps/api/src/shelly/models.ts
 apps/api/src/shelly/notify.ts
+apps/api/src/shelly/presence-check.test.ts
+apps/api/src/shelly/presence-check.ts
 apps/api/src/shelly/suggest.ts
 apps/api/src/shelly/topics.ts
 apps/api/src/shelly/validate.test.ts

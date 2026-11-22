@@ -15,6 +15,7 @@ import { applyBoardHealthTopic, boardFingerprint } from "../devices/board-health
 import { applyBrokerLog, BROKER_LOG_TOPIC } from "./broker-log.js";
 import { looksLikeShellyCommandTopic, isShellyGen1MqttPrefix } from "../shelly/topics.js";
 import { parseShellyMqttSwitchUpdates } from "../shelly/notify.js";
+import { createShellyPresenceCheck } from "../shelly/presence-check.js";
 import { installationMqttRoot } from "../migrate/align-mqtt-topics.js";
 import {
   collectMqttSubscriptionTopics,
@@ -67,6 +68,24 @@ function noteSent(topic: string): string {
 }
 /** MQTT topic prefix → the device(s) behind it: the device path knows devices, not topics. */
 const devicesByPrefix = new Map<string, string[]>();
+
+/** A Shelly is online only when it answers live (shelly/presence-check.ts). */
+const shellyPresence = createShellyPresenceCheck({
+  ask(prefix) {
+    if (!client?.connected) return false;
+    try {
+      // Gen1 answers "announce" with its online word and info; Gen2 and newer answer "status_update" with their status.
+      client.publish(noteSent(`${prefix}/command`), isShellyGen1MqttPrefix(prefix) ? "announce" : "status_update", { qos: 0 });
+      return true;
+    } catch {
+      return false;
+    }
+  },
+  notThere(prefix) {
+    devicePath.deviceOffline(devicesOf(prefix));
+  },
+  connected: () => Boolean(client?.connected),
+});
 let mqttMessagesReceived = 0;
 let mqttCapabilityUpdates = 0;
 
@@ -212,18 +231,27 @@ function applyDeviceRootStatusTopic(topic: string, payload: string): boolean {
   return false;
 }
 
-/** Shelly Gen1: {prefix}/online → true|false */
-function applyDeviceShellyOnlineTopic(topic: string, payload: string): boolean {
+/**
+ * Shelly: {prefix}/online → true|false. A live "true" is proof; a replayed one (kept by the message
+ * service from before) is only checked, never believed by itself (shelly/presence-check.ts).
+ */
+function applyDeviceShellyOnlineTopic(topic: string, payload: string, retained: boolean): boolean {
   const match = /^(.+)\/online$/i.exec(topic);
   if (!match) return false;
   const prefix = longestPrefixForTopic(topic);
   if (!prefix || prefix !== match[1]) return false;
   const state = payload.trim().toLowerCase();
   if (/^(true|1|online)$/.test(state)) {
+    if (retained && shellyPrefixes.has(prefix)) {
+      shellyPresence.check(prefix);
+      return true;
+    }
+    shellyPresence.heardLive(prefix);
     devicePath.deviceOnline(devicesOf(prefix));
     return true;
   }
   if (/^(false|0|offline)$/.test(state)) {
+    shellyPresence.saidOffline(prefix);
     devicePath.deviceOffline(devicesOf(prefix));
     return true;
   }
@@ -233,7 +261,9 @@ function applyDeviceShellyOnlineTopic(topic: string, payload: string): boolean {
 function touchDeviceOnlineFromTopic(topic: string, retained: boolean) {
   if (retained) return;
   const prefix = longestPrefixForTopic(topic);
-  if (prefix) devicePath.deviceHeard(devicesOf(prefix));
+  if (!prefix) return;
+  shellyPresence.heardLive(prefix);
+  devicePath.deviceHeard(devicesOf(prefix));
 }
 
 function applyShellyTopicUpdates(
@@ -257,7 +287,8 @@ function applyShellyTopicUpdates(
     applied = true;
   }
   if (applied) {
-    devicePath.deviceOnline(devicesOf(prefix));
+    // A replayed switch position is only the last thing it said, not proof it is there now.
+    if (!retained) devicePath.deviceOnline(devicesOf(prefix));
   }
   return applied;
 }
@@ -524,7 +555,7 @@ async function handleMessage(
 
   const presenceHandled =
     applyDeviceRootStatusTopic(topic, payload) ||
-    applyDeviceShellyOnlineTopic(topic, payload);
+    applyDeviceShellyOnlineTopic(topic, payload, retained);
   if (presenceHandled) {
     observationKind = "device_presence";
     finishObservation();
@@ -588,20 +619,16 @@ async function handleMessage(
   finishObservation();
 }
 
-/** Ask each Shelly to publish full status (fills cache after API restart). */
+/**
+ * Ask each Shelly to publish its full status (fills the cache after an API restart). It is also the
+ * presence check: a Shelly that does not answer is offline, whatever was written down before.
+ */
 function requestShellyStatusUpdates() {
   if (!client?.connected) return;
   let hasGen1 = false;
   for (const prefix of shellyPrefixes) {
-    if (isShellyGen1MqttPrefix(prefix)) {
-      hasGen1 = true;
-      continue;
-    }
-    try {
-      client.publish(noteSent(`${prefix}/command`), "status_update", { qos: 0 });
-    } catch {
-      /* ignore */
-    }
+    if (isShellyGen1MqttPrefix(prefix)) hasGen1 = true;
+    shellyPresence.check(prefix);
   }
   if (hasGen1) {
     try {

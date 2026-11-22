@@ -785,16 +785,17 @@ export async function deleteDevice(
   );
   const row = meta.rows[0];
 
+  // A Zherodius device: it is asked to forget Nexternel too (it holds only 3), then its direct line ends.
+  // Asked before the device is deleted, so the Activity log entry still belongs to it.
+  if (row?.firmware_type === "zherodius") {
+    const { unpairZherodius } = await import("../zherodius/service.js");
+    await unpairZherodius(id);
+  }
+
   const result = await getPool().query(`DELETE FROM devices WHERE id = $1 RETURNING id`, [
     id,
   ]);
   const deleted = (result.rowCount ?? 0) > 0;
-
-  // A Zherodius device: its direct line ends with it.
-  if (deleted && row?.firmware_type === "zherodius") {
-    const { zherodius } = await import("../zherodius/service.js");
-    zherodius.forget(id);
-  }
 
   if (deleted && row?.firmware_type === "esphome") {
     const mode = row.esphome_management_mode?.trim() || "imported";

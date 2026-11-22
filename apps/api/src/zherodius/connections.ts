@@ -5,7 +5,8 @@
  * - every status the device sends (at once after each change, and at least every 30 s) = its readings;
  * - a changed `cfg` (names or parts changed on the device) = its items are read again (Zh.GetInfo);
  * - a press = Relay.Set over the line; the device's answer confirms it;
- * - Nexternel's name on the device follows the home's name: told when the line opens and when it changes.
+ * - Nexternel's name on the device follows the home's name: told when the line opens and when it changes;
+ * - removing the device in Nexternel asks it to forget Nexternel too (Zh.Unpair), so it frees that place.
  * A device that moved to another address is found again by its serial number on the home network.
  */
 import type { CapabilityRow } from "../capabilities/store.js";
@@ -52,6 +53,8 @@ const SILENT_MS = 75_000;
 const RETRY_MS = [1_000, 2_000, 5_000, 10_000, 30_000, 60_000];
 /** Longer than the shared path waits for a press, so the shared path decides about "no answer". */
 const PRESS_ANSWER_MS = 7_000;
+/** How long the device has to confirm it forgot Nexternel. */
+const UNPAIR_ANSWER_MS = 5_000;
 
 type Entry = {
   p: Pairing;
@@ -283,6 +286,34 @@ export function createZherodiusConnections(deps: ConnectionsDeps) {
     line?.close();
   }
 
+  /**
+   * The device was removed from Nexternel: ask it to forget Nexternel too (it keeps only 3 hubs), then end
+   * its line. A device that is not connected right now gets one try to open the line first.
+   * Gives "done", "old" (its firmware is older than Zherodius 1.11.9 and cannot be asked) or "unreachable".
+   */
+  async function unpair(deviceId: string): Promise<"done" | "old" | "unreachable" | "unknown"> {
+    const entry = entries.get(deviceId);
+    if (!entry) return "unknown";
+    entry.stopped = true;
+    if (entry.retry) clearTimeout(entry.retry);
+    entry.retry = null;
+    let line = entry.line;
+    let mine = false;
+    try {
+      if (!line) {
+        line = await open(entry, await deps.hubKey());
+        mine = true;
+      }
+      await line.call("Zh.Unpair", undefined, UNPAIR_ANSWER_MS);
+      return "done";
+    } catch (err) {
+      return err instanceof LineError && /^Unknown method/.test(err.message) ? "old" : "unreachable";
+    } finally {
+      if (mine) line?.close();
+      forget(deviceId);
+    }
+  }
+
   const sender: ItemSender = {
     unavailable(item: CapabilityRow) {
       const found = entryOfItem(item.id);
@@ -312,6 +343,7 @@ export function createZherodiusConnections(deps: ConnectionsDeps) {
     },
     add,
     forget,
+    unpair,
     refreshItems,
     /** Nexternel's name changed: tell every device on an open line. */
     tellNames() {
