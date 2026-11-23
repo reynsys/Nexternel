@@ -1,9 +1,13 @@
 /**
- * One Zherodius direct line (version 2): a WebSocket to ws://<address>/api/line.
+ * One Zherodius direct line (version 2): its own TCP connection to port 7368 (Zherodius 1.13.1+), apart from the
+ * device's web page, so the page never waits for the line. Each message: 1 byte kind (1 = words, 2 = bytes),
+ * 2 bytes length (high byte first), the message. Older devices only have the WebSocket ws://<address>/api/line:
+ * when port 7368 refuses the connection, the line goes there instead.
  * - pairDevice: once, with the code shown on the device's page (SPAKE2+); proves both long-term keys.
  * - openLine: every connection (Noise IK); then encrypted JSON asks/answers and the device's NotifyStatus.
  * The device's key is pinned at pairing: a hello with any other key is refused.
  */
+import net from "node:net";
 import {
   cleanCode,
   hex,
@@ -87,52 +91,45 @@ const ANSWER_MS = 5_000;
 const HANDSHAKE_MS = 8_000;
 const EMPTY = Buffer.alloc(0);
 const LINE_VERSION = 2;
+/** The device's own port for the line (Zherodius 1.13.1+). */
+export const LINE_PORT = 7368;
+/** The longest message the device takes; what it sends is only limited by the 2-byte length. */
+const MAX_MESSAGE = 4096;
+const K_TEXT = 1;
+const K_BYTES = 2;
 
-/** A WebSocket with a queue: next() gives the next message (text or bytes), or null once closed. */
-class Socket {
+/** One line connection, whichever way it goes: next() gives the next message (text or bytes), or null once closed. */
+interface LineSocket {
+  next(ms: number): Promise<string | Buffer | null>;
+  listen(onMessage: (m: string | Buffer) => void, onClose: () => void): void;
+  send(m: string | Buffer): void;
+  close(): void;
+}
+
+/** Messages in arrival order, for whoever waits for them; the same for both ways of connecting. */
+class Inbox {
   private queue: (string | Buffer)[] = [];
   private waiters: ((m: string | Buffer | null) => void)[] = [];
   private closed = false;
   private onMessage: ((m: string | Buffer) => void) | null = null;
   private onClose: (() => void) | null = null;
 
-  private constructor(private readonly ws: WebSocket) {
-    ws.binaryType = "arraybuffer";
-    ws.onmessage = (e) => {
-      const m = typeof e.data === "string" ? e.data : Buffer.from(e.data as ArrayBuffer);
-      if (this.onMessage) this.onMessage(m);
-      else if (this.waiters.length) this.waiters.shift()!(m);
-      else this.queue.push(m);
-    };
-    ws.onclose = () => {
-      this.closed = true;
-      while (this.waiters.length) this.waiters.shift()!(null);
-      this.onClose?.();
-    };
+  put(m: string | Buffer) {
+    if (this.closed) return;
+    if (this.onMessage) this.onMessage(m);
+    else if (this.waiters.length) this.waiters.shift()!(m);
+    else this.queue.push(m);
   }
 
-  static open(address: string): Promise<Socket> {
-    return new Promise((resolve, reject) => {
-      let ws: WebSocket;
-      try {
-        ws = new WebSocket(`ws://${address}/api/line`);
-      } catch {
-        reject(new LineError(`${address} is not a device address.`));
-        return;
-      }
-      const timer = setTimeout(() => {
-        ws.close();
-        reject(new LineError(`No answer from ${address}.`));
-      }, CONNECT_MS);
-      ws.onopen = () => {
-        clearTimeout(timer);
-        resolve(new Socket(ws));
-      };
-      ws.onerror = () => {
-        clearTimeout(timer);
-        reject(new LineError(`No answer from ${address}.`));
-      };
-    });
+  end() {
+    if (this.closed) return;
+    this.closed = true;
+    while (this.waiters.length) this.waiters.shift()!(null);
+    this.onClose?.();
+  }
+
+  get isClosed() {
+    return this.closed;
   }
 
   next(ms: number): Promise<string | Buffer | null> {
@@ -151,12 +148,139 @@ class Socket {
     });
   }
 
-  /** From now on every message goes to onMessage (those already waiting first), and the close to onClose. */
   listen(onMessage: (m: string | Buffer) => void, onClose: () => void) {
     this.onMessage = onMessage;
     this.onClose = onClose;
     for (const m of this.queue.splice(0)) onMessage(m);
     if (this.closed) onClose();
+  }
+}
+
+/** The line on the device's own port (Zherodius 1.13.1+). */
+class TcpSocket implements LineSocket {
+  private readonly inbox = new Inbox();
+  private pending: Buffer = Buffer.alloc(0);
+
+  private constructor(private readonly sock: net.Socket) {
+    sock.setNoDelay(true);
+    sock.setKeepAlive(true, 20_000);
+    sock.on("data", (d: Buffer) => this.take(d));
+    sock.on("close", () => this.inbox.end());
+    sock.on("error", () => sock.destroy());
+  }
+
+  /** Opens the line; "refused" when the device has no line port (an older Zherodius). */
+  static open(host: string, port: number): Promise<TcpSocket | "refused"> {
+    return new Promise((resolve, reject) => {
+      const sock = net.connect({ host, port });
+      const timer = setTimeout(() => {
+        sock.destroy();
+        reject(new LineError(`No answer from ${host}.`));
+      }, CONNECT_MS);
+      sock.once("connect", () => {
+        clearTimeout(timer);
+        sock.removeAllListeners("error");
+        resolve(new TcpSocket(sock));
+      });
+      sock.once("error", (err: NodeJS.ErrnoException) => {
+        clearTimeout(timer);
+        sock.destroy();
+        if (err.code === "ECONNREFUSED") resolve("refused");
+        else reject(new LineError(`No answer from ${host}.`));
+      });
+    });
+  }
+
+  private take(d: Buffer) {
+    this.pending = this.pending.length ? Buffer.concat([this.pending, d]) : d;
+    while (this.pending.length >= 3) {
+      const kind = this.pending[0];
+      const n = this.pending.readUInt16BE(1);
+      if (kind !== K_TEXT && kind !== K_BYTES) {
+        this.sock.destroy(); // not this line's messages: nothing is guessed
+        return;
+      }
+      if (this.pending.length < 3 + n) return;
+      const body = Buffer.from(this.pending.subarray(3, 3 + n));
+      this.pending = this.pending.subarray(3 + n);
+      this.inbox.put(kind === K_TEXT ? body.toString("utf8") : body);
+    }
+  }
+
+  next(ms: number) {
+    return this.inbox.next(ms);
+  }
+
+  listen(onMessage: (m: string | Buffer) => void, onClose: () => void) {
+    this.inbox.listen(onMessage, onClose);
+  }
+
+  send(m: string | Buffer) {
+    const body = typeof m === "string" ? Buffer.from(m, "utf8") : m;
+    if (body.length > MAX_MESSAGE) throw new LineError("A message for the device is too long.");
+    const head = Buffer.alloc(3);
+    head[0] = typeof m === "string" ? K_TEXT : K_BYTES;
+    head.writeUInt16BE(body.length, 1);
+    this.sock.write(Buffer.concat([head, body]));
+  }
+
+  close() {
+    if (!this.inbox.isClosed) this.sock.destroy();
+  }
+}
+
+/** The address's host part ("192.168.1.40" from "192.168.1.40:80"). */
+function hostOf(address: string): string {
+  const i = address.lastIndexOf(":");
+  return i > 0 ? address.slice(0, i) : address;
+}
+
+/** The line to a device: its own port first; a device that refuses it is an older one, reached over the WebSocket. */
+async function connect(address: string, linePort = LINE_PORT): Promise<LineSocket> {
+  const tcp = await TcpSocket.open(hostOf(address), linePort);
+  return tcp === "refused" ? WsSocket.open(address) : tcp;
+}
+
+/** The line over the device's web page (Zherodius before 1.13.1). */
+class WsSocket implements LineSocket {
+  private readonly inbox = new Inbox();
+
+  private constructor(private readonly ws: WebSocket) {
+    ws.binaryType = "arraybuffer";
+    ws.onmessage = (e) => this.inbox.put(typeof e.data === "string" ? e.data : Buffer.from(e.data as ArrayBuffer));
+    ws.onclose = () => this.inbox.end();
+  }
+
+  static open(address: string): Promise<WsSocket> {
+    return new Promise((resolve, reject) => {
+      let ws: WebSocket;
+      try {
+        ws = new WebSocket(`ws://${address}/api/line`);
+      } catch {
+        reject(new LineError(`${address} is not a device address.`));
+        return;
+      }
+      const timer = setTimeout(() => {
+        ws.close();
+        reject(new LineError(`No answer from ${address}.`));
+      }, CONNECT_MS);
+      ws.onopen = () => {
+        clearTimeout(timer);
+        resolve(new WsSocket(ws));
+      };
+      ws.onerror = () => {
+        clearTimeout(timer);
+        reject(new LineError(`No answer from ${address}.`));
+      };
+    });
+  }
+
+  next(ms: number) {
+    return this.inbox.next(ms);
+  }
+
+  listen(onMessage: (m: string | Buffer) => void, onClose: () => void) {
+    this.inbox.listen(onMessage, onClose);
   }
 
   send(m: string | Buffer) {
@@ -164,7 +288,7 @@ class Socket {
   }
 
   close() {
-    if (!this.closed) this.ws.close();
+    if (!this.inbox.isClosed) this.ws.close();
   }
 }
 
@@ -177,7 +301,7 @@ function parseText<T>(m: string | Buffer | null, what: string): T {
   }
 }
 
-async function readHello(sock: Socket): Promise<Hello> {
+async function readHello(sock: LineSocket): Promise<Hello> {
   const hello = parseText<{ hello?: Hello }>(await sock.next(ANSWER_MS), "greeting").hello;
   if (!hello || typeof hello.key !== "string" || !/^[0-9a-f]{64}$/i.test(hello.key) || typeof hello.serial !== "string") {
     throw new LineError("This is not a Zherodius device, or it sent a greeting Nexternel does not understand.");
@@ -192,9 +316,9 @@ async function readHello(sock: Socket): Promise<Hello> {
  * Pair with a device: the owner has opened pairing on the device's page and typed its code here.
  * Returns the device's greeting; its key (hello.key) is the one to keep and check from now on.
  */
-export async function pairDevice(o: { address: string; code: string; hub: X25519Key; hubName: string }): Promise<Hello> {
+export async function pairDevice(o: { address: string; code: string; hub: X25519Key; hubName: string; linePort?: number }): Promise<Hello> {
   if (cleanCode(o.code).length !== 8) throw new LineError("The pairing code has 8 letters and numbers, as shown on the device's page.");
-  const sock = await Socket.open(o.address);
+  const sock = await connect(o.address, o.linePort);
   try {
     const hello = await readHello(sock);
     if (!hello.pairing || !hello.salt) {
@@ -240,8 +364,10 @@ export async function openLine(o: {
   serial: string;
   onStatus: (status: DeviceStatus) => void;
   onClose: () => void;
+  /** The device's line port (LINE_PORT unless a test says otherwise). */
+  linePort?: number;
 }): Promise<Line> {
-  const sock = await Socket.open(o.address);
+  const sock = await connect(o.address, o.linePort);
   let opened = false;
   try {
     const hello = await readHello(sock);

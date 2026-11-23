@@ -14,7 +14,7 @@ let run = 0;
 before(async () => {
   await device.start();
   device.pairingCode = "7KQ2M9XD";
-  await pairDevice({ address: device.address, code: "7KQ2M9XD", hub, hubName: "Nexternel" });
+  await pairDevice({ address: device.address, linePort: device.linePort, code: "7KQ2M9XD", hub, hubName: "Nexternel" });
   device.pairingCode = null;
 });
 after(() => device.stop());
@@ -61,6 +61,7 @@ async function setup(version: string, available: string) {
     logActivity: () => {},
     updateReady: (u) => told.push({ latest: u.latest, notes: u.notes }),
     retryMs: [20],
+    linePort: device.linePort,
   });
   await conns.add(pairing);
   const update = createZherodiusUpdater({ conn: conns, pollMs: 10, checkMs: 2000, installMs: 2000, backMs: 2000, keptMs: 2000 });

@@ -61,6 +61,8 @@ export type ConnectionsDeps = {
   retryMs?: number[];
   /** A line the device has said nothing on for this long is taken as gone. */
   silentMs?: number;
+  /** The devices' line port (LINE_PORT; tests use the pretend device's). */
+  linePort?: number;
 };
 
 /** The device sends its status at least every 30 seconds: two missed ones and a bit = gone. */
@@ -213,6 +215,7 @@ export function createZherodiusConnections(deps: ConnectionsDeps) {
         if (line) void queue(entry, () => heard(entry, line, s)).catch(() => undefined);
       },
       onClose: () => closed(entry),
+      linePort: deps.linePort,
     });
     try {
       return await openLine(opts(entry.p.address));

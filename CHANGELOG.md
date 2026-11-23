@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting at 1. Newest first.
 
+## V5.5.1
+
+- **A faster line to Zherodius devices:** Nexternel now talks to a Zherodius device on the device's own line, apart from the device's web page, so neither has to wait for the other. Devices on older Zherodius versions are reached the old way. Install this version before updating your boards to Zherodius 2.0.1.
+
 ## V5.4.13
 
 - **Nexternel can update your Zherodius devices:** a Zherodius device's page shows when a new version is ready and what is new, with **Update board** and **Check for update**. The bell tells you once per new version. **Devices → Update boards** now updates every kind of board, one after another, and shows each step. A device on a version older than Zherodius 1.12.1 needs 1.12.1 installed once from its own Firmware page; after that Nexternel can update it.

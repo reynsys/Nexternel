@@ -5,12 +5,14 @@
  * Never used by the running server.
  */
 import { WebSocketServer, type WebSocket } from "ws";
-import type { AddressInfo } from "node:net";
+import net, { type AddressInfo } from "node:net";
 import crypto from "node:crypto";
 import { hex, noiseResponder, spakeL, spakeSecrets, spakeVerifier, unhex, x25519Key, type CipherState } from "./line-crypto.js";
 import type { DeviceInfo, DeviceStatus } from "./line.js";
 
-type Conn = { ws: WebSocket; send?: CipherState; recv?: CipherState };
+/** One connection to the pretend device, over its own line port or over the WebSocket. */
+type Channel = { send(m: string | Buffer): void; close(): void; drop(): void };
+type Conn = { ch: Channel; send?: CipherState; recv?: CipherState };
 
 export class PretendDevice {
   readonly key = x25519Key();
@@ -37,9 +39,17 @@ export class PretendDevice {
   /** The new version does not start properly: after the restart the device is back on the old one. */
   newVersionFails = false;
   update = { latest: "", notes: "", state: "idle", progress: 0, message: "", trying: false };
+  /** Its own line port (Zherodius 1.13.1+); false: only the WebSocket, like older versions. */
+  ownLinePort = true;
+  /** Connections that came over its line port, and over its web page's WebSocket. */
+  viaPort = 0;
+  viaWebSocket = 0;
   private readonly conns = new Set<Conn>();
   private server!: WebSocketServer;
+  private lineServer: net.Server | null = null;
   port = 0;
+  /** Where its line port is (with ownLinePort false: a port nobody answers on, so the connection is refused). */
+  linePort = 0;
 
   constructor() {
     this.info = {
@@ -60,21 +70,35 @@ export class PretendDevice {
     return `127.0.0.1:${this.port}`;
   }
 
-  async start(port = 0, host = "127.0.0.1"): Promise<void> {
+  async start(port = 0, host = "127.0.0.1", linePort = this.linePort): Promise<void> {
     this.server = new WebSocketServer({ port, host, path: "/api/line" });
     await new Promise<void>((r) => this.server.once("listening", () => r()));
     this.port = (this.server.address() as AddressInfo).port;
-    this.server.on("connection", (ws) => this.connected(ws));
+    this.server.on("connection", (ws) => {
+      this.viaWebSocket += 1;
+      this.connected(wsChannel(ws), (on) => wsMessages(ws, on));
+    });
+    const line = net.createServer((sock) => {
+      this.viaPort += 1;
+      this.connected(tcpChannel(sock), (on) => tcpMessages(sock, on));
+    });
+    await new Promise<void>((r) => line.listen(linePort, host, () => r()));
+    this.linePort = (line.address() as AddressInfo).port;
+    if (this.ownLinePort) this.lineServer = line;
+    else await new Promise<void>((r) => line.close(() => r())); // the port stays free: connections to it are refused
   }
 
   async stop(): Promise<void> {
     this.dropAll();
     await new Promise<void>((r) => this.server.close(() => r()));
+    const line = this.lineServer;
+    this.lineServer = null;
+    if (line) await new Promise<void>((r) => line.close(() => r()));
   }
 
   /** Every open line ends (the device restarted or left the Wi-Fi). */
   dropAll() {
-    for (const c of this.conns) c.ws.terminate();
+    for (const c of this.conns) c.ch.drop();
     this.conns.clear();
   }
 
@@ -101,10 +125,12 @@ export class PretendDevice {
   restart(version = this.version, afterMs = 30) {
     this.dropAll();
     this.server.close();
+    this.lineServer?.close();
+    this.lineServer = null;
     setTimeout(() => {
       this.version = version;
       this.info = { ...this.info, version };
-      void this.start(this.port);
+      void this.start(this.port, "127.0.0.1", this.linePort);
     }, afterMs).unref?.();
   }
 
@@ -142,18 +168,16 @@ export class PretendDevice {
     for (const c of this.conns) if (c.send) this.secret(c, { method: "NotifyStatus", params: this.status() });
   }
 
-  private connected(ws: WebSocket) {
-    const conn: Conn = { ws };
+  private connected(ws: Channel, messages: (on: { message(buf: Buffer, isBinary: boolean): void; close(): void }) => void) {
+    const conn: Conn = { ch: ws };
     this.conns.add(conn);
-    ws.on("close", () => this.conns.delete(conn));
     const salt = crypto.randomBytes(16);
     ws.send(JSON.stringify({
       hello: { zherodius: 2, serial: this.serial, name: this.name, version: this.version, key: hex(this.key.pub), pairing: this.pairingCode !== null, ...(this.pairingCode ? { salt: hex(salt) } : {}) },
     }));
     let verifier: ReturnType<typeof spakeVerifier> | null = null;
     let pairingHub: { key: string; name: string } | null = null;
-    ws.on("message", (data, isBinary) => {
-      const buf = Buffer.from(data as Buffer);
+    messages({ close: () => this.conns.delete(conn), message: (buf, isBinary) => {
       if (!isBinary) {
         const pair = JSON.parse(buf.toString()).pair;
         if (pair?.share && this.pairingCode) {
@@ -198,7 +222,7 @@ export class PretendDevice {
       }
       this.asked.push(ask.method);
       this.answer(conn, ask);
-    });
+    } });
   }
 
   private answer(conn: Conn, ask: { id: number; method: string; params?: { id?: number; on?: boolean; name?: string; do?: string } }) {
@@ -228,6 +252,43 @@ export class PretendDevice {
   }
 
   private secret(conn: Conn, body: object) {
-    conn.ws.send(conn.send!.encrypt(Buffer.alloc(0), Buffer.from(JSON.stringify(body))));
+    conn.ch.send(conn.send!.encrypt(Buffer.alloc(0), Buffer.from(JSON.stringify(body))));
   }
+}
+
+function wsChannel(ws: WebSocket): Channel {
+  return { send: (m) => ws.send(m), close: () => ws.close(), drop: () => ws.terminate() };
+}
+function wsMessages(ws: WebSocket, on: { message(buf: Buffer, isBinary: boolean): void; close(): void }) {
+  ws.on("message", (data, isBinary) => on.message(Buffer.from(data as Buffer), isBinary));
+  ws.on("close", () => on.close());
+}
+
+/** The line port's messages: 1 byte kind (1 = words, 2 = bytes), 2 bytes length (high byte first), the message. */
+function tcpChannel(sock: net.Socket): Channel {
+  return {
+    send: (m) => {
+      const body = typeof m === "string" ? Buffer.from(m, "utf8") : m;
+      const head = Buffer.from([typeof m === "string" ? 1 : 2, body.length >> 8, body.length & 0xff]);
+      sock.write(Buffer.concat([head, body]));
+    },
+    close: () => sock.end(),
+    drop: () => sock.destroy(),
+  };
+}
+function tcpMessages(sock: net.Socket, on: { message(buf: Buffer, isBinary: boolean): void; close(): void }) {
+  let pending: Buffer = Buffer.alloc(0);
+  sock.on("data", (d: Buffer) => {
+    pending = Buffer.concat([pending, d]);
+    while (pending.length >= 3) {
+      const n = pending.readUInt16BE(1);
+      if (pending.length < 3 + n) return;
+      const kind = pending[0];
+      const body = Buffer.from(pending.subarray(3, 3 + n));
+      pending = pending.subarray(3 + n);
+      on.message(body, kind === 2);
+    }
+  });
+  sock.on("close", () => on.close());
+  sock.on("error", () => sock.destroy());
 }

@@ -16,7 +16,7 @@ let run = 0;
 before(async () => {
   await device.start();
   device.pairingCode = "7KQ2M9XD";
-  await pairDevice({ address: device.address, code: "7KQ2M9XD", hub, hubName: "Nexternel" });
+  await pairDevice({ address: device.address, linePort: device.linePort, code: "7KQ2M9XD", hub, hubName: "Nexternel" });
   device.pairingCode = null;
 });
 after(() => device.stop());
@@ -77,6 +77,7 @@ function setup(over: Partial<ConnectionsDeps> = {}) {
     },
     logActivity: (e) => calls.activity.push(e.text),
     retryMs: [50],
+    linePort: device.linePort,
     ...over,
   };
   const conns = createZherodiusConnections(deps);
@@ -139,7 +140,7 @@ test("a silent line is taken as gone", async () => {
 
 test("a device that moved is found again by its serial number", async () => {
   const { conns, calls, pairing } = setup({ findAddress: async () => device.address });
-  await conns.add({ ...pairing, address: "127.0.0.1:1" });
+  await conns.add({ ...pairing, address: "127.0.0.2:1" });
   assert.ok(conns.isOpen(pairing.deviceId));
   assert.equal(calls.seen.at(-1)?.address, device.address);
   conns.stop();
@@ -147,10 +148,10 @@ test("a device that moved is found again by its serial number", async () => {
 
 test("a device that cannot be reached: said once in the Activity log, and tried again", async () => {
   const { conns, calls, pairing } = setup();
-  await conns.add({ ...pairing, address: "127.0.0.1:1" });
+  await conns.add({ ...pairing, address: "127.0.0.2:1" });
   await new Promise((r) => setTimeout(r, 200));
   assert.equal(conns.isOpen(pairing.deviceId), false);
-  assert.deepEqual(calls.activity, ["Pretend Relays: No answer from 127.0.0.1:1."]);
+  assert.deepEqual(calls.activity, ["Pretend Relays: No answer from 127.0.0.2:1."]);
   conns.stop();
 });
 
@@ -177,7 +178,7 @@ test("a removed device is asked to forget Nexternel, and its line is not opened 
 
 test("a removed device that is not connected right now: the line is opened once to ask it", async () => {
   const { conns, pairing } = setup({ retryMs: [60_000] });
-  await conns.add({ ...pairing, address: "127.0.0.1:1" });
+  await conns.add({ ...pairing, address: "127.0.0.2:1" });
   assert.equal(conns.isOpen(pairing.deviceId), false);
   assert.equal(await conns.unpair(pairing.deviceId), "unreachable");
   // reachable again at its own address: asked, then the line closes
