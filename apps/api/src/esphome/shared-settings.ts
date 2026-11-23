@@ -6,7 +6,7 @@ import { publishChange } from "../live/changes.js";
 import { esphomeDir } from "../migrate/paths.js";
 import { logActivity } from "../activity/activity.js";
 import { runEsphomeJob } from "./esphome-jobs.js";
-import { updateRun } from "./board-updates.js";
+import { updateRun } from "../devices/board-updates.js";
 
 /**
  * Every Nexternel board includes the shared board settings (esphome/packages/). ESPHome only works out

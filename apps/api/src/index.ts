@@ -75,7 +75,7 @@ import { ensureUpdateSchema, startUpdateChecks } from "./system/updates.js";
 import { startSelfCheck } from "./system/self-check.js";
 import { startSharedSettingsWatch } from "./esphome/shared-settings.js";
 import { esphomeGateRoutes } from "./esphome/gate.js";
-import { boardUpdateRoutes } from "./esphome/board-update-routes.js";
+import { boardUpdateRoutes } from "./devices/board-update-routes.js";
 import { activityRoutes } from "./activity/routes.js";
 import { ensureActivitySchema, logActivity } from "./activity/activity.js";
 import { ensureBoardHealthSchema } from "./devices/board-health-history.js";

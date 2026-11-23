@@ -161,3 +161,17 @@ export function wifiSignalWords(c: { wifiDbm: number | null; wifiQuality: string
 export function durationWords(minutes: number): string {
   return minutes < 1 ? "under a minute" : minutes >= 120 ? `${Math.round(minutes / 60)} hours` : `${minutes} min`;
 }
+
+/** One labelled value in a box: the label on the left, the value on the right (below it when the box is narrow). */
+export function Fact({ label, value }: { label: string; value: string }) {
+  return (
+    <Box sx={{ display: "flex", flexWrap: "wrap", columnGap: 1, justifyContent: "space-between" }}>
+      <Typography variant="body2" color="text.secondary">
+        {label}
+      </Typography>
+      <Typography variant="body2" sx={{ ml: "auto", overflowWrap: "anywhere" }}>
+        {value}
+      </Typography>
+    </Box>
+  );
+}

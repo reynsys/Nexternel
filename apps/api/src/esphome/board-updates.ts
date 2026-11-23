@@ -1,5 +1,5 @@
 import { getPool } from "../db.js";
-import { publishChange } from "../live/changes.js";
+import { recentDrops, registerBoardKind, UNSTEADY_DROPS, type BoardStatus, type BoardUpdater } from "../devices/board-updates.js";
 import { compileEsphomeDevice, deviceYamlFile, uploadEsphomeDevice } from "./builder/firmware.js";
 import { esphomeGet, filesForAddress } from "./file-identity.js";
 import { buildCacheMismatch } from "./cli-log.js";
@@ -10,7 +10,8 @@ import { esphomeDir } from "../migrate/paths.js";
 import { sharedSettingsChangedAt, sharedSettingsNews } from "./shared-settings.js";
 
 /**
- * Updating boards from Nexternel: for each board, prepare its firmware on this server (ESPHome
+ * Updating ESPHome boards from Nexternel (the run itself, the list and the kept records are shared by
+ * every kind of board: devices/board-updates.ts): for each board, prepare its firmware on this server (ESPHome
  * compile), send it over Wi-Fi (ESPHome upload to the board's address), then wait until the board is
  * back online. Runs in the background, one board after another; the Devices page shows each step.
  * Which boards need an update: the software fingerprint the board itself reports over MQTT
@@ -46,51 +47,8 @@ async function esphomeBoards(): Promise<Map<string, EsphomeBoard>> {
   return new Map((r?.configured ?? []).map((b) => [b.configuration, b]));
 }
 
-export type BoardStatus = {
-  deviceId: string;
-  name: string;
-  /** The board's settings file (linked by its exact message address), when there is one. */
-  file: string | null;
-  /** ESPHome has this board's settings file. */
-  known: boolean;
-  /** Not linked: no file has this board's address ("none"), or several do ("several": `choices`). */
-  linkProblem: "none" | "several" | null;
-  choices: string[];
-  /** The board runs older software or settings than its file (it needs an update). */
-  needsUpdate: boolean;
-  /**
-   * Why it needs one, in plain words (its own settings file changed, the shared board settings
-   * changed and what is new). A board is never "update" without a reason.
-   */
-  updateReason: string | null;
-  /**
-   * "current": runs exactly the newest build; "update": needs an update; "unknown": the board does
-   * not report which software it runs yet (or nothing is built yet), so Nexternel cannot tell.
-   */
-  updateState: "current" | "update" | "unknown";
-  /** The software fingerprint the board reports (what it runs), or null. */
-  fingerprint: string | null;
-  /** The board can be reached over Wi-Fi now. */
-  reachable: boolean;
-  deployedVersion: string | null;
-  currentVersion: string | null;
-  /** How often the board dropped off Wi-Fi in the last 15 minutes (unsteady from UNSTEADY_DROPS). */
-  recentDrops: number;
-};
-
-/** Drop-outs in 15 minutes from which updating over Wi-Fi is likely to fail. */
-export const UNSTEADY_DROPS = 3;
-
-async function recentDrops(deviceId: string): Promise<number> {
-  const r = await getPool().query<{ n: string }>(
-    `SELECT COUNT(*) AS n FROM device_connection_events WHERE device_id = $1 AND state = 'offline' AND at >= NOW() - INTERVAL '15 minutes'`,
-    [deviceId]
-  );
-  return Number(r.rows[0]?.n ?? 0);
-}
-
 /** Every ESPHome board in Nexternel with what ESPHome says about it. */
-export async function listBoardStatus(): Promise<BoardStatus[]> {
+async function listEsphomeBoards(): Promise<BoardStatus[]> {
   const [devices, boards] = await Promise.all([
     getPool().query<{ id: string; name: string; mqtt_topic_prefix: string | null }>(
       `SELECT id, name, mqtt_topic_prefix FROM devices WHERE COALESCE(firmware_type, 'esphome') = 'esphome' AND is_enabled ORDER BY name`
@@ -109,6 +67,7 @@ export async function listBoardStatus(): Promise<BoardStatus[]> {
     out.push({
       deviceId: d.id,
       name: d.name,
+      kind: "esphome",
       file,
       linkProblem: file ? null : choices.length > 1 ? "several" : "none",
       choices,
@@ -166,38 +125,6 @@ export function boardUpdateState(board: EsphomeBoard | undefined, running: strin
   const newest = board.expected_config_hash?.toLowerCase() || null;
   if (!running || !newest) return "unknown";
   return running === newest ? "current" : "update";
-}
-
-export type UpdateStep = "waiting" | "preparing" | "sending" | "restarting" | "done" | "failed";
-export type UpdateItem = {
-  deviceId: string;
-  name: string;
-  step: UpdateStep;
-  message: string;
-  startedAt: string | null;
-  finishedAt: string | null;
-  /** The kept record of this update (GET /api/v1/esphome/updates/log/:id), once it has finished. */
-  logId: string | null;
-};
-export type UpdateRun = {
-  running: boolean;
-  startedAt: string | null;
-  /** Who started it (the person signed in); boards are never updated without someone asking. */
-  startedBy: string | null;
-  items: UpdateItem[];
-};
-
-let run: UpdateRun = { running: false, startedAt: null, startedBy: null, items: [] };
-
-export function updateRun(): UpdateRun {
-  return run;
-}
-
-function set(item: UpdateItem, step: UpdateStep, message: string) {
-  item.step = step;
-  item.message = message;
-  if (step === "done" || step === "failed") item.finishedAt = new Date().toISOString();
-  publishChange("devices");
 }
 
 /** The useful line of a failed ESPHome run, in plain words where we know them. */
@@ -259,19 +186,6 @@ async function confirmsNewSoftware(prefix: string | null, expected: string | und
   return false;
 }
 
-async function keepLog(item: UpdateItem, log: string[]): Promise<void> {
-  const r = await getPool().query<{ id: string }>(
-    `INSERT INTO board_update_log (device_id, started_at, outcome, message, log, started_by) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-    [item.deviceId, item.startedAt, item.step, item.message, log.join("\n\n"), run.startedBy]
-  );
-  item.logId = r.rows[0]?.id ?? null;
-  await getPool().query(
-    `DELETE FROM board_update_log WHERE device_id = $1 AND id NOT IN (SELECT id FROM board_update_log WHERE device_id = $1 ORDER BY finished_at DESC LIMIT 10)`,
-    [item.deviceId]
-  );
-  publishChange("devices");
-}
-
 /** "It dropped off Wi-Fi 9 times in the 15 minutes before." — or nothing when it was steady. */
 function dropsNote(drops: number): string {
   return drops >= UNSTEADY_DROPS
@@ -279,84 +193,36 @@ function dropsNote(drops: number): string {
     : "";
 }
 
-async function updateOne(item: UpdateItem): Promise<void> {
-  item.startedAt = new Date().toISOString();
-  const log: string[] = [];
-  const finish = async (step: UpdateStep, message: string) => {
-    set(item, step, message);
-    log.unshift(`${step === "failed" ? "FAILED" : "RESULT"}: ${message}`);
-    await keepLog(item, log).catch(() => undefined);
-  };
+const esphomeUpdate: BoardUpdater = async (item, { step, log }) => {
   const drops = await recentDrops(item.deviceId);
   if (drops >= UNSTEADY_DROPS) log.push(`Before the update: the board dropped off Wi-Fi ${drops} times in the last 15 minutes.`);
 
   const file = await deviceYamlFile(item.deviceId);
   const before = file ? (await esphomeBoards()).get(file) : undefined;
-  set(item, "preparing", "Preparing the update on this server (the first one can take several minutes)…");
+  step("preparing", "Preparing the update on this server (the first one can take several minutes)…");
   const built = await compileEsphomeDevice(item.deviceId).catch((err) => ({ ok: false as const, log: err instanceof Error ? err.message : String(err) }));
   log.push(`== Preparing the update (ESPHome build) ==\n${built.log}`);
-  if (!built.ok) return finish("failed", `Could not prepare the update: ${failureReason(built.log)}`);
+  if (!built.ok) return { step: "failed", message: `Could not prepare the update: ${failureReason(built.log)}` };
 
   const board = file ? await boardAfterBuild(file, before?.expected_config_hash) : undefined;
   const prefix = await devicePrefix(item.deviceId);
-  if (alreadyRunsIt(board, prefix)) return finish("done", "Already up to date — the board runs exactly this software.");
+  if (alreadyRunsIt(board, prefix)) return { step: "done", message: "Already up to date — the board runs exactly this software." };
   const address = board?.ip || board?.ip_addresses?.[0] || null;
-  set(item, "sending", "Sending it to the board over Wi-Fi…");
+  step("sending", "Sending it to the board over Wi-Fi…");
   const sentAt = new Date();
   const sent = await uploadEsphomeDevice(item.deviceId, address).catch((err) => ({ ok: false as const, log: err instanceof Error ? err.message : String(err) }));
   log.push(`== Sending it to the board (to ${address || "its name on the network"}) ==\n${sent.log}`);
-  if (!sent.ok) return finish("failed", `Could not send the update: ${failureReason(sent.log)}${dropsNote(Math.max(drops, await recentDrops(item.deviceId)))}`);
+  if (!sent.ok) return { step: "failed", message: `Could not send the update: ${failureReason(sent.log)}${dropsNote(Math.max(drops, await recentDrops(item.deviceId)))}` };
 
-  set(item, "restarting", "The board is restarting with the update…");
+  step("restarting", "The board is restarting with the update…");
   const back = await waitBackOnline(item.deviceId, sentAt);
   log.push(back ? "== The board came back online ==" : "== The board did not come back online within 4 minutes ==");
-  if (!back) return finish("failed", "Updated, but the board has not come back online after 4 minutes. Check its power and Wi-Fi.");
+  if (!back) return { step: "failed", message: "Updated, but the board has not come back online after 4 minutes. Check its power and Wi-Fi." };
   // The board says which software it runs: proof the new one is in (boards updated before this
   // reading existed start reporting it with this update).
   const confirmed = await confirmsNewSoftware(prefix, board?.expected_config_hash);
   log.push(confirmed ? `== The board reports the new software (${board?.expected_config_hash}) ==` : "== The board did not report its software fingerprint (yet) ==");
-  await finish("done", confirmed ? "Updated — the board is back online and runs the new software." : "Updated — the board is back online.");
-}
+  return { step: "done", message: confirmed ? "Updated — the board is back online and runs the new software." : "Updated — the board is back online." };
+};
 
-/** One kept update record (what ESPHome wrote, the outcome). */
-export async function updateLog(id: string): Promise<{ id: string; deviceId: string; startedAt: string; finishedAt: string; outcome: string; message: string; log: string } | null> {
-  if (!/^\d+$/.test(id)) return null;
-  const r = await getPool().query(
-    `SELECT id, device_id AS "deviceId", started_at AS "startedAt", finished_at AS "finishedAt", outcome, message, log FROM board_update_log WHERE id = $1`,
-    [id]
-  );
-  return r.rows[0] ?? null;
-}
-
-/** A board's kept updates, newest first (without the long record). */
-export async function boardUpdateHistory(deviceId: string): Promise<{ id: string; startedAt: string; finishedAt: string; outcome: string; message: string }[]> {
-  const r = await getPool().query(
-    `SELECT id, started_at AS "startedAt", finished_at AS "finishedAt", outcome, message FROM board_update_log WHERE device_id = $1 ORDER BY finished_at DESC`,
-    [deviceId]
-  );
-  return r.rows;
-}
-
-/** Start updating these boards (one after another). Refused while an update is already running. */
-export function startBoardUpdates(boards: { deviceId: string; name: string }[], startedBy: string): UpdateRun {
-  if (run.running) throw new Error("Boards are already being updated. Wait until it has finished.");
-  run = {
-    running: true,
-    startedAt: new Date().toISOString(),
-    startedBy,
-    items: boards.map((b) => ({ deviceId: b.deviceId, name: b.name, step: "waiting", message: "Waiting…", startedAt: null, finishedAt: null, logId: null })),
-  };
-  publishChange("devices");
-  void (async () => {
-    for (const item of run.items) {
-      try {
-        await updateOne(item);
-      } catch (err) {
-        set(item, "failed", err instanceof Error ? err.message : "The update failed.");
-      }
-    }
-    run.running = false;
-    publishChange("devices");
-  })();
-  return run;
-}
+registerBoardKind("esphome", { list: listEsphomeBoards, update: esphomeUpdate });

@@ -9,7 +9,8 @@ import { readAnywhereSettings } from "../system/anywhere.js";
 import { devicePath } from "../devices/device-path-store.js";
 import { createZherodiusConnections } from "./connections.js";
 import { LineError, pairDevice } from "./line.js";
-import { findAddress, getPairing, hubKey, itemsOf, listPairings, savePairedDevice, saveHubName, saveSeen, syncItems } from "./store.js";
+import { addNotification } from "../notifications/service.js";
+import { findAddress, getPairing, hubKey, itemsOf, listPairings, markUpdateTold, savePairedDevice, saveHubName, saveSeen, syncItems } from "./store.js";
 
 export const zherodius = createZherodiusConnections({
   hubKey,
@@ -22,7 +23,21 @@ export const zherodius = createZherodiusConnections({
   findAddress,
   path: devicePath,
   logActivity: (e) => void logActivity({ kind: "device", deviceId: e.deviceId, text: e.text }),
+  updateReady: (u) => void tellUpdateReady(u).catch(() => undefined),
 });
+
+/** The bell says once per device and version that a newer Zherodius is ready (never installed by itself). */
+async function tellUpdateReady(u: { deviceId: string; deviceName: string; version: string; latest: string; notes: string }): Promise<void> {
+  if (!(await markUpdateTold(u.deviceId, u.latest))) return;
+  const notes = u.notes.trim().replace(/[.\s]+$/, "");
+  await addNotification({
+    source: "system",
+    sourceName: "Devices",
+    level: "info",
+    title: `${u.deviceName} has a new Zherodius version ready`,
+    body: `Zherodius ${u.latest} (it runs ${u.version})${notes ? `: ${notes}` : ""}. Nothing is installed by itself: to install it, open Devices and press Update boards.`,
+  });
+}
 
 /** The device keeps at most this many bytes of a hub's name. */
 const HUB_NAME_BYTES = 32;

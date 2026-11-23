@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { api, type BoardPrepareRun, type BoardStatus, type BoardUpdateRun } from "../api";
 
 /**
- * Board updates, shared by the Devices page and each device's page: which ESPHome boards need an
+ * Board updates, shared by the Devices page and each device's page: which boards (ESPHome and Zherodius) need an
  * update and the update in progress. One copy for the whole app; it checks every 3 seconds while an
  * update runs, otherwise when asked (refresh) or every minute.
  */
@@ -18,7 +18,7 @@ function emit(next: Partial<State>) {
 
 export async function refreshBoards(): Promise<void> {
   try {
-    const r = await api.esphomeBoards();
+    const r = await api.boards();
     emit({ boards: r.boards, run: r.run, preparing: r.preparing ?? null, error: null });
   } catch (err) {
     emit({ error: err instanceof Error ? err.message : "Could not check the boards" });

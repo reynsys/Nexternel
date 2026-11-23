@@ -36,6 +36,28 @@ test("a device that lists what a sensor reads is followed", () => {
   assert.deepEqual(plan.map((p) => p.slug), ["sensor_3_p"]);
 });
 
+test("an electricity meter gives power now (W) and energy so far (kWh)", () => {
+  const plan = planItems(info([{ id: 7, type: "sensor", name: "House", model: "Electricity meter", reads: ["w", "e"] }]));
+  assert.deepEqual(
+    plan.map((p) => [p.slug, p.name, p.kind === "sensor" ? `${p.sensorType} ${p.unit}` : ""]),
+    [
+      ["sensor_7_w", "House power", "power W"],
+      ["sensor_7_e", "House energy", "energy kWh"],
+    ]
+  );
+  const items: ItemMap = new Map([
+    ["sensor_7_w", { itemId: "w", kind: "power" }],
+    ["sensor_7_e", { itemId: "e", kind: "energy" }],
+  ]);
+  assert.deepEqual(
+    readStatus({ sensors: [{ id: 7, w: 530, e: 1234.567 }] }, items).map((r) => [r.itemId, r.value]),
+    [
+      ["w", 530],
+      ["e", 1234.567],
+    ]
+  );
+});
+
 test("an unknown sensor model gives no guessed items", () => {
   assert.deepEqual(planItems(info([{ id: 3, type: "sensor", name: "New", model: "XYZ9" }])), []);
 });

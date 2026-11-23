@@ -1,17 +1,20 @@
 /**
  * A Zherodius device's parts (Zh.GetInfo) as Nexternel items: each relay is a switch, and each sensor
- * gives one item per reading it takes (temperature, humidity, pressure, CO2).
+ * gives one item per reading it takes (temperature, humidity, pressure, CO2; an electricity meter: power now
+ * and kWh so far).
  */
 import type { DeviceInfo, DeviceStatus } from "./line.js";
 
-export type Reading = "t" | "h" | "p" | "c";
-const READINGS: readonly Reading[] = ["t", "h", "p", "c"];
+export type Reading = "t" | "h" | "p" | "c" | "w" | "e";
+const READINGS: readonly Reading[] = ["t", "h", "p", "c", "w", "e"];
 
 const READING: Record<Reading, { sensorType: string; unit: string; word: string }> = {
   t: { sensorType: "temperature", unit: "°C", word: "temperature" },
   h: { sensorType: "humidity", unit: "%", word: "humidity" },
   p: { sensorType: "pressure", unit: "hPa", word: "pressure" },
   c: { sensorType: "co2", unit: "ppm", word: "CO2" },
+  w: { sensorType: "power", unit: "W", word: "power" },
+  e: { sensorType: "energy", unit: "kWh", word: "energy" },
 };
 
 /**

@@ -877,6 +877,10 @@ export const api = {
       body: JSON.stringify(body),
     }),
 
+  /** Ask a Zherodius device to look for a newer version now; gives the newer version it found (null: none). Nothing is installed. */
+  zherodiusCheckUpdate: (deviceId: string) =>
+    apiFetch<{ ok: true; latest: string | null; version: string }>(`/api/v1/zherodius/${encodeURIComponent(deviceId)}/check-update`, { method: "POST" }),
+
   /** Devices this one may replace (same name), with which items would keep their panels. */
   deviceReplaceCandidates: (deviceId: string) =>
     apiFetch<{ candidates: DeviceReplaceCandidate[] }>(`/api/v1/devices/${encodeURIComponent(deviceId)}/replaces`),
@@ -1370,15 +1374,15 @@ export const api = {
 
   system: () => apiFetch<SystemInfo>("/api/v1/system"),
   /** Every ESPHome board: does it need an update, can it be reached; and the update in progress. */
-  esphomeBoards: () =>
-    apiFetch<{ boards: BoardStatus[]; run: BoardUpdateRun; preparing?: BoardPrepareRun }>("/api/v1/esphome/boards"),
+  boards: () =>
+    apiFetch<{ boards: BoardStatus[]; run: BoardUpdateRun; preparing?: BoardPrepareRun }>("/api/v1/boards"),
   /** Update these boards over Wi-Fi, one after another (in the background). */
   startBoardUpdates: (deviceIds: string[]) =>
-    apiFetch<{ run: BoardUpdateRun }>("/api/v1/esphome/updates", { method: "POST", body: JSON.stringify({ deviceIds }) }),
-  boardUpdates: () => apiFetch<{ run: BoardUpdateRun }>("/api/v1/esphome/updates"),
-  boardUpdateLog: (id: string) => apiFetch<{ entry: BoardUpdateLog }>(`/api/v1/esphome/updates/log/${encodeURIComponent(id)}`),
+    apiFetch<{ run: BoardUpdateRun }>("/api/v1/boards/updates", { method: "POST", body: JSON.stringify({ deviceIds }) }),
+  boardUpdates: () => apiFetch<{ run: BoardUpdateRun }>("/api/v1/boards/updates"),
+  boardUpdateLog: (id: string) => apiFetch<{ entry: BoardUpdateLog }>(`/api/v1/boards/updates/log/${encodeURIComponent(id)}`),
   boardUpdateHistory: (deviceId: string) =>
-    apiFetch<{ updates: Omit<BoardUpdateLog, "deviceId" | "log">[] }>(`/api/v1/esphome/boards/${encodeURIComponent(deviceId)}/updates`),
+    apiFetch<{ updates: Omit<BoardUpdateLog, "deviceId" | "log">[] }>(`/api/v1/boards/${encodeURIComponent(deviceId)}/updates`),
   /** Link a board to its ESPHome settings file (only a file with the board's own message address). */
   linkBoardFile: (deviceId: string, file: string) =>
     apiFetch<{ ok: true }>("/api/v1/esphome/link", { method: "POST", body: JSON.stringify({ deviceId, file }) }),
@@ -2710,6 +2714,7 @@ export type DeviceConnection = {
 export type BoardStatus = {
   deviceId: string;
   name: string;
+  kind: "esphome" | "zherodius";
   file: string | null;
   known: boolean;
   linkProblem: "none" | "several" | null;
@@ -2717,8 +2722,11 @@ export type BoardStatus = {
   needsUpdate: boolean;
   /** Why it needs an update, in plain words (never "update" without one). */
   updateReason?: string | null;
-  /** current: runs the newest build; update: needs one; unknown: the board does not report which software it runs yet. */
-  updateState: "current" | "update" | "unknown";
+  /**
+   * current: runs the newest software; update: needs one; unknown: the board does not report which software it runs yet;
+   * own-page: a Zherodius board too old to be updated from Nexternel (updated once on its own page, then Nexternel can).
+   */
+  updateState: "current" | "update" | "unknown" | "own-page";
   /** The software fingerprint the board reports (what it runs), or null. */
   fingerprint: string | null;
   reachable: boolean;
@@ -2739,5 +2747,5 @@ export type BoardUpdateRun = {
   startedAt: string | null;
   /** Who started it. */
   startedBy?: string | null;
-  items: { deviceId: string; name: string; step: BoardUpdateStep; message: string; startedAt: string | null; finishedAt: string | null; logId: string | null }[];
+  items: { deviceId: string; name: string; kind: "esphome" | "zherodius"; step: BoardUpdateStep; message: string; startedAt: string | null; finishedAt: string | null; logId: string | null }[];
 };

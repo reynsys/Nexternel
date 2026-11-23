@@ -33,6 +33,8 @@ export async function ensureZherodiusSchema(): Promise<void> {
     );
     -- The name Nexternel gave itself when pairing (the device lists it as "Unpair <name>").
     ALTER TABLE zherodius_pairings ADD COLUMN IF NOT EXISTS hub_name TEXT;
+    -- The newest version the owner was told about (the bell says so once per version).
+    ALTER TABLE zherodius_pairings ADD COLUMN IF NOT EXISTS update_told TEXT;
   `);
 }
 
@@ -145,6 +147,24 @@ export function saveSeen(deviceId: string, seen: { address: string; cfg: number 
       .query(`UPDATE devices SET ip_address = $2::inet WHERE id = $1 AND ip_address IS DISTINCT FROM $2::inet`, [deviceId, seen.address])
       .catch(() => undefined);
   }
+}
+
+/** The Zherodius devices with the version each runs (as last seen), by name. */
+export async function listVersions(): Promise<{ deviceId: string; name: string; version: string | null }[]> {
+  const r = await getPool().query<{ device_id: string; name: string; version: string | null }>(
+    `SELECT p.device_id, d.name, p.version FROM zherodius_pairings p JOIN devices d ON d.id = p.device_id
+     WHERE d.connection = 'zherodius' AND COALESCE(d.is_enabled, TRUE) ORDER BY d.name`
+  );
+  return r.rows.map((x) => ({ deviceId: x.device_id, name: x.name, version: x.version }));
+}
+
+/** Note that the owner was told about this version; false when they already were. */
+export async function markUpdateTold(deviceId: string, version: string): Promise<boolean> {
+  const r = await getPool().query(
+    `UPDATE zherodius_pairings SET update_told = $2 WHERE device_id = $1 AND update_told IS DISTINCT FROM $2`,
+    [deviceId, version]
+  );
+  return (r.rowCount ?? 0) > 0;
 }
 
 /** The device now knows Nexternel by this name. */

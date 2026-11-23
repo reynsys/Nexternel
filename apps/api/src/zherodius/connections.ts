@@ -6,14 +6,27 @@
  * - a changed `cfg` (names or parts changed on the device) = its items are read again (Zh.GetInfo);
  * - a press = Relay.Set over the line; the device's answer confirms it;
  * - Nexternel's name on the device follows the home's name: told when the line opens and when it changes;
- * - removing the device in Nexternel asks it to forget Nexternel too (Zh.Unpair), so it frees that place.
+ * - removing the device in Nexternel asks it to forget Nexternel too (Zh.Unpair), so it frees that place;
+ * - a newer Zherodius found by the device's own update check is noted (its status says which), so Devices can
+ *   offer it; installing it is asked over the line (Zh.Update), only when the owner presses Update.
  * A device that moved to another address is found again by its serial number on the home network.
  */
 import type { CapabilityRow } from "../capabilities/store.js";
 import type { DevicePath, ItemSender } from "../devices/device-path.js";
 import { readStatus, type ItemMap } from "./items.js";
 import type { X25519Key } from "./line-crypto.js";
-import { LineError, NoAnswerError, openLine, type DeviceInfo, type DeviceStatus, type Hello, type Line } from "./line.js";
+import {
+  compareVersions,
+  LineError,
+  NoAnswerError,
+  openLine,
+  UPDATES_FROM_HUB,
+  type DeviceInfo,
+  type DeviceStatus,
+  type DeviceUpdate,
+  type Hello,
+  type Line,
+} from "./line.js";
 
 export type Pairing = {
   deviceId: string;
@@ -42,6 +55,8 @@ export type ConnectionsDeps = {
   findAddress(serial: string): Promise<string | null>;
   path: Pick<DevicePath, "reportItem" | "deviceOnline" | "deviceOffline" | "deviceHeard">;
   logActivity(entry: { deviceId: string; text: string }): void;
+  /** The device found a newer Zherodius (told once per device and version, also after a restart). */
+  updateReady?(entry: { deviceId: string; deviceName: string; version: string; latest: string; notes: string }): void;
   /** Waits between tries to open a line (the last one repeats). */
   retryMs?: number[];
   /** A line the device has said nothing on for this long is taken as gone. */
@@ -71,7 +86,14 @@ type Entry = {
   chain: Promise<void>;
   /** The device's Wi-Fi signal and time since its start, from its last status. */
   health: { rssi: number | null; uptimeS: number | null; at: number } | null;
+  /** The newer version the device found and its notes (null: none, or the device can't say). */
+  update: { latest: string; notes: string } | null;
 };
+
+/** Whether a device on this version can be asked about updates over the line. */
+export function updatesFromHub(version: string | null | undefined): boolean {
+  return Boolean(version) && compareVersions(version!, UPDATES_FROM_HUB) >= 0;
+}
 
 export function createZherodiusConnections(deps: ConnectionsDeps) {
   const entries = new Map<string, Entry>();
@@ -118,6 +140,23 @@ export function createZherodiusConnections(deps: ConnectionsDeps) {
     entry.p.cfg = cfg;
   }
 
+  /** The device says which newer version it found: note it, with its notes, and tell the owner once. */
+  async function noteUpdate(entry: Entry, line: Line, latest: string) {
+    if ((entry.update?.latest ?? "") === latest) return;
+    if (!latest) {
+      entry.update = null;
+      return;
+    }
+    let notes = "";
+    try {
+      notes = (await line.call<DeviceUpdate>("Zh.GetUpdate")).notes ?? "";
+    } catch {
+      /* the notes come with the next status */
+    }
+    entry.update = { latest, notes };
+    deps.updateReady?.({ deviceId: entry.p.deviceId, deviceName: entry.p.deviceName, version: line.hello.version, latest, notes });
+  }
+
   function apply(entry: Entry, status: DeviceStatus) {
     entry.health = {
       rssi: typeof status.rssi === "number" ? status.rssi : null,
@@ -143,6 +182,7 @@ export function createZherodiusConnections(deps: ConnectionsDeps) {
       deps.saveSeen(entry.p.deviceId, { address: entry.p.address, cfg, version: line.hello.version });
     }
     apply(entry, status);
+    if (typeof status.update === "string") await noteUpdate(entry, line, status.update);
   }
 
   /**
@@ -208,6 +248,9 @@ export function createZherodiusConnections(deps: ConnectionsDeps) {
         deps.path.deviceOnline([entry.p.deviceId]);
         apply(entry, status);
         await tellName(entry, opened);
+        // What it found before this line opened (an older device has no "update": nothing to note).
+        if (typeof status.update === "string") await noteUpdate(entry, opened, status.update);
+        else entry.update = null;
       });
       if (entry.line === line) {
         entry.attempt = 0;
@@ -257,6 +300,7 @@ export function createZherodiusConnections(deps: ConnectionsDeps) {
       problem: null,
       chain: Promise.resolve(),
       health: null,
+      update: null,
     };
     entries.set(p.deviceId, entry);
     startWatchdog();
@@ -356,6 +400,24 @@ export function createZherodiusConnections(deps: ConnectionsDeps) {
     /** Whether the line to this device is open (for the device page). */
     isOpen: (deviceId: string) => Boolean(entries.get(deviceId)?.line),
     hello: (deviceId: string): Hello | null => entries.get(deviceId)?.line?.hello ?? null,
+    /** The newer Zherodius the device found, with its notes (null: none found, not connected, or too old to say). */
+    updateOf: (deviceId: string): { latest: string; notes: string } | null => entries.get(deviceId)?.update ?? null,
+    /** Ask the device about its updates; `what` starts its check or its install (Zherodius 1.12.1+). */
+    async askUpdate(deviceId: string, what?: "check" | "install"): Promise<DeviceUpdate> {
+      const e = entries.get(deviceId);
+      const line = e?.line;
+      if (!e || !line) throw new LineError(`${e?.p.deviceName ?? "The device"} is not connected to Nexternel right now.`);
+      if (!updatesFromHub(line.hello.version)) {
+        throw new LineError(`${e.p.deviceName} runs Zherodius ${line.hello.version}, which can't be updated from Nexternel yet: update it once on its own page (Firmware).`);
+      }
+      const u = what ? await line.call<DeviceUpdate>("Zh.Update", { do: what }) : await line.call<DeviceUpdate>("Zh.GetUpdate");
+      if (!what || what === "check") {
+        // What it knows now (a check runs in the background; its result comes with the next status).
+        if (u.latest && u.latest !== e.update?.latest) await noteUpdate(e, line, u.latest);
+        else if (!u.latest && u.state !== "checking") e.update = null;
+      }
+      return u;
+    },
     /** Wi-Fi signal (dBm) and when the device last started, from its latest status on an open line. */
     health(deviceId: string): { wifiDbm: number | null; wifiAt: string | null; restartedAt: string | null } | null {
       const e = entries.get(deviceId);

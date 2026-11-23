@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting at 1. Newest first.
 
+## V5.4.13
+
+- **Nexternel can update your Zherodius devices:** a Zherodius device's page shows when a new version is ready and what is new, with **Update board** and **Check for update**. The bell tells you once per new version. **Devices → Update boards** now updates every kind of board, one after another, and shows each step. A device on a version older than Zherodius 1.12.1 needs 1.12.1 installed once from its own Firmware page; after that Nexternel can update it.
+
 ## V5.4.12
 
 - **A Shelly is shown "online" only when it really answers:** each time Nexternel connects to the message service, it asks every Shelly to answer. A Shelly that stays silent for 30 seconds is shown as offline. Before, an old "online" could be shown for a Shelly that was switched off.

@@ -88,6 +88,8 @@ apps/api/src/devices/board-health-history.test.ts
 apps/api/src/devices/board-health-history.ts
 apps/api/src/devices/board-health.test.ts
 apps/api/src/devices/board-health.ts
+apps/api/src/devices/board-update-routes.ts
+apps/api/src/devices/board-updates.ts
 apps/api/src/devices/connection-history.test.ts
 apps/api/src/devices/connection-history.ts
 apps/api/src/devices/connectivity.test.ts
@@ -108,7 +110,6 @@ apps/api/src/devices/service.ts
 apps/api/src/devices/slug.ts
 apps/api/src/diagnostics/live-pipeline.test.ts
 apps/api/src/diagnostics/live-pipeline.ts
-apps/api/src/esphome/board-update-routes.ts
 apps/api/src/esphome/board-update-state.test.ts
 apps/api/src/esphome/board-updates.ts
 apps/api/src/esphome/board-wifi.test.ts
@@ -280,6 +281,7 @@ apps/api/src/v4/routes.ts
 apps/api/src/v4/systems-in-scope.ts
 apps/api/src/v4/types.ts
 apps/api/src/version.ts
+apps/api/src/zherodius/board-updates.ts
 apps/api/src/zherodius/connections.test.ts
 apps/api/src/zherodius/connections.ts
 apps/api/src/zherodius/items.test.ts
@@ -291,6 +293,8 @@ apps/api/src/zherodius/line.ts
 apps/api/src/zherodius/pretend-device.ts
 apps/api/src/zherodius/service.ts
 apps/api/src/zherodius/store.ts
+apps/api/src/zherodius/updates.test.ts
+apps/api/src/zherodius/updates.ts
 apps/api/src/zherodius/vectors/noise-ik-aesgcm-sha256.json
 apps/api/tsconfig.json
 apps/door-link/Dockerfile
@@ -563,6 +567,7 @@ apps/ui/src/pages/admin/devices/ReadingSettingsDialog.tsx
 apps/ui/src/pages/admin/devices/ShellyGuide.tsx
 apps/ui/src/pages/admin/devices/use-capability-values.ts
 apps/ui/src/pages/admin/devices/ZherodiusPairing.tsx
+apps/ui/src/pages/admin/devices/ZherodiusSoftware.tsx
 apps/ui/src/pages/admin/EsphomeAddDeviceWizard.tsx
 apps/ui/src/pages/admin/esphome/BuilderComponentFields.tsx
 apps/ui/src/pages/admin/esphome/BuilderComponentPicker.tsx

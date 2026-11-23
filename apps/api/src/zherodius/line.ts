@@ -40,11 +40,41 @@ export type DeviceInfo = {
 export type DeviceStatus = {
   relays?: { id: number; on: boolean }[];
   /** t °C, h %, p hPa, c CO2 ppm. */
-  sensors?: { id: number; t?: number; h?: number; p?: number; c?: number }[];
+  sensors?: { id: number; t?: number; h?: number; p?: number; c?: number; w?: number; e?: number }[];
   rssi?: number;
   uptime?: number;
   cfg?: number;
+  /** The newer version the device's update check found, "" = none (Zherodius 1.12.1+). */
+  update?: string;
 };
+
+/** What the device says about its updates (Zh.GetUpdate and Zh.Update; the same as its Firmware page). */
+export type DeviceUpdate = {
+  version: string;
+  /** The newer version found, "" = none. */
+  latest: string;
+  notes: string;
+  state: "idle" | "checking" | "installing" | "done" | "failed" | string;
+  progress: number;
+  /** Why the last check or install failed. */
+  message: string;
+  auto: boolean;
+  /** When it last checked (seconds since 1970, 0 = not yet). */
+  lastCheck: number;
+  /** A new version is running on trial (it goes back by itself if it does not start properly). */
+  trying: boolean;
+};
+
+/** The first Zherodius version that can be updated from Nexternel (Zh.GetUpdate, Zh.Update). */
+export const UPDATES_FROM_HUB = "1.12.1";
+
+/** Versions compared number by number (1.11.10 is newer than 1.11.9). Gives -1, 0 or 1. */
+export function compareVersions(a: string, b: string): number {
+  const x = a.split(".").map((n) => parseInt(n, 10) || 0);
+  const y = b.split(".").map((n) => parseInt(n, 10) || 0);
+  for (let i = 0; i < 3; i++) if ((x[i] ?? 0) !== (y[i] ?? 0)) return (x[i] ?? 0) < (y[i] ?? 0) ? -1 : 1;
+  return 0;
+}
 
 /** Something the person can be told as it is ("The pairing code is not right."). */
 export class LineError extends Error {}

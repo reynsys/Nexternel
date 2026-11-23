@@ -30,6 +30,13 @@ export class PretendDevice {
   knowsUnpair = true;
   /** When false, Relay.Set is not answered (a device cut off mid-press). */
   answers = true;
+  /** Updates over the line (Zherodius 1.12.1+): the newest version on the update server, and what the device knows. */
+  knowsUpdates = false;
+  available = "";
+  availableNotes = "";
+  /** The new version does not start properly: after the restart the device is back on the old one. */
+  newVersionFails = false;
+  update = { latest: "", notes: "", state: "idle", progress: 0, message: "", trying: false };
   private readonly conns = new Set<Conn>();
   private server!: WebSocketServer;
   port = 0;
@@ -86,7 +93,48 @@ export class PretendDevice {
       rssi: -61,
       uptime: 1234,
       cfg: this.cfg(),
+      ...(this.knowsUpdates ? { update: this.update.latest } : {}),
     };
+  }
+
+  /** The device restarts: every line ends, and it answers again a moment later (on `version`). */
+  restart(version = this.version, afterMs = 30) {
+    this.dropAll();
+    this.server.close();
+    setTimeout(() => {
+      this.version = version;
+      this.info = { ...this.info, version };
+      void this.start(this.port);
+    }, afterMs).unref?.();
+  }
+
+  private updateAnswer(what?: string): object {
+    if (what === "check") {
+      this.update.state = "checking";
+      setTimeout(() => {
+        this.update = { ...this.update, state: "idle", latest: this.available, notes: this.availableNotes };
+        this.notify();
+      }, 20).unref?.();
+    } else if (what === "install") {
+      if (!this.update.latest) return { error: { code: 400, message: "Check for an update first." } };
+      const target = this.update.latest;
+      this.update.state = "installing";
+      this.update.progress = 0;
+      const step = setInterval(() => {
+        this.update.progress = Math.min(100, this.update.progress + 50);
+        if (this.update.progress < 100) return;
+        clearInterval(step);
+        this.update.state = "done";
+        setTimeout(() => {
+          const old = this.version;
+          this.update = { latest: "", notes: "", state: "idle", progress: 0, message: "", trying: !this.newVersionFails };
+          this.restart(this.newVersionFails ? old : target);
+          if (!this.newVersionFails) setTimeout(() => (this.update.trying = false), 80).unref?.();
+        }, 20).unref?.();
+      }, 15);
+      step.unref?.();
+    }
+    return { result: { version: this.version, auto: true, lastCheck: 1, ...this.update } };
   }
 
   /** Something changed on the device itself (its button, a new reading): every hub is told at once. */
@@ -153,7 +201,7 @@ export class PretendDevice {
     });
   }
 
-  private answer(conn: Conn, ask: { id: number; method: string; params?: { id?: number; on?: boolean; name?: string } }) {
+  private answer(conn: Conn, ask: { id: number; method: string; params?: { id?: number; on?: boolean; name?: string; do?: string } }) {
     const reply = (body: object) => this.secret(conn, { id: ask.id, ...body });
     if (ask.method === "Zh.GetInfo") return reply({ result: this.info });
     if (ask.method === "Zh.GetStatus") return reply({ result: this.status() });
@@ -174,6 +222,8 @@ export class PretendDevice {
       return reply({ result: {} });
     }
     if (ask.method === "Zh.Unpair" && this.knowsUnpair) return reply({ result: {} });
+    if (ask.method === "Zh.GetUpdate" && this.knowsUpdates) return reply(this.updateAnswer());
+    if (ask.method === "Zh.Update" && this.knowsUpdates) return reply(this.updateAnswer((ask.params as { do?: string } | undefined)?.do));
     reply({ error: { code: 400, message: "Unknown method." } });
   }
 
