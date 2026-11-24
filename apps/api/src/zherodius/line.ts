@@ -388,7 +388,7 @@ export async function openLine(o: {
     if (hello.serial !== o.serial) throw new LineError(`Another device (${hello.name}, ${hello.serial}) now answers at ${o.address}.`);
     if (hello.key.toLowerCase() !== o.deviceKey.toLowerCase()) {
       throw new NotPairedError(
-        `${hello.name} answers with another key than when it was paired (it was reset), so Nexternel does not trust it. Pair it again.`,
+        `${hello.name} answers with another key than when it was paired (it was reset), so Nexternel does not trust it. Reconnect it in Devices.`,
         "reset"
       );
     }
@@ -400,7 +400,7 @@ export async function openLine(o: {
       const words = parseText<{ line?: { error?: string } }>(m2, "answer").line?.error;
       if (words === NOT_PAIRED_WORDS) {
         throw new NotPairedError(
-          `${hello.name} no longer lists this Nexternel (it was removed on the device's page, or the device was reset). Pair it again.`,
+          `${hello.name} no longer lists this Nexternel (it was removed on the device's page, or the device was reset). Reconnect it in Devices.`,
           "forgotten"
         );
       }

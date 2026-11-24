@@ -1,10 +1,10 @@
 /**
  * Zherodius devices that no longer accept Nexternel's line, and why. Filled by the connections (connections.ts),
- * read by the device list and by Search my home, so the owner is offered "Pair again" wherever the device shows.
+ * read by the device list and by Search my home, so the owner is offered "Reconnect" wherever the device shows.
  * - "forgotten": the device says this Nexternel is not paired (it was removed on the device's page, or its
  *   pairings were cleared);
  * - "reset": the device answers with another key than the one kept at pairing (it was reset to factory settings).
- * Pairing again keeps the same device in Nexternel (store.ts savePairedDevice), so its panels and history stay.
+ * Reconnecting (pairing again) keeps the same device in Nexternel (store.ts savePairedDevice), so its panels and history stay.
  */
 export type NeedsPairing = "forgotten" | "reset";
 

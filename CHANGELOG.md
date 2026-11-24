@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting at 1. Newest first.
 
+## V5.5.3
+
+- **"Reconnect" instead of "Pair again":** the button and notice for a Zherodius device that no longer accepts Nexternel now say Reconnect.
+
 ## V5.5.2
 
 - **Pair a Zherodius device again:** when a Zherodius device no longer accepts Nexternel (it was removed on the device's own page, or the device was reset), its page in Nexternel says so and offers **Pair again**, and Search my home offers it too. Pairing again keeps the device as it was: its area, panels, names and history stay. Until then Nexternel asks the device only every 30 minutes instead of every minute.

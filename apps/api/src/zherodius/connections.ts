@@ -10,7 +10,7 @@
  * - a newer Zherodius found by the device's own update check is noted (its status says which), so Devices can
  *   offer it; installing it is asked over the line (Zh.Update), only when the owner presses Update.
  * A device that moved to another address is found again by its serial number on the home network.
- * A device that no longer accepts Nexternel (removed on its own page, or reset) is marked for "Pair again"
+ * A device that no longer accepts Nexternel (removed on its own page, or reset) is marked for "Reconnect"
  * (pairing-state.ts) and tried only every 30 minutes, as only pairing again helps.
  */
 import type { CapabilityRow } from "../capabilities/store.js";

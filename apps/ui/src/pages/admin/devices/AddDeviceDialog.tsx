@@ -131,7 +131,7 @@ function Row(props: {
         </Stack>
         <Typography variant="body2" color="text.secondary">
           {d.alreadyIn?.needsPairing
-            ? `In Nexternel as “${d.alreadyIn.name}”, but it no longer accepts this Nexternel. Pair it again to control it; its panels, names and history stay.`
+            ? `In Nexternel as “${d.alreadyIn.name}”, but it no longer accepts this Nexternel. Reconnect it to control it; its panels, names and history stay.`
             : d.alreadyIn
               ? `Already in Nexternel as “${d.alreadyIn.name}”.`
               : bringInSentence(d)}
@@ -230,7 +230,7 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
 
   const groups = useMemo(() => {
     const ready = found.filter(canBringIn);
-    // A Zherodius device that no longer accepts this Nexternel is listed with the new ones, to pair it again.
+    // A Zherodius device that no longer accepts this Nexternel is listed with the new ones, to reconnect it.
     const zherodius = found.filter((d) => d.kind === "zherodius" && (!d.alreadyIn || d.alreadyIn.needsPairing));
     const cameras = found.filter((d) => d.kind === "camera" && !d.alreadyIn);
     const existing = found.filter((d) => d.alreadyIn && !d.alreadyIn.needsPairing);
@@ -582,7 +582,7 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
                               setStage("zherodius");
                             }}
                           >
-                            {d.alreadyIn ? "Pair again" : "Add"}
+                            {d.alreadyIn ? "Reconnect" : "Add"}
                           </Button>
                         )
                       }

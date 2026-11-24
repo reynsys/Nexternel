@@ -2410,7 +2410,7 @@ export type DeviceRecord = {
     version: string | null;
     address: string;
     hubName: string | null;
-    /** The device no longer accepts this Nexternel: "forgotten" (removed on its page) or "reset"; null: fine. Offer Pair again. */
+    /** The device no longer accepts this Nexternel: "forgotten" (removed on its page) or "reset"; null: fine. Offer Reconnect. */
     needsPairing: "forgotten" | "reset" | null;
   } | null;
   esphomeName: string | null;

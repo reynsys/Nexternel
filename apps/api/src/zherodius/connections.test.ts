@@ -167,7 +167,7 @@ test("a device that forgot this Nexternel: marked for Pair again, tried only rar
     await waitFor(() => needsPairing(pairing.deviceId) === "forgotten");
     assert.equal(conns.isOpen(pairing.deviceId), false);
     assert.deepEqual(calls.activity, [
-      "Pretend Relays: Pretend Relays no longer lists this Nexternel (it was removed on the device's page, or the device was reset). Pair it again.",
+      "Pretend Relays: Pretend Relays no longer lists this Nexternel (it was removed on the device's page, or the device was reset). Reconnect it in Devices.",
     ]);
     await new Promise((r) => setTimeout(r, 250)); // with the usual 50 ms retries this would be about 5 more tries
     assert.equal(device.viaPort - before, 1, "not tried again before the long wait");

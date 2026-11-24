@@ -25,7 +25,7 @@ const codeLength = (code: string) => code.replace(/[^0-9A-Za-z]/g, "").length;
 /**
  * Add a Zherodius device that Search my home found: the owner opens pairing on the device's own page,
  * types the code shown there, and picks an area. The device then comes in with its own name.
- * Pair again (a device already in Nexternel that no longer accepts it): the same steps, no area to pick;
+ * Reconnect (a device already in Nexternel that no longer accepts it): the same steps, no area to pick;
  * the device stays the same one in Nexternel.
  */
 export function ZherodiusPairing({ device, areas, onBack, onPaired }: Props) {
@@ -67,7 +67,7 @@ export function ZherodiusPairing({ device, areas, onBack, onPaired }: Props) {
       </Box>
       {again ? (
         <Typography variant="body2" color="text.secondary">
-          This device no longer accepts this Nexternel. Pairing it again keeps it as “{device.alreadyIn!.name}”, with its {AREA.singular.toLowerCase()}, panels and history.
+          This device no longer accepts this Nexternel. Reconnecting it keeps it as “{device.alreadyIn!.name}”, with its {AREA.singular.toLowerCase()}, panels and history.
         </Typography>
       ) : null}
 
@@ -122,7 +122,7 @@ export function ZherodiusPairing({ device, areas, onBack, onPaired }: Props) {
           Back
         </Button>
         <Button type="submit" variant="contained" disabled={busy || !ready || !device.address}>
-          {busy ? "Pairing…" : again ? "Pair again" : "Pair and add"}
+          {busy ? (again ? "Reconnecting…" : "Pairing…") : again ? "Reconnect" : "Pair and add"}
         </Button>
       </ButtonRow>
     </Stack>

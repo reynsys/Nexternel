@@ -49,7 +49,7 @@ export type DeviceDetailActions = {
   /** Open a reading's Name & icon settings. */
   onEditReading: (reading: ReadingToEdit) => void;
   onRemoveEntity: (kind: "sensor" | "relay", deviceId: string, entityId: string, name: string) => void;
-  /** Read the devices again (after a Zherodius device was paired again). */
+  /** Read the devices again (after a Zherodius device was reconnected). */
   onReload: () => void;
 };
 

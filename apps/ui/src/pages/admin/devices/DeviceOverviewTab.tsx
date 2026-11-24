@@ -18,7 +18,7 @@ type Props = {
   values: Map<string, Capability>;
   onUsb: () => void;
   onShowReadings: () => void;
-  /** A Zherodius device was paired again: read the devices again. */
+  /** A Zherodius device was reconnected: read the devices again. */
   onPairedAgain: () => void;
 };
 
@@ -48,20 +48,20 @@ export function DeviceOverviewTab({ device, isAdmin, busy, connection, values, o
           action={
             isAdmin ? (
               <Button color="inherit" size="small" onClick={() => setPairAgain(true)}>
-                Pair again
+                Reconnect
               </Button>
             ) : undefined
           }
         >
           {device.name} no longer accepts this Nexternel
           {zh.needsPairing === "reset" ? " (the device was reset)" : " (it was removed on the device's own page)"}, so it can't be controlled from here.
-          Pair it again; its panels, names and history stay.
+          Reconnect it; its panels, names and history stay.
         </Alert>
       ) : null}
-      {pairedAgain ? <Alert severity="success">{device.name} is paired again.</Alert> : null}
+      {pairedAgain ? <Alert severity="success">{device.name} is reconnected.</Alert> : null}
       {zh ? (
         <Dialog open={pairAgain} onClose={() => setPairAgain(false)} fullWidth maxWidth="sm">
-          <DialogTitle>Pair {device.name} again</DialogTitle>
+          <DialogTitle>Reconnect {device.name}</DialogTitle>
           <DialogContent>
             <ZherodiusPairing
               device={{ name: device.name, address: zh.address, alreadyIn: { kind: "device", id: device.id, name: device.name, needsPairing: zh.needsPairing } }}
