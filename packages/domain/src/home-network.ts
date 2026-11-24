@@ -33,5 +33,6 @@ export type FoundDevice = {
   /** ESPHome software version, when the board says. */
   version: string | null;
   /** Set when this device is already in Nexternel. */
-  alreadyIn: { kind: "device" | "camera"; id: string; name: string } | null;
+  /** needsPairing: a Zherodius device that no longer accepts this Nexternel (offer Pair again, which keeps it). */
+  alreadyIn: { kind: "device" | "camera"; id: string; name: string; needsPairing?: "forgotten" | "reset" | null } | null;
 };

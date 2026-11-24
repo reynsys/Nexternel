@@ -1,9 +1,11 @@
-import { Alert, Box, Button, Stack, Typography } from "@mui/material";
+import { useState } from "react";
+import { Alert, Box, Button, Dialog, DialogContent, DialogTitle, Stack, Typography } from "@mui/material";
 import { type Capability, type DeviceConnection, type DeviceRecord } from "../../../api";
 import { deviceConnectivityState } from "../../../lib/device-utils";
 import { BoardSoftware } from "./BoardSoftware";
 import { InfoCard, durationWords, wifiSignalWords } from "./DeviceBits";
 import { ZherodiusSoftware } from "./ZherodiusSoftware";
+import { ZherodiusPairing } from "./ZherodiusPairing";
 import { readingValue, switchWord } from "./device-summary";
 import { devicesOutlinedButton } from "./devices-panel-styles";
 import { FullDateTime } from "../../../components/FullDateTime";
@@ -16,13 +18,18 @@ type Props = {
   values: Map<string, Capability>;
   onUsb: () => void;
   onShowReadings: () => void;
+  /** A Zherodius device was paired again: read the devices again. */
+  onPairedAgain: () => void;
 };
 
 /**
  * A device's Overview: three equal boxes — Connection, Software (boards) and its readings or
  * switches with their values — and, only when something needs doing, what to do.
  */
-export function DeviceOverviewTab({ device, isAdmin, busy, connection, values, onUsb, onShowReadings }: Props) {
+export function DeviceOverviewTab({ device, isAdmin, busy, connection, values, onUsb, onShowReadings, onPairedAgain }: Props) {
+  const [pairAgain, setPairAgain] = useState(false);
+  const [pairedAgain, setPairedAgain] = useState(false);
+  const zh = device.zherodius;
   const isBoard = (device.firmwareType || "esphome") === "esphome";
   const connectivity = deviceConnectivityState(device);
   const items = [
@@ -35,6 +42,40 @@ export function DeviceOverviewTab({ device, isAdmin, busy, connection, values, o
 
   return (
     <Stack spacing={2}>
+      {zh?.needsPairing && !pairedAgain ? (
+        <Alert
+          severity="warning"
+          action={
+            isAdmin ? (
+              <Button color="inherit" size="small" onClick={() => setPairAgain(true)}>
+                Pair again
+              </Button>
+            ) : undefined
+          }
+        >
+          {device.name} no longer accepts this Nexternel
+          {zh.needsPairing === "reset" ? " (the device was reset)" : " (it was removed on the device's own page)"}, so it can't be controlled from here.
+          Pair it again; its panels, names and history stay.
+        </Alert>
+      ) : null}
+      {pairedAgain ? <Alert severity="success">{device.name} is paired again.</Alert> : null}
+      {zh ? (
+        <Dialog open={pairAgain} onClose={() => setPairAgain(false)} fullWidth maxWidth="sm">
+          <DialogTitle>Pair {device.name} again</DialogTitle>
+          <DialogContent>
+            <ZherodiusPairing
+              device={{ name: device.name, address: zh.address, alreadyIn: { kind: "device", id: device.id, name: device.name, needsPairing: zh.needsPairing } }}
+              areas={[]}
+              onBack={() => setPairAgain(false)}
+              onPaired={() => {
+                setPairAgain(false);
+                setPairedAgain(true);
+                onPairedAgain();
+              }}
+            />
+          </DialogContent>
+        </Dialog>
+      ) : null}
       {device.esphomeLifecycleState === "configuration_missing" ? (
         <Alert severity="warning">
           The board's ESPHome settings file is missing on the server.{" "}

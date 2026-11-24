@@ -8,6 +8,7 @@ import { planItems, type ItemMap } from "./items.js";
 import { hex, x25519Key } from "./line-crypto.js";
 import { pairDevice } from "./line.js";
 import { PretendDevice } from "./pretend-device.js";
+import { needsPairing } from "./pairing-state.js";
 
 const device = new PretendDevice();
 const hub = x25519Key();
@@ -152,6 +153,44 @@ test("a device that cannot be reached: said once in the Activity log, and tried 
   await new Promise((r) => setTimeout(r, 200));
   assert.equal(conns.isOpen(pairing.deviceId), false);
   assert.deepEqual(calls.activity, ["Pretend Relays: No answer from 127.0.0.2:1."]);
+  conns.stop();
+});
+
+test("a device that forgot this Nexternel: marked for Pair again, tried only rarely, and paired again it keeps its place", async () => {
+  const hubHex = hex(hub.pub);
+  const hubName = device.pairedHubs.get(hubHex)!;
+  device.pairedHubs.delete(hubHex); // removed on the device's own page
+  const { conns, calls, pairing } = setup({ notPairedRetryMs: 400 });
+  try {
+    const before = device.viaPort;
+    await conns.add(pairing);
+    await waitFor(() => needsPairing(pairing.deviceId) === "forgotten");
+    assert.equal(conns.isOpen(pairing.deviceId), false);
+    assert.deepEqual(calls.activity, [
+      "Pretend Relays: Pretend Relays no longer lists this Nexternel (it was removed on the device's page, or the device was reset). Pair it again.",
+    ]);
+    await new Promise((r) => setTimeout(r, 250)); // with the usual 50 ms retries this would be about 5 more tries
+    assert.equal(device.viaPort - before, 1, "not tried again before the long wait");
+    // The owner pairs it again: the same device in Nexternel, its line opens, the mark goes.
+    device.pairingCode = "7KQ2M9XD";
+    await pairDevice({ address: device.address, linePort: device.linePort, code: "7KQ2M9XD", hub, hubName });
+    device.pairingCode = null;
+    await conns.add(pairing);
+    await waitFor(() => conns.isOpen(pairing.deviceId));
+    assert.equal(needsPairing(pairing.deviceId), null);
+  } finally {
+    device.pairedHubs.set(hubHex, hubName);
+    conns.stop();
+  }
+});
+
+test("a device that was reset (another key): marked for Pair again", async () => {
+  const { conns, pairing } = setup({ notPairedRetryMs: 60_000 });
+  await conns.add({ ...pairing, deviceKey: hex(x25519Key().pub) });
+  await waitFor(() => needsPairing(pairing.deviceId) === "reset");
+  assert.equal(conns.isOpen(pairing.deviceId), false);
+  conns.forget(pairing.deviceId);
+  assert.equal(needsPairing(pairing.deviceId), null, "removing the device clears the mark");
   conns.stop();
 });
 

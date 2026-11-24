@@ -4,6 +4,7 @@
  * Pure: no network, no database — the route passes in what Nexternel already has.
  */
 
+import { needsPairing } from "../zherodius/pairing-state.js";
 import type { FoundDevice, FoundDeviceKind } from "@nexternel/domain";
 
 export type { FoundDevice };
@@ -211,7 +212,7 @@ function matchKnown(
   const id = c.deviceId?.toLowerCase() ?? null;
   for (const d of devices) {
     if (c.kind === "zherodius") {
-      if (c.deviceId && d.zherodiusSerial === c.deviceId) return { kind: "device", id: d.id, name: d.name };
+      if (c.deviceId && d.zherodiusSerial === c.deviceId) return { kind: "device", id: d.id, name: d.name, needsPairing: needsPairing(d.id) };
       continue;
     }
     const mac = normaliseMac(d.macAddress);

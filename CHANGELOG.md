@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting at 1. Newest first.
 
+## V5.5.2
+
+- **Pair a Zherodius device again:** when a Zherodius device no longer accepts Nexternel (it was removed on the device's own page, or the device was reset), its page in Nexternel says so and offers **Pair again**, and Search my home offers it too. Pairing again keeps the device as it was: its area, panels, names and history stay. Until then Nexternel asks the device only every 30 minutes instead of every minute.
+
 ## V5.5.1
 
 - **A faster line to Zherodius devices:** Nexternel now talks to a Zherodius device on the device's own line, apart from the device's web page, so neither has to wait for the other. Devices on older Zherodius versions are reached the old way. Install this version before updating your boards to Zherodius 2.0.1.

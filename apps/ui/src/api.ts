@@ -2405,7 +2405,14 @@ export type DeviceRecord = {
   /** How Nexternel reaches the device. */
   connection: "mqtt" | "extension" | "zherodius" | "octopus";
   /** A paired Zherodius device: its serial number, software version and address. */
-  zherodius: { serial: string; version: string | null; address: string; hubName: string | null } | null;
+  zherodius: {
+    serial: string;
+    version: string | null;
+    address: string;
+    hubName: string | null;
+    /** The device no longer accepts this Nexternel: "forgotten" (removed on its page) or "reset"; null: fine. Offer Pair again. */
+    needsPairing: "forgotten" | "reset" | null;
+  } | null;
   esphomeName: string | null;
   firmwareType?: string;
   ipAddress: string | null;

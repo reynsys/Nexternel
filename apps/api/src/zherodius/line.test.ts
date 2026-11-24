@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
 import { hex, x25519Key } from "./line-crypto.js";
-import { openLine, pairDevice, type DeviceInfo, type DeviceStatus } from "./line.js";
+import { NotPairedError, openLine, pairDevice, type DeviceInfo, type DeviceStatus } from "./line.js";
 import { PretendDevice } from "./pretend-device.js";
 
 const device = new PretendDevice();
@@ -62,17 +62,17 @@ test("the open line asks, switches and hears changes", async () => {
   await assert.rejects(line.call("Zh.GetStatus"), /closed/);
 });
 
-test("a hub the device does not know is told so", async () => {
+test("a hub the device does not know is told so: pair it again", async () => {
   await assert.rejects(
     openLine({ address: device.address, linePort: device.linePort, hub: x25519Key(), deviceKey: hex(device.key.pub), serial: device.serial, onStatus: () => {}, onClose: () => {} }),
-    /not paired with this device/
+    (err: unknown) => err instanceof NotPairedError && err.why === "forgotten" && /no longer lists this Nexternel/.test(err.message)
   );
 });
 
-test("a device answering with another key is not trusted", async () => {
+test("a device answering with another key is not trusted: it was reset, pair it again", async () => {
   await assert.rejects(
     openLine({ address: device.address, linePort: device.linePort, hub, deviceKey: hex(x25519Key().pub), serial: device.serial, onStatus: () => {}, onClose: () => {} }),
-    /not the one kept when it was paired/
+    (err: unknown) => err instanceof NotPairedError && err.why === "reset" && /another key than when it was paired/.test(err.message)
   );
 });
 

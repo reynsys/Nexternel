@@ -22,6 +22,7 @@ import {
   type Availability,
 } from "./connectivity.js";
 import { getLiveState } from "../telemetry/state-cache.js";
+import { needsPairing } from "../zherodius/pairing-state.js";
 import { deviceSlugFromTopicPrefix, slugify } from "./slug.js";
 
 export type RelayInsert = EsphomeImportSuggestion["relays"][number] & {
@@ -43,7 +44,14 @@ export type DeviceDetail = {
   /** How Nexternel reaches the device. */
   connection: Connection;
   /** A paired Zherodius device: its serial number, software version and address. */
-  zherodius: { serial: string; version: string | null; address: string; hubName: string | null } | null;
+  zherodius: {
+    serial: string;
+    version: string | null;
+    address: string;
+    hubName: string | null;
+    /** The device no longer accepts this Nexternel: "forgotten" (removed on its page) or "reset"; null: fine. Offer Pair again. */
+    needsPairing: "forgotten" | "reset" | null;
+  } | null;
   ipAddress: string | null;
   macAddress: string | null;
   isEnabled: boolean;
@@ -265,7 +273,9 @@ export async function listDevicesDetailed(): Promise<DeviceDetail[]> {
       esphomeName: d.esphome_name,
       firmwareType: d.firmware_type || "esphome",
       connection: d.connection,
-      zherodius: d.zh_serial ? { serial: d.zh_serial, version: d.zh_version, address: d.zh_address ?? "", hubName: d.zh_hub_name } : null,
+      zherodius: d.zh_serial
+        ? { serial: d.zh_serial, version: d.zh_version, address: d.zh_address ?? "", hubName: d.zh_hub_name, needsPairing: needsPairing(d.id) }
+        : null,
       ipAddress: d.ip_address,
       macAddress: d.mac_address,
       isEnabled: d.is_enabled,

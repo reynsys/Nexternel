@@ -85,6 +85,19 @@ export class LineError extends Error {}
 /** The device did not answer an ask in time (the ask may still have been carried out). */
 export class NoAnswerError extends LineError {}
 
+/** The device's answer to a hub it does not know (Zherodius direct line description, docs/direct-line.md). */
+export const NOT_PAIRED_WORDS = "This hub is not paired with this device.";
+
+/** The device does not accept this Nexternel any more: only pairing again helps (not trying more often). */
+export class NotPairedError extends LineError {
+  constructor(
+    message: string,
+    readonly why: "forgotten" | "reset"
+  ) {
+    super(message);
+  }
+}
+
 const CONNECT_MS = 5_000;
 const ANSWER_MS = 5_000;
 /** Opening the line takes the device about a second (four X25519 steps); allow for a busy one. */
@@ -105,6 +118,7 @@ interface LineSocket {
   send(m: string | Buffer): void;
   close(): void;
 }
+
 
 /** Messages in arrival order, for whoever waits for them; the same for both ways of connecting. */
 class Inbox {
@@ -373,7 +387,10 @@ export async function openLine(o: {
     const hello = await readHello(sock);
     if (hello.serial !== o.serial) throw new LineError(`Another device (${hello.name}, ${hello.serial}) now answers at ${o.address}.`);
     if (hello.key.toLowerCase() !== o.deviceKey.toLowerCase()) {
-      throw new LineError(`${hello.name} answered with a key that is not the one kept when it was paired, so Nexternel does not trust it. Pair it again if the device was reset.`);
+      throw new NotPairedError(
+        `${hello.name} answers with another key than when it was paired (it was reset), so Nexternel does not trust it. Pair it again.`,
+        "reset"
+      );
     }
     const ini = noiseInitiator({ s: o.hub, rs: unhex(o.deviceKey) });
     sock.send(ini.writeMessage1());
@@ -381,6 +398,12 @@ export async function openLine(o: {
     if (m2 === null) throw new LineError(`${hello.name} did not open the line.`);
     if (typeof m2 === "string") {
       const words = parseText<{ line?: { error?: string } }>(m2, "answer").line?.error;
+      if (words === NOT_PAIRED_WORDS) {
+        throw new NotPairedError(
+          `${hello.name} no longer lists this Nexternel (it was removed on the device's page, or the device was reset). Pair it again.`,
+          "forgotten"
+        );
+      }
       throw new LineError(words ?? `${hello.name} did not open the line.`);
     }
     let send: CipherState;

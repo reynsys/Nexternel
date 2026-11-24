@@ -394,6 +394,7 @@ export function DevicesPage() {
     onRestoreYaml: restoreYaml,
     onEditBuilder: openEditBuilder,
     onAdoptToBuilder: adoptToBuilder,
+    onReload: () => void load(),
     onOpenEsphomePanel: (d: DeviceRecord, mode: "usb" | "file" = "usb") => {
       setEsphomePanelMode(mode);
       setEsphomePanelDevice(d);

@@ -12,7 +12,8 @@ import { insetSx } from "../../../skins/surfaceStyles";
 export type Paired = { deviceId: string; name: string; online: boolean; switches: number; readings: number };
 
 type Props = {
-  device: FoundDevice;
+  /** The device to pair; with `alreadyIn` it is paired again and keeps its place, panels and history. */
+  device: Pick<FoundDevice, "name" | "address" | "alreadyIn">;
   areas: { id: string; name: string }[];
   onBack: () => void;
   onPaired: (paired: Paired) => void;
@@ -24,6 +25,8 @@ const codeLength = (code: string) => code.replace(/[^0-9A-Za-z]/g, "").length;
 /**
  * Add a Zherodius device that Search my home found: the owner opens pairing on the device's own page,
  * types the code shown there, and picks an area. The device then comes in with its own name.
+ * Pair again (a device already in Nexternel that no longer accepts it): the same steps, no area to pick;
+ * the device stays the same one in Nexternel.
  */
 export function ZherodiusPairing({ device, areas, onBack, onPaired }: Props) {
   const [code, setCode] = useState("");
@@ -31,6 +34,7 @@ export function ZherodiusPairing({ device, areas, onBack, onPaired }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const ready = codeLength(code) === 8;
+  const again = Boolean(device.alreadyIn);
 
   async function pair() {
     if (!device.address || !ready) return;
@@ -61,6 +65,11 @@ export function ZherodiusPairing({ device, areas, onBack, onPaired }: Props) {
           Zherodius device{device.address ? ` · IP address ${device.address}` : ""}
         </Typography>
       </Box>
+      {again ? (
+        <Typography variant="body2" color="text.secondary">
+          This device no longer accepts this Nexternel. Pairing it again keeps it as “{device.alreadyIn!.name}”, with its {AREA.singular.toLowerCase()}, panels and history.
+        </Typography>
+      ) : null}
 
       <Stack component="ol" gap={1} sx={{ m: 0, pl: 2.5 }}>
         <Typography component="li">
@@ -90,6 +99,7 @@ export function ZherodiusPairing({ device, areas, onBack, onPaired }: Props) {
         autoFocus
         fullWidth
       />
+      {again ? null : (
       <FormControl fullWidth>
         <InputLabel id="zherodius-pairing-area">{AREA.singular}</InputLabel>
         <Select labelId="zherodius-pairing-area" label={AREA.singular} value={areaId} onChange={(e) => setAreaId(e.target.value)}>
@@ -101,6 +111,7 @@ export function ZherodiusPairing({ device, areas, onBack, onPaired }: Props) {
           ))}
         </Select>
       </FormControl>
+      )}
       {error ? (
         <Alert severity="error" role="alert">
           {error}
@@ -111,7 +122,7 @@ export function ZherodiusPairing({ device, areas, onBack, onPaired }: Props) {
           Back
         </Button>
         <Button type="submit" variant="contained" disabled={busy || !ready || !device.address}>
-          {busy ? "Pairing…" : "Pair and add"}
+          {busy ? "Pairing…" : again ? "Pair again" : "Pair and add"}
         </Button>
       </ButtonRow>
     </Stack>

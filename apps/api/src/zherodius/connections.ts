@@ -10,15 +10,19 @@
  * - a newer Zherodius found by the device's own update check is noted (its status says which), so Devices can
  *   offer it; installing it is asked over the line (Zh.Update), only when the owner presses Update.
  * A device that moved to another address is found again by its serial number on the home network.
+ * A device that no longer accepts Nexternel (removed on its own page, or reset) is marked for "Pair again"
+ * (pairing-state.ts) and tried only every 30 minutes, as only pairing again helps.
  */
 import type { CapabilityRow } from "../capabilities/store.js";
 import type { DevicePath, ItemSender } from "../devices/device-path.js";
 import { readStatus, type ItemMap } from "./items.js";
 import type { X25519Key } from "./line-crypto.js";
+import { setNeedsPairing } from "./pairing-state.js";
 import {
   compareVersions,
   LineError,
   NoAnswerError,
+  NotPairedError,
   openLine,
   UPDATES_FROM_HUB,
   type DeviceInfo,
@@ -59,6 +63,8 @@ export type ConnectionsDeps = {
   updateReady?(entry: { deviceId: string; deviceName: string; version: string; latest: string; notes: string }): void;
   /** Waits between tries to open a line (the last one repeats). */
   retryMs?: number[];
+  /** Wait between tries while the device does not accept this Nexternel (only pairing again helps). */
+  notPairedRetryMs?: number;
   /** A line the device has said nothing on for this long is taken as gone. */
   silentMs?: number;
   /** The devices' line port (LINE_PORT; tests use the pretend device's). */
@@ -68,6 +74,8 @@ export type ConnectionsDeps = {
 /** The device sends its status at least every 30 seconds: two missed ones and a bit = gone. */
 const SILENT_MS = 75_000;
 const RETRY_MS = [1_000, 2_000, 5_000, 10_000, 30_000, 60_000];
+/** A device that does not accept this Nexternel is asked again only every 30 minutes (its pairings may come back from a backup). */
+const NOT_PAIRED_RETRY_MS = 30 * 60_000;
 /** Longer than the shared path waits for a press, so the shared path decides about "no answer". */
 const PRESS_ANSWER_MS = 7_000;
 /** How long the device has to confirm it forgot Nexternel. */
@@ -100,6 +108,7 @@ export function updatesFromHub(version: string | null | undefined): boolean {
 export function createZherodiusConnections(deps: ConnectionsDeps) {
   const entries = new Map<string, Entry>();
   const retryMs = deps.retryMs ?? RETRY_MS;
+  const notPairedRetryMs = deps.notPairedRetryMs ?? NOT_PAIRED_RETRY_MS;
   const silentMs = deps.silentMs ?? SILENT_MS;
   let watchdog: ReturnType<typeof setInterval> | null = null;
 
@@ -125,9 +134,8 @@ export function createZherodiusConnections(deps: ConnectionsDeps) {
     return run;
   }
 
-  function scheduleRetry(entry: Entry) {
+  function scheduleRetry(entry: Entry, wait = retryMs[Math.min(entry.attempt, retryMs.length - 1)]!) {
     if (entry.stopped || entry.retry) return;
-    const wait = retryMs[Math.min(entry.attempt, retryMs.length - 1)]!;
     entry.attempt += 1;
     entry.retry = setTimeout(() => {
       entry.retry = null;
@@ -257,6 +265,7 @@ export function createZherodiusConnections(deps: ConnectionsDeps) {
       });
       if (entry.line === line) {
         entry.attempt = 0;
+        setNeedsPairing(entry.p.deviceId, null);
         tell(entry, null);
       }
     } catch (err) {
@@ -266,7 +275,10 @@ export function createZherodiusConnections(deps: ConnectionsDeps) {
         line.close();
       }
       tell(entry, err instanceof LineError ? err.message : "the direct line could not be opened");
-      scheduleRetry(entry);
+      if (err instanceof NotPairedError) {
+        setNeedsPairing(entry.p.deviceId, err.why);
+        scheduleRetry(entry, notPairedRetryMs);
+      } else scheduleRetry(entry);
     } finally {
       entry.connecting = false;
     }
@@ -323,6 +335,7 @@ export function createZherodiusConnections(deps: ConnectionsDeps) {
 
   /** The device was removed from Nexternel: its line ends and is not opened again. */
   function forget(deviceId: string) {
+    setNeedsPairing(deviceId, null);
     const entry = entries.get(deviceId);
     if (!entry) return;
     entry.stopped = true;

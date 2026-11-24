@@ -290,6 +290,7 @@ apps/api/src/zherodius/line-crypto.test.ts
 apps/api/src/zherodius/line-crypto.ts
 apps/api/src/zherodius/line.test.ts
 apps/api/src/zherodius/line.ts
+apps/api/src/zherodius/pairing-state.ts
 apps/api/src/zherodius/pretend-device.ts
 apps/api/src/zherodius/service.ts
 apps/api/src/zherodius/store.ts
