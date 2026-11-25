@@ -11,6 +11,7 @@ import {
 } from "react";
 import { Box, Button, Portal, Stack, Typography, useMediaQuery } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import { floatingGlass } from "../../skins/surfaceStyles";
 
 /** Width of the side panel on wide screens; the page keeps this much free on the right. */
 export const SIDE_PANEL_WIDTH = 440;
@@ -124,7 +125,7 @@ export function SidePanel({ open, onClose, title, subtitle, top, footer, showClo
         bgcolor: t.nx.popupFill || "background.paper",
         borderLeft: t.nx.popupBorder || `1px solid ${t.palette.divider}`,
         boxShadow: t.nx.popupShadow || "0 0 40px rgba(0,0,0,.45)",
-        backdropFilter: "blur(14px)",
+        ...floatingGlass(t, 14),
       })}
     >
       <Stack direction="row" alignItems="flex-start" spacing={1} sx={{ px: 2, pt: 2, pb: 1.5, flexShrink: 0, borderBottom: 1, borderColor: "divider" }}>

@@ -3,14 +3,7 @@ import { gradientCss } from "./gradientPalettes";
 import type { ThemePrefs } from "./themePrefs";
 import { resolveLook } from "./looks/registry";
 import type { LookTokens } from "./looks/types";
-
-/*
- * Frosted glass blurs whatever is behind it. Over a moving background effect that blur must be
- * redone every frame (it halved the frame rate in tests), so while an effect runs
- * BackgroundEffects sets --nx-glass-blur to none and adds --nx-glass-tint, a thicker fill instead.
- */
-const GLASS_BLUR = (px: number) => `var(--nx-glass-blur, blur(${px}px))`;
-const GLASS_TINT = "linear-gradient(var(--nx-glass-tint, transparent), var(--nx-glass-tint, transparent))";
+import { FLOATING_TINT, GLASS_BLUR, GLASS_TINT } from "./glass";
 
 /**
  * True when the page has a backdrop to show through — a gradient or soft-glow background, or a
@@ -36,6 +29,12 @@ const blurOf = (t: Theme, px: number) => (t.nxScheme?.surfaces === "glass" ? GLA
  * background picture" switch is no longer used (kept in the signatures for older callers).
  */
 
+/** Glass floating over the page (dock, bars, side panels): blurred, or a thicker fill over a moving effect. */
+export const floatingGlass = (t: Theme, px: number) => ({
+  backgroundImage: t.nxScheme?.surfaces === "glass" ? FLOATING_TINT : "none",
+  backdropFilter: GLASS_BLUR(px),
+});
+
 /** Frames: side menu, dashboard sections. */
 export function chromeSurfaceSx(_gradientActive?: boolean) {
   return {
@@ -47,8 +46,18 @@ export function chromeSurfaceSx(_gradientActive?: boolean) {
 
 /** Bars that stay while the page scrolls under them (top bar, bottom menu, page bar): frames too. */
 export function barSurfaceSx(_gradientActive?: boolean) {
-  return chromeSurfaceSx();
+  return {
+    bgcolor: (t: Theme) => t.nxScheme.surface.frame,
+    backgroundImage: (t: Theme) => floatingGlass(t, 14).backgroundImage,
+    backdropFilter: (t: Theme) => blurOf(t, 14),
+  };
 }
+
+/*
+ * Sections and panels do not blur: behind them is only the smooth page background, where a blur does not
+ * show but is redone each time a reading moves (13 panels and their section halved a dashboard's speed).
+ * What floats over text does (menus, dock, bars, side panels, pop-ups).
+ */
 
 /** Panel fill as plain style values (for theme overrides). */
 export function contentPanelStyles(theme: Theme, _opts?: { gradientActive: boolean; solidContentPanels: boolean }) {
@@ -56,8 +65,6 @@ export function contentPanelStyles(theme: Theme, _opts?: { gradientActive: boole
   return {
     backgroundColor: theme.nxScheme?.surface.panel ?? theme.palette.background.paper,
     backgroundImage: glass ? GLASS_TINT : "none",
-    backdropFilter: glass ? GLASS_BLUR(10) : "none",
-    WebkitBackdropFilter: glass ? GLASS_BLUR(10) : "none",
   };
 }
 
@@ -76,7 +83,6 @@ export function contentSurfaceSx(_gradientActive?: boolean, _solidContentPanels 
   return {
     bgcolor: (t: Theme) => t.nxScheme.surface.panel,
     backgroundImage: (t: Theme) => (t.nxScheme.surfaces === "glass" ? GLASS_TINT : "none"),
-    backdropFilter: (t: Theme) => blurOf(t, 10),
   };
 }
 
@@ -123,6 +129,5 @@ export function sectionSx(_gradientActive?: boolean) {
     boxShadow: t.nx.sectionShadow,
     backgroundColor: t.nx.sectionFill,
     backgroundImage: "none",
-    backdropFilter: blurOf(t, 14),
   });
 }

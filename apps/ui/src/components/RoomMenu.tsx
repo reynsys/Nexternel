@@ -5,6 +5,7 @@ import { getDashboardIcon } from "../lib/dashboard-icons";
 import { DOCK_TILE, dockFit } from "../lib/dock-fit";
 import type { RoomNav } from "../lib/room-nav";
 import { ARRANGE_ATTR, type ArrangeDashboards } from "../lib/use-arrange-dashboards";
+import { floatingGlass } from "../skins/surfaceStyles";
 import { ArrangeArrows, ArrangeGrip } from "./ArrangeControls";
 
 type Props = {
@@ -132,7 +133,7 @@ const islandFrame = (t: Theme) => ({
   borderRadius: t.nx.radiusCard,
   border: t.nx.chromeEdge,
   bgcolor: t.nx.chromeFill,
-  backdropFilter: t.nxScheme.surfaces === "glass" ? "blur(14px)" : "none",
+  ...(t.nxScheme.surfaces === "glass" ? floatingGlass(t, 14) : {}),
   boxShadow: t.nx.popupShadow,
 });
 

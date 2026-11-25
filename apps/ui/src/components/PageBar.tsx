@@ -18,7 +18,7 @@ export function PageBar({ children }: { children: ReactNode }) {
   const [slot, setSlot] = useState<HTMLElement | null>(null);
   useEffect(() => setSlot(document.getElementById(PAGE_BAR_SLOT_ID)), []);
   const bar = (
-    <Box data-nx-role="chrome" sx={{ ...barSurfaceSx(gradientActive), backdropFilter: "blur(10px)" }}>
+    <Box data-nx-role="chrome" sx={barSurfaceSx(gradientActive)}>
       <Box
         sx={{
           minHeight: 64,

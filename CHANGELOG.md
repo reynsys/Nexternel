@@ -2,6 +2,10 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting at 1. Newest first.
 
+## V5.5.6 — 25/11/2026
+
+- **Glass is much smoother, with or without a background effect:** sections and panels no longer blur the plain background behind them (they look almost the same), so dashboards move freely. And with the Glass look and a moving background (bubbles, snow, stars and the others), dashboards were jerky. The dashboard menu at the bottom, the top and edit bars, side panels and pop-ups no longer blur what moves behind them while an effect runs; they get a thicker fill instead, so everything stays readable.
+
 ## V5.5.5 — 25/11/2026
 
 - **Settings opens at once:** pressing Settings in the menu no longer makes the screen stand still for a moment. Appearance now draws only the tab you have open, and the samples on its Look tab appear one after another.

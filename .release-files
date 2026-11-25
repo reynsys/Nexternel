@@ -409,6 +409,7 @@ apps/ui/src/lib/appearance/background-colours.test.ts
 apps/ui/src/lib/appearance/color.ts
 apps/ui/src/lib/appearance/fonts-load.ts
 apps/ui/src/lib/appearance/fonts.ts
+apps/ui/src/lib/appearance/glass-blur.test.ts
 apps/ui/src/lib/appearance/presets.ts
 apps/ui/src/lib/appearance/scale.ts
 apps/ui/src/lib/appearance/scheme.ts
@@ -701,6 +702,7 @@ apps/ui/src/skins/builtin/mui-dashboard/theme.ts
 apps/ui/src/skins/effects/BackgroundEffects.tsx
 apps/ui/src/skins/effects/catalog.ts
 apps/ui/src/skins/effects/engine.ts
+apps/ui/src/skins/glass.ts
 apps/ui/src/skins/gradientPalettes.ts
 apps/ui/src/skins/local/.gitignore
 apps/ui/src/skins/local/.gitkeep

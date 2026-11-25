@@ -84,7 +84,7 @@ export function BackgroundEffects({ prefs }: { prefs: ThemePrefs }) {
   if (!active) return null;
   return (
     <>
-      {/* Glass without blur while the background moves — see surfaceStyles.ts. */}
+      {/* Glass without blur while the background moves — see glass.ts. */}
       <GlobalStyles
         styles={{
           ":root": {

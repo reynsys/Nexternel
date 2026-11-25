@@ -1,5 +1,6 @@
 import { alpha, type Theme } from "@mui/material/styles";
 import { GLASS_LOOK_ID, STANDARD_LOOK_ID } from "../../lib/look-choice";
+import { FLOATING_TINT, GLASS_BLUR } from "../glass";
 import type { LookTokens, UiLook } from "./types";
 
 /** Today's panel shape: the values the dashboard used before Looks existed. */
@@ -147,7 +148,8 @@ export const glassLook: UiLook = {
   // Dialogs, menus and pop-ups are frosted glass too, like the panels.
   css: `:scope[data-nx-look="glass"] [data-nx-role="popup"] {
   background-color: var(--nx-popup) !important;
-  backdrop-filter: blur(18px) saturate(1.25);
+  background-image: ${FLOATING_TINT} !important;
+  backdrop-filter: ${GLASS_BLUR(18, " saturate(1.25)")};
 }`,
 };
 
