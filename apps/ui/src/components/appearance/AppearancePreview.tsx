@@ -1,5 +1,5 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Box, Typography } from "@mui/material";
+import { Box } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import type { ThemePrefs } from "../../skins/themePrefs";
 import { resolveLook } from "../../skins/looks/registry";
@@ -8,6 +8,7 @@ import { LookLayer } from "../../skins/SkinProvider";
 import { getSkin } from "../../skins/registry";
 import { EffectPicture, useEffectOptions, useReducedMotion } from "../../skins/effects/BackgroundEffects";
 import { LookSample, NO_CONTROLS } from "./LookSample";
+import { ReadableLine } from "./ReadableLine";
 
 /**
  * The preview is drawn as wide as a laptop's dashboard (five panels in a row), in one shape for every
@@ -83,7 +84,6 @@ export function AppearancePreview({ prefs, skinId, deviceDark = true }: { prefs:
   const look = resolveLook(prefs.lookId);
   const mode = look.forceMode ?? (prefs.autoMode ? (deviceDark ? "dark" : "light") : prefs.mode);
   const scheme = useMemo(() => schemeForPrefs({ ...prefs, mode }, mode, Boolean(look.frosted)), [prefs, mode, look]);
-  const allReadable = scheme.audit.every((a) => a.pass);
   const skin = useMemo(() => getSkin(skinId), [skinId]);
 
   const outerRef = useRef<HTMLDivElement>(null);
@@ -123,11 +123,7 @@ export function AppearancePreview({ prefs, skinId, deviceDark = true }: { prefs:
           </LookLayer>
         </Box>
       </Box>
-      <Typography variant="caption" sx={{ display: "block", mt: 0.75, color: allReadable ? "success.main" : "warning.main" }}>
-        {allReadable
-          ? `✓ Every text and control is readable (${scheme.audit.length} checks).`
-          : "Some text may be hard to read with these settings."}
-      </Typography>
+      <ReadableLine scheme={scheme} />
     </Box>
   );
 }

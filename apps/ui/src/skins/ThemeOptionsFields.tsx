@@ -30,7 +30,9 @@ import { ButtonRow } from "../components/ButtonRow";
 import { PHONE_ROOM_NAVS, ROOM_NAVS } from "../lib/room-nav";
 import { Segmented } from "../components/Segmented";
 import { AppearancePreview } from "../components/appearance/AppearancePreview";
+import { InTurn } from "../components/appearance/InTurn";
 import { LookSampleBox } from "../components/appearance/LookSampleBox";
+import { ReadableLine } from "../components/appearance/ReadableLine";
 import { HARMONIES } from "../lib/appearance/scale";
 import { CORE_FONTS, FONT_GROUPS, DEFAULT_FONT_ID } from "../lib/appearance/fonts";
 import { THEME_PRESETS } from "../lib/appearance/presets";
@@ -50,6 +52,8 @@ type Props = {
   onPhone?: boolean;
   /** A wall screen with Light effects on (Users → Edit → Wall display): its screen shows no background effect. */
   wallLight?: boolean;
+  /** Show a preview: the settings are for another account, so the page itself does not change. */
+  preview?: boolean;
 };
 
 const TABS = [
@@ -155,11 +159,11 @@ function Swatch({ colour, label, selected, onClick }: { colour: string; label: s
 
 /**
  * Settings → Appearance (and Users → Edit): one theme made of a style, a mode, three colours, a
- * background and a font — with a live preview and ready-made themes. Every colour comes from the
+ * background and a font and ready-made themes; with a preview in Edit user. Every colour comes from the
  * Appearance engine (lib/appearance), which keeps all text readable. Every colour choice is on the
  * Colours tab; Style is how things are drawn and what moves.
  */
-export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, onSkinChange, footnote, onPhone = false, wallLight = false }: Props) {
+export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, onSkinChange, footnote, onPhone = false, wallLight = false, preview = false }: Props) {
   const [customHex, setCustomHex] = useState(themePrefs.primary);
   const [kind, setKind] = useState<BackgroundKind>(() => kindOf(themePrefs.gradientId));
   const reducedMotion = useReducedMotion();
@@ -497,7 +501,9 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
           {listLooks().map((l) => (
             <ChoiceTile key={l.id} holdsSample selected={look.id === l.id} onClick={() => onThemeChange(withLook(themePrefs, l.id))} title={l.label}>
               <Box sx={{ width: "100%", mb: 0.5, borderRadius: 1, overflow: "hidden" }}>
-                <LookSampleBox prefs={{ ...withLook(themePrefs, l.id), effectId: "off" }} skinId={skinId} show="look" drawnWidth={LOOK_TILE_DRAWN_WIDTH} />
+                <InTurn placeholder={<Box sx={{ aspectRatio: "3 / 2" }} />}>
+                  <LookSampleBox prefs={{ ...withLook(themePrefs, l.id), effectId: "off" }} skinId={skinId} show="look" drawnWidth={LOOK_TILE_DRAWN_WIDTH} />
+                </InTurn>
               </Box>
             </ChoiceTile>
           ))}
@@ -510,7 +516,9 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
                 <ChoiceTile key={b.id} holdsSample selected={chosenLookButtons(look, themePrefs.lookButtons)?.id === b.id} onClick={() => set({ lookButtons: b.id })} title={b.label}>
                   {/* Shown a little bigger than buttons are (every button is one size), so its details read. */}
                   <Box sx={{ py: 1, mb: 0.25, zoom: 1.2 }}>
-                    <LookSampleBox prefs={{ ...themePrefs, lookButtons: b.id, effectId: "off" }} skinId={skinId} show="buttons" background={false} />
+                    <InTurn placeholder={<Box sx={{ height: 36 }} />}>
+                      <LookSampleBox prefs={{ ...themePrefs, lookButtons: b.id, effectId: "off" }} skinId={skinId} show="buttons" background={false} />
+                    </InTurn>
                   </Box>
                 </ChoiceTile>
               ))}
@@ -519,7 +527,7 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
         ) : null}
       </Section>
 
-        {tab === "style" ? effectTiles : null}
+        {effectTiles}
       </Stack>
     ),
     text: textTab,
@@ -537,22 +545,19 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
         variant="scrollable"
         allowScrollButtonsMobile
         aria-label="Appearance"
-        sx={{ mb: 3 }}
+        sx={{ mb: preview ? 3 : 1 }}
       >
         {TABS.map((t) => (
           <Tab key={t.id} value={t.id} label={t.label} sx={{ minWidth: 0, px: 1.75 }} />
         ))}
       </Tabs>
-      {tab !== "style" ? (tabContent[tab] ?? tabContent.theme) : null}
-      {/* The Look tab is always there, laid out at its real width but unseen until opened (not display:
-          none, which has no width to lay panels out in), so its live samples are drawn by the time it is opened. */}
-      <Box
-        inert={tab !== "style"}
-        aria-hidden={tab !== "style"}
-        sx={tab === "style" ? undefined : { visibility: "hidden", position: "absolute", top: 0, left: 0, right: 0, height: 0, overflow: "hidden" }}
-      >
-        {tabContent.style}
-      </Box>
+      {preview ? null : (
+        <Box sx={{ mb: 2.5 }}>
+          <ReadableLine scheme={scheme} />
+        </Box>
+      )}
+      {/* Only the open tab is drawn. The Look tab's live samples are the heaviest part of the page, so they are drawn one by one once it is open. */}
+      {tabContent[tab] ?? tabContent.theme}
       {footnote ? (
         <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 3 }}>
           {footnote}
@@ -560,6 +565,10 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
       ) : null}
     </Box>
   );
+
+  // Choices show on the whole page at once. Only where they do not (another account's, in Edit user) is
+  // there a preview; elsewhere just the line that says whether everything can be read.
+  if (!preview) return settings;
 
   // Room enough (measured on the space this editor has, not the screen: it also sits inside the
   // Edit user popup): settings on the left, the preview beside them staying in view; else preview first.
