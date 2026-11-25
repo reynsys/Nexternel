@@ -35,7 +35,7 @@ import { HARMONIES } from "../lib/appearance/scale";
 import { CORE_FONTS, FONT_GROUPS, DEFAULT_FONT_ID } from "../lib/appearance/fonts";
 import { THEME_PRESETS } from "../lib/appearance/presets";
 import { ChoiceTile, ThemePresetTile, prefsWithPreset, presetIsChosen } from "./ThemePresetTile";
-import { MINE_GLOW_ID, MINE_GRADIENT_ID, isMineBackground, mineBackground, schemeForPrefs } from "./appearance-scheme";
+import { MINE_GLOW_ID, MINE_GRADIENT_ID, backgroundHasColours, isMineBackground, mineBackground, schemeForPrefs } from "./appearance-scheme";
 import { fontFamilyFor } from "./looks/resolve";
 
 type Props = {
@@ -197,6 +197,10 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
   // Fonts: Nexternel's built-in ones, plus any a Look brings of its own.
   const lookOwnFonts = (look.fonts ?? []).filter((f) => !CORE_FONTS.some((c) => c.id === f.id));
   const fontId = themePrefs.lookFont ?? look.fonts?.[0]?.id ?? DEFAULT_FONT_ID;
+  // A plain background has no colours to take: that choice is not offered, and main colour is what shows.
+  const hasBackgroundColours = backgroundHasColours(themePrefs.gradientId);
+  const effectColours = EFFECT_COLOURS.filter((c) => c.value !== "scene" || hasBackgroundColours);
+  const effectColour = themePrefs.effectColour === "scene" && !hasBackgroundColours ? "accent" : (themePrefs.effectColour ?? "white");
   const swatches = kind === "glow" ? GLOW_PALETTES : kind === "gradient" ? GRADIENT_PALETTES : [];
 
   const modeTiles = (
@@ -480,8 +484,8 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
 
       {/* Only while a background effect is on (chosen on the Look tab). */}
       {effectId !== "off" ? (
-        <Section title="Background effect colour" hint="White, your main colour, or the colours of your background.">
-          <Segmented<EffectColour> label="Effect colour" value={themePrefs.effectColour ?? "white"} options={EFFECT_COLOURS} onChange={(v) => set({ effectColour: v })} />
+        <Section title="Background effect colour" hint={hasBackgroundColours ? "White, your main colour, or the colours of your background." : "White or your main colour."}>
+          <Segmented<EffectColour> label="Effect colour" value={effectColour} options={effectColours} onChange={(v) => set({ effectColour: v })} />
         </Section>
       ) : null}
       </Stack>

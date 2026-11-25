@@ -1,6 +1,6 @@
 import { buildScheme, type Scheme } from "../lib/appearance/scheme";
 import { mix, withAlpha } from "../lib/appearance/color";
-import { getGradientPalette, gradientBaseColour, GRADIENT_NONE_ID } from "./gradientPalettes";
+import { getGradientPalette, gradientBaseColour, GRADIENT_NONE_ID, paletteColours as readyMadeColours } from "./gradientPalettes";
 import type { ThemePrefs } from "./themePrefs";
 
 /** Backgrounds made from the person's own colours (Settings → Appearance → Background). */
@@ -24,6 +24,22 @@ function paletteColours(gradientId: string | undefined, mode: "light" | "dark"):
   return [p.from, p.to, mix(p.from, p.to, 0.5)];
 }
 
+/** The person's three colours as strong as backgrounds and effects draw them. */
+const threeColours = (scheme: Scheme): [string, string, string] => [scheme.scales.main[8], scheme.scales.second[8], scheme.scales.third[8]];
+
+/** A plain background has no colours of its own for effects to take. */
+export const backgroundHasColours = (gradientId: string | null | undefined) =>
+  isMineBackground(gradientId) || getGradientPalette(gradientId) !== null;
+
+/**
+ * The colours of the chosen background, for effects coloured "like the background": a ready-made one's
+ * own, or the person's three colours for one made from them. Empty for a plain background.
+ */
+export function backgroundColours(prefs: ThemePrefs, mode: "light" | "dark"): string[] {
+  if (isMineBackground(prefs.gradientId)) return threeColours(schemeForPrefs(prefs, mode, false));
+  return readyMadeColours(prefs.gradientId).map(hexOf);
+}
+
 /**
  * A background made from the scheme's own colours (glow pools or a soft gradient): a CSS
  * background-image (layers only — the page colour under it is the scheme's page colour).
@@ -34,7 +50,7 @@ export function mineBackground(scheme: Scheme, kind: string): { css: string; col
   const dark = r.mode === "dark";
   if (kind === MINE_GLOW_ID) {
     const a = dark ? 0.35 : 0.22;
-    const pools = [scheme.scales.main[8], scheme.scales.second[8], scheme.scales.third[8]];
+    const pools = threeColours(scheme);
     return {
       css: `radial-gradient(60% 55% at 12% 15%, ${withAlpha(pools[0], a)}, transparent 70%), radial-gradient(55% 50% at 90% 85%, ${withAlpha(pools[1], a)}, transparent 70%), radial-gradient(45% 45% at 70% 10%, ${withAlpha(pools[2], a * 0.8)}, transparent 70%)`,
       colours: [bg, ...pools.map((p) => mix(p, bg, a))],

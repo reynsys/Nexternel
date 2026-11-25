@@ -20,6 +20,7 @@ import {
   Alert,
   InputAdornment,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import type { Capability, HistoryRange, WidgetInstance } from "../../api";
 import { CapabilityPicker } from "../../components/CapabilityPicker";
 import { PanelTitleFields } from "../../components/PanelTitleFields";
@@ -97,6 +98,7 @@ export function EChartsWidgetEditor({
   onSave,
   renderPreview,
 }: Props) {
+  const theme = useTheme();
   const [presetId, setPresetId] = useState("gauge");
   const [title, setTitle] = useState("");
   const [titleIcon, setTitleIcon] = useState("auto");
@@ -216,7 +218,8 @@ export function EChartsWidgetEditor({
     onClose();
   }
 
-  const accentColour = /^#[0-9a-fA-F]{6}$/.test(accent.trim()) ? accent.trim() : "#1A73E8";
+  // Empty: the square shows the Appearance colour the chart then uses.
+  const accentColour = /^#[0-9a-fA-F]{6}$/.test(accent.trim()) ? accent.trim() : theme.palette.primary.main;
 
   const previewResult = open && renderPreview ? patchFrom() : null;
   const kindLabel = kindName(editScope);
@@ -376,7 +379,7 @@ export function EChartsWidgetEditor({
             </Typography>
 
             <TextField
-              label="Accent colour"
+              label="Colour"
               size="small"
               fullWidth
               value={accent}
@@ -389,7 +392,7 @@ export function EChartsWidgetEditor({
                     <Box
                       component="input"
                       type="color"
-                      aria-label="Pick accent colour"
+                      aria-label="Pick colour"
                       value={accentColour}
                       onChange={(e) => setAccent((e.target as HTMLInputElement).value)}
                       sx={{ width: 28, height: 28, p: 0, border: 0, bgcolor: "transparent", cursor: "pointer" }}

@@ -2,6 +2,11 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting at 1. Newest first.
 
+## V5.5.4
+
+- **Background effects** (Settings → Appearance → Colours): with a "From my colours" background, "Background colours" now uses all three of your colours, not only the main one. With a Plain background that choice is no longer shown, as there are no colours to take.
+- **Gauges** (Edit → Look): "Accent colour" is now called "Colour", and while it is empty the small square shows the colour the gauge really uses.
+
 ## V5.5.3
 
 - **"Reconnect" instead of "Pair again":** the button and notice for a Zherodius device that no longer accepts Nexternel now say Reconnect.

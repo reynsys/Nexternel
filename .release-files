@@ -403,6 +403,7 @@ apps/ui/src/lib/add-panel-discovery.test.ts
 apps/ui/src/lib/add-panel-discovery.ts
 apps/ui/src/lib/add-panel-validation.ts
 apps/ui/src/lib/appearance/appearance.test.ts
+apps/ui/src/lib/appearance/background-colours.test.ts
 apps/ui/src/lib/appearance/color.ts
 apps/ui/src/lib/appearance/fonts-load.ts
 apps/ui/src/lib/appearance/fonts.ts

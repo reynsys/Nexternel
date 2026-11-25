@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { GlobalStyles } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
-import { paletteColours } from "../gradientPalettes";
+import { backgroundColours } from "../appearance-scheme";
 import type { ThemePrefs } from "../themePrefs";
 import type { EffectOptions, Rgb } from "./engine";
 
@@ -31,16 +31,20 @@ function hexToRgb(hex: string): Rgb {
 export function useEffectOptions(prefs: ThemePrefs): EffectOptions {
   const theme = useTheme();
   const effectId = prefs.effectId ?? "off";
+  // As text, so the effect only changes when the colours really do (not with every other Appearance choice).
+  const sceneKey = useMemo(
+    () => (prefs.effectColour === "scene" ? backgroundColours(prefs, theme.palette.mode).join(" ") : ""),
+    [prefs, theme.palette.mode]
+  );
   return useMemo<EffectOptions>(() => {
     const light = prefs.mode === "light";
     let colours: Rgb[] = light ? [[70, 85, 110]] : [[255, 255, 255]];
     if (prefs.effectColour === "accent") colours = [hexToRgb(theme.palette.primary.main)];
     if (prefs.effectColour === "scene") {
-      const scene = paletteColours(prefs.gradientId);
-      colours = scene.length ? scene : [hexToRgb(theme.palette.primary.main)];
+      colours = sceneKey ? sceneKey.split(" ").map(hexToRgb) : [hexToRgb(theme.palette.primary.main)];
     }
     return { id: effectId, amount: prefs.effectAmount ?? 1, speed: prefs.effectSpeed ?? 1, colours, light };
-  }, [effectId, prefs.mode, prefs.effectColour, prefs.effectAmount, prefs.effectSpeed, prefs.gradientId, theme.palette.primary.main]);
+  }, [effectId, prefs.mode, prefs.effectColour, prefs.effectAmount, prefs.effectSpeed, sceneKey, theme.palette.primary.main]);
 }
 
 /**
