@@ -2,6 +2,13 @@
 
 Versions are numbered **V{generation}.{major update}.{fix}**: the middle number goes up with each major update that brings new features, the last with each fix, starting at 1. Newest first.
 
+## V5.6.1 — 28/11/2026
+
+- **More from Zherodius devices** (Zherodius 2.7.2): new readings show by themselves (motion, person detected, light level, soil moisture, dust, air quality, VOC index, distance, voltage, current). Wired switches and contacts show as Open or Closed. Dimmable lights and colour LEDs are lights (on, brightness, colour). A buzzer has a button that sounds it.
+- **Shorter words on every page:** labels and values, no long help lines.
+- **Updates** (Settings → System): Installed, Status, Last checked and Last update in rows, and one button, "Update to V…".
+- **Backup:** "Last backup" shows the date and time only.
+
 ## V5.5.6 — 25/11/2026
 
 - **Glass is much smoother, with or without a background effect:** sections and panels no longer blur the plain background behind them (they look almost the same), so dashboards move freely. And with the Glass look and a moving background (bubbles, snow, stars and the others), dashboards were jerky. The dashboard menu at the bottom, the top and edit bars, side panels and pop-ups no longer blur what moves behind them while an effect runs; they get a thicker fill instead, so everything stays readable.

@@ -154,13 +154,13 @@ async function rows(): Promise<Row[]> {
 async function stateOf(r: Row, sid: string): Promise<{ status: AddonStatus; message: string | null; licence: LicencePayload | null }> {
   if (r.status === "revoked") return { status: "revoked", message: r.status_message, licence: null };
   const licence = readLicence(r.licence_token, keys());
-  if (!licence) return { status: "broken", message: "The licence on this server cannot be read. Install the key again.", licence: null };
+  if (!licence) return { status: "broken", message: "Licence unreadable. Enter the key again.", licence: null };
   const s = licenceState(licence, sid, Math.floor(Date.now() / 1000));
   if (s === "other-server") {
-    return { status: "broken", message: "This licence belongs to another server. Install the key again here.", licence };
+    return { status: "broken", message: "Licence for another server. Enter the key again.", licence };
   }
   if (s === "expired") {
-    return { status: "expired", message: "The licence could not be renewed. Check the internet connection, then press Check now.", licence };
+    return { status: "expired", message: "Not renewed. Check the internet connection.", licence };
   }
   return { status: "active", message: r.status_message, licence };
 }
@@ -220,7 +220,7 @@ async function callLicenceServer(path: string, body: Record<string, unknown>): P
       signal: AbortSignal.timeout(20000),
     });
   } catch {
-    throw new AddonError("The Nexternel licence server could not be reached. Check this server's internet connection and try again.");
+    throw new AddonError("Can't reach the Nexternel shop. Check the internet connection.");
   }
   const json = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   if (!res.ok) {
@@ -238,7 +238,7 @@ function packFromServer(json: Record<string, unknown>) {
 export async function installWithKey(rawKey: string): Promise<AddonInfo[]> {
   if (!addonsAvailable()) throw new AddonError("Paid extensions are not available on this version of Nexternel yet.");
   const key = normalizeLicenceKey(rawKey);
-  if (!key) throw new AddonError("That does not look like a licence key. Copy it exactly from your email.");
+  if (!key) throw new AddonError("Not a licence key.");
   const sid = await serverId();
   const activated = await callLicenceServer("/v1/activate", {
     key,
@@ -253,7 +253,7 @@ export async function installWithKey(rawKey: string): Promise<AddonInfo[]> {
     throw new AddonError("The licence server sent a licence this server cannot use.");
   }
   const packIds = Array.isArray(activated.packs) ? (activated.packs as unknown[]).filter((p): p is string => typeof p === "string") : [];
-  if (packIds.length === 0) throw new AddonError("This licence key does not include any extensions.");
+  if (packIds.length === 0) throw new AddonError("No extensions in this key.");
 
   for (const packId of packIds) {
     if (!licenceCovers(licence, packId)) continue;
@@ -267,7 +267,7 @@ export async function installWithKey(rawKey: string): Promise<AddonInfo[]> {
 
 async function savePack(m: AddonManifest, code: Buffer, key: string, token: string, lid: string): Promise<void> {
   if (m.minNexternel && !nexternelVersionAtLeast(APP_VERSION, m.minNexternel)) {
-    throw new AddonError(`${m.name} needs Nexternel ${m.minNexternel} or newer. Update Nexternel first.`);
+    throw new AddonError(`Needs Nexternel ${m.minNexternel} or newer.`);
   }
   const sha = createHash("sha256").update(code).digest("hex").slice(0, 16);
   await getPool().query(
@@ -298,7 +298,7 @@ export async function checkAddons(): Promise<AddonInfo[]> {
     try {
       const res = await callLicenceServer("/v1/check", { key, serverId: sid, nexternel: APP_VERSION });
       if (res.revoked === true) {
-        const why = typeof res.message === "string" ? res.message : "This licence was cancelled.";
+        const why = typeof res.message === "string" ? res.message : "Licence cancelled.";
         await getPool().query(`UPDATE addons SET status = 'revoked', status_message = $2, checked_at = NOW() WHERE id = ANY($1)`, [
           packs.map((p) => p.id),
           why,

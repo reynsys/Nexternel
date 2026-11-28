@@ -9,13 +9,13 @@ import { hasPermission } from "../../../lib/permissions";
 import { useContentSurfaceSx } from "../../../skins/useSurfaceStyles";
 
 /** Nexternel's own kinds of message, in the order shown. */
-const TOPICS: { key: keyof BellTopics; label: string; text: string }[] = [
-  { key: "readings", label: "Readings at act now", text: "A reading's status light stayed red (and when it is back to normal)." },
-  { key: "devices", label: "Devices going offline", text: "A device stays offline for the time chosen below, and when it is back (with how long it was gone)." },
-  { key: "mqtt", label: "Device messages stopped", text: "Readings and switches stopped updating for 5 minutes." },
-  { key: "disk", label: "Disk getting full", text: "Less than 10 % (or 2 GB) free on the server." },
-  { key: "backup", label: "Automatic backup failed", text: "The nightly backup could not be made." },
-  { key: "updates", label: "New Nexternel version", text: "A newer version is ready to install." },
+const TOPICS: { key: keyof BellTopics; label: string }[] = [
+  { key: "readings", label: 'Readings at "Act now"' },
+  { key: "devices", label: "Devices going offline" },
+  { key: "mqtt", label: "Device messages stopped" },
+  { key: "disk", label: "Disk getting full" },
+  { key: "backup", label: "Automatic backup failed" },
+  { key: "updates", label: "New Nexternel version" },
 ];
 
 /**
@@ -77,10 +77,6 @@ export function NotificationsSettingsPage() {
       <Card sx={surfaceSx}>
         <CardContent>
           <Typography variant="h6">Your bell</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Its number has the colour of the most important new message: your main colour for information, amber for keep an eye on it, red for act now.
-            Saved to your account.
-          </Typography>
           <BellFields value={themePrefs.bell} showPlace={!isPhoneScreen()} onChange={(bell) => setThemePrefs((prev) => ({ ...prev, bell }))} />
         </CardContent>
       </Card>
@@ -90,7 +86,7 @@ export function NotificationsSettingsPage() {
           <CardContent>
             <Typography variant="h6">What reaches the bell</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-              For everyone on this Nexternel. Saved straight away.
+              For everyone on this Nexternel.
             </Typography>
             {error ? <Alert severity="error" sx={{ mb: 1.5 }}>{error}</Alert> : null}
             <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
@@ -102,14 +98,9 @@ export function NotificationsSettingsPage() {
                 <FormControlLabel
                   control={<Switch checked={topics?.[t.key] ?? true} disabled={!topics} onChange={(e) => void setTopic(t.key, e.target.checked)} />}
                   label={
-                    <span>
-                      <Typography variant="body2" component="span" fontWeight="fontWeightBold">
-                        {t.label}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" display="block">
-                        {t.text}
-                      </Typography>
-                    </span>
+                    <Typography variant="body2" component="span" fontWeight="fontWeightBold">
+                      {t.label}
+                    </Typography>
                   }
                 />
                 {t.key === "devices" ? (
@@ -149,15 +140,12 @@ export function NotificationsSettingsPage() {
                       value={p.bell ?? "important"}
                       onChange={(e) => void setPluginBell(p.id, e.target.value as "all" | "important" | "none")}
                     >
-                      <MenuItem value="important">Only important ones (keep an eye on it)</MenuItem>
+                      <MenuItem value="important">Only important ones</MenuItem>
                       <MenuItem value="all">All, including information such as summaries</MenuItem>
                       <MenuItem value="none">None</MenuItem>
                     </Select>
                   </FormControl>
                 ))}
-                <Typography variant="caption" color="text.secondary">
-                  An extension's messages are never red: red is kept for Nexternel itself.
-                </Typography>
               </Stack>
             ) : (
               <Typography variant="body2" color="text.secondary">

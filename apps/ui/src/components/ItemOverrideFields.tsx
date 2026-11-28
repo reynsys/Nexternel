@@ -45,7 +45,6 @@ export function ItemOverrideFields({ defaultName, defaultIcon, kind, value, onCh
           placeholder={defaultName}
           value={value?.name ?? ""}
           onChange={(e) => update({ name: e.target.value })}
-          helperText="Leave empty to use the reading's name."
           inputProps={{ maxLength: 60 }}
         />
         <ButtonRow direction="row" alignItems="center">
@@ -83,7 +82,7 @@ export function ItemOverrideFields({ defaultName, defaultIcon, kind, value, onCh
                 update({ switchStyle: e.target.value === "panel" ? undefined : (e.target.value as SwitchStyleId) })
               }
             >
-              <MenuItem value="panel">Same as the panel (Look tab)</MenuItem>
+              <MenuItem value="panel">Same as the panel</MenuItem>
               {SWITCH_STYLES.map((s) => (
                 <MenuItem key={s.id} value={s.id}>
                   {s.label}

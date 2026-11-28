@@ -48,11 +48,11 @@ export function PanelPlaceActions() {
             Move
           </Button>
         </Stack>
-        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.75 }}>
-          {place.moveTargets.length
-            ? "Pick another section and press Move to move this panel there."
-            : "This dashboard has one section. Add another (Add section, at the top) to move panels between them."}
-        </Typography>
+        {place.moveTargets.length ? null : (
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.75 }}>
+            Only one section on this dashboard.
+          </Typography>
+        )}
       </Box>
       {askRemove ? (
         <Box>

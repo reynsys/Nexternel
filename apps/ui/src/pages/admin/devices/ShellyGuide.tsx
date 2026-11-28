@@ -19,7 +19,7 @@ import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import type { FoundDevice } from "@nexternel/domain";
 import { api } from "../../../api";
 import { ButtonRow } from "../../../components/ButtonRow";
-import { DevicesWifiExplainer, DevicesWifiForm } from "../../../components/DevicesWifi";
+import { DevicesWifiForm } from "../../../components/DevicesWifi";
 import { AREA } from "../../../lib/area-labels";
 import { copyTextToClipboard } from "../../../lib/copyText";
 import { insetSx } from "../../../skins/surfaceStyles";
@@ -128,8 +128,7 @@ function StepPowerOn() {
         ]}
       </Steps>
       <Typography variant="body2" color="text.secondary">
-        Used before, or set up with Shelly's app? If it's already on this network, go back and use Search this network instead. To
-        start a Shelly fresh, hold its button for 10 seconds.
+        Already on this network? Go back and use Search this network. To start a Shelly fresh, hold its button for 10 seconds.
       </Typography>
     </Stack>
   );
@@ -141,12 +140,12 @@ function StepJoinShellyWifi() {
       <Typography variant="h6">Join the Shelly's Wi-Fi</Typography>
       <Steps>
         {[
-          "On your phone, open the Wi-Fi list.",
+          "On a phone, tablet or laptop, open the Wi-Fi list.",
           <>
             Tap the network whose name starts with <b>shelly</b>. It has no password.
           </>,
           <>
-            If the phone warns there is no internet, choose <b>stay connected</b>.
+            If it warns there is no internet, choose <b>stay connected</b>.
           </>,
         ]}
       </Steps>
@@ -177,7 +176,6 @@ function StepGiveHomeWifi() {
     return (
       <Stack gap={2}>
         <Typography variant="h6">First: which Wi-Fi do your devices use?</Typography>
-        <DevicesWifiExplainer />
         <DevicesWifiForm idPrefix="shelly-guide-wifi" saveLabel="Save" onSaved={loadWifi} />
       </Stack>
     );
@@ -186,7 +184,7 @@ function StepGiveHomeWifi() {
   return (
     <Stack gap={2}>
       <Typography variant="h6">Give the Shelly the Wi-Fi it will use</Typography>
-      <Typography color="text.secondary">Open this address in your phone's browser:</Typography>
+      <Typography color="text.secondary">Open this address in its browser:</Typography>
       <Stack direction="row" gap={1.5} alignItems="center" flexWrap="wrap" sx={[{ px: 1.75, py: 1.25 }, insetSx()]}>
         <Typography component="code" variant="h5">
           {SHELLY_SETUP_ADDRESS}
@@ -202,10 +200,10 @@ function StepGiveHomeWifi() {
             <b>Internet &amp; Security → Wi-Fi Mode – Client</b>.
           </>,
           <>
-            Choose <b>{wifi.ssid}</b> and type its password. That's the Wi-Fi set for your devices (Devices → Wi-Fi for devices).
+            Choose <b>{wifi.ssid}</b> and type its password.
           </>,
           <>
-            Press <b>Save</b>. Then put your phone back on your usual Wi-Fi.
+            Press <b>Save</b>. Then go back to your usual Wi-Fi.
           </>,
         ]}
       </Steps>
@@ -299,7 +297,7 @@ function StepFind(props: { areas: { id: string; name: string }[]; onRestart: () 
         <Typography variant="h6">Finding your new Shelly</Typography>
         <Stack direction="row" gap={1.5} alignItems="center">
           <CircularProgress size={22} />
-          <Typography color="text.secondary">Looking for it on this network… usually under a minute.</Typography>
+          <Typography color="text.secondary">Searching…</Typography>
         </Stack>
         {error ? <Alert severity="warning">{error}</Alert> : null}
       </Stack>
@@ -351,7 +349,7 @@ function StepFind(props: { areas: { id: string; name: string }[]; onRestart: () 
       ) : (
         <Box>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-            Pick the new one. The others are already on your Wi-Fi but not in Nexternel.
+            Pick the new one.
           </Typography>
           <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 1 }}>
             {found.map((d) => (
@@ -480,15 +478,11 @@ function TryIt(props: { added: Added; onFinished: (deviceId: string) => void }) 
       ) : null}
       {waitedOut && !online ? (
         <Alert severity="info">
-          It hasn't reported yet. It's in Nexternel, and it will show as online once it has restarted. If it stays offline, switch
-          its power off and on.
+          Not reported yet. If it stays offline, switch its power off and on.
         </Alert>
       ) : null}
       {online ? (
         <Stack gap={1}>
-          <Typography>
-            Try it: Nexternel switches it on, then off again after a moment. Anything plugged into it switches too.
-          </Typography>
           <ButtonRow>
             <Button variant="outlined" onClick={() => void tryIt()} disabled={trying}>
               {trying ? "Switching…" : "Switch the Shelly on and off"}

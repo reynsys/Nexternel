@@ -10,6 +10,7 @@ import { DiagnosticReportCard } from "./DiagnosticReportCard";
 import { UpdatesSection } from "./UpdatesSection";
 import { AddressesSection } from "./AddressesSection";
 import { ButtonRow } from "../../../components/ButtonRow";
+import { FactGrid } from "../../../components/FactGrid";
 import { ActivityList } from "../../../components/ActivityList";
 import { hasPermission } from "../../../lib/permissions";
 import { useShellAuth } from "../../../skins/useShellAuth";
@@ -39,13 +40,13 @@ function healthLine(info: SystemInfo): { ok: boolean; title: string; text: strin
   const db = info.database === "ok";
   const mqtt = info.mqtt === "connected";
   if (db && mqtt) {
-    return { ok: true, title: "Everything is running", text: `The server, its database and device messages are working. Running for ${formatUptime(info.uptimeSeconds)}.` };
+    return { ok: true, title: "Everything is running", text: `Running for ${formatUptime(info.uptimeSeconds)}` };
   }
   const problems = [!db ? "the database is not answering" : null, !mqtt ? "device messages (MQTT) are not connected — readings and switches will not update" : null].filter(Boolean);
   return {
     ok: false,
     title: "Something needs attention",
-    text: `${problems.join("; ")}${info.mqttError ? ` (${info.mqttError})` : ""}. Try Restart on the Help & troubleshooting tab.`,
+    text: `${problems.join("; ")}${info.mqttError ? ` (${info.mqttError})` : ""}.`,
   };
 }
 
@@ -128,34 +129,16 @@ export function SystemStatusPage() {
                     <Typography fontWeight="fontWeightBold">{health.title}</Typography>
                     <Typography variant="body2">{health.text}</Typography>
                   </Alert>
-                  <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 2 }}>
-                    <Box>
-                      <Typography variant="subtitle2">Computer</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {info.cpu.model} · {info.cpu.cores} cores · busy {info.cpu.loadPercent}%
-                        {info.temperatureC != null ? ` · ${Math.round(info.temperatureC)}°C` : ""}
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="subtitle2">Memory</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {gb(info.memory.usedMb)} of {gb(info.memory.totalMb)} GB in use
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="subtitle2">Network</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Home address {info.lanIp ?? "—"}
-                        {info.wanIp ? ` · internet address ${info.wanIp}` : ""}
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="subtitle2">Version</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Nexternel {info.version}
-                      </Typography>
-                    </Box>
-                  </Box>
+                  <FactGrid
+                    items={[
+                      {
+                        label: "Computer",
+                        value: `${info.cpu.model} · ${info.cpu.cores} cores · busy ${info.cpu.loadPercent}%${info.temperatureC != null ? ` · ${Math.round(info.temperatureC)}°C` : ""}`,
+                      },
+                      { label: "Memory", value: `${gb(info.memory.usedMb)} of ${gb(info.memory.totalMb)} GB in use` },
+                      { label: "Network", value: `Local ${info.lanIp ?? "—"}${info.wanIp ? ` · Internet ${info.wanIp}` : ""}` },
+                    ]}
+                  />
                 </Stack>
               ) : null}
             </Box>
@@ -166,19 +149,12 @@ export function SystemStatusPage() {
         {tab === "help" ? (
           <>
             <Typography variant="h6">Help &amp; troubleshooting</Typography>
-            <Typography variant="body2" color="text.secondary">
-              Tools for when something is not working, or when someone is helping you.
-            </Typography>
             <Stack spacing={3} divider={<Divider flexItem />} sx={{ pt: 3 }}>
               <DiagnosticReportCard />
               <SystemDiagnosticsSection />
               <Box>
                 <Typography variant="subtitle1" gutterBottom>
                   Restart
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Restart Nexternel, or only the service that carries device messages (MQTT). Dashboards come back by themselves after a few
-                  seconds.
                 </Typography>
                 <ButtonRow direction="row">
                   <Button variant="outlined" disabled={restartBusy !== null} onClick={() => void restart("all")}>

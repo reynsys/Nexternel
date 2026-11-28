@@ -159,8 +159,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
           error: {
             code: "locked_outside",
             message:
-              "This account is locked for signing in from outside, after too many wrong passwords. " +
-              "Use the unlock link in the email Nexternel sent, or ask your home's administrator to unlock it in Users.",
+              "Locked for signing in from outside. Unlock it in Users.",
           },
         });
       }
@@ -173,7 +172,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
         request.log.warn({ username, ip }, "login refused: wrong name or password");
         if (fromOutside && user) await warnOutsideFail(user.id, user.username, ip);
         return reply.code(401).send({
-          error: { code: "invalid_credentials", message: "Invalid credentials" },
+          error: { code: "invalid_credentials", message: "Wrong username or password." },
         });
       }
       loginGuard.succeed(ip);
@@ -185,8 +184,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
             error: {
               code: "second_check_reset",
               message:
-                "The second check has to be set up again (Nexternel was moved to another server). " +
-                "Sign in on the same network as Nexternel and set it up again in My profile.",
+                "Set up the second check again: sign in on Nexternel's network, then My profile.",
             },
           });
         }
@@ -203,8 +201,8 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
             error: {
               code: "password_too_weak_outside",
               message:
-                "Your password is too simple for signing in from outside Nexternel's network. " +
-                `Sign in on the same network as Nexternel and choose a new one (at least ${MIN_PASSWORD_LENGTH} characters) in My profile.`,
+                "Password too simple for signing in from outside. " +
+                `On Nexternel's network, choose a new one (${MIN_PASSWORD_LENGTH} characters or more) in My profile.`,
             },
           });
         }
@@ -249,8 +247,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
           error: {
             code: "locked_outside",
             message:
-              "This account is locked for signing in from outside, after too many wrong tries. " +
-              "Use the unlock link in the email Nexternel sent, or ask your home's administrator to unlock it in Users.",
+              "Locked for signing in from outside. Unlock it in Users.",
           },
         });
       }
@@ -259,7 +256,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
         request.log.warn({ username: user.username, ip }, "login refused: wrong second-check code");
         if (!isFromHome(request)) await warnOutsideFail(user.id, user.username, ip);
         return reply.code(401).send({
-          error: { code: "wrong_code", message: "That code is not right. Check the app and try the newest code." },
+          error: { code: "wrong_code", message: "Wrong code." },
         });
       }
       loginGuard.succeed(ip);

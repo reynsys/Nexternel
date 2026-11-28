@@ -71,7 +71,7 @@ export function ThemePresetTile({ preset: p, prefs, mode, selected, onPick }: { 
   const s = schemeForPrefs(pPrefs, mode, Boolean(resolveLook(p.lookId).frosted));
   const bg = isMineBackground(p.gradientId) ? mineBackground(s, p.gradientId).css : (gradientCss(p.gradientId, mode) ?? s.roles.surfaceSolid.background);
   return (
-    <ChoiceTile selected={selected} onClick={onPick} title={p.label} text={p.description}>
+    <ChoiceTile selected={selected} onClick={onPick} title={p.label}>
       <Box
         aria-hidden
         sx={{

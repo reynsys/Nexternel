@@ -23,17 +23,17 @@ const PHASE_LABELS: Record<string, string> = {
   collecting_home: "Configuration",
   collecting_esphome: "Devices",
   collecting_automations: "Automations",
-  collecting_history: "Historical sensor data",
+  collecting_history: "Sensor history",
   packaging: "Finalising backup",
   encrypting: "Finalising backup",
-  verifying: "Verifying installation",
+  verifying: "Checking",
   ready: "Backup ready",
-  restoring_home: "Home configuration",
+  restoring_home: "Settings",
   restoring_esphome: "Devices",
-  adapting_network: "Adapting network configuration",
+  adapting_network: "Network",
   restoring_automations: "Automations",
-  restoring_history: "Historical sensor data",
-  syncing: "Rebuilding device configuration",
+  restoring_history: "Sensor history",
+  syncing: "Devices",
 };
 
 function progressLines(job: BackupJob | null): string[] {
@@ -249,9 +249,6 @@ export function BackupRestoreSection() {
           <Typography variant="h6" gutterBottom>
             Back up to a file
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            A one-off backup with a password you choose, downloaded to this computer.
-          </Typography>
           <ButtonRow sx={{ maxWidth: 480 }}>
             <TextField
               label="Backup password"
@@ -319,10 +316,6 @@ export function BackupRestoreSection() {
           <Typography variant="h6" gutterBottom>
             Restore from a file
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Bring back a backup file, also one from another server. A backup the server made itself (Back up
-            now or the daily backup) opens with that server's backup key from its emergency kit.
-          </Typography>
           <input
             ref={restoreFileRef}
             type="file"
@@ -368,8 +361,8 @@ export function BackupRestoreSection() {
               <Alert severity={inspect.compatible ? "success" : "warning"}>
                 <Typography variant="subtitle2" gutterBottom>
                   {inspect.compatible
-                    ? "Backup is compatible with this installation."
-                    : "Backup may not be fully compatible."}
+                    ? "Backup fits this Nexternel."
+                    : "Backup may not fully fit this Nexternel."}
                 </Typography>
                 <Typography variant="body2">
                   Date: {new Date(inspect.manifest.createdAt).toLocaleString()}
@@ -395,19 +388,13 @@ export function BackupRestoreSection() {
             {inspect?.networkAdaptation && (
               <Alert severity="info">
                 <Typography variant="subtitle2" gutterBottom>
-                  Network adaptation
+                  Network
                 </Typography>
                 {inspect.networkAdaptation.differentInstallation ? (
                   <Typography variant="body2" sx={{ mb: 1 }}>
-                    This backup was created on a different Nexternel installation. Network-specific
-                    settings will be adapted automatically.
+                    From another server: network settings are changed to this one.
                   </Typography>
-                ) : (
-                  <Typography variant="body2" sx={{ mb: 1 }}>
-                    This backup matches this installation. Network settings will still be refreshed
-                    from the current server.
-                  </Typography>
-                )}
+                ) : null}
                 <Box component="ul" sx={{ m: 0, pl: 2 }}>
                   {inspect.networkAdaptation.adaptations.map((row) => (
                     <li key={row.label}>
@@ -419,14 +406,13 @@ export function BackupRestoreSection() {
                 </Box>
                 {inspect.networkAdaptation.wifiMayBeRequired && (
                   <Typography variant="body2" color="warning.main" sx={{ mt: 1 }}>
-                    Some devices may require Wi-Fi configuration.
+                    Some devices may need their Wi-Fi set again.
                   </Typography>
                 )}
                 {inspect.networkAdaptation.usersInBackup > 0 && (
                   <Typography variant="body2" sx={{ mt: 1 }}>
-                    Backup contains {inspect.networkAdaptation.usersInBackup} user
-                    {inspect.networkAdaptation.usersInBackup === 1 ? "" : "s"}. Your current
-                    administrator password will be kept.
+                    {inspect.networkAdaptation.usersInBackup} user
+                    {inspect.networkAdaptation.usersInBackup === 1 ? "" : "s"} in the backup. Your password is kept.
                   </Typography>
                 )}
               </Alert>
@@ -439,7 +425,7 @@ export function BackupRestoreSection() {
                   value={wifiSsid}
                   onChange={(e) => setWifiSsid(e.target.value)}
                   fullWidth
-                  helperText="Only if devices must join a different Wi‑Fi network on this site."
+                  helperText="Only if devices must join a different Wi‑Fi."
                 />
                 <TextField
                   label="Wi‑Fi password (optional)"
@@ -450,9 +436,7 @@ export function BackupRestoreSection() {
                   autoComplete="new-password"
                 />
                 <Alert severity="warning">
-                  This will replace the current Nexternel configuration with the selected backup.
-                  Current Areas, Devices, Dashboards, Automations and other configuration may be
-                  replaced. Type RESTORE to continue.
+                  Everything is replaced by this backup. Type RESTORE to continue.
                 </Alert>
                 <TextField
                   label='Type RESTORE'

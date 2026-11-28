@@ -97,7 +97,7 @@ async function bringInBoard(found: FoundDevice): Promise<BringInResult> {
   const board = boardIdFor(found.board);
   if (!board) {
     throw new BringInRefused(
-      "Nexternel doesn't know this kind of board yet, so it can't make its software. Add it yourself with Add device → ESPHome board."
+      "Nexternel doesn't know this kind of board yet, so it can't make its firmware. Add it yourself with Add device → ESPHome board."
     );
   }
   const wifi = checkEsphomeBuildPrerequisites();
@@ -126,7 +126,7 @@ async function bringInBoard(found: FoundDevice): Promise<BringInResult> {
   const built = await compileEsphomeDevice(deviceId);
   if (!built.ok) {
     throw new BringInRefused(
-      `Nexternel couldn't make the board's software. “${found.name}” is in Devices: open it and press Install to try again.`
+      `Nexternel couldn't make the board's firmware. “${found.name}” is in Devices: open it and press Install to try again.`
     );
   }
   const sent = await uploadEsphomeDevice(deviceId, ip);
@@ -135,18 +135,18 @@ async function bringInBoard(found: FoundDevice): Promise<BringInResult> {
       // Nothing was changed on the board: leave Nexternel as it was.
       await deleteDevice(deviceId, { deleteYaml: true }).catch(() => undefined);
       throw new BringInRefused(
-        "This board has an update password from the system that set it up, so it refused Nexternel's software. Nothing was changed on it."
+        "This board has an update password from the system that set it up, so it refused Nexternel's firmware. Nothing was changed on it."
       );
     }
     throw new BringInRefused(
-      `The board didn't take the new software. “${found.name}” is in Devices: check it has power, then open it and press Install.`
+      `The board didn't take the new firmware. “${found.name}” is in Devices: check it has power, then open it and press Install.`
     );
   }
   await afterDeviceMutation();
   return {
     deviceId,
     name: found.name,
-    message: `Brought in as “${found.name}”. It restarts with Nexternel's software. Add its readings and switches from Devices → ${found.name}.`,
+    message: `Brought in as “${found.name}”. It restarts with Nexternel's firmware. Add its readings and switches from Devices → ${found.name}.`,
   };
 }
 

@@ -79,7 +79,7 @@ export function ActivityList({ deviceId, showFilters = true, pageSize = 100 }: {
       ) : null}
       {entries && !entries.length ? (
         <Typography variant="body2" color="text.secondary">
-          Nothing recorded yet.
+          Nothing yet.
         </Typography>
       ) : null}
       <Box>

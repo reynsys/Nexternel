@@ -27,9 +27,9 @@ function secretHelp(plugin: PluginInfo, field: PluginSettingField): string | und
   const v = plugin.settings[field.key];
   if (v?.type !== "secret") return field.help;
   const state = v.unreadable
-    ? "Saved on another server and cannot be read here — type it again."
+    ? "Type it again."
     : v.isSet
-      ? "Saved. Leave empty to keep it, or type a new one."
+      ? "Saved."
       : "Not set.";
   return field.help ? `${field.help} ${state}` : state;
 }
@@ -123,7 +123,7 @@ export function PluginSettingsForm({
         );
       })}
       {error ? <Alert severity="error">{error}</Alert> : null}
-      {saved ? <Alert severity="success">Saved. The extension restarts with the new settings.</Alert> : null}
+      {saved ? <Alert severity="success">Saved.</Alert> : null}
       <div>
         <Button variant="contained" onClick={() => void save()} disabled={busy}>
           Save settings

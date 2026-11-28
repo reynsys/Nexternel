@@ -106,9 +106,6 @@ function EmptyDetail() {
         <Typography variant="h6" color="text.secondary" gutterBottom>
           Choose a device
         </Typography>
-        <Typography variant="body2" color="text.secondary" maxWidth={320}>
-          Pick one from the list to see its readings, switches and settings.
-        </Typography>
       </Box>
     </Box>
   );
@@ -130,7 +127,7 @@ export function DeviceDetailPane({ selection, device, isAdmin, busy, hostname, s
   if (!selection) return <EmptyDetail />;
   if (selection.kind === "service") {
     return (
-      <DetailShell title="Octopus Home Mini" subtitle="Online service · energy use from Octopus" kind="service" showBack={showBack} onBack={onBack}>
+      <DetailShell title="Octopus Home Mini" subtitle="Online service" kind="service" showBack={showBack} onBack={onBack}>
         <OctopusSettingsCard embedded />
       </DetailShell>
     );
@@ -138,7 +135,7 @@ export function DeviceDetailPane({ selection, device, isAdmin, busy, hostname, s
   if (!device) {
     return (
       <DetailShell title="Device" showBack={showBack} onBack={onBack}>
-        <Alert severity="warning">This device is no longer there. It may have been deleted.</Alert>
+        <Alert severity="warning">This device no longer exists.</Alert>
       </DetailShell>
     );
   }
@@ -247,12 +244,9 @@ function HotspotCard({ deviceId }: { deviceId: string }) {
   if (!hotspot) return null;
   return (
     <InfoCard title="Emergency Wi‑Fi hotspot">
-      <Typography variant="body2" color="text.secondary">
-        If the board cannot reach your Wi‑Fi for a minute or two (new router, changed password), it opens its own Wi‑Fi. Join it from a phone: a page opens where you choose your Wi‑Fi again.
-      </Typography>
       {hotspot.own ? (
         <Typography variant="body2">
-          {hotspot.name ? <>Name: <b>{hotspot.name}</b>. </> : null}This board sets its own hotspot in its settings file (open it below to see the password).
+          {hotspot.name ? <>Name: <b>{hotspot.name}</b>. </> : null}Set in its settings file.
         </Typography>
       ) : (
         <Stack direction="row" alignItems="center" flexWrap="wrap" sx={{ gap: 1.5 }}>
@@ -281,8 +275,8 @@ function AdvancedTab({ device, hostname, busy, actions }: { device: DeviceRecord
       <InfoCard title="Settings kept by">
         <Typography variant="body2" color="text.secondary">
           {managed
-            ? "Nexternel keeps this board's settings: change them with Edit configuration."
-            : "The board's own ESPHome settings file. Nexternel can take it over, so you change its settings here instead."}
+            ? "Nexternel"
+            : "ESPHome"}
         </Typography>
         <ButtonRow direction="row">
           {managed ? (
@@ -297,10 +291,7 @@ function AdvancedTab({ device, hostname, busy, actions }: { device: DeviceRecord
         </ButtonRow>
       </InfoCard>
       <HotspotCard deviceId={device.id} />
-      <InfoCard title="ESPHome — for experienced users">
-        <Typography variant="body2" color="text.secondary">
-          The board's ESPHome settings file and tools. Everyday updates are on the Overview tab (Update board).
-        </Typography>
+      <InfoCard title="ESPHome">
         <ButtonRow direction="row" flexWrap="wrap" useFlexGap>
           <Button {...devicesOutlinedButton} startIcon={<EditRoundedIcon />} disabled={busy} onClick={() => actions.onOpenEsphomePanel(device, "file")}>
             Open settings file

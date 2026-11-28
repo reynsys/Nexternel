@@ -181,7 +181,7 @@ export function ManageDashboardsPanel({ compact, currentDashboardId, onDashboard
       </Typography>
       {error && <Alert severity="error">{error}</Alert>}
       {dashboards.length > 0 && !dashboards.some((d) => d.isDefault) && (
-        <Alert severity="warning">No sign-in dashboard yet — choose one with its star.</Alert>
+        <Alert severity="warning">No sign-in dashboard: choose one with its star.</Alert>
       )}
 
       <Stack spacing={1}>
@@ -214,14 +214,14 @@ export function ManageDashboardsPanel({ compact, currentDashboardId, onDashboard
                       {d.isDefault ? <StarIcon fontSize="small" /> : <StarBorderIcon fontSize="small" />}
                     </Button>
                   </Tooltip>
-                  <Tooltip title="Earlier in the Dashboard Menu">
+                  <Tooltip title="Move up">
                     <span>
                       <Button variant="outlined" size="small" aria-label={`Move ${d.name} earlier`} disabled={index === 0} onClick={() => void moveDashboard(d.id, -1)} sx={square}>
                         <ArrowUpwardIcon fontSize="small" />
                       </Button>
                     </span>
                   </Tooltip>
-                  <Tooltip title="Later in the Dashboard Menu">
+                  <Tooltip title="Move down">
                     <span>
                       <Button variant="outlined" size="small" aria-label={`Move ${d.name} later`} disabled={index === dashboards.length - 1} onClick={() => void moveDashboard(d.id, 1)} sx={square}>
                         <ArrowDownwardIcon fontSize="small" />
@@ -239,7 +239,7 @@ export function ManageDashboardsPanel({ compact, currentDashboardId, onDashboard
                   <TextField label="Name" size="small" fullWidth value={editName} onChange={(e) => setEditName(e.target.value)} />
                   <FormControlLabel
                     control={<Switch checked={editShowLabel} onChange={(e) => setEditShowLabel(e.target.checked)} />}
-                    label="Show the name in the Dashboard Menu (off = icon only)"
+                    label="Show the name next to the icon"
                   />
                   <DashboardIconPicker dense value={editIcon} onChange={setEditIcon} />
                   <ButtonRow direction="row" justifyContent="flex-end">
@@ -271,7 +271,7 @@ export function ManageDashboardsPanel({ compact, currentDashboardId, onDashboard
             </Paper>
           );
         })}
-        {dashboards.length === 0 && <Typography color="text.secondary">No dashboards yet — create one below.</Typography>}
+        {dashboards.length === 0 && <Typography color="text.secondary">No dashboards.</Typography>}
       </Stack>
 
       <Stack direction="row" spacing={1} alignItems="flex-start">

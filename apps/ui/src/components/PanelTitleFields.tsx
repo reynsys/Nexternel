@@ -25,7 +25,6 @@ type Props = {
 export function PanelTitleFields({ title, onTitleChange, icon, onIconChange, automatic }: Props) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const autoTitle = automatic.title?.trim() || null;
-  const typed = title.trim();
   const shownIcon = icon === "auto" ? automatic.icon.iconId : icon === "none" ? null : icon;
 
   return (
@@ -54,15 +53,6 @@ export function PanelTitleFields({ title, onTitleChange, icon, onIconChange, aut
           onChange={(e) => onTitleChange(e.target.value)}
           placeholder={autoTitle ?? "No title"}
           InputLabelProps={{ shrink: true }}
-          helperText={
-            typed
-              ? autoTitle
-                ? `Clear it to go back to the automatic title, “${autoTitle}”.`
-                : "Clear it to show no title."
-              : autoTitle
-                ? "Automatic — taken from what the panel shows. Type to replace it."
-                : "Type a title to show one."
-          }
         />
       </Stack>
       <Box>

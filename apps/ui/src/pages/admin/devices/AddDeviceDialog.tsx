@@ -17,7 +17,6 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import ToggleOnOutlinedIcon from "@mui/icons-material/ToggleOnOutlined";
 import VideocamOutlinedIcon from "@mui/icons-material/VideocamOutlined";
-import MemoryOutlinedIcon from "@mui/icons-material/MemoryOutlined";
 import HubOutlinedIcon from "@mui/icons-material/HubOutlined";
 import DeviceHubOutlinedIcon from "@mui/icons-material/DeviceHubOutlined";
 import ExtensionOutlinedIcon from "@mui/icons-material/ExtensionOutlined";
@@ -28,7 +27,7 @@ import type { FoundDevice } from "@nexternel/domain";
 import { api } from "../../../api";
 import { ButtonRow } from "../../../components/ButtonRow";
 import { insetSx } from "../../../skins/surfaceStyles";
-import { DevicesWifiExplainer, DevicesWifiForm } from "../../../components/DevicesWifi";
+import { DevicesWifiForm } from "../../../components/DevicesWifi";
 import { ShellyGuide, type ShellyGuideStep } from "./ShellyGuide";
 import { ZherodiusPaired, ZherodiusPairing, type Paired } from "./ZherodiusPairing";
 
@@ -57,32 +56,24 @@ export type AddDeviceDialogProps = {
 type Stage = "start" | "searching" | "results" | "shelly" | "zherodius" | "paired" | "soon" | "more";
 
 /** Kinds that have a tile but can't be added yet. */
-type SoonKind = "board" | "zigbee" | "matter";
-const SOON: Record<SoonKind, { title: string; sentence: string }> = {
-  board: {
-    title: "ESP32 board",
-    sentence: "Adding a new ESP32 board comes with Nexternel's own board software, which is being built now.",
-  },
-  zigbee: { title: "Zigbee device", sentence: "Zigbee devices come in a later update. They'll need a small Zigbee USB stick in the Nexternel computer." },
-  matter: { title: "Matter device", sentence: "Matter devices come in a later update. You'll add one by scanning the code on the device or its box." },
+type SoonKind = "zigbee" | "matter";
+const SOON: Record<SoonKind, { title: string }> = {
+  zigbee: { title: "Zigbee device" },
+  matter: { title: "Matter device" },
 };
 
 /** The plain sentence that says what bringing this device in does. */
 export function bringInSentence(d: FoundDevice): string {
   switch (d.kind) {
     case "zherodius":
-      return "Pair it with the code shown on its own page.";
-    case "board":
-      return "Nexternel puts its own board software on it once (about 2 minutes). After that, other systems no longer see it.";
-    case "shelly":
-      return "Nexternel changes one setting on the switch so it reports here. It keeps working with the system that uses it now.";
     case "camera":
-      return "Add it with the camera's user name and password.";
-    case "matterNew":
-    case "matterShared":
-      return "A Matter device. Nexternel can't add Matter devices yet.";
+      return "";
+    case "board":
+      return "Nexternel puts its own ESPHome firmware on it. Other systems will no longer see it.";
+    case "shelly":
+      return "Nexternel changes one setting on it.";
     default:
-      return "Nexternel can't control this yet. It stays as it is.";
+      return "Can't be added yet.";
   }
 }
 
@@ -102,6 +93,11 @@ function Row(props: {
 }) {
   const { device: d, state } = props;
   const [password, setPassword] = useState("");
+  const line = d.alreadyIn?.needsPairing
+    ? `In Nexternel as “${d.alreadyIn.name}”, but it no longer accepts this Nexternel. Reconnect it to control it; its panels, names and history stay.`
+    : d.alreadyIn
+      ? `Already in Nexternel as “${d.alreadyIn.name}”.`
+      : bringInSentence(d);
   return (
     <Stack
       direction="row"
@@ -129,13 +125,11 @@ function Row(props: {
             </Typography>
           ) : null}
         </Stack>
-        <Typography variant="body2" color="text.secondary">
-          {d.alreadyIn?.needsPairing
-            ? `In Nexternel as “${d.alreadyIn.name}”, but it no longer accepts this Nexternel. Reconnect it to control it; its panels, names and history stay.`
-            : d.alreadyIn
-              ? `Already in Nexternel as “${d.alreadyIn.name}”.`
-              : bringInSentence(d)}
-        </Typography>
+        {line ? (
+          <Typography variant="body2" color="text.secondary">
+            {line}
+          </Typography>
+        ) : null}
         {state ? (
           <Stack direction="row" gap={1} alignItems="center" sx={{ mt: 0.5 }}>
             {state.status === "working" ? <CircularProgress size={14} /> : null}
@@ -150,7 +144,6 @@ function Row(props: {
         ) : null}
         {state?.status === "wifi" && props.onWifiSaved ? (
           <Stack spacing={1.5} sx={{ mt: 1 }}>
-            <DevicesWifiExplainer />
             <DevicesWifiForm idPrefix={`bring-in-wifi-${d.key}`} saveLabel="Save and bring in" onSaved={props.onWifiSaved} />
           </Stack>
         ) : null}
@@ -219,7 +212,7 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
   const [bringing, setBringing] = useState(false);
   const [showExisting, setShowExisting] = useState(false);
   const [shellyStep, setShellyStep] = useState<ShellyGuideStep>(1);
-  const [soon, setSoon] = useState<SoonKind>("board");
+  const [soon, setSoon] = useState<SoonKind>("zigbee");
   const [pairing, setPairing] = useState<FoundDevice | null>(null);
   const [paired, setPaired] = useState<Paired | null>(null);
   /** Found devices added in this window (by key → the new device's id). */
@@ -294,7 +287,7 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
     }
   }
 
-  const tile = (o: { key: string; title: string; text: string; icon: React.ReactNode; ready?: boolean; soon?: boolean; go: () => void }) => (
+  const tile = (o: { key: string; title: string; icon: React.ReactNode; ready?: boolean; soon?: boolean; go: () => void }) => (
     <ButtonBase
       key={o.key}
       onClick={o.go}
@@ -324,20 +317,16 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
       <Typography fontWeight="fontWeightMedium" sx={{ opacity: o.soon ? 0.75 : 1 }}>
         {o.title}
       </Typography>
-      <Typography variant="body2" color="text.secondary">
-        {o.text}
-      </Typography>
     </ButtonBase>
   );
 
   const kinds = (
     <Stack gap={1.25}>
-      <Typography variant="subtitle1">Or pick what you have in your hand</Typography>
+      <Typography variant="subtitle1">Or choose a kind</Typography>
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))" }, gap: 1.25 }}>
         {tile({
           key: "zherodius",
           title: "Zherodius",
-          text: "A Zherodius device that is already on your Wi-Fi",
           icon: <DeveloperBoardOutlinedIcon />,
           ready: true,
           go: () => void search(),
@@ -345,7 +334,6 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
         {tile({
           key: "shelly",
           title: "Shelly",
-          text: "A new Shelly switch, plug or dimmer, still in its box",
           icon: <ToggleOnOutlinedIcon />,
           ready: true,
           go: () => {
@@ -356,7 +344,6 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
         {tile({
           key: "camera",
           title: "Camera or doorbell",
-          text: "One that gives a live picture over the network",
           icon: <VideocamOutlinedIcon />,
           ready: true,
           go: () => {
@@ -364,17 +351,11 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
             props.onAddCamera();
           },
         })}
-        {(["board", "zigbee", "matter"] as const).map((k) =>
+        {(["zigbee", "matter"] as const).map((k) =>
           tile({
             key: k,
             title: SOON[k].title,
-            text:
-              k === "board"
-                ? "A bare board you're building into something"
-                : k === "zigbee"
-                  ? "IKEA, Hue, Aqara, Sonoff sensors and bulbs"
-                  : "Anything with the Matter logo",
-            icon: k === "board" ? <MemoryOutlinedIcon /> : k === "zigbee" ? <HubOutlinedIcon /> : <DeviceHubOutlinedIcon />,
+            icon: k === "zigbee" ? <HubOutlinedIcon /> : <DeviceHubOutlinedIcon />,
             soon: true,
             go: () => {
               setSoon(k);
@@ -385,7 +366,6 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
         {tile({
           key: "more",
           title: "More kinds",
-          text: "Online services and other devices, added through Extensions",
           icon: <ExtensionOutlinedIcon />,
           go: () => setStage("more"),
         })}
@@ -420,9 +400,6 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
               >
                 <Box sx={{ minWidth: 0 }}>
                   <Typography fontWeight="fontWeightMedium">Devices already on this network</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Nexternel looks for devices on the network it's connected to and lists them. Nothing changes until you choose.
-                  </Typography>
                 </Box>
                 <ButtonRow sx={{ flexShrink: 0 }}>
                   <Button variant="contained" startIcon={<SearchIcon />} onClick={() => void search()}>
@@ -481,10 +458,6 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
           {stage === "soon" ? (
             <Stack gap={2}>
               <Typography variant="h6">{SOON[soon].title}: coming soon</Typography>
-              <Typography>{SOON[soon].sentence}</Typography>
-              <Typography color="text.secondary">
-                If it is already on this network, Search this network may be able to bring it in.
-              </Typography>
               <ButtonRow justifyContent="space-between">
                 <Button onClick={reset}>Back</Button>
                 <Button variant="contained" startIcon={<SearchIcon />} onClick={() => void search()}>
@@ -497,10 +470,6 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
           {stage === "more" ? (
             <Stack gap={2}>
               <Typography variant="h6">More kinds</Typography>
-              <Typography>
-                Online services, such as Octopus Energy, are set up in their own settings. More kinds of devices come as
-                Extensions.
-              </Typography>
               <ButtonRow justifyContent="space-between">
                 <Button onClick={reset}>Back</Button>
                 <Button
@@ -519,7 +488,7 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
           {stage === "searching" ? (
             <Stack direction="row" gap={1.5} alignItems="center" sx={{ py: 3 }}>
               <CircularProgress size={22} />
-              <Typography>Looking for devices on this network… this takes about 5 seconds.</Typography>
+              <Typography>Searching…</Typography>
             </Stack>
           ) : null}
 
@@ -527,12 +496,12 @@ export function AddDeviceDialog(props: AddDeviceDialogProps) {
             <>
               <Typography variant="body2" color="text.secondary">
                 {shownCount === 0
-                  ? "Nexternel found nothing it can add on this network. Devices that are switched off, or on a different network, can't be found."
+                  ? "Nothing found."
                   : `Found ${shownCount === 1 ? "1 device" : `${shownCount} devices`}.`}
               </Typography>
 
               {groups.ready.length ? (
-                <Group title="Ready to bring in" note="Tick the ones you want in Nexternel">
+                <Group title="Ready to bring in">
                   {groups.ready.map((d) => (
                     <Row
                       key={d.key}

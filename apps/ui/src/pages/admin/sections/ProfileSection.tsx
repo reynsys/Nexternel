@@ -35,7 +35,7 @@ export function ProfileSection() {
     setElsewhereMsg(null);
     try {
       await api.signOutElsewhere();
-      setElsewhereMsg({ ok: true, text: "Done. Every other screen signed in as you has to sign in again." });
+      setElsewhereMsg({ ok: true, text: "Signed out everywhere else." });
     } catch (error) {
       setElsewhereMsg({ ok: false, text: error instanceof Error ? error.message : "Could not sign out elsewhere" });
     } finally {
@@ -68,7 +68,7 @@ export function ProfileSection() {
         ...(newPassword ? { password: newPassword } : {}),
       });
       notifyUserUpdated();
-      setMsg(newPassword ? "Profile and new password saved. Other screens signed in as you have to sign in again." : "Profile saved.");
+      setMsg(newPassword ? "Saved. Other screens must sign in again." : "Profile saved.");
       setNewPassword("");
       setRepeatPassword("");
     } catch (error) {
@@ -88,7 +88,6 @@ export function ProfileSection() {
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Username <strong>{user.username}</strong> · {roleLabel(user.role, user.roleName)}.
-          An administrator can change your role in the list of users below.
         </Typography>
         <Stack component="form" spacing={2} onSubmit={(e) => void onSave(e)} sx={{ maxWidth: 560 }}>
           <UserAvatarField
@@ -102,7 +101,6 @@ export function ProfileSection() {
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
             fullWidth
-            helperText="Shown next to your name in the side menu"
           />
           <TextField
             label="Email (optional)"
@@ -110,7 +108,6 @@ export function ProfileSection() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             fullWidth
-            helperText="For warnings and the unlock link, if your account gets locked from outside"
           />
           <TextField
             label="New password"
@@ -119,7 +116,7 @@ export function ProfileSection() {
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             fullWidth
-            helperText={`Leave blank to keep your password. At least ${MIN_PASSWORD_LENGTH} characters; a few words in a row are easy to remember.`}
+            helperText={`Leave blank to keep your password. At least ${MIN_PASSWORD_LENGTH} characters.`}
           />
           {newPassword && (
             <TextField
@@ -141,9 +138,7 @@ export function ProfileSection() {
           Sign out everywhere else
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-          Lost a phone, or signed in on someone else's screen? This signs you out on every other
-          screen. This one stays signed in. Wall screens signed in as you will need to sign in again.
-          Changing your password does this too.
+          Signs you out on every other screen, wall screens too. This one stays signed in.
         </Typography>
         {elsewhereMsg && (
           <Alert severity={elsewhereMsg.ok ? "success" : "error"} sx={{ mb: 1.5 }}>

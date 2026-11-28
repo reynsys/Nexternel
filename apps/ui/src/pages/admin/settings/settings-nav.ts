@@ -15,11 +15,11 @@ export const SETTINGS_TABS: {
   /** One line under the page title. */
   hint?: string;
 }[] = [
-  { label: "Appearance", segment: "appearance", icon: PaletteRoundedIcon, permission: "viewSystem", hint: "How Nexternel looks for you. Each person chooses their own." },
-  { label: "System", segment: "system", icon: MemoryRoundedIcon, permission: "viewSystem", hint: "This Nexternel server: whether everything is running, updates, addresses, what happened, and help." },
-  { label: "Users", segment: "users", icon: PeopleRoundedIcon, permission: "manageUsers", hint: "The people who can sign in, their role, and what each role may see and change." },
-  { label: "Notifications", segment: "notifications", icon: NotificationsRoundedIcon, permission: "viewSystem", hint: "Your notification bell, and which messages reach it." },
-  { label: "Backup & Restore", segment: "backup", icon: SettingsBackupRestoreRoundedIcon, permission: "manageUsers", hint: "Save everything to a file, bring it back, or let Nexternel do it by itself." },
+  { label: "Appearance", segment: "appearance", icon: PaletteRoundedIcon, permission: "viewSystem" },
+  { label: "System", segment: "system", icon: MemoryRoundedIcon, permission: "viewSystem" },
+  { label: "Users", segment: "users", icon: PeopleRoundedIcon, permission: "manageUsers" },
+  { label: "Notifications", segment: "notifications", icon: NotificationsRoundedIcon, permission: "viewSystem" },
+  { label: "Backup & Restore", segment: "backup", icon: SettingsBackupRestoreRoundedIcon, permission: "manageUsers" },
 ];
 
 export function settingsTabPath(segment: string): string {

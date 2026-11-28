@@ -122,9 +122,6 @@ export function DeviceOverviewTab({ device, isAdmin, busy, connection, values, o
         ) : (
           <InfoCard title="Device">
             <Typography variant="h6">{device.firmwareType === "shelly" ? "Shelly switch" : "Device"}</Typography>
-            <Typography variant="body2" color="text.secondary">
-              Its readings and switches come straight from the device over the network.
-            </Typography>
           </InfoCard>
         )}
 
@@ -171,11 +168,11 @@ function WhatToDo({ device, isBoard, isAdmin, busy, values, onUsb }: { device: D
       {offline ? (
         <Stack spacing={1}>
           <Typography variant="body2">
-            {isBoard ? "This board is not answering." : "This device is not answering."} Check that it has power and that your Wi-Fi is working; it comes back by itself once it can reach Nexternel.
+            Not answering. Check its power and the Wi-Fi.
           </Typography>
           {isBoard ? (
             <Typography variant="body2" color="text.secondary">
-              Moved Nexternel to a new computer? A board set up for the old one cannot find this one. Plug the board into this computer with a USB cable and press Install with USB: Nexternel puts this server's address and your Wi-Fi on it, once.
+              Moved Nexternel to a new computer? Plug the board in by USB and press Install with USB.
             </Typography>
           ) : null}
           {isBoard && isAdmin ? (
@@ -189,7 +186,7 @@ function WhatToDo({ device, isBoard, isAdmin, busy, values, onUsb }: { device: D
       ) : null}
       {notAnswering.length ? (
         <Typography variant="body2" sx={{ mt: offline ? 1.5 : 0 }}>
-          {notAnswering.length === 1 ? `${notAnswering[0].customName ?? notAnswering[0].name} says "Sensor not answering"` : `${notAnswering.length} readings say "Sensor not answering"`}: the board is working, but it cannot read the sensor. Check the sensor's wires and plug.
+          {notAnswering.length === 1 ? `${notAnswering[0].customName ?? notAnswering[0].name}: sensor not answering` : `${notAnswering.length} readings: sensor not answering`}. Check its wires.
         </Typography>
       ) : null}
     </InfoCard>

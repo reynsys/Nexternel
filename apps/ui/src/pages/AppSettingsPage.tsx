@@ -37,13 +37,13 @@ export function AppSettingsPage() {
   const latest = state.latest ?? null;
   // One line that is always there and only changes its words, so nothing below jumps while checking.
   const note = busy
-    ? "Checking for an update…"
+    ? "Checking…"
     : latest
-      ? `Version ${latest} is ready to install.`
+      ? `Version ${latest} is ready.`
       : state.checked
         ? state.failed
           ? "Could not check. Check the internet connection."
-          : "This is the newest version."
+          : "Up to date."
         : "\u00a0";
 
   return (
@@ -54,7 +54,7 @@ export function AppSettingsPage() {
           Back
         </Button>
       </Box>
-      <PageHeader title="App settings" hint="Settings for the app on this phone or tablet. Nexternel's own settings are in Settings." />
+      <PageHeader title="App settings" />
 
       <Card sx={surfaceSx}>
         <CardContent>
@@ -116,9 +116,6 @@ function KeepScreenOn({ bridge, surfaceSx }: { bridge: AppBridge; surfaceSx: obj
             }
             label="Keep the screen on while Nexternel is open"
           />
-          <Typography variant="body2" color="text.secondary">
-            When Nexternel is closed or in the background, the screen sleeps as usual.
-          </Typography>
         </Stack>
       </CardContent>
     </Card>
@@ -132,10 +129,7 @@ function HomeCard({ bridge, surfaceSx }: { bridge: AppBridge; surfaceSx: object 
     <Card sx={surfaceSx}>
       <CardContent>
         <Stack spacing={1.5}>
-          <Typography variant="h6">Home address</Typography>
-          <Typography variant="body2" color="text.secondary">
-            This app opens your Nexternel here.
-          </Typography>
+          <Typography variant="h6">Address</Typography>
           <Paper variant="inset" sx={{ display: "flex", alignItems: "center", gap: 1.25, px: 1.5, py: 1.25, minWidth: 0 }}>
             <HomeOutlinedIcon aria-hidden sx={{ color: "primary.main", flexShrink: 0 }} />
             <Typography variant="body1" sx={{ fontWeight: "fontWeightMedium", overflowWrap: "anywhere" }}>
@@ -144,21 +138,21 @@ function HomeCard({ bridge, surfaceSx }: { bridge: AppBridge; surfaceSx: object 
           </Paper>
           <ButtonRow direction="row">
             <Button variant="outlined" onClick={() => setAsking(true)}>
-              Change home
+              Change address
             </Button>
           </ButtonRow>
         </Stack>
       </CardContent>
       <Dialog open={asking} onClose={() => setAsking(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>Change home?</DialogTitle>
+        <DialogTitle>Change address?</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary">
-            This app will ask for another home name or address. Your home and its settings stay as they are.
+            Nexternel and its settings stay as they are.
           </Typography>
         </DialogContent>
         <DialogActions>
           <Button variant="outlined" onClick={() => setAsking(false)}>
-            Stay here
+            Cancel
           </Button>
           <Button
             variant="contained"
@@ -167,7 +161,7 @@ function HomeCard({ bridge, surfaceSx }: { bridge: AppBridge; surfaceSx: object 
               bridge.changeHome?.();
             }}
           >
-            Change home
+            Change address
           </Button>
         </DialogActions>
       </Dialog>

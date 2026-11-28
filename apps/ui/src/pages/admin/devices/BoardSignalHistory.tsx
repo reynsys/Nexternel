@@ -91,13 +91,10 @@ export function BoardSignalHistory({ deviceId }: { deviceId: string }) {
               Message service drops: {history.mqttDrops}
             </Typography>
           </Stack>
-          <Typography variant="caption" color="text.secondary">
-            A gap means no report arrived. A steady line with gaps means the board hears the Wi‑Fi well, but its messages are not getting through.
-          </Typography>
         </>
       ) : (
         <Typography variant="body2" color="text.secondary">
-          No reports recorded in this period yet. The board sends one every minute.
+          No reports in this period.
         </Typography>
       )}
     </InfoCard>

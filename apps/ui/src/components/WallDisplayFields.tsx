@@ -36,16 +36,12 @@ export function WallDisplayFields({ value, onChange }: { value: WallPrefs | unde
 
   return (
     <Stack spacing={1.5}>
-      <Typography variant="body2" color="text.secondary">
-        For the wall screen or tablet signed in with this account, opened at its wall display address (Settings →
-        System → Addresses). Changes show on the screen within seconds.
-      </Typography>
       <FormControl size="small" fullWidth>
         <InputLabel id="wall-start" shrink>
           Start on
         </InputLabel>
         <Select labelId="wall-start" label="Start on" notched displayEmpty value={wall.start ?? ""} onChange={(e) => set({ start: e.target.value || null })}>
-          <MenuItem value="">The home dashboard</MenuItem>
+          <MenuItem value="">The sign-in dashboard</MenuItem>
           {dashboards.map((d) => (
             <MenuItem key={d.id} value={d.id}>
               {d.name}
@@ -75,9 +71,6 @@ export function WallDisplayFields({ value, onChange }: { value: WallPrefs | unde
         label={
           <Box>
             <Typography>Autoscroll</Typography>
-            <Typography variant="caption" color="text.secondary" display="block">
-              Panels with more than fits slowly scroll down, pause and return to the top.
-            </Typography>
           </Box>
         }
         sx={{ alignItems: "flex-start", "& .MuiSwitch-root": { mt: -0.5 } }}

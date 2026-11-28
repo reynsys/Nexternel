@@ -237,9 +237,6 @@ export function RolesPage() {
           Add role
         </Button>
       </PageActions>
-      <Typography variant="body2" color="text.secondary">
-        Set what each role can view or change. A person's role is chosen on the Users page.
-      </Typography>
       {error && <Alert severity="error">{error}</Alert>}
       <Card>
         <CardContent sx={{ px: { xs: 1, sm: 2 }, "&:last-child": { pb: 2 } }}>
@@ -347,10 +344,6 @@ export function RolesPage() {
                 minRows={2}
               />
               <Typography variant="subtitle1">Permissions</Typography>
-              <Typography variant="body2" color="text.secondary">
-                Choose what this role is allowed to do. Disabled items are hidden from the
-                menu.
-              </Typography>
               <PermissionEditor
                 value={permissions}
                 onChange={setPermissions}

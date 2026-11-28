@@ -457,7 +457,7 @@ export function SectionGrid({
       {panels.length === 0 && (
         <Stack alignItems="center" spacing={1.5} sx={{ p: 2 }}>
           <Typography sx={{ textAlign: "center", color: mutedLabel }}>
-            {editMode || onStartAdding ? "No panels here yet." : "Empty section."}
+            No panels.
           </Typography>
           {/* While editing: add a panel here. Otherwise (for people who may edit): start editing with it. */}
           {(editMode ? onAddPanel : onStartAdding) ? (

@@ -76,11 +76,6 @@ export function AddPanelTypePicker({ catalog, value, onChange }: Props) {
           </Box>
         </Box>
       ))}
-      {value ? (
-        <Typography variant="body2" color="text.secondary">
-          {catalog.find((i) => i.id === value)?.description}
-        </Typography>
-      ) : null}
     </Box>
   );
 }

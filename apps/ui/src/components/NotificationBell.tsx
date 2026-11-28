@@ -147,7 +147,7 @@ export function NotificationBell({
           }
           sx={{ justifyContent: "flex-start", "& .MuiButton-endIcon": { ml: "auto" } }}
         >
-          Messages
+          Notifications
         </Button>
       ) : (
       <Tooltip title={unread ? `${unread} new notification${unread === 1 ? "" : "s"}` : "Notifications"} placement={tip}>
@@ -190,7 +190,7 @@ export function NotificationBell({
         <Divider />
         {items.length === 0 ? (
           <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
-            No notifications yet.
+            No notifications.
           </Typography>
         ) : (
           <Stack divider={<Divider />}>

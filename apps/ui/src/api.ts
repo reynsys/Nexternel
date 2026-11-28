@@ -235,7 +235,7 @@ async function postWelcomeBackup<T>(path: string, opts: { file: File; password: 
   return res.json() as Promise<T>;
 }
 
-export const SERVER_UNREACHABLE = "Can't reach Nexternel right now. Trying again.";
+export const SERVER_UNREACHABLE = "Can't reach Nexternel.";
 
 /** This screen's id, sent with every request so the "something changed" message can skip its own echo. */
 export const CLIENT_ID =
@@ -276,7 +276,7 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   if (res.status === 401 && shouldAttemptRefresh(path)) {
     const refreshed = await tryRefreshSession();
     if (refreshed === "unreachable") {
-      const message = "Cannot reach the Nexternel server — retrying.";
+      const message = SERVER_UNREACHABLE;
       pushDiagnosticError({ kind: "api", message, source: path, status: 401 });
       throw new Error(message);
     }
@@ -1540,7 +1540,6 @@ export const api = {
   updateStatus: () => apiFetch<UpdateStatus>("/api/v1/system/update"),
   maintenance: () => apiFetch<Maintenance>("/api/v1/system/maintenance"),
   checkForUpdate: () => apiFetch<UpdateStatus>("/api/v1/system/update/check", { method: "POST" }),
-  downloadUpdate: () => apiFetch<UpdateStatus>("/api/v1/system/update/download", { method: "POST" }),
   startUpdate: () => apiFetch<UpdateStatus>("/api/v1/system/update/start", { method: "POST" }),
   dismissUpdate: () => apiFetch<UpdateStatus>("/api/v1/system/update/dismiss", { method: "POST" }),
 

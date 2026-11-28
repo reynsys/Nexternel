@@ -40,13 +40,13 @@ function technical(device: DeviceRecord, board: BoardStatus | null): { label: st
     ...(device.zherodius
       ? [
           { label: "Serial number", value: device.zherodius.serial },
-          { label: "Software", value: `Zherodius ${device.zherodius.version ?? "not known"}` },
+          { label: "Firmware", value: `Zherodius ${device.zherodius.version ?? "not known"}` },
         ]
       : []),
     { label: "Network address", value: device.ipAddress ?? "Not known" },
     ...(board?.file ? [{ label: "ESPHome settings file", value: board.file }] : []),
     ...(board
-      ? [{ label: "Software", value: [board.deployedVersion ? `ESPHome ${board.deployedVersion}` : null, board.fingerprint ? `fingerprint ${board.fingerprint}` : null].filter(Boolean).join(" · ") || "Not known" }]
+      ? [{ label: "Firmware", value: [board.deployedVersion ? `ESPHome ${board.deployedVersion}` : null, board.fingerprint ? `fingerprint ${board.fingerprint}` : null].filter(Boolean).join(" · ") || "Not known" }]
       : []),
   ];
 }
@@ -154,9 +154,6 @@ export function DeviceTroubleshootingTab({
       {isBoard ? (
         <InfoCard title="Updates from Nexternel">
           <LastBoardUpdates deviceId={device.id} name={device.name} refreshKey="" max={10} />
-          <Typography variant="caption" color="text.secondary">
-            The last 10 updates are kept, each with everything ESPHome wrote (Show details).
-          </Typography>
         </InfoCard>
       ) : null}
 

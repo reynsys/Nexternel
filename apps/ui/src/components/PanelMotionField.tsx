@@ -1,4 +1,4 @@
-import { FormControl, InputLabel, MenuItem, Select, Typography } from "@mui/material";
+import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 import type { PanelMotion } from "../lib/motion";
 import { useHasDecor } from "../skins/looks/LookDecor";
 
@@ -27,9 +27,6 @@ export function PanelMotionField({
         <MenuItem value="on">On for this panel</MenuItem>
         <MenuItem value="off">Off for this panel</MenuItem>
       </Select>
-      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
-        Moving parts of this panel's look (frame lights, switch movements). Readings and switches keep working either way.
-      </Typography>
     </FormControl>
   );
 }

@@ -119,7 +119,7 @@ export async function checkSharedSettings(): Promise<void> {
   );
   prepare = { running: true, done: 0, total: boards.rows.length, current: null };
   publishChange("devices");
-  void logActivity({ kind: "update", text: `The shared board settings changed: preparing new software for ${boards.rows.length} boards (nothing is sent yet)` });
+  void logActivity({ kind: "update", text: `The shared board settings changed: preparing new firmware for ${boards.rows.length} boards (nothing is sent yet)` });
   let failed = 0;
   for (const b of boards.rows) {
     prepare.current = b.name;
@@ -134,7 +134,7 @@ export async function checkSharedSettings(): Promise<void> {
   publishChange("devices");
   void logActivity({
     kind: "update",
-    text: failed ? `New board software prepared, ${failed} board${failed === 1 ? "" : "s"} could not be built (tried again later)` : "New board software prepared — boards that need it show Update ready",
+    text: failed ? `New board firmware prepared, ${failed} board${failed === 1 ? "" : "s"} could not be built (tried again later)` : "New board firmware prepared — boards that need it show Update ready",
   });
 }
 

@@ -84,7 +84,7 @@ export function DeviceNavigator({
         key: `c-${c.id}`,
         kind: "camera",
         name: c.name,
-        summary: c.enabled ? "Camera · live picture" : "Camera",
+        summary: "Camera",
         status: c.enabled ? { word: "In use", tone: "ok" } : { word: "Switched off", tone: "off" },
         selection: { kind: "camera", cameraId: c.id },
         attention: false,
@@ -188,7 +188,7 @@ export function DeviceNavigator({
         {groups.length === 0 ? (
           <Typography variant="body2" color="text.secondary" sx={{ p: 2.5, textAlign: "center" }}>
             {counts.all === 0
-              ? "No devices yet. Use Add device to add one."
+              ? "No devices."
               : statusFilter === "needs_attention"
                 ? "Nothing needs attention."
                 : statusFilter === "offline"

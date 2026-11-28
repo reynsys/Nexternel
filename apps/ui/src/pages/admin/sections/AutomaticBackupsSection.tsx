@@ -82,7 +82,7 @@ export function AutomaticBackupsSection() {
   async function restore(file: StoredBackup) {
     const ok = await confirm({
       title: "Restore this backup?",
-      message: `Everything in Nexternel will be replaced by the backup from ${formatWhen(file.createdAt)}. Your own sign-in is kept. This takes about a minute.`,
+      message: `Everything is replaced by the backup from ${formatWhen(file.createdAt)}. Your sign-in is kept.`,
       confirmLabel: "Restore",
     });
     if (!ok) return;
@@ -103,7 +103,7 @@ export function AutomaticBackupsSection() {
           const result = current.restoreResult;
           setNotice(
             current.status === "completed"
-              ? { ok: true, text: "Restore complete. Reload the page to see the restored home." }
+              ? { ok: true, text: "Restored. Reload the page." }
               : { ok: false, text: result?.errors?.join(" ") || current.message || "Restore failed." }
           );
           break;
@@ -129,10 +129,7 @@ export function AutomaticBackupsSection() {
           Automatic backups
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          A full backup every day — devices, dashboards, settings, and sensor history — kept on the
-          machine Nexternel runs on (the list below). Download the emergency
-          kit once and keep it somewhere safe: it holds the key that opens these backups on a new
-          server.
+          Download the emergency kit once and keep it safe: without it, these backups can't be opened on a new server.
         </Typography>
 
         {notice && (
@@ -201,8 +198,10 @@ export function AutomaticBackupsSection() {
 
         <Typography variant="body2" color={schedule.lastOk === false ? "error" : "text.secondary"} sx={{ mb: 2 }}>
           {schedule.lastRunAt
-            ? `Last backup ${formatWhen(schedule.lastRunAt)}: ${schedule.lastOk ? "OK" : "failed"} — ${schedule.lastMessage ?? ""}`
-            : "No backup yet — the first runs at the chosen time, or press Back up now."}
+            ? schedule.lastOk
+              ? `Last backup: ${formatWhen(schedule.lastRunAt)}`
+              : `Last backup failed: ${formatWhen(schedule.lastRunAt)}. ${schedule.lastMessage ?? ""}`
+            : "No backup yet."}
         </Typography>
 
         <ButtonRow direction="row" flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
@@ -218,7 +217,7 @@ export function AutomaticBackupsSection() {
                   res.result.ok
                     ? {
                         ok: true,
-                        text: `${res.result.message} It opens with this server's backup key, not a password — download the emergency kit if you have not kept it yet.`,
+                        text: "Backup saved.",
                       }
                     : { ok: false, text: `Backup failed: ${res.result.message}` }
                 );

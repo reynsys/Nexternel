@@ -56,7 +56,7 @@ export function SideMenu({
   // Both footer buttons are ordinary buttons, so they take the chosen Look's button style.
   const collapseToggle = (
     <Tooltip
-      title={collapsed ? "Expand menu" : "Collapse menu (icons only)"}
+      title={collapsed ? "Expand menu" : "Collapse menu"}
       placement={collapsed ? "right" : "top"}
     >
       <Button

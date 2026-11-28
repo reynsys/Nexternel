@@ -50,14 +50,6 @@ export function BellFields({
           ]}
           onChange={(position) => onChange({ ...bell, position })}
         />
-        <Typography variant="caption" color="text.secondary">
-          {bell.position === "menu-bottom"
-            ? "Next to your name at the bottom of the side menu, on every page."
-            : bell.position === "top"
-              ? "Next to the Dashboard Options cog on dashboards (in the tabs, dock or rail). On other pages it sits at the top of the side menu."
-              : "Next to the Nexternel name at the top of the side menu, on every page."}{" "}
-          On phones it is always in the top bar.
-        </Typography>
       </Stack>
       ) : null}
     </Stack>

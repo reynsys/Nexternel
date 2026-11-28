@@ -10,7 +10,6 @@ import {
   CircularProgress,
   Dialog,
   DialogActions,
-  DialogContent,
   DialogTitle,
   FormControl,
   InputLabel,
@@ -18,7 +17,6 @@ import {
   Select,
   Stack,
   TextField,
-  Tooltip,
   Typography,
   useMediaQuery,
   useTheme,
@@ -398,7 +396,7 @@ function DashboardPageContent() {
         if (!targetId) {
           if (!cancelled) {
             setDashboardId(null);
-            setBootError("No dashboards yet. Use + Add dashboard in the Dashboard Menu to create one.");
+            setBootError("No dashboards.");
           }
           return;
         }
@@ -415,7 +413,7 @@ function DashboardPageContent() {
         setError(null);
       } catch (err) {
         if (!cancelled) {
-          setBootError(err instanceof Error ? err.message : "Failed to load dashboard");
+          setBootError(err instanceof Error ? err.message : "Could not load the dashboard.");
         }
       } finally {
         if (!cancelled) setPageLoading(false);
@@ -436,7 +434,7 @@ function DashboardPageContent() {
     if (!dashboardId) return;
     const ok = await confirm({
       title: "Remove this dashboard?",
-      message: `Remove “${name}” with its sections and panels? Your devices and their readings stay. This cannot be undone.`,
+      message: `Remove “${name}” with its sections and panels? Devices and readings stay. This cannot be undone.`,
       confirmLabel: "Remove",
     });
     if (!ok) return;
@@ -1094,11 +1092,6 @@ function DashboardPageContent() {
 
       <Dialog open={Boolean(leaveAsk)} onClose={() => setLeaveAsk(null)} maxWidth="xs" fullWidth>
         <DialogTitle>Save the changes to “{name}”?</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary">
-            You changed this dashboard. Save the changes before going on, or leave them out.
-          </Typography>
-        </DialogContent>
         <DialogActions>
           <Button variant="outlined" onClick={() => setLeaveAsk(null)}>
             Stay here
@@ -1263,13 +1256,10 @@ function DashboardPageContent() {
                     sx={{ flexShrink: 0 }}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <Tooltip title="Add a panel to this section">
-                      <Button variant="outlined" startIcon={<AddIcon />} onClick={() => openAddPanel(section.id)} sx={{ whiteSpace: "nowrap" }}>
-                        Add panel
-                      </Button>
-                    </Tooltip>
-                    <Tooltip title="Name, icon, width, position, delete">
-                      <Button
+                    <Button variant="outlined" startIcon={<AddIcon />} onClick={() => openAddPanel(section.id)} sx={{ whiteSpace: "nowrap" }}>
+                      Add panel
+                    </Button>
+                    <Button
                         variant={settingsPanel?.type === "section" && settingsPanel.id === section.id ? "contained" : "outlined"}
                         startIcon={<SettingsOutlinedIcon />}
                         onClick={() => setSettingsPanel({ type: "section", id: section.id })}
@@ -1277,7 +1267,6 @@ function DashboardPageContent() {
                       >
                         Section settings
                       </Button>
-                    </Tooltip>
                   </ButtonRow>
                 ) : null
               }
@@ -1454,7 +1443,6 @@ function DashboardPageContent() {
                 fullWidth
                 value={addPanelTitle}
                 onChange={(e) => setAddPanelTitle(e.target.value)}
-                helperText="Leave empty to use the name of what it shows"
               />
 
               {/* Every panel that shows readings gets a status light; readings without limits can be given them here. */}

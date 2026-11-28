@@ -37,14 +37,24 @@ export type DeviceInfo = {
   board: string;
   version: string;
   mac: string;
-  parts: { id: number; type: string; name: string; model?: string; reads?: string[] }[];
+  /** kind: buttons (Zherodius 2.5.1+): "contact" (switch or contact, stays open or closed) or "push";
+   *  lights (2.7.1+): "dimmable", "colour" or "status" (the board's status light). ms: buzzers, how long one sound lasts. */
+  parts: { id: number; type: string; name: string; model?: string; reads?: string[]; kind?: string; ms?: number }[];
+  /** What each reading of these parts is, by its key (Zherodius 2.5.1+): unit, words, Nexternel sensor type. */
+  measures?: Record<string, { unit?: string; word?: string; type?: string; yesNo?: boolean }>;
 };
 
 /** What the device reports now (Zh.GetStatus and NotifyStatus). */
 export type DeviceStatus = {
   relays?: { id: number; on: boolean }[];
+  /** Wired buttons and contacts: pressed = the contact is closed. */
+  buttons?: { id: number; pressed: boolean }[];
+  /** Lights (Zherodius 2.7.1+): level = brightness 1-100 %; rgb = colour at full brightness (WS2812B only). */
+  lights?: { id: number; on: boolean; level?: number; rgb?: number[] }[];
+  /** Buzzers (Zherodius 2.7.1+): on while it sounds. */
+  buzzers?: { id: number; on: boolean }[];
   /** t °C, h %, p hPa, c CO2 ppm. */
-  sensors?: { id: number; t?: number; h?: number; p?: number; c?: number; w?: number; e?: number }[];
+  sensors?: { id: number; t?: number; h?: number; p?: number; c?: number; w?: number; e?: number; [reading: string]: number | boolean | undefined }[];
   rssi?: number;
   uptime?: number;
   cfg?: number;

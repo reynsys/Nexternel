@@ -8,7 +8,7 @@ const SHORT: Record<AnywhereView["light"], string> = {
   green: "Connected",
   orange: "Connecting…",
   red: "Not connected",
-  off: "Switched off",
+  off: "Off",
 };
 
 /**

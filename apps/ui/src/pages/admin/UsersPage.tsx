@@ -450,14 +450,13 @@ function UsersAdminPage() {
                     onChange={setAvatarData}
                   />
                   {addOpen ? (
-                    <TextField label="Username" value={username} onChange={(e) => setUsername(e.target.value)} required fullWidth helperText="Used to sign in" />
+                    <TextField label="Username" value={username} onChange={(e) => setUsername(e.target.value)} required fullWidth />
                   ) : null}
                   <TextField
                     label="Display name"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     fullWidth
-                    helperText="Shown in the side menu instead of the username"
                   />
                   <FormControl fullWidth>
                     <InputLabel id="user-role">Role</InputLabel>
@@ -477,7 +476,7 @@ function UsersAdminPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       fullWidth
-                      helperText={`At least ${MIN_PASSWORD_LENGTH} characters. A few words in a row are easy to remember.`}
+                      helperText={`At least ${MIN_PASSWORD_LENGTH} characters.`}
                     />
                   ) : (
                     <TextField
@@ -495,17 +494,11 @@ function UsersAdminPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     fullWidth
-                    helperText="For warnings and the unlock link, if this account gets locked from outside"
                   />
                   <FormControlLabel
                     control={<Switch checked={isScreen} onChange={(_, on) => setTheme((t) => ({ ...t, wall: { ...normalizeWallPrefs(t.wall), screen: on } }))} />}
                     label={
-                      <Box>
-                        <Typography>This account is for a wall screen</Typography>
-                        <Typography variant="caption" color="text.secondary" display="block">
-                          A screen or tablet on the wall that stays signed in with this account. Its look, how it shows dashboards and its bell are set here (Appearance, Wall display, Notification bell). People set their own in Settings → Appearance and Settings → Notifications.
-                        </Typography>
-                      </Box>
+                      "This account is for a wall screen"
                     }
                     sx={{ alignItems: "flex-start", "& .MuiSwitch-root": { mt: -0.5 } }}
                   />
@@ -513,22 +506,14 @@ function UsersAdminPage() {
                     <FormControlLabel control={<Switch checked={isActive} onChange={(_, checked) => setIsActive(checked)} />} label="Account active" />
                   )}
                   {editUser?.secondCheck && (
-                    <Stack spacing={0.5}>
-                      <Button variant="outlined" color="error" onClick={() => void secondCheckOff(editUser)} sx={{ alignSelf: "flex-start" }}>
-                        Turn off second check
-                      </Button>
-                      <Typography variant="caption" color="text.secondary">
-                        For someone who lost their phone. They can then sign in from outside with a strong password, and set it up again.
-                      </Typography>
-                    </Stack>
+                    <Button variant="outlined" color="error" onClick={() => void secondCheckOff(editUser)} sx={{ alignSelf: "flex-start" }}>
+                      Turn off second check
+                    </Button>
                   )}
                 </Stack>
               ) : null}
               {shownTab === "appearance" ? (
                 <Stack spacing={2} sx={{ mt: 0.5 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    How Nexternel looks on this wall screen.
-                  </Typography>
                   <ThemeOptionsFields preview themePrefs={theme} skinId={skinId} skins={skins} onThemeChange={setTheme} onSkinChange={setSkinId} wallLight={normalizeWallPrefs(theme.wall).light} />
                 </Stack>
               ) : null}

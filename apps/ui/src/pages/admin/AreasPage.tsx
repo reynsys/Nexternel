@@ -126,7 +126,6 @@ export function AreasPage() {
     <Stack spacing={2}>
       <PageHeader
         title={AREA.plural}
-        hint={<>The parts of your home, like the kitchen, the garden or the garage.{canEdit ? " Drag a box by its title to change the order; Edit opens its settings." : ""}</>}
         actions={
           canEdit ? (
             <Button variant="contained" startIcon={<AddIcon />} onClick={() => open(null)}>
@@ -142,7 +141,7 @@ export function AreasPage() {
       ) : null}
       {areas.length === 0 ? (
         <Typography color="text.secondary">
-          No {AREA.plural.toLowerCase()} yet.{canEdit ? ` Use “${AREA.add}” to create one.` : ""}
+          No {AREA.plural.toLowerCase()}.
         </Typography>
       ) : null}
 
@@ -216,7 +215,7 @@ export function AreasPage() {
                   </Stack>
                 ) : (
                   <Typography variant="body2" color="text.secondary">
-                    No devices here yet.
+                    No devices.
                   </Typography>
                 )}
               </PanelTile>
@@ -237,7 +236,6 @@ export function AreasPage() {
               value={editing.name}
               onChange={(e) => setEditing({ ...editing, name: e.target.value })}
               autoFocus
-              placeholder="e.g. Kitchen, Front Garden, Driveway"
               fullWidth
             />
             <DashboardIconPicker dense value={editing.icon} onChange={(icon) => setEditing({ ...editing, icon })} />
@@ -246,7 +244,6 @@ export function AreasPage() {
               size="small"
               value={editing.description}
               onChange={(e) => setEditing({ ...editing, description: e.target.value })}
-              placeholder="e.g. Upstairs, next to the bathroom"
               fullWidth
             />
             {editing.id ? (
@@ -256,14 +253,14 @@ export function AreasPage() {
                     Devices here
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    {editingDevices.length ? `${editingDevices.join(", ")}.` : "None yet."} A device's area is chosen on the Devices page.
+                    {editingDevices.length ? `${editingDevices.join(", ")}.` : "None."}
                   </Typography>
                 </Box>
                 <Box sx={{ borderTop: 1, borderColor: "divider", pt: 2 }}>
                   {askDelete ? (
                     <>
                       <Typography variant="body2">
-                        Delete “{editingArea?.name}”? Its devices keep working; they just have no area until you choose one.
+                        Delete “{editingArea?.name}”? Its devices stay, without an area.
                       </Typography>
                       <ButtonRow direction="row" sx={{ mt: 1 }}>
                         <Button variant="outlined" onClick={() => setAskDelete(false)}>

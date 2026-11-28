@@ -17,7 +17,8 @@ import {
 
 export type ConfirmOptions = {
   title: string;
-  message: string;
+  /** A line under the title; leave it out when the title says enough. */
+  message?: string;
   confirmLabel?: string;
   cancelLabel?: string;
   /** When true (default), the confirm button uses error styling. */
@@ -64,9 +65,11 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
         fullWidth
       >
         <DialogTitle>{pending?.title}</DialogTitle>
-        <DialogContent>
-          <DialogContentText>{pending?.message}</DialogContentText>
-        </DialogContent>
+        {pending?.message ? (
+          <DialogContent>
+            <DialogContentText>{pending.message}</DialogContentText>
+          </DialogContent>
+        ) : null}
         <DialogActions>
           <Button onClick={() => close(false)}>{pending?.cancelLabel ?? "Cancel"}</Button>
           <Button

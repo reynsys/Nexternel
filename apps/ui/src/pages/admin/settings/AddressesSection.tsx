@@ -26,25 +26,20 @@ export function AddressesSection() {
           {status ? (
             <>
               <Box>
-                <Typography variant="subtitle2">Open Nexternel on its network with</Typography>
+                <Typography variant="subtitle2">On Nexternel's network</Typography>
                 {status.localAddresses.map((a) => (
                   <Typography key={a} variant="body2">
                     <Link href={a}>{a}</Link>
                   </Typography>
                 ))}
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                  The name works on phones, tablets and computers on the same network as Nexternel. If a device cannot find it, use the
-                  number address.
+                  If the name doesn't open, use the number.
                 </Typography>
               </Box>
               <Box>
                 <Typography variant="subtitle2">Wall displays and tablets</Typography>
                 <Typography variant="body2">
                   <Link href={`${status.localAddresses[0] ?? ""}/display`}>{status.localAddresses[0] ?? ""}/display</Link>
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                  The dashboard alone, full screen, with larger text and lighter effects. Each wall display's own settings are in Settings → Users → Edit →
-                  Wall display.
                 </Typography>
               </Box>
               {status.settings.domain && status.domainCertificate ? (

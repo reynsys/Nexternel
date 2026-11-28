@@ -75,7 +75,7 @@ export async function linkDeviceYamlFile(deviceId: string, file: string): Promis
 function yamlRelativePath(meta: DeviceEsphomeMeta): string {
   const raw = meta.esphome_yaml_path?.trim();
   if (raw) return raw.replace(/^\/+/, "");
-  throw new Error("This board is not linked to its ESPHome settings file yet. Link it under Devices → the board → Overview → Software.");
+  throw new Error("This board is not linked to its ESPHome settings file yet. Link it under Devices → the board → Overview → Firmware.");
 }
 
 function yamlConfigPath(meta: DeviceEsphomeMeta): string {

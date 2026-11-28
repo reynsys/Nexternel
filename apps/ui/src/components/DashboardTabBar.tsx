@@ -75,7 +75,7 @@ export function DashboardTabBar({
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Failed to load tabs");
+          setError(err instanceof Error ? err.message : "Could not load the dashboards.");
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -140,10 +140,10 @@ export function DashboardTabBar({
       {canAdd ? addButton(size, dir === "column" ? "left" : undefined) : null}
       {skin.id === "mui-dashboard" && !display.active ? <NotificationBell place="dashboard" canClear={canClearNotifications} tip={dir === "column" ? "left" : undefined} /> : null}
       {canEdit && !phoneEditing && (
-        <Tooltip title="Dashboard Options" placement={dir === "column" ? "left" : undefined}>
+        <Tooltip title="Edit dashboard" placement={dir === "column" ? "left" : undefined}>
           <Button
             variant={editMode ? "contained" : "outlined"}
-            aria-label="Dashboard Options"
+            aria-label="Edit dashboard"
             aria-pressed={editMode}
             onClick={() => onDashboardOptions?.()}
             data-nx-room=""
@@ -225,7 +225,7 @@ export function DashboardTabBar({
       >
         {loading && (
           <Typography variant="caption" color="text.secondary">
-            Loading tabs…
+            Loading…
           </Typography>
         )}
         {!loading && error && (
@@ -235,7 +235,7 @@ export function DashboardTabBar({
         )}
         {!loading && !error && dashboards.length === 0 && (
           <Typography variant="caption" color="text.secondary">
-            No dashboards yet — use + to add one.
+            No dashboards.
           </Typography>
         )}
         {!loading &&
@@ -309,11 +309,11 @@ export function DashboardTabBar({
         </Box>
       ) : null}
       {canEdit && !phoneEditing && (
-        <Tooltip title="Dashboard Options">
+        <Tooltip title="Edit dashboard">
           <Button
             size="small"
             variant={editMode ? "contained" : "outlined"}
-            aria-label="Dashboard Options"
+            aria-label="Edit dashboard"
             aria-pressed={editMode}
             onClick={() => onDashboardOptions?.()}
             sx={{ minWidth: 34, width: 34, height: 34, p: 0, flexShrink: 0 }}

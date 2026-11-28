@@ -14,6 +14,8 @@ import { useConfirm } from "../../../components/confirm";
 import { useShellAuth } from "../../../skins/useShellAuth";
 import { hasPermission } from "../../../lib/permissions";
 import { ButtonRow } from "../../../components/ButtonRow";
+import { FactGrid, type FactItem } from "../../../components/FactGrid";
+import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 
 const when = (iso: string) =>
   new Date(iso).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
@@ -95,17 +97,19 @@ export function UpdatesSection() {
   }
 
   async function update() {
-    if (!status?.downloaded) return;
+    const version = status?.latest?.version;
+    if (!version) return;
     const ok = await confirm({
-      title: `Update to ${status.downloaded}?`,
+      title: `Update to ${version}?`,
       message:
-        "Nexternel will be unavailable for a few minutes while it rebuilds. Your settings, devices and dashboards are kept, " +
-        "a copy of your settings is saved first, and if anything goes wrong the current version is put back by itself.",
+        "Nexternel is unavailable for a few minutes. Settings, devices and dashboards are kept; if anything goes wrong, " +
+        "the current version comes back by itself.",
       confirmLabel: "Update now",
       destructive: false,
     });
     if (!ok) return;
-    target.current = status.downloaded;
+    target.current = version;
+    // One press: the server downloads the new version first when needed, then installs it.
     await run("start", api.startUpdate);
     // Show the maintenance banner straight away.
     window.dispatchEvent(new Event("nexternel:maintenance"));
@@ -115,6 +119,40 @@ export function UpdatesSection() {
   const run_ = status?.run;
   if (run_?.target) target.current = run_.target;
 
+  /** The Status row: one short value, coloured by what it means. */
+  const statusFact = (s: UpdateStatus): FactItem => {
+    if (updating) {
+      return {
+        label: "Status",
+        value: (
+          <Stack direction="row" spacing={1} alignItems="center" component="span">
+            <CircularProgress size={14} color="inherit" />
+            <span>
+              Updating to {target.current ?? "the new version"}
+              {run_?.step ? `: ${run_.step}` : ""}
+            </span>
+          </Stack>
+        ),
+        tone: "warn",
+      };
+    }
+    if (s.lastCheckError) return { label: "Status", value: `Could not check: ${s.lastCheckError}`, tone: "warn" };
+    if (s.updateAvailable && latest) return { label: "Status", value: `${latest.version} available`, tone: "warn" };
+    if (s.lastCheckedAt) {
+      return {
+        label: "Status",
+        value: (
+          <Stack direction="row" spacing={0.5} alignItems="center" component="span">
+            <span>Up to date</span>
+            <CheckRoundedIcon fontSize="inherit" />
+          </Stack>
+        ),
+        tone: "good",
+      };
+    }
+    return { label: "Status", value: "Not checked yet" };
+  };
+
   return (
         <Stack spacing={2}>
           <Typography variant="h6">Updates</Typography>
@@ -122,80 +160,40 @@ export function UpdatesSection() {
             error ? <Alert severity="error">{error}</Alert> : <CircularProgress size={24} />
           ) : (
             <>
-              <Typography variant="body2">
-                This is Nexternel <strong>{status.current}</strong>.{" "}
-                {status.updateAvailable && latest
-                  ? `Version ${latest.version} is available${latest.publishedAt ? ` (published ${when(latest.publishedAt)})` : ""}.`
-                  : status.lastCheckedAt && !status.lastCheckError
-                    ? "It is the newest version."
-                    : ""}
-              </Typography>
-              {status.lastCheckedAt ? (
-                <Typography variant="caption" color="text.secondary">
-                  Last checked {when(status.lastCheckedAt)}. Nexternel checks by itself every night at {status.nightlyCheck}.
-                </Typography>
-              ) : null}
-              {status.lastCheckError ? (
-                <Alert severity="warning">Could not check for updates: {status.lastCheckError}</Alert>
-              ) : null}
-
-              {updating ? (
-                <Alert severity="info" icon={<CircularProgress size={18} color="inherit" />}>
-                  Updating to {target.current ?? "the new version"}. This takes a few minutes; Nexternel restarts on the
-                  way and this page reloads by itself when it is done.
-                  {run_?.step ? (
-                    <Box component="span" sx={{ display: "block", mt: 0.5 }}>
-                      Now: {run_.step}
-                    </Box>
-                  ) : null}
-                </Alert>
-              ) : null}
-              {run_?.state === "succeeded" && !updating && run_.target ? (
-                <Typography variant="body2" color="text.secondary">
-                  Last update: {run_.target}
-                  {run_.startedAt ? `, installed on ${when(run_.startedAt)}` : ""}.
-                </Typography>
-              ) : null}
+              <FactGrid
+                items={[
+                  { label: "Installed", value: `Nexternel ${status.current}` },
+                  statusFact(status),
+                  ...(status.lastCheckedAt ? [{ label: "Last checked", value: when(status.lastCheckedAt) }] : []),
+                  ...(run_?.state === "succeeded" && run_.startedAt ? [{ label: "Last update", value: when(run_.startedAt) }] : []),
+                ]}
+              />
               {run_?.state === "failed" && !updating ? (
-                <Alert severity="error">
-                  The update to {run_.target} did not finish, so Nexternel put the previous version back. You can try again
-                  with Update; "Show details" below shows where it stopped.
-                </Alert>
+                <Alert severity="error">The update to {run_.target} did not finish; the previous version is back.</Alert>
               ) : null}
               {error ? <Alert severity="error">{error}</Alert> : null}
 
               {canManage ? (
                 <ButtonRow direction={{ xs: "column", sm: "row" }}>
+                  {status.updateAvailable && latest && status.canUpdate ? (
+                    <Button variant="contained" disabled={busy !== null || updating} onClick={() => void update()}>
+                      {busy === "start" ? "Starting…" : `Update to ${latest.version}`}
+                    </Button>
+                  ) : null}
                   <Button variant="outlined" disabled={busy !== null || updating} onClick={() => void run("check", api.checkForUpdate)}>
                     {busy === "check" ? "Checking…" : "Check for update"}
                   </Button>
-                  {status.updateAvailable && latest && status.downloaded !== latest.version ? (
-                    <Button variant="contained" disabled={busy !== null || updating} onClick={() => void run("download", api.downloadUpdate)}>
-                      {busy === "download" ? "Downloading…" : "Download"}
-                    </Button>
-                  ) : null}
-                  {status.downloaded ? (
-                    <Button
-                      variant="contained"
-                      color="success"
-                      disabled={busy !== null || updating || !status.canUpdate}
-                      onClick={() => void update()}
-                    >
-                      {busy === "start" ? "Starting…" : "Update"}
-                    </Button>
-                  ) : null}
                 </ButtonRow>
               ) : null}
-              {status.downloaded && !status.canUpdate ? (
+              {status.updateAvailable && !status.canUpdate ? (
                 <Typography variant="body2" color="text.secondary">
                   Updating from here is switched off on this server.
                 </Typography>
               ) : null}
-
               {status.updateAvailable && latest?.notes ? (
                 <Box>
                   <Button size="small" onClick={() => setShowNotes((v) => !v)}>
-                    {showNotes ? "Hide" : "Show"} what is new in {latest.version}
+                    What is new in {latest.version}
                   </Button>
                   <Collapse in={showNotes}>
                     <Box sx={{ pt: 1 }}>

@@ -283,7 +283,7 @@ export async function adoptEsphomeDeviceToManaged(deviceId: string): Promise<{
 
   // The board's own settings file (linked by its exact message address), never one with a similar name.
   const file = await linkedSettingsFile(device.id, device.esphomeYamlPath ?? null, device.mqttTopicPrefix);
-  if (!file) throw new Error("This board is not linked to its ESPHome settings file yet. Link it under Devices → the board → Overview → Software.");
+  if (!file) throw new Error("This board is not linked to its ESPHome settings file yet. Link it under Devices → the board → Overview → Firmware.");
   const slug = file.replace(/^devices\//, "").replace(/\.yaml$/, "");
   const yaml = await readEsphomeFile(file);
   if (!yaml) throw new Error(`The board's settings file (${file}) is not on the server.`);

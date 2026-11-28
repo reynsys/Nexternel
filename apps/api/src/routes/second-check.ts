@@ -41,7 +41,7 @@ export const secondCheckRoutes: FastifyPluginAsync = async (app) => {
       const ok = await confirmSetup(request.user!.id, String(request.body?.code ?? ""));
       if (!ok) {
         return reply.code(400).send({
-          error: { code: "wrong_code", message: "That code is not right. Check that the app shows Nexternel and type the newest code." },
+          error: { code: "wrong_code", message: "Wrong code." },
         });
       }
       request.log.info({ username: request.user!.username }, "second check turned on");

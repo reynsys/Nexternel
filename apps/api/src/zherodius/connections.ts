@@ -15,7 +15,8 @@
  */
 import type { CapabilityRow } from "../capabilities/store.js";
 import type { DevicePath, ItemSender } from "../devices/device-path.js";
-import { readStatus, type ItemMap } from "./items.js";
+import type { ControlState } from "../devices/controls.js";
+import { hsToRgb, readStatus, rgbToHs, type ItemMap } from "./items.js";
 import type { X25519Key } from "./line-crypto.js";
 import { setNeedsPairing } from "./pairing-state.js";
 import {
@@ -57,7 +58,7 @@ export type ConnectionsDeps = {
   saveHubName(deviceId: string, name: string): void;
   /** The device's address on the home network now, found by its serial number (null: not seen). */
   findAddress(serial: string): Promise<string | null>;
-  path: Pick<DevicePath, "reportItem" | "deviceOnline" | "deviceOffline" | "deviceHeard">;
+  path: Pick<DevicePath, "reportItem" | "reportControl" | "deviceOnline" | "deviceOffline" | "deviceHeard">;
   logActivity(entry: { deviceId: string; text: string }): void;
   /** The device found a newer Zherodius (told once per device and version, also after a restart). */
   updateReady?(entry: { deviceId: string; deviceName: string; version: string; latest: string; notes: string }): void;
@@ -174,6 +175,10 @@ export function createZherodiusConnections(deps: ConnectionsDeps) {
       at: Date.now(),
     };
     for (const r of readStatus(status, entry.items)) {
+      if (r.control) {
+        deps.path.reportControl(r.itemId, r.value);
+        continue;
+      }
       deps.path.reportItem(r.itemId, r.value, {
         kind: r.kind,
         retained: false,
@@ -382,15 +387,43 @@ export function createZherodiusConnections(deps: ConnectionsDeps) {
     },
     async send(item: CapabilityRow, on: boolean) {
       const found = entryOfItem(item.id);
-      const m = found ? /^relay_(\d+)$/.exec(found.slug) : null;
+      const m = found ? /^(relay|buzzer)_(\d+)$/.exec(found.slug) : null;
       const line = found?.entry.line;
       if (!found || !m || !line) throw new Error("Nexternel has no line to this device");
       try {
-        const r = await line.call<{ on?: boolean }>("Relay.Set", { id: Number(m[1]), on }, PRESS_ANSWER_MS);
+        // A buzzer (Zherodius 2.7.1+): on = sound for its own set time; off = stop now.
+        const r = m[1] === "buzzer"
+          ? await line.call<{ on?: boolean }>("Buzzer.Sound", { id: Number(m[2]), on }, PRESS_ANSWER_MS)
+          : await line.call<{ on?: boolean }>("Relay.Set", { id: Number(m[2]), on }, PRESS_ANSWER_MS);
         // The device's answer is its report of the new position.
         if (typeof r?.on === "boolean") deps.path.reportItem(item.id, r.on, { kind: "switch", retained: false });
       } catch (err) {
         // No answer yet: the shared path waits for the device's report and decides.
+        if (err instanceof NoAnswerError) return;
+        throw err;
+      }
+    },
+    /** A light (Zherodius 2.7.1+): on, brightness 1-100 %, colour; what is not sent stays as it is. */
+    async sendControl(item: CapabilityRow, change: ControlState) {
+      const found = entryOfItem(item.id);
+      const m = found ? /^light_(\d+)$/.exec(found.slug) : null;
+      const line = found?.entry.line;
+      if (!found || !m || !line) throw new Error("Nexternel has no line to this device");
+      const params: Record<string, unknown> = { id: Number(m[1]) };
+      if (typeof change.on === "boolean") params.on = change.on;
+      if (typeof change.brightness === "number") params.level = change.brightness;
+      if (change.color) params.rgb = hsToRgb(change.color);
+      try {
+        const r = await line.call<{ on?: boolean; level?: number; rgb?: number[] }>("Light.Set", params, PRESS_ANSWER_MS);
+        // The device's answer is its report of the light now.
+        if (typeof r?.on === "boolean") {
+          const state: Record<string, unknown> = { on: r.on };
+          if (typeof r.level === "number") state.brightness = r.level;
+          const color = rgbToHs(r.rgb);
+          if (color) state.color = color;
+          deps.path.reportControl(item.id, state);
+        }
+      } catch (err) {
         if (err instanceof NoAnswerError) return;
         throw err;
       }

@@ -61,7 +61,7 @@ export function ExtensionsSettingsPage() {
       setCatalog((await api.pluginCatalog(refresh)).plugins);
       setCatalogError(null);
     } catch (err) {
-      setCatalogError(err instanceof Error ? err.message : "The official list could not be loaded.");
+      setCatalogError(err instanceof Error ? err.message : "The list could not be loaded.");
     }
   }, []);
   // Changes made on another screen show here straight away.
@@ -141,8 +141,7 @@ export function ExtensionsSettingsPage() {
             onClick={async () => {
               const ok = await confirm({
                 title: `Remove ${a.name}?`,
-                message:
-                  "It stops working on this server and its place on your licence is freed, so you can install it on another server. You can install it here again with the same key.",
+                message: "Its licence becomes free for another server.",
                 confirmLabel: "Remove",
               });
               if (ok) await run(`remove-${a.id}`, async () => void (await api.removeAddon(a.id), await loadAddons()));
@@ -154,12 +153,12 @@ export function ExtensionsSettingsPage() {
       </Stack>
       {a.description ? (
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          {a.description} Choose it in Settings → Appearance → Look.
+          {a.description}
         </Typography>
       ) : null}
       <Typography variant="caption" color="text.secondary" component="div" sx={{ mt: 0.75 }}>
         Licence {a.licenceId}
-        {a.holder ? ` · ${a.holder}` : ""} · Valid until {day(a.validUntil)} (renewed automatically) · Last checked {day(a.checkedAt)}
+        {a.holder ? ` · ${a.holder}` : ""} · Valid until {day(a.validUntil)} · Last checked {day(a.checkedAt)}
       </Typography>
       {a.message && a.status !== "active" ? (
         <Alert severity={a.status === "expired" ? "warning" : "error"} sx={{ mt: 1 }}>
@@ -171,7 +170,7 @@ export function ExtensionsSettingsPage() {
 
   return (
     <Stack spacing={3}>
-      <PageHeader title="Manage extensions" hint="Extra features and Looks. Free ones install with one click; paid ones unlock with the licence key from your email." />
+      <PageHeader title="Manage extensions" />
       <Card sx={surfaceSx}>
         <CardContent>
           <Stack spacing={2}>
@@ -207,7 +206,7 @@ export function ExtensionsSettingsPage() {
                     await loadAddons();
                     setKey("");
                     setKeyOpen(false);
-                    return `Unlocked: ${r.addons.map((x) => x.name).join(", ")}. Choose it in Settings → Appearance.`;
+                    return `Unlocked: ${r.addons.map((x) => x.name).join(", ")}.`;
                   });
                 }}
               >
@@ -215,7 +214,7 @@ export function ExtensionsSettingsPage() {
                   <TextField
                     id="addon-licence-key"
                     size="small"
-                    label="Licence key (from your email)"
+                    label="Licence key"
                     placeholder="NX-XXXX-XXXX-XXXX-XXXX"
                     value={key}
                     onChange={(e) => setKey(e.target.value)}
@@ -231,8 +230,7 @@ export function ExtensionsSettingsPage() {
             </Collapse>
             {plugins && !plugins.host.connected ? (
               <Alert severity="warning">
-                The service that runs features is not running, so features cannot start. It starts with Nexternel; if this message stays, restart Nexternel
-                (Settings → System → Help &amp; troubleshooting).
+                Features can't start. Settings → System → Help &amp; troubleshooting → Restart Nexternel.
               </Alert>
             ) : null}
             {notice ? (
@@ -258,7 +256,7 @@ export function ExtensionsSettingsPage() {
               ) : null}
             </Stack>
             {!plugins ? <CircularProgress size={24} /> : null}
-            {plugins && nothingInstalled ? <Typography color="text.secondary">Nothing of this kind is installed.</Typography> : null}
+            {plugins && nothingInstalled ? <Typography color="text.secondary">Nothing installed.</Typography> : null}
             {show("feature")
               ? installedPlugins.map((p) => (
                   <InstalledPlugin
@@ -284,7 +282,7 @@ export function ExtensionsSettingsPage() {
                     onRemove={async () => {
                       const ok = await confirm({
                         title: `Remove ${p.name}?`,
-                        message: "Its devices disappear from your panels and its settings are deleted. You can install it again later.",
+                        message: "Its devices and settings are removed.",
                         confirmLabel: "Remove",
                       });
                       if (ok) await run(`remove-${p.id}`, async () => void (await api.removePlugin(p.id)));
@@ -295,7 +293,7 @@ export function ExtensionsSettingsPage() {
             {show("style") ? styles.map(addonRow) : null}
             {canManage && addons ? (
               <Typography variant="caption" color="text.secondary">
-                Paid extensions are licensed to this server and may not be copied or shared. Server id {addons.serverId.slice(0, 8)}.
+                Server ID {addons.serverId.slice(0, 8)}.
               </Typography>
             ) : null}
           </Stack>
@@ -332,22 +330,19 @@ export function ExtensionsSettingsPage() {
                     </Paper>
                   ))}
                   {catalog && available.length === 0 ? (
-                    <Typography color="text.secondary">Every free feature is already installed.</Typography>
+                    <Typography color="text.secondary">All installed.</Typography>
                   ) : null}
                 </>
               ) : null}
               {show("style") ? (
-                <Typography variant="body2" color="text.secondary">
-                  {addons?.available
-                    ? "Paid Looks (3D, HUD and more) unlock with a licence key from the Nexternel shop — press Enter licence key above."
-                    : "Paid Looks will be available when the Nexternel shop opens."}
-                </Typography>
+                !addons?.available ? (
+                  <Typography variant="body2" color="text.secondary">
+                    Paid Looks: coming soon.
+                  </Typography>
+                ) : null
               ) : null}
               <Box sx={{ pt: 1 }}>
-                <Typography variant="subtitle2">Install from a file</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                  For features that are not in the official list. Only use files from people you trust.
-                </Typography>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>Install from a file</Typography>
                 <input ref={fileInput} type="file" accept=".zip,application/zip" hidden onChange={(e) => void chooseFile(e.target.files?.[0])} />
                 <Button variant="outlined" disabled={busy !== null} onClick={() => fileInput.current?.click()}>
                   Choose file…

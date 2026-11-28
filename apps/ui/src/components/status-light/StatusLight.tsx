@@ -327,7 +327,7 @@ function PlainGlowBorder({
   );
 }
 
-const UNSET_LABEL = "No limits set yet. Open Edit → Status light to set them.";
+const UNSET_LABEL = "No limits.";
 const UNSET_LINE = "rgba(141, 151, 168, 0.75)";
 // Same parts as a real light (so a Look's shapes apply); an outline drawn inside the shape.
 const UNSET_FILL = "rgba(141, 151, 168, 0.12)";

@@ -69,7 +69,6 @@ export function UserAvatarField({
                 void (async () => {
                   const ok = await confirm({
                     title: "Remove picture?",
-                    message: "Remove your profile picture?",
                     confirmLabel: "Remove picture",
                   });
                   if (ok) onChange(null);
@@ -86,9 +85,6 @@ export function UserAvatarField({
           {error}
         </Typography>
       )}
-      <Typography variant="caption" color="text.secondary">
-        Square photos work best. Images are resized automatically.
-      </Typography>
     </Stack>
   );
 }

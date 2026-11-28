@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from "fastify";
 import { requirePermission } from "../auth/rbac.js";
-import { checkForUpdate, dismissUpdateRun, downloadUpdate, startUpdate, updateStatus } from "./updates.js";
+import { checkForUpdate, dismissUpdateRun, startUpdate, updateStatus } from "./updates.js";
 import { currentMaintenance } from "./maintenance.js";
 
 export const updateRoutes: FastifyPluginAsync = async (app) => {
@@ -19,15 +19,6 @@ export const updateRoutes: FastifyPluginAsync = async (app) => {
   app.post("/api/v1/system/update/check", async (request, reply) => {
     if (!requirePermission(request, reply, "manageUsers")) return;
     return checkForUpdate();
-  });
-
-  app.post("/api/v1/system/update/download", async (request, reply) => {
-    if (!requirePermission(request, reply, "manageUsers")) return;
-    try {
-      return await downloadUpdate();
-    } catch (err) {
-      return reply.code(400).send(failed(err));
-    }
   });
 
   app.post("/api/v1/system/update/start", async (request, reply) => {

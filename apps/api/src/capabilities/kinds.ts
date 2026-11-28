@@ -20,6 +20,7 @@ export function kindFromSensorType(sensorType: string): string {
     "pm10",
   ]);
   if (known.has(t)) return t;
+  if (t === "presence") return "binary_sensor";   // Zherodius presence radar: someone there yes / no
   if (t.includes("temp")) return "temperature";
   if (t.includes("humid")) return "humidity";
   if (t.includes("pm10") || t.includes("pm_10")) return "pm10";

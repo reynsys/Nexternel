@@ -121,7 +121,7 @@ export function PluginPermissionsForm({ requested, grants, onChange, controlPick
             {key === "control" ? (
               controlPickerLater ? (
                 <Typography variant="body2" color="text.secondary" sx={{ pt: 0.5 }}>
-                  Off for now. After installing, choose exactly which devices it may switch, under Permissions.
+                  Choose its devices after installing, under Permissions.
                 </Typography>
               ) : (
                 <Autocomplete
@@ -133,7 +133,7 @@ export function PluginPermissionsForm({ requested, grants, onChange, controlPick
                   value={switches.filter((c) => grants.control.includes(c.id))}
                   onChange={(_, v) => onChange({ ...grants, control: v.map((c) => c.id) })}
                   renderInput={(params) => (
-                    <TextField {...params} label="Devices it may switch" helperText="Leave empty to allow none." />
+                    <TextField {...params} label="Devices it may switch" />
                   )}
                 />
               )

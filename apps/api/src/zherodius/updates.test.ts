@@ -74,7 +74,7 @@ async function setup(version: string, available: string) {
 test("an update from Nexternel: the device checks, installs, restarts and comes back on the new version", async () => {
   const { conns, pairing, go, steps } = await setup("1.12.1", "1.12.2");
   const result = await go();
-  assert.deepEqual(result, { step: "done", message: "Updated — Garden Relays is back and runs Zherodius 1.12.2." });
+  assert.deepEqual(result, { step: "done", message: "Updated to Zherodius 1.12.2." });
   assert.equal(conns.hello(pairing.deviceId)?.version, "1.12.2");
   assert.deepEqual([...new Set(steps.map((s) => s.step))], ["preparing", "sending", "restarting"]);
   assert.ok(steps.some((s) => /50% downloaded and checked/.test(s.message)));
@@ -86,13 +86,13 @@ test("a new version that does not start properly: the device went back by itself
   device.newVersionFails = true;
   const result = await go();
   assert.equal(result.step, "failed");
-  assert.equal(result.message, "Zherodius 1.12.2 did not start properly, so Garden Relays went back to 1.12.1 by itself. Nothing was lost; it can be tried again later.");
+  assert.equal(result.message, "Zherodius 1.12.2 did not start properly; Garden Relays went back to 1.12.1.");
   conns.stop();
 });
 
 test("nothing newer: already up to date, nothing installed", async () => {
   const { conns, go } = await setup("1.12.1", "");
-  assert.deepEqual(await go(), { step: "done", message: "Already up to date — it runs Zherodius 1.12.1, the newest version." });
+  assert.deepEqual(await go(), { step: "done", message: "Already up to date (Zherodius 1.12.1)." });
   assert.equal(device.version, "1.12.1");
   assert.equal(device.update.state, "idle");
   conns.stop();

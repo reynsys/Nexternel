@@ -1,8 +1,8 @@
 /** Nexternel Backend API — Generation 5 (V5 Constitution) */
 export const VERSION_GENERATION = 5;
 /** Major update (named "hardware" for history; since 07/11/2026 it counts major updates with new features). */
-export const VERSION_HARDWARE = 5;
-export const VERSION_SOFTWARE = 6;
+export const VERSION_HARDWARE = 6;
+export const VERSION_SOFTWARE = 1;
 
 export function formatVersion(
   gen = VERSION_GENERATION,

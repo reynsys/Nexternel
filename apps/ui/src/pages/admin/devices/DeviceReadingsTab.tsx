@@ -93,7 +93,7 @@ export function DeviceReadingsTab({ device, isAdmin, values, systems, onEditRead
     <Stack spacing={2}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
         <Typography variant="body2" color="text.secondary" sx={{ flex: 1, minWidth: 240 }}>
-          {items.length ? `${what} from this device. Names and icons set here are used on every dashboard.` : "No readings or switches yet."}
+          {items.length ? what : "No readings or switches yet."}
         </Typography>
         <FormControlLabel control={<Switch checked={technical} onChange={(e) => setTechnical(e.target.checked)} />} label="Show technical details" />
       </Box>

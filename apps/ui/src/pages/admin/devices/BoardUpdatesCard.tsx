@@ -53,10 +53,9 @@ export function BoardUpdatesCard({ canEdit }: { canEdit: boolean }) {
           <Stack direction="row" alignItems="center" spacing={1.5}>
             <CircularProgress size={ICON_SIZE.title + 4} />
             <Box>
-              <Typography variant="subtitle1">Preparing new board software</Typography>
+              <Typography variant="subtitle1">Preparing new board firmware</Typography>
               <Typography variant="body2" color="text.secondary">
-                {preparing.done} of {preparing.total} boards{preparing.current ? ` · now ${preparing.current}` : ""}. Nothing is sent to the
-                boards yet; when it is done, the boards that need it show Update boards.
+                {preparing.done} of {preparing.total} boards{preparing.current ? ` · now ${preparing.current}` : ""}. Nothing is sent yet.
               </Typography>
             </Box>
           </Stack>
@@ -82,40 +81,35 @@ export function BoardUpdatesCard({ canEdit }: { canEdit: boolean }) {
                 : behind.length
                   ? `${behind.length} board${behind.length === 1 ? " needs" : "s need"} an update`
                   : unknown.length || silent.length || ownPage.length
-                    ? "Board software to check"
+                    ? "Board firmware to check"
                     : "Board updates finished"}
             </Typography>
             {run?.running ? (
               <Typography variant="body2" color="text.secondary">
                 {run.startedBy && run.startedAt
-                  ? `Started by ${run.startedBy} at ${new Date(run.startedAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}. `
-                  : ""}
-                One after another, over Wi‑Fi. Each board restarts once; you can keep using Nexternel.
+                  ? `Started by ${run.startedBy} at ${new Date(run.startedAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}.`
+                  : "Updating…"}
               </Typography>
             ) : (
               <>
                 {behind.map((b) => (
                   <Typography key={b.deviceId} variant="body2" color="text.secondary">
-                    <b>{b.name}</b>: {b.updateReason ?? "it runs older software than the newest build of its settings"}.
+                    <b>{b.name}</b>: {b.updateReason ?? "it runs older firmware than the newest build of its settings"}.
                   </Typography>
                 ))}
                 {unknown.length ? (
                   <Typography variant="body2" color="text.secondary">
-                    Nexternel can't tell which software version {names(unknown)} {unknown.length === 1 ? "runs" : "run"}. Update boards
-                    installs the newest version; after that Nexternel checks it by itself.
+                    Firmware version not known: {names(unknown)}. Update boards once.
                   </Typography>
                 ) : null}
                 {silent.length ? (
                   <Typography variant="body2" color="text.secondary">
-                    {names(silent)} {silent.length === 1 ? "is" : "are"} not answering, so Nexternel can't check {silent.length === 1 ? "its" : "their"} software.
-                    It checks again when {silent.length === 1 ? "it answers" : "they answer"}.
+                    Not answering: {names(silent)}.
                   </Typography>
                 ) : null}
                 {ownPage.length ? (
                   <Typography variant="body2" color="text.secondary">
-                    {names(ownPage)} {ownPage.length === 1 ? "runs a Zherodius version that Nexternel can't" : "run Zherodius versions that Nexternel can't"} update
-                    yet. Update {ownPage.length === 1 ? "it" : "each"} once on {ownPage.length === 1 ? "its" : "their"} own device page (Firmware); after that
-                    Nexternel can update {ownPage.length === 1 ? "it" : "them"} here.
+                    Update once on the device's page (Firmware): {names(ownPage)}.
                   </Typography>
                 ) : null}
                 {!behind.length && !unknown.length && !silent.length && !ownPage.length ? (

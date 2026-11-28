@@ -80,14 +80,16 @@ export async function itemsOf(deviceId: string): Promise<ItemMap> {
   const r = await getPool().query<{ slug: string; id: string; kind: string }>(
     `SELECT r.slug, c.id, c.kind FROM relays r JOIN capabilities c ON c.source_type = 'relay' AND c.source_id = r.id WHERE r.device_id = $1
      UNION ALL
-     SELECT s.slug, c.id, c.kind FROM sensors s JOIN capabilities c ON c.source_type = 'sensor' AND c.source_id = s.id WHERE s.device_id = $1`,
+     SELECT s.slug, c.id, c.kind FROM sensors s JOIN capabilities c ON c.source_type = 'sensor' AND c.source_id = s.id WHERE s.device_id = $1
+     UNION ALL
+     SELECT dc.slug, c.id, c.kind FROM device_controls dc JOIN capabilities c ON c.source_type = 'control' AND c.source_id = dc.id WHERE dc.device_id = $1`,
     [deviceId]
   );
   return new Map(r.rows.map((row) => [row.slug, { itemId: row.id, kind: row.kind }]));
 }
 
 /**
- * Make the device's relays and sensors match what it says it is made of: new parts are added,
+ * Make the device's relays, sensors and lights match what it says it is made of: new parts are added,
  * renamed ones renamed, removed ones removed (names a person gave items in Nexternel stay).
  */
 export async function syncItems(deviceId: string, info: DeviceInfo): Promise<ItemMap> {
@@ -96,7 +98,14 @@ export async function syncItems(deviceId: string, info: DeviceInfo): Promise<Ite
   try {
     await client.query("BEGIN");
     for (const item of plan) {
-      if (item.kind === "relay") {
+      if (item.kind === "control") {
+        await client.query(
+          `INSERT INTO device_controls (device_id, name, slug, control_type, features) VALUES ($1, $2, $3, $4, $5)
+           ON CONFLICT (device_id, slug) DO UPDATE SET name = EXCLUDED.name, control_type = EXCLUDED.control_type, features = EXCLUDED.features,
+             command_topic = NULL, state_topic = NULL, updated_at = NOW()`,
+          [deviceId, item.name, item.slug, item.controlType, JSON.stringify(item.features)]
+        );
+      } else if (item.kind === "relay") {
         await client.query(
           `INSERT INTO relays (device_id, name, slug, esphome_entity_id) VALUES ($1, $2, $3, $3)
            ON CONFLICT (device_id, slug) DO UPDATE SET name = EXCLUDED.name, updated_at = NOW()`,
@@ -112,6 +121,13 @@ export async function syncItems(deviceId: string, info: DeviceInfo): Promise<Ite
     }
     const relaySlugs = plan.filter((p) => p.kind === "relay").map((p) => p.slug);
     const sensorSlugs = plan.filter((p) => p.kind === "sensor").map((p) => p.slug);
+    const controlSlugs = plan.filter((p) => p.kind === "control").map((p) => p.slug);
+    await client.query(
+      `DELETE FROM capabilities c USING device_controls dc
+       WHERE c.source_type = 'control' AND c.source_id = dc.id AND dc.device_id = $1 AND NOT (dc.slug = ANY($2::text[]))`,
+      [deviceId, controlSlugs]
+    );
+    await client.query(`DELETE FROM device_controls WHERE device_id = $1 AND NOT (slug = ANY($2::text[]))`, [deviceId, controlSlugs]);
     await client.query(
       `DELETE FROM capabilities c USING relays r
        WHERE c.source_type = 'relay' AND c.source_id = r.id AND r.device_id = $1 AND NOT (r.slug = ANY($2::text[]))`,

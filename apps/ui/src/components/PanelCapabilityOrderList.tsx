@@ -82,12 +82,8 @@ export function PanelCapabilityOrderList({
 
   function removeId(id: string) {
     void (async () => {
-      const cap = byId.get(id);
       const ok = await confirm({
         title: "Remove item?",
-        message: cap
-          ? `Remove “${capabilityOptionPrimary(cap)}” from this panel’s item list?`
-          : "Remove this item from the list?",
         confirmLabel: "Remove",
       });
       if (ok) onChange(value.filter((v) => v !== id));
@@ -109,7 +105,7 @@ export function PanelCapabilityOrderList({
       <Typography variant="subtitle2">{heading}</Typography>
       {selected.length === 0 ? (
         <Typography variant="body2" color="text.secondary">
-          No items selected yet. Add one below.
+          No items.
         </Typography>
       ) : (
         <List dense disablePadding>
@@ -238,7 +234,7 @@ export function PanelCapabilityOrderList({
 
       {options.length === 0 && (
         <Typography variant="caption" color="text.secondary">
-          No items in this scope — adjust place or category first.
+          Nothing to add here yet.
         </Typography>
       )}
     </Stack>

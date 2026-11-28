@@ -352,6 +352,7 @@ apps/ui/src/components/DashboardSectionFrame.tsx
 apps/ui/src/components/DashboardTabBar.tsx
 apps/ui/src/components/DashboardTileBody.tsx
 apps/ui/src/components/DevicesWifi.tsx
+apps/ui/src/components/FactGrid.tsx
 apps/ui/src/components/FullDateTime.tsx
 apps/ui/src/components/IconPicker.tsx
 apps/ui/src/components/ItemOverrideFields.tsx

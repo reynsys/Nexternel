@@ -32,7 +32,7 @@ import { BuilderComponentPicker } from "./esphome/BuilderComponentPicker";
 import { useConfirm } from "../../components/confirm";
 import { ButtonRow } from "../../components/ButtonRow";
 import { insetSx } from "../../skins/surfaceStyles";
-import { DevicesWifiExplainer, DevicesWifiForm } from "../../components/DevicesWifi";
+import { DevicesWifiForm } from "../../components/DevicesWifi";
 
 type AreaOption = { id: string; name: string };
 
@@ -493,7 +493,6 @@ export function EsphomeAddDeviceWizard({
               {newStep === "hardware" && wifiMissing && (
                 <Stack spacing={1.5} sx={[{ p: 2, mb: 2 }, insetSx()]}>
                   <Typography variant="subtitle1">First: Wi-Fi for your devices</Typography>
-                  <DevicesWifiExplainer />
                   <DevicesWifiForm idPrefix="board-wizard-wifi" onSaved={() => setWifiMissing(false)} />
                 </Stack>
               )}

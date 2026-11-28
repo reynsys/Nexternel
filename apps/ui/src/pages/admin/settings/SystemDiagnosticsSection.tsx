@@ -50,7 +50,7 @@ function DeviceRow({ device }: { device: DevicePipelineDiagnostic }) {
           {device.breakAt ? (
             <Chip size="small" color="error" label={device.breakAt} />
           ) : (
-            <Chip size="small" color="success" label="ok" />
+            <Chip size="small" color="success" label="OK" />
           )}
         </TableCell>
       </TableRow>
@@ -98,7 +98,7 @@ export function SystemDiagnosticsSection() {
       const data = await api.diagnosticsPipeline();
       setReport(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load diagnostics");
+      setError(err instanceof Error ? err.message : "Could not run the check.");
       setReport(null);
     } finally {
       setBusy(false);
@@ -115,7 +115,7 @@ export function SystemDiagnosticsSection() {
         void loadPipeline();
       }, 31_000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Broker sniff failed");
+      setError(err instanceof Error ? err.message : "Could not watch the messages.");
     }
   }
 
@@ -124,12 +124,9 @@ export function SystemDiagnosticsSection() {
         <Typography variant="subtitle1" gutterBottom>
           Check device messages
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Shows whether each device's messages reach Nexternel and turn into readings. Only looks — changes nothing.
-        </Typography>
         <ButtonRow direction="row" flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
           <Button variant="contained" disabled={busy} onClick={() => void loadPipeline()}>
-            {busy ? "Checking…" : "Run check"}
+            {busy ? "Checking…" : "Check"}
           </Button>
           <Button variant="outlined" disabled={busy} onClick={() => void startSniff()}>
             Watch all messages for 30 s
@@ -137,7 +134,7 @@ export function SystemDiagnosticsSection() {
         </ButtonRow>
         {sniffMsg && (
           <Alert severity="info" sx={{ mb: 1 }}>
-            {sniffMsg} — diagnostics will refresh when the sniff window ends.
+            {sniffMsg}
           </Alert>
         )}
         {error && (
@@ -149,29 +146,26 @@ export function SystemDiagnosticsSection() {
           <Stack spacing={2}>
             <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
               <Chip label={`MQTT ${String(report.mqtt.status)}`} />
-              <Chip label={`${report.summary.devicesWithTraffic}/${report.summary.devicesTotal} with traffic`} />
+              <Chip label={`${report.summary.devicesWithTraffic} of ${report.summary.devicesTotal} sending`} />
               <Chip
-                label={`${report.summary.devicesWithoutTraffic} no traffic`}
+                label={`${report.summary.devicesWithoutTraffic} silent`}
                 color={report.summary.devicesWithoutTraffic > 0 ? "warning" : "default"}
               />
-              <Chip label={`${report.summary.unmatchedMessageCount} unmatched topics`} />
+              <Chip label={`${report.summary.unmatchedMessageCount} unknown messages`} />
             </Stack>
-            <Typography variant="subtitle2">By protocol</Typography>
+            <Typography variant="subtitle2">By kind</Typography>
             <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
               {Object.entries(report.byProtocol).map(([key, val]) => (
                 <Chip
                   key={key}
                   variant="outlined"
-                  label={`${key}: ${val.withTraffic}/${val.count} traffic`}
+                  label={`${key === "esphome" ? "ESPHome" : key}: ${val.withTraffic} of ${val.count} sending`}
                 />
               ))}
             </Stack>
             {report.recentUnmatchedTopics.length > 0 && (
               <>
-                <Typography variant="subtitle2">Recent unmatched MQTT topics</Typography>
-                <Typography variant="caption" color="text.secondary" display="block">
-                  Messages received by the API that did not match a capability binding.
-                </Typography>
+                <Typography variant="subtitle2">Recent unknown messages</Typography>
                 {report.recentUnmatchedTopics.slice(0, 10).map((m) => (
                   <Typography key={`${m.topic}-${m.at}`} variant="caption" display="block">
                     {m.at} — {m.topic}
@@ -183,11 +177,11 @@ export function SystemDiagnosticsSection() {
               <TableHead>
                 <TableRow>
                   <TableCell>Device</TableCell>
-                  <TableCell>Protocol</TableCell>
-                  <TableCell>MQTT prefix</TableCell>
+                  <TableCell>Kind</TableCell>
+                  <TableCell>Message address</TableCell>
                   <TableCell>Status</TableCell>
-                  <TableCell>Msgs</TableCell>
-                  <TableCell>Break at</TableCell>
+                  <TableCell>Messages</TableCell>
+                  <TableCell>Stops at</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>

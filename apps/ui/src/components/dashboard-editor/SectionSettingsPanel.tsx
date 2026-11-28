@@ -61,7 +61,7 @@ export function SectionSettingsPanel({ section, onCancel, onApply, onChange, onM
         <Stack spacing={3}>
           <TextField label="Name" size="small" fullWidth value={s.title} onChange={(e) => onChange({ title: e.target.value })} />
           <DashboardIconPicker dense value={s.icon ?? DEFAULT_SECTION_ICON} onChange={(icon) => onChange({ icon })} />
-          <SettingBlock label="Section name on the dashboard" help="Off: the panels show inside the section's frame without its name bar.">
+          <SettingBlock label="Section name on the dashboard">
             <FormControlLabel
               control={<Switch checked={s.showTitle !== false} onChange={(e) => onChange({ showTitle: e.target.checked })} />}
               label="Show the name above the panels"
@@ -69,7 +69,6 @@ export function SectionSettingsPanel({ section, onCancel, onApply, onChange, onM
           </SettingBlock>
           <SettingBlock
             label="Section width"
-            help="How much of the page width this section takes. Narrower sections sit side by side; on phones every section is full width."
           >
             <Segmented<SectionColSpan> label="Section width" value={s.colSpan} onChange={(v) => onChange({ colSpan: v })} options={WIDTHS.map((w) => ({ value: w, label: sectionColSpanLabel(w) }))} />
             {/* A small picture of the page width the section takes. */}
@@ -80,12 +79,7 @@ export function SectionSettingsPanel({ section, onCancel, onApply, onChange, onM
             </Box>
           </SettingBlock>
           {s.panelCount > 0 ? (
-            <SettingBlock
-              label="Panels per row"
-              help={`Makes every panel in this section the same width, in rows of this many. Heights stay as they are; you can still resize panels afterwards.${
-                s.perRow.choices.some((c) => !c.fits) ? " Greyed-out choices would make some panels here narrower than they can be." : ""
-              }`}
-            >
+            <SettingBlock label="Panels per row">
               <Segmented<number> label="Panels per row" value={s.perRow.current} onChange={onPanelsPerRow} options={s.perRow.choices.map((c) => ({ value: c.n, label: String(c.n), disabled: !c.fits }))} />
             </SettingBlock>
           ) : null}
@@ -119,11 +113,11 @@ export function SectionSettingsPanel({ section, onCancel, onApply, onChange, onM
                 <Button variant="outlined" color="error" startIcon={<DeleteOutlineIcon />} disabled={s.isOnly} onClick={() => setAskDelete(true)}>
                   Delete this section
                 </Button>
-                <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.75 }}>
-                  {s.isOnly
-                    ? "A dashboard needs at least one section, so the only section can't be deleted."
-                    : `Deletes the section and its ${s.panelCount} panel${s.panelCount === 1 ? "" : "s"}.`}
-                </Typography>
+                {s.isOnly ? (
+                  <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.75 }}>
+                    The only section can't be deleted.
+                  </Typography>
+                ) : null}
               </>
             )}
           </Box>

@@ -36,10 +36,10 @@ export function validateAddPanelReady(input: AddPanelValidationInput): AddPanelV
 
   if (kind === "panel.camera") {
     if (input.cameras.length === 0) {
-      return { ok: false, message: "No cameras are available to add yet." };
+      return { ok: false, message: "No cameras yet." };
     }
     if (input.contentMode === "manual" && input.cameraIds.length === 0) {
-      return { ok: false, message: "Choose at least one camera for this panel." };
+      return { ok: false, message: "Choose at least one camera." };
     }
     return { ok: true };
   }
@@ -49,22 +49,22 @@ export function validateAddPanelReady(input: AddPanelValidationInput): AddPanelV
       if (kind === "panel.charts") {
         return {
           ok: false,
-          message: "No chartable history is currently available for this scope.",
+          message: "Nothing to chart here yet.",
         };
       }
       if (kind === "panel.controls") {
-        return { ok: false, message: "No controllable items match this scope yet." };
+        return { ok: false, message: "Nothing to control here yet." };
       }
-      return { ok: false, message: "No readable values match this scope yet." };
+      return { ok: false, message: "No readings here yet." };
     }
     if (input.contentMode === "manual" && input.capabilityIds.length === 0) {
       if (kind === "panel.charts") {
-        return { ok: false, message: "Choose at least one value to chart." };
+        return { ok: false, message: "Choose at least one reading." };
       }
       if (kind === "panel.controls") {
         return { ok: false, message: "Choose at least one item to control." };
       }
-      return { ok: false, message: "Choose at least one value to show." };
+      return { ok: false, message: "Choose at least one reading." };
     }
     return { ok: true };
   }

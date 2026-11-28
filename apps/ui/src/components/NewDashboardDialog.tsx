@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Typography } from "@mui/material";
+import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from "@mui/material";
 import { api } from "../api";
 import { migratePersistedDashboardDocument } from "../lib/panel-compatibility";
 import { DashboardIconPicker } from "./DashboardIconPicker";
@@ -46,7 +46,6 @@ export function NewDashboardDialog({ open, onClose, onCreated }: { open: boolean
             fullWidth
             size="small"
             label="Name"
-            placeholder="e.g. Garden"
             value={name}
             onChange={(e) => setName(e.target.value)}
             sx={{ mt: 1 }}
@@ -54,10 +53,6 @@ export function NewDashboardDialog({ open, onClose, onCreated }: { open: boolean
           <Box sx={{ mt: 2 }}>
             <DashboardIconPicker dense value={icon} onChange={setIcon} />
           </Box>
-          <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1.5 }}>
-            It opens ready to add panels. Drag it in the Dashboard Menu to change its place; its name and icon can be changed in
-            Dashboard settings.
-          </Typography>
           {error ? <Alert severity="error" sx={{ mt: 1.5 }}>{error}</Alert> : null}
         </DialogContent>
         <DialogActions>

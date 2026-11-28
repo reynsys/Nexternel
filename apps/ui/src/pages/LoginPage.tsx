@@ -96,7 +96,7 @@ export function LoginPage() {
       applyAccountPrefs(data.user.themePrefs);
       goOn();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Login failed";
+      const msg = err instanceof Error ? err.message : "Sign-in failed.";
       setError(msg);
       // An expired step starts again from the password.
       if (ticket && /too long/i.test(msg)) setTicket(null);
@@ -164,12 +164,9 @@ export function LoginPage() {
         </Box>
         <Stack spacing={1.25} sx={{ position: "relative", maxWidth: 480 }}>
           <Typography variant="h3" component="p" sx={{ fontWeight: "fontWeightBold" }}>
-            Your home,
+            Everything
             <br />
             in one place.
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Lights, climate, energy and every board in the house — on your own server, under your control.
           </Typography>
         </Stack>
       </Box>
@@ -188,20 +185,15 @@ export function LoginPage() {
         }}
       >
         <Stack component="form" onSubmit={onSubmit} spacing={2.25} sx={{ width: "100%", maxWidth: 380 }}>
-          <Stack spacing={0.75}>
-            <Typography variant="h4" component="h1">
-              Welcome home
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Sign in to continue.
-            </Typography>
-          </Stack>
+          <Typography variant="h4" component="h1">
+            Welcome
+          </Typography>
           {error && <Alert severity="error">{error}</Alert>}
-          {cleared && <Alert severity="success">Saved sign-in forgotten — sign in again.</Alert>}
+          {cleared && <Alert severity="success">Saved sign-in forgotten.</Alert>}
           {ticket ? (
             <>
               <Typography variant="body2" color="text.secondary">
-                You are signing in from outside Nexternel's network. Type the 6-digit code from your Authenticator app.
+                Type the 6-digit code from your Authenticator app.
               </Typography>
               <TextField
                 label="Code"
@@ -216,7 +208,7 @@ export function LoginPage() {
               />
               <FormControlLabel
                 control={<Checkbox checked={trust} onChange={(e) => setTrust(e.target.checked)} disabled={busy} />}
-                label="Trust this phone: no code next time"
+                label="Trust this device: no code next time"
               />
               <ButtonRow direction="column" alignItems="stretch">
                 <Button type="submit" variant="contained" size="large" disabled={busy} fullWidth>
@@ -226,9 +218,6 @@ export function LoginPage() {
                   Back to the password
                 </Button>
               </ButtonRow>
-              <Typography variant="caption" color="text.secondary">
-                Lost your phone? Sign in at home, or ask your home's administrator to turn your second check off in Users.
-              </Typography>
             </>
           ) : (
             <>

@@ -87,13 +87,6 @@ function writeStored(key: string, value: string) {
 
 type BackgroundKind = "plain" | "mine" | "glow" | "gradient";
 
-const BACKGROUND_HINT: Record<BackgroundKind, string> = {
-  plain: "A plain page in the scheme's own colour.",
-  mine: "Made from your three colours, so it always matches.",
-  glow: "Pools of soft light. Each works in Light and Dark mode.",
-  gradient: "Two colours blending across the page.",
-};
-
 function kindOf(gradientId: string | undefined): BackgroundKind {
   if (!gradientId || gradientId === GRADIENT_NONE_ID) return "plain";
   if (isMineBackground(gradientId)) return "mine";
@@ -210,7 +203,7 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
   const modeTiles = (
     <Section
       title="Mode"
-      hint={look.forceMode ? `${look.label} is always ${look.forceMode}. Your choice comes back with other styles.` : "Light, dark, or follow this device's own setting (light by day, dark by night if it does that)."}
+      hint={look.forceMode ? `${look.label} is always ${look.forceMode}.` : undefined}
     >
       <Segmented<"light" | "dark" | "auto">
         label="Mode"
@@ -228,14 +221,14 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
 
   // Fonts as small rows, each written in its own letters; the buttons above show one group.
   const fontGroups = [
-    ...FONT_GROUPS.map((g) => ({ id: g.id as string, label: g.label, fonts: CORE_FONTS.filter((f) => f.group === g.id).map((f) => ({ id: f.id, label: f.label, family: f.family, text: f.description })) })),
-    ...(lookOwnFonts.length ? [{ id: "look", label: `${look.label} fonts`, fonts: lookOwnFonts.map((f) => ({ id: f.id, label: f.label, family: f.family, text: `Made for ${look.label}.` })) }] : []),
+    ...FONT_GROUPS.map((g) => ({ id: g.id as string, label: g.label, fonts: CORE_FONTS.filter((f) => f.group === g.id).map((f) => ({ id: f.id, label: f.label, family: f.family })) })),
+    ...(lookOwnFonts.length ? [{ id: "look", label: `${look.label} fonts`, fonts: lookOwnFonts.map((f) => ({ id: f.id, label: f.label, family: f.family })) }] : []),
   ];
   const shownFonts = fontGroups.filter((g) => fontGroup === "all" || g.id === fontGroup).flatMap((g) => g.fonts);
 
   const textTab = (
     <Stack spacing={3.5} divider={<Divider flexItem />}>
-      <Section title="Text size" hint="All text in Nexternel, on this account.">
+      <Section title="Text size">
         <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 1 }}>
           {TEXT_SIZES.map((t) => (
             <ChoiceTile
@@ -253,7 +246,7 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
         </Box>
       </Section>
 
-      <Section title="Font" hint="One font for all text, in every style. Built into Nexternel, so it works without the internet.">
+      <Section title="Font">
         <Segmented
           label="Font group"
           value={fontGroup}
@@ -267,7 +260,7 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
               selected={fontId === f.id}
               onClick={() => set({ lookFont: f.id })}
               title={<Box component="span" sx={{ fontFamily: f.family }}>{f.label}</Box>}
-              text={f.text}
+             
             >
               <Typography aria-hidden variant="h5" sx={{ fontFamily: f.family, lineHeight: 1.1, color: "secondary.main", mb: 0.25 }}>
                 21.4° Living Room
@@ -280,20 +273,20 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
   );
 
   const effectTiles = (
-    <Section title="Background effect" hint="A gentle animation behind your dashboards. Each tile shows how it moves.">
+    <Section title="Background effect">
       {reducedMotion && (
         <Alert severity="info" sx={{ mb: 1.5 }}>
-          This device asks apps to reduce motion, so effects stay still here.
+          Effects stay still: this device asks for less motion.
         </Alert>
       )}
       {wallLight && (
         <Alert severity="info" sx={{ mb: 1.5 }}>
-          Not shown on the wall screen while Light effects is on (Wall display tab).
+          Not on the wall screen while Light effects is on.
         </Alert>
       )}
       <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 1 }}>
         {BACKGROUND_EFFECTS.map((e) => (
-          <ChoiceTile key={e.id} selected={effectId === e.id} onClick={() => set({ effectId: e.id })} title={e.label} text={e.description}>
+          <ChoiceTile key={e.id} selected={effectId === e.id} onClick={() => set({ effectId: e.id })} title={e.label}>
             <Box aria-hidden sx={[insetSx(), { width: "100%", height: 64, mb: 0.5, overflow: "hidden", bgcolor: scheme.roles.surfaceSolid.background, position: "relative" }]}>
               {e.id === "off" ? (
                 <Typography sx={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "text.secondary" }}>—</Typography>
@@ -308,11 +301,11 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
         <>
           {(
             [
-              ["Amount", "how much of the effect there is", "effectAmount", EFFECT_AMOUNTS],
-              ["Speed", "how fast it moves", "effectSpeed", EFFECT_SPEEDS],
+              ["Amount", "effectAmount", EFFECT_AMOUNTS],
+              ["Speed", "effectSpeed", EFFECT_SPEEDS],
             ] as const
-          ).map(([label, hint, key, options]) => (
-            <Row key={key} label={label} hint={hint}>
+          ).map(([label, key, options]) => (
+            <Row key={key} label={label}>
               <Segmented label={label} value={themePrefs[key] ?? 1} options={options} onChange={(v) => set({ [key]: v })} />
             </Row>
           ))}
@@ -323,20 +316,20 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
 
   const dashboardsTab = (
     <Stack spacing={3.5} divider={<Divider flexItem />}>
-      <Section title="Dashboards" hint="How you move between dashboards, and moving decorations.">
+      <Section title="Dashboards">
         {onPhone ? (
-          <Row label="Dashboard menu" hint="where your dashboards are listed on this phone">
+          <Row label="Dashboard menu">
             <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 1 }}>
               {PHONE_ROOM_NAVS.map((n) => (
-                <ChoiceTile key={n.value} selected={(themePrefs.phoneRoomNav ?? "dock") === n.value} onClick={() => set({ phoneRoomNav: n.value })} title={n.label} text={n.description} />
+                <ChoiceTile key={n.value} selected={(themePrefs.phoneRoomNav ?? "dock") === n.value} onClick={() => set({ phoneRoomNav: n.value })} title={n.label} />
               ))}
             </Box>
           </Row>
         ) : (
-          <Row label="Dashboard menu" hint="where your dashboards are listed; phones have their own choice">
+          <Row label="Dashboard menu">
             <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 1 }}>
               {ROOM_NAVS.map((n) => (
-                <ChoiceTile key={n.value} selected={(themePrefs.roomNav ?? "dock") === n.value} onClick={() => set({ roomNav: n.value })} title={n.label} text={n.description} />
+                <ChoiceTile key={n.value} selected={(themePrefs.roomNav ?? "dock") === n.value} onClick={() => set({ roomNav: n.value })} title={n.label} />
               ))}
             </Box>
           </Row>
@@ -346,10 +339,7 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
           control={<Switch checked={themePrefs.motion !== false} onChange={(e) => set({ motion: e.target.checked })} />}
           label={
             <Typography variant="body2">
-              Animations{" "}
-              <Typography component="span" variant="caption" color="text.secondary">
-                — moving frames, rings and lights in styles that have them. Each panel can choose its own in Edit → Look.
-              </Typography>
+              Animations
             </Typography>
           }
         />
@@ -357,10 +347,10 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
 
       {/* A phone always has its menu behind the button at the top right, so the choice does nothing there. */}
       {isPhoneScreen() ? null : (
-        <Section title="Layout" hint="Where Nexternel's menu sits around your dashboards on this screen.">
+        <Section title="Layout">
           <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 1 }}>
             {skins.map((sk) => (
-              <ChoiceTile key={sk.id} selected={skinId === sk.id} onClick={() => onSkinChange(sk.id)} title={sk.label} text={sk.description} />
+              <ChoiceTile key={sk.id} selected={skinId === sk.id} onClick={() => onSkinChange(sk.id)} title={sk.label} />
             ))}
           </Box>
         </Section>
@@ -371,7 +361,7 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
   const tabContent: Record<string, ReactNode> = {
     theme: (
       <Stack spacing={3}>
-        <Section title="Ready-made themes" hint="Each theme comes in Light and Dark. Picking one replaces your style, colours, background and font, and keeps your Light, Dark or Automatic choice below. Change anything afterwards; Cancel puts back how it was.">
+        <Section title="Ready-made themes">
           <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 1 }}>
             {THEME_PRESETS.filter((p) => resolveLook(p.lookId).id === p.lookId).map((p) => (
               <ThemePresetTile key={p.id} preset={p} prefs={themePrefs} mode={mode} selected={presetIsChosen(themePrefs, p)} onPick={() => onThemeChange(prefsWithPreset(themePrefs, p))} />
@@ -385,7 +375,7 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
       <Stack spacing={3.5} divider={<Divider flexItem />}>
         {modeTiles}
 
-      <Section title="Background" hint={BACKGROUND_HINT[kind]}>
+      <Section title="Background">
         <Segmented
           label="Background type"
           value={kind}
@@ -400,10 +390,10 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
         {kind === "mine" ? (
           <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 1, mt: 1.5 }}>
             {[
-              [MINE_GLOW_ID, "Glow", "Soft pools of your three colours."],
-              [MINE_GRADIENT_ID, "Gradient", "Your main and second colour blending."],
-            ].map(([id, label, text]) => (
-              <ChoiceTile key={id} selected={themePrefs.gradientId === id} onClick={() => set({ gradientId: id })} title={label} text={text}>
+              [MINE_GLOW_ID, "Glow"],
+              [MINE_GRADIENT_ID, "Gradient"],
+            ].map(([id, label]) => (
+              <ChoiceTile key={id} selected={themePrefs.gradientId === id} onClick={() => set({ gradientId: id })} title={label}>
                 <Box aria-hidden sx={[insetSx(), { width: "100%", height: 40, mb: 0.5, backgroundImage: mineBackground(scheme, id).css }]} />
               </ChoiceTile>
             ))}
@@ -423,8 +413,8 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
         )}
       </Section>
 
-      <Section title="Colours" hint="Three colours that work together. Nexternel keeps every text readable: a colour is made a little lighter or darker where needed, never changed.">
-        <Row label="Main colour" hint="buttons, chosen items, the switch when on">
+      <Section title="Colours">
+        <Row label="Main colour">
           <ButtonRow direction="row" flexWrap="wrap" useFlexGap>
             {PRIMARY_SWATCHES.map((s) => (
               <Swatch key={s.id} colour={s.color} label={s.label} selected={themePrefs.primary.toLowerCase() === s.color.toLowerCase()} onClick={() => set({ primary: s.color })} />
@@ -456,10 +446,10 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
             />
           </Stack>
         </Row>
-        <Row label="Second and third colours" hint="big values (temperatures, clock, energy) and highlights (charts)">
+        <Row label="Second and third colours">
           <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 1 }}>
             {HARMONIES.map((h) => (
-              <ChoiceTile key={h.id} selected={(themePrefs.harmony ?? "split") === h.id} onClick={() => set({ harmony: h.id, ...(h.id === "custom" ? { second: themePrefs.second ?? scheme.input.second, third: themePrefs.third ?? scheme.input.third } : {}) })} title={h.label} text={h.description} />
+              <ChoiceTile key={h.id} selected={(themePrefs.harmony ?? "split") === h.id} onClick={() => set({ harmony: h.id, ...(h.id === "custom" ? { second: themePrefs.second ?? scheme.input.second, third: themePrefs.third ?? scheme.input.third } : {}) })} title={h.label} />
             ))}
           </Box>
           <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap sx={{ mt: 1.5 }}>
@@ -488,7 +478,7 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
 
       {/* Only while a background effect is on (chosen on the Look tab). */}
       {effectId !== "off" ? (
-        <Section title="Background effect colour" hint={hasBackgroundColours ? "White, your main colour, or the colours of your background." : "White or your main colour."}>
+        <Section title="Background effect colour">
           <Segmented<EffectColour> label="Effect colour" value={effectColour} options={effectColours} onChange={(v) => set({ effectColour: v })} />
         </Section>
       ) : null}
@@ -496,7 +486,7 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
     ),
     style: (
       <Stack spacing={3.5} divider={<Divider flexItem />}>
-      <Section title="Look" hint="How panels, frames, buttons and switches are drawn. Each tile shows the real thing in your colours.">
+      <Section title="Look">
         <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 1 }}>
           {listLooks().map((l) => (
             <ChoiceTile key={l.id} holdsSample selected={look.id === l.id} onClick={() => onThemeChange(withLook(themePrefs, l.id))} title={l.label}>
@@ -509,7 +499,7 @@ export function ThemeOptionsFields({ themePrefs, skinId, skins, onThemeChange, o
           ))}
         </Box>
         {(look.buttonStyles?.length ?? 0) > 1 ? (
-          <Row label="Buttons" hint={`how buttons are drawn while ${look.label} is chosen`}>
+          <Row label="Buttons">
             <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 1 }}>
               {look.buttonStyles!.map((b) => (
                 // Just the button on the tile, in this style; pointing at it shows its real hover.

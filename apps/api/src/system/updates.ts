@@ -153,10 +153,11 @@ export async function checkForUpdate(): Promise<UpdateStatus> {
 }
 
 /** Download the newest release next to the backups and check it is a complete Nexternel package. */
-export async function downloadUpdate(): Promise<UpdateStatus> {
+/** Fetch the newest version and check it is complete (Update does this first when needed). */
+async function downloadUpdate(): Promise<void> {
   const row = await getRow();
   const latest = row.latest;
-  if (!latest || !isNewer(latest.version)) throw new Error("There is no newer version to download. Check for updates first.");
+  if (!latest || !isNewer(latest.version)) throw new Error("There is no newer version. Check for update first.");
   await mkdir(updatesDir(), { recursive: true });
   const file = packageFile(latest.version);
   const partial = `${file}.part`;
@@ -183,7 +184,6 @@ export async function downloadUpdate(): Promise<UpdateStatus> {
   // Only the newest download is kept.
   for (const f of await listUpdateFiles()) if (f !== path.basename(file)) await rm(path.join(updatesDir(), f), { force: true });
   await setRow({ downloaded_version: latest.version });
-  return updateStatus();
 }
 
 async function listUpdateFiles(): Promise<string[]> {
@@ -224,14 +224,17 @@ function logFile(): string {
 export async function startUpdate(): Promise<UpdateStatus> {
   if (process.env.ALLOW_DOCKER_RESTART !== "true") throw new Error("Updating from Nexternel is not enabled on this server.");
   if (await updaterRunning()) throw new Error("An update is already running.");
+  // One press: the newest version is downloaded first when it is not here yet.
+  const first = await getRow();
+  if (first.latest && isNewer(first.latest.version) && first.downloaded_version !== first.latest.version) await downloadUpdate();
   const row = await getRow();
   const version = row.downloaded_version;
-  if (!version || !isNewer(version)) throw new Error("Download the new version first.");
+  if (!version || !isNewer(version)) throw new Error("There is no newer version. Check for update first.");
   try {
     await stat(packageFile(version));
   } catch {
     await setRow({ downloaded_version: null });
-    throw new Error("The downloaded file is missing. Download it again.");
+    throw new Error("The downloaded file is missing. Press Update again.");
   }
   const host = await hostFolder();
   const pkg = `backups/updates/nexternel-${version}.tar.gz`;

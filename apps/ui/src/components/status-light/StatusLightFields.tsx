@@ -164,8 +164,7 @@ export function StatusLightEditorSection({
         ))}
       </Stack>
       <Typography variant="caption" color="text.secondary">
-        Style, place, blink and colours are for this panel. Limits belong to the reading, so they apply
-        wherever it is shown and to bell alerts.
+        Limits apply wherever this reading is shown.
       </Typography>
     </Stack>
   );
@@ -187,8 +186,8 @@ function ReadingLimitsRow({
   const text =
     !settings || !settings.enabled
       ? settings
-        ? "Light switched off for this reading"
-        : "No limits yet: its light is an empty outline until you set them"
+        ? "Light off"
+        : "No limits"
       : limitsSummary(settings.limits, reading.unit) + (status?.custom ? "" : " (starting limits)");
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0 }}>
@@ -323,7 +322,7 @@ export function StatusLimitsEditor({
     }
     const mins = Number(minutes);
     if (notifyOn && (!Number.isInteger(mins) || mins < 1 || mins > 1440)) {
-      setError("Minutes before a bell alert must be a whole number from 1 to 1440.");
+      setError("Whole minutes, 1 to 1440.");
       return;
     }
     void done(api.setStatusLimits(reading.id, { enabled, limits, notifyAfterMin: notifyOn ? mins : null }));
@@ -337,10 +336,6 @@ export function StatusLimitsEditor({
       />
       {enabled ? (
         <>
-          <Typography variant="body2" color="text.secondary">
-            Leave a box empty when that side does not matter (for example CO₂ is never too low). The light
-            changes after the reading has stayed past a limit for 1 minute.
-          </Typography>
           <Box sx={{ display: "grid", gridTemplateColumns: "1fr", gap: 2 }}>
             {FIELDS.map(({ key, label }) => (
               <TextField
@@ -370,9 +365,6 @@ export function StatusLimitsEditor({
               InputProps={{ endAdornment: <InputAdornment position="end">min</InputAdornment> }}
             />
           </Stack>
-          <Typography variant="caption" color="text.secondary">
-            The bell rings when the reading has been at act now this long, and again when it is back to normal.
-          </Typography>
         </>
       ) : null}
       {error ? <Alert severity="error">{error}</Alert> : null}

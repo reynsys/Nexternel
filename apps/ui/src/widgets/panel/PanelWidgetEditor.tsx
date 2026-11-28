@@ -681,11 +681,6 @@ export function PanelWidgetEditor({
             <Stack spacing={1}>
               <Typography variant="subtitle2">Switch style</Typography>
               <SwitchStylePicker value={switchStyle} onChange={setSwitchStyle} />
-              <Typography variant="caption" color="text.secondary">
-                {itemCount > 1
-                  ? "For every switch in this panel. A switch can have its own style in its options on the Content tab."
-                  : "How this panel's switch looks."}
-              </Typography>
             </Stack>
           )}
           {showArrange && (
@@ -700,9 +695,6 @@ export function PanelWidgetEditor({
                 <MenuItem value="across">Across</MenuItem>
                 <MenuItem value="down">Down</MenuItem>
               </Select>
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
-                Across places them in a row. Down stacks them. The panel will not shrink smaller than the items need.
-              </Typography>
             </FormControl>
           )}
           {showArrange && (
@@ -718,9 +710,6 @@ export function PanelWidgetEditor({
                 <MenuItem value="tiles">Tiles</MenuItem>
                 <MenuItem value="list">List</MenuItem>
               </Select>
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
-                Automatic shows a tile per item while they fit, and a list when the panel is too small.
-              </Typography>
             </FormControl>
           )}
 
@@ -754,10 +743,6 @@ export function PanelWidgetEditor({
                   </Select>
                 </FormControl>
               </Stack>
-              <Typography variant="caption" color="text.secondary">
-                Short leaves out the part every item shares, which the panel title already shows. To give
-                one item its own name or icon here, use the pencil beside it in Content.
-              </Typography>
             </Stack>
           )}
 

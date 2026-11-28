@@ -87,7 +87,7 @@ export function signalWord(dbm: number): "good" | "fair" | "weak" | "very weak" 
 const ESP32_RESET: Record<number, string> = {
   1: "switched on",
   2: "reset button or pin",
-  3: "restarted by its software (an update, a settings change, or no Wi‑Fi for a long time)",
+  3: "restarted by its firmware",
   4: "crashed",
   5: "frozen and restarted by its watchdog",
   6: "frozen and restarted by its watchdog",
@@ -110,7 +110,7 @@ export function resetWords(code: unknown, text: unknown): string | null {
   if (t.includes("power on")) return "switched on";
   if (t.includes("watchdog")) return "frozen and restarted by its watchdog";
   if (t.includes("exception")) return "crashed";
-  if (t.includes("software")) return "restarted by its software (an update, a settings change, or no Wi‑Fi for a long time)";
+  if (t.includes("software")) return "restarted by its firmware";
   if (t.includes("deep")) return "woke from deep sleep";
   if (t.includes("external")) return "reset button or pin";
   return text.trim();

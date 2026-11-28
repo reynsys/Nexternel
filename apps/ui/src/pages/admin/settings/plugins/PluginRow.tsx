@@ -91,7 +91,7 @@ export function InstalledPlugin({
             ) : null}
             <FormControlLabel
               control={<Switch checked={p.enabled} disabled={busy !== null} onChange={(e) => onToggle(e.target.checked)} />}
-              label="Switched on"
+              label="On"
             />
             <Button startIcon={<DeleteOutlineIcon />} color="error" size="small" disabled={busy !== null} onClick={onRemove}>
               Remove
@@ -132,11 +132,6 @@ export function InstalledPlugin({
                   Undo
                 </Button>
               </ButtonRow>
-              {p.permissions.notify ? (
-                <Typography variant="caption" color="text.secondary">
-                  Which of its messages reach the bell is chosen in Settings → Notifications.
-                </Typography>
-              ) : null}
             </Stack>
           ) : null}
           {tab === "activity" ? <PluginActivityView pluginId={p.id} /> : null}
@@ -181,10 +176,7 @@ export function InstallDialog({
             <Typography variant="body2" color="text.secondary">By {info.author}</Typography>
           ) : null}
           {target.kind === "file" ? (
-            <Alert severity="warning">
-              This plugin is not from the official list, so Nexternel cannot check where it came from. A plugin from a
-              file can only do what you approve below, but only install it if you trust the person who gave it to you.
-            </Alert>
+            <Alert severity="warning">Not from the official list.</Alert>
           ) : null}
           <Typography variant="subtitle2">It asks to:</Typography>
           <PluginPermissionsForm requested={requested} grants={grants} onChange={setGrants} controlPickerLater />

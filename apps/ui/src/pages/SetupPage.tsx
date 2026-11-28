@@ -28,7 +28,7 @@ import { toAccountThemePrefs } from "../skins/themePrefs";
 import { THEME_PRESETS } from "../lib/appearance/presets";
 import { ThemePresetTile, prefsWithPreset, presetIsChosen } from "../skins/ThemePresetTile";
 import { ButtonRow } from "../components/ButtonRow";
-import { DevicesWifiExplainer, DevicesWifiFields, type DevicesWifiValue } from "../components/DevicesWifi";
+import { DevicesWifiFields, type DevicesWifiValue } from "../components/DevicesWifi";
 import { BrandMark } from "../components/BrandMark";
 import { PlaceSearch, type ChosenPlace } from "../components/PlaceSearch";
 import { PasswordTicks, passwordChecksPass } from "../components/PasswordTicks";
@@ -53,9 +53,9 @@ const ANDROID_PAGE = "https://www.nexternel.com/#android";
 const formatWhen = (iso: string) =>
   new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 
-function Choice({ icon, title, text, selected, onClick }: { icon: ReactNode; title: string; text: string; selected: boolean; onClick: () => void }) {
+function Choice({ icon, title, selected, onClick }: { icon: ReactNode; title: string; selected: boolean; onClick: () => void }) {
   return (
-    <ChoiceTile selected={selected} onClick={onClick} title={title} text={text} sx={{ flex: 1, p: 2 }}>
+    <ChoiceTile selected={selected} onClick={onClick} title={title} sx={{ flex: 1, p: 2 }}>
       <Box sx={{ color: "primary.main", mb: 0.5, "& svg": { fontSize: ICON_SIZE.feature } }}>{icon}</Box>
     </ChoiceTile>
   );
@@ -90,14 +90,11 @@ function AddressBox({ label, address }: { label: string; address: string }) {
 }
 
 /** A suggestion on the last step: opens the right page. */
-function NextLink({ title, text, to, href }: { title: string; text: string; to?: string; href?: string }) {
+function NextLink({ title, to, href }: { title: string; to?: string; href?: string }) {
   const linkProps = href ? { component: "a" as const, href, target: "_blank", rel: "noreferrer" } : { component: RouterLink, to: to! };
   return (
     <ButtonBase {...linkProps} sx={[{ justifyContent: "space-between", textAlign: "left", px: 1.5, py: 1.25, gap: 1 }, choiceSx(false)]}>
-      <Box sx={{ minWidth: 0 }}>
-        <Typography variant="body2" fontWeight="fontWeightBold">{title}</Typography>
-        <Typography variant="caption" color="text.secondary">{text}</Typography>
-      </Box>
+      <Typography variant="body2" fontWeight="fontWeightBold" sx={{ minWidth: 0 }}>{title}</Typography>
       <ChevronRightRoundedIcon color="action" />
     </ButtonBase>
   );
@@ -158,7 +155,7 @@ export function SetupPage() {
   function onAccountNext(e: FormEvent) {
     e.preventDefault();
     if (username.trim().length < 2) return setError("The username needs at least 2 characters.");
-    if (!passwordChecksPass(checks)) return setError("The password does not meet all the rules yet (see the ticks).");
+    if (!passwordChecksPass(checks)) return setError("The password does not meet all the rules yet.");
     if (password !== confirmPassword) return setError("The two passwords are not the same.");
     if (emailProblem) return setError(emailProblem);
     go("home");
@@ -270,21 +267,16 @@ export function SetupPage() {
             {status && step === "welcome" && (
               <>
                 <Typography variant="h5">Welcome to your Nexternel</Typography>
-                <Typography variant="body1" color="text.secondary">
-                  It is installed and running on this machine. How would you like to start?
-                </Typography>
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                   <Choice
                     icon={<AddHomeRoundedIcon />}
                     title="Start fresh"
-                    text="A new home: set up your account, then add your areas and devices."
                     selected={path === "fresh"}
                     onClick={() => setPath("fresh")}
                   />
                   <Choice
                     icon={<SettingsBackupRestoreRoundedIcon />}
                     title="Restore from a backup"
-                    text="Move your home from another machine, with everything in it."
                     selected={path === "restore"}
                     onClick={() => setPath("restore")}
                   />
@@ -329,10 +321,7 @@ export function SetupPage() {
             {step === "account" && (
               <Stack spacing={2} component="form" onSubmit={onAccountNext}>
                 <Typography variant="h5">Your account</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  You will sign in with this. You can add the rest of your household later.
-                </Typography>
-                <TextField label="Your name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} fullWidth autoComplete="name" helperText="Shown in the menu and on Users. You can leave it empty." />
+                <TextField label="Your name (optional)" value={displayName} onChange={(e) => setDisplayName(e.target.value)} fullWidth autoComplete="name" />
                 <TextField label="Username" value={username} onChange={(e) => setUsername(e.target.value)} required fullWidth autoComplete="username" />
                 <Stack spacing={0.75}>
                   <TextField label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required fullWidth autoComplete="new-password" />
@@ -357,7 +346,7 @@ export function SetupPage() {
                   fullWidth
                   autoComplete="email"
                   error={!!emailProblem}
-                  helperText={emailProblem ?? "For account messages once Nexternel sends them, such as a lost-password link. You can add it later in My profile."}
+                  helperText={emailProblem}
                 />
                 {error && <Alert severity="error">{error}</Alert>}
                 <ButtonRow direction="row" justifyContent="space-between">
@@ -371,17 +360,11 @@ export function SetupPage() {
 
             {step === "home" && (
               <>
-                <Typography variant="h5">Your home</Typography>
-                <Stack spacing={0.5}>
-                  <Typography variant="body2" fontWeight="fontWeightBold">Your town, for the weather</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Your first dashboard gets a weather panel for it. Only the town is used to fetch the forecast.
-                  </Typography>
-                </Stack>
+                <Typography variant="h5">Weather</Typography>
                 <PlaceSearch value={place} onChange={setPlace} search={api.setupPlaces} label="Town or postcode" />
                 {status?.timeZone ? (
                   <Typography variant="body2" color="text.secondary">
-                    Time zone: {status.timeZone} (from this machine)
+                    Time zone: {status.timeZone}
                   </Typography>
                 ) : null}
                 <ButtonRow direction="row" justifyContent="space-between">
@@ -406,11 +389,7 @@ export function SetupPage() {
             {step === "devices-wifi" && (
               <>
                 <Typography variant="h5">Wi-Fi for your devices</Typography>
-                <DevicesWifiExplainer />
                 <DevicesWifiFields idPrefix="setup-devices-wifi" value={devicesWifi} onChange={setDevicesWifi} />
-                <Typography variant="caption" color="text.secondary">
-                  You can skip this and set it later on the Devices page (Wi-Fi for devices). Nexternel asks again when you add your first board.
-                </Typography>
                 {error && <Alert severity="error">{error}</Alert>}
                 <ButtonRow direction="row" justifyContent="space-between">
                   <Button onClick={() => go("home")}>Back</Button>
@@ -427,7 +406,7 @@ export function SetupPage() {
                       variant="contained"
                       onClick={() => {
                         const { ssid, password } = devicesWifi;
-                        if (!ssid.trim()) return setError("Type the name of the Wi-Fi your devices will use, or press Skip.");
+                        if (!ssid.trim()) return setError("Type the Wi-Fi name, or press Skip.");
                         if (password.length < 8 || password.length > 63) return setError("A Wi-Fi password has 8 to 63 characters.");
                         go("look");
                       }}
@@ -441,18 +420,12 @@ export function SetupPage() {
 
             {step === "look" && (
               <>
-                <Typography variant="h5">Your look</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Pick the colours you like. The screen changes as you choose.
-                </Typography>
+                <Typography variant="h5">Theme</Typography>
                 <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 1 }}>
                   {setupThemes.map((p) => (
                     <ThemePresetTile key={p.id} preset={p} prefs={themePrefs} mode={themePrefs.mode} selected={presetIsChosen(themePrefs, p)} onPick={() => setThemePrefs(prefsWithPreset(themePrefs, p))} />
                   ))}
                 </Box>
-                <Typography variant="caption" color="text.secondary">
-                  More themes are in Settings → Appearance, any time.
-                </Typography>
                 {busy && <LinearProgress />}
                 {error && <Alert severity="error">{error}</Alert>}
                 <ButtonRow direction="row" justifyContent="space-between">
@@ -481,16 +454,13 @@ export function SetupPage() {
               <>
                 <Typography variant="h5">Your Nexternel is ready</Typography>
                 <Stack spacing={1.25}>
-                  {addresses[0] ? <AddressBox label="Your Nexternel address: save it as a bookmark" address={addresses[0]} /> : null}
-                  {addresses[1] ? <AddressBox label="If that one doesn't open, use this one instead" address={addresses[1]} /> : null}
+                  {addresses[0] ? <AddressBox label="Your Nexternel address" address={addresses[0]} /> : null}
+                  {addresses[1] ? <AddressBox label="If it doesn't open" address={addresses[1]} /> : null}
                 </Stack>
-                <Typography variant="body2" color="text.secondary">
-                  Your first dashboard is waiting. When you are ready:
-                </Typography>
                 <Stack spacing={1}>
-                  <NextLink title="Add the areas of your home" text="Kitchen, garden, garage…" to="/admin/areas" />
-                  <NextLink title="Add your first device" text="A board, a Shelly switch or a camera" to="/admin/devices" />
-                  <NextLink title="Put Nexternel on your phone" text="Nexternel for Android (opens nexternel.com)" href={ANDROID_PAGE} />
+                  <NextLink title="Add areas" to="/admin/areas" />
+                  <NextLink title="Add a device" to="/admin/devices" />
+                  <NextLink title="Nexternel for Android" href={ANDROID_PAGE} />
                 </Stack>
                 <Alert severity="info">
                   Daily backups are on. Download your emergency kit from{" "}
@@ -507,11 +477,6 @@ export function SetupPage() {
 
             {step === "pick-backup" && (
               <Stack spacing={2} component="form" onSubmit={onCheckBackup}>
-                <Typography variant="body2" color="text.secondary">
-                  Choose a backup file (it ends in <strong>.nexbackup</strong>). For a backup you
-                  downloaded, enter the password you chose then. For an automatic backup, enter the{" "}
-                  <strong>backup key</strong> from your emergency kit.
-                </Typography>
                 <Button variant="outlined" component="label" disabled={busy}>
                   {backupFile ? backupFile.name : "Choose backup file"}
                   <input
@@ -564,15 +529,9 @@ export function SetupPage() {
                 )}
                 {addressChanges ? (
                   <Alert severity="warning">
-                    Your devices are set up to talk to the server at <strong>{network!.backupServerIp}</strong>,
-                    but this server is at <strong>{network!.currentServerIp}</strong>. The easy way: in your
-                    router, give this server the address {network!.backupServerIp}, restart it, and then
-                    restore — every device reconnects by itself. If you restore now, each device will need
-                    updating afterwards.
-                  </Alert>
-                ) : network?.backupServerIp && network.backupServerIp === network.currentServerIp ? (
-                  <Alert severity="info">
-                    This server has the same address as the old one, so your devices reconnect by themselves.
+                    Devices look for <strong>{network!.backupServerIp}</strong>; this server is{" "}
+                    <strong>{network!.currentServerIp}</strong>. Easiest: give this server {network!.backupServerIp} in
+                    your router, restart it, then restore. Restore now and each device needs updating after.
                   </Alert>
                 ) : null}
                 {error && <Alert severity="error">{error}</Alert>}
@@ -589,7 +548,7 @@ export function SetupPage() {
 
             {step === "restoring" && (
               <>
-                <Typography variant="body1">Restoring your home — this takes about a minute.</Typography>
+                <Typography variant="body1">Restoring…</Typography>
                 <LinearProgress variant="determinate" value={job?.percent ?? 0} />
                 <Typography variant="body2" color="text.secondary">
                   {job?.message || "Starting…"}
@@ -601,7 +560,7 @@ export function SetupPage() {
               <>
                 {restoreOk ? (
                   <Alert severity="success">
-                    Your home is restored. Sign in with your usual username and password.
+                    Restored.
                   </Alert>
                 ) : (
                   <Alert severity="error">

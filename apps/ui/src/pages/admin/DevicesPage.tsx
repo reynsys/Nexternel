@@ -33,7 +33,7 @@ import {
 import { useLiveChanges } from "../../lib/live-changes";
 import { AddDeviceDialog, type BringInState } from "./devices/AddDeviceDialog";
 import { ButtonRow } from "../../components/ButtonRow";
-import { DevicesWifiExplainer, DevicesWifiForm } from "../../components/DevicesWifi";
+import { DevicesWifiForm } from "../../components/DevicesWifi";
 import WifiIcon from "@mui/icons-material/Wifi";
 import type { FoundDevice } from "@nexternel/domain";
 
@@ -150,15 +150,15 @@ export function DevicesPage() {
       setCatalog(catRes.configs);
       if (catRes.yamlStatus?.markedMissing?.length) {
         setInfo(
-          `Nexternel can't find the software file for these boards: ${catRes.yamlStatus.markedMissing.map((p) => p.name).join(", ")}.`
+          `Nexternel can't find the settings file for these boards: ${catRes.yamlStatus.markedMissing.map((p) => p.name).join(", ")}.`
         );
       } else if (catRes.yamlStatus?.restored?.length) {
         setInfo(
-          `The software file is back for: ${catRes.yamlStatus.restored.map((p) => p.name).join(", ")}.`
+          `The settings file is back for: ${catRes.yamlStatus.restored.map((p) => p.name).join(", ")}.`
         );
       } else if (catRes.pruned?.length) {
         setInfo(
-          `Nexternel can't find the software file for these boards: ${catRes.pruned.map((p) => p.name).join(", ")}.`
+          `Nexternel can't find the settings file for these boards: ${catRes.pruned.map((p) => p.name).join(", ")}.`
         );
       }
       setError(null);
@@ -414,7 +414,6 @@ export function DevicesPage() {
     <Stack spacing={2}>
       <PageHeader
         title="Devices"
-        hint="Everything Nexternel talks to: Zherodius devices, ESPHome boards, Shelly switches, cameras and online services. Pick one to see its readings, switches and settings."
         actions={
           isAdmin ? (
             <ButtonRow>
@@ -443,7 +442,7 @@ export function DevicesPage() {
       )}
 
       {physicalDeviceCount === 0 && !isAdmin ? (
-        <Typography color="text.secondary">No devices registered yet.</Typography>
+        <Typography color="text.secondary">No devices.</Typography>
       ) : (
         <Box
           sx={{
@@ -585,25 +584,14 @@ export function DevicesPage() {
                     </MenuItem>
                   ))}
                 </Select>
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75 }}>
-                  Its readings show this {AREA.singular.toLowerCase()} under their panels' titles.
-                </Typography>
               </FormControl>
               <FormControlLabel
                 control={<Switch checked={form.isEnabled} onChange={(e) => setForm((f) => ({ ...f, isEnabled: e.target.checked }))} />}
                 label={
-                  <span>
-                    Use this device
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      Off: Nexternel ignores it until it is switched on again; nothing is deleted.
-                    </Typography>
-                  </span>
+                  "Use this device"
                 }
               />
               <Box sx={{ borderTop: 1, borderColor: "divider", pt: 2 }}>
-                <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
-                  Its technical address is fixed: it is how Nexternel recognises the device (Troubleshooting → Technical details).
-                </Typography>
                 <Button startIcon={<DeleteOutlineIcon />}
                   variant="outlined"
                   color="error"
@@ -635,9 +623,8 @@ export function DevicesPage() {
         <DialogTitle>Wi-Fi for your devices</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 0.5 }}>
-            <DevicesWifiExplainer />
             <Typography variant="body2" color="text.secondary">
-              Boards already running keep the Wi-Fi they have until their next install.
+              Running boards keep their Wi-Fi until their next install.
             </Typography>
             <DevicesWifiForm idPrefix="devices-page-wifi" />
           </Stack>
@@ -701,13 +688,13 @@ export function DevicesPage() {
         <DialogContent>
           <Stack spacing={2}>
             <Typography>
-              Remove <strong>{deleteTarget?.name}</strong> from Nexternel? Its readings and switches are removed with it, and
-              panels that show them lose them. This cannot be undone.
+              Remove <strong>{deleteTarget?.name}</strong> from Nexternel, with its readings and switches? This cannot be
+              undone.
             </Typography>
             {deleteTarget?.zherodius ? (
               <Typography variant="body2" color="text.secondary">
-                Nexternel stops talking to it. The device still lists this Nexternel as paired: to remove that too, open the
-                device's page, go to Settings → Nexternel and press Unpair {deleteTarget.zherodius.hubName ?? "Nexternel"}.
+                The device still lists this Nexternel. To remove it there: device's page, Settings → Nexternel, Unpair{" "}
+                {deleteTarget.zherodius.hubName ?? "Nexternel"}.
               </Typography>
             ) : null}
             {deleteTarget &&

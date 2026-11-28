@@ -284,7 +284,7 @@ function Dock({ dashboards, activeId, onGo, tools, loading, error, arrange, scro
               }
         }
       >
-        {loading ? <Typography variant="caption">Loading dashboards…</Typography> : null}
+        {loading ? <Typography variant="caption">Loading…</Typography> : null}
         {error ? <Typography variant="caption" color="error">{error}</Typography> : null}
         {dashboards.map((d, i) => (
           <RoomTile key={d.id} d={d} active={d.id === activeId} onGo={() => onGo(d)} size={fit.size} tip="bottom" arrange={arrange} index={i} count={dashboards.length} axis="row" />

@@ -60,16 +60,16 @@ export function BoardSoftware({ device, canEdit, busy, onUsb, showHistory = true
       : !board.known
         ? `ESPHome does not list ${board.file}.`
       : board.updateState === "update"
-        ? `An update is ready. Why: ${board.updateReason ? `${board.updateReason.charAt(0).toLowerCase()}${board.updateReason.slice(1)}` : "the board runs older software than the newest build of its settings"}.`
+        ? `An update is ready. Why: ${board.updateReason ? `${board.updateReason.charAt(0).toLowerCase()}${board.updateReason.slice(1)}` : "the board runs older firmware than the newest build of its settings"}.`
         : board.updateState === "unknown"
           ? board.reachable
-            ? "Nexternel can't tell which software version this board runs. An update installs the newest version; after that Nexternel checks it by itself."
-            : "This board is not answering, so Nexternel can't check its software. It checks again when the board answers."
-          : `Up to date — it runs the newest build${board.deployedVersion ? ` (ESPHome ${board.deployedVersion})` : ""}.`;
+            ? "Firmware version not known. Update it once."
+            : "Not answering: firmware not checked."
+          : `Up to date${board.deployedVersion ? ` (ESPHome ${board.deployedVersion})` : ""}`;
 
   return (
     // A full row of its own (long messages wrap or shorten instead of widening the page).
-    <InfoCard title="Software">
+    <InfoCard title="Firmware">
       {showItem ? (
         <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ mb: 1.5 }}>
           <Box sx={{ pt: 0.25 }}>
@@ -133,10 +133,6 @@ export function BoardSoftware({ device, canEdit, busy, onUsb, showHistory = true
           </Button>
         </ButtonRow>
       ) : null}
-      <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-        Update board sends the latest software to the board over Wi‑Fi; it restarts once. A new board, or one not on your
-        Wi‑Fi, is installed with a USB cable. More tools for experienced users are under Advanced.
-      </Typography>
     </InfoCard>
   );
 }

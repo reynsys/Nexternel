@@ -72,6 +72,7 @@ function setup(over: Partial<ConnectionsDeps> = {}) {
     findAddress: async () => null,
     path: {
       reportItem: (itemId, value, o) => calls.reports.push({ itemId, value, kind: o.kind, history: o.history }),
+      reportControl: (itemId, value) => (calls.reports.push({ itemId, value, kind: "control", history: null }), true),
       deviceOnline: (ids) => calls.online.push(...ids),
       deviceOffline: (ids) => calls.offline.push(...ids),
       deviceHeard: () => {},
@@ -320,5 +321,50 @@ test("a device that does not know the name ask keeps working", async () => {
     conns.stop();
   } finally {
     device.knowsHubName = true;
+  }
+});
+
+test("a light: on, brightness and colour go over the line and the device's answer confirms them; a buzzer sounds", async () => {
+  const parts = device.info.parts;
+  device.info = { ...device.info, parts: [...parts, { id: 4, type: "light", name: "Shelf", kind: "colour" }, { id: 5, type: "buzzer", name: "Door", ms: 1500 }] };
+  device.lights.set(4, { on: false, level: 20, rgb: [255, 255, 255] });
+  device.buzzers.set(5, false);
+  const holder: { conns?: ReturnType<typeof createZherodiusConnections> } = {};
+  const row = (id: string) =>
+    (id.endsWith("light_4")
+      ? { id, device_id: `dev-${run}`, device_name: device.name, name: "Shelf", kind: "light", source_type: "control", command_topic: null, firmware_type: "zherodius", connection: "zherodius" }
+      : { id, device_id: `dev-${run}`, device_name: device.name, name: "Door", kind: "switch", source_type: "relay", command_topic: null, firmware_type: "zherodius", connection: "zherodius" }) as CapabilityRow;
+  const path = createDevicePath({
+    getItem: async (id) => row(id),
+    getControl: async () => ({ type: "light", features: { brightness: true, color: true } }),
+    sender: async () => holder.conns!.sender,
+    touchDeviceOfItem: () => {},
+    setDevicesOnline: () => {},
+    itemsToStaleOnOffline: async () => [],
+    itemsExemptFromFreshness: async () => new Set(),
+    saveSwitchPosition: () => {},
+    writeHistory: () => {},
+    logSwitchChange: () => {},
+    logSensorAnswer: () => {},
+    noteSwitchCommand: () => {},
+    logActivity: () => {},
+    now: () => Date.now(),
+  } as Parameters<typeof createDevicePath>[0]);
+  const { conns, pairing } = setup({ path });
+  holder.conns = conns;
+  try {
+    await conns.add(pairing);
+    const shelf = `${run}-light_4`;
+    assert.deepEqual(getLiveState(shelf)?.value, { on: false, brightness: 20, color: { h: 0, s: 0 } });
+    const st = await path.setControl(shelf, { on: true, brightness: 60, color: { h: 30, s: 1 } }, "rey");
+    assert.deepEqual(device.lights.get(4), { on: true, level: 60, rgb: [255, 128, 0] });
+    assert.deepEqual(st, { on: true, brightness: 60, color: { h: 30, s: 1 } });
+    assert.deepEqual(await path.switchItem(`${run}-buzzer_5`, "on", "rey"), { value: true });
+    assert.equal(device.buzzers.get(5), true);
+  } finally {
+    device.info = { ...device.info, parts };
+    device.lights.clear();
+    device.buzzers.clear();
+    conns.stop();
   }
 });

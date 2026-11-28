@@ -24,6 +24,9 @@ export class PretendDevice {
   info: DeviceInfo;
   relays = new Map<number, boolean>([[1, false], [2, false]]);
   sensors = new Map<number, { t?: number; h?: number; p?: number }>([[3, { t: 21.5, h: 48 }]]);
+  /** Lights and buzzers (Zherodius 2.7.1+); a test adds their parts to info as well. */
+  lights = new Map<number, { on: boolean; level: number; rgb?: number[] }>();
+  buzzers = new Map<number, boolean>();
   /** Asks received, in order (method names). */
   readonly asked: string[] = [];
   /** Whether it understands Zh.SetHubName (Zherodius 1.11.2+). */
@@ -114,6 +117,8 @@ export class PretendDevice {
     return {
       relays: [...this.relays].map(([id, on]) => ({ id, on })),
       sensors: [...this.sensors].map(([id, r]) => ({ id, ...r })),
+      lights: [...this.lights].map(([id, l]) => ({ id, ...l })),
+      buzzers: [...this.buzzers].map(([id, on]) => ({ id, on })),
       rssi: -61,
       uptime: 1234,
       cfg: this.cfg(),
@@ -225,7 +230,7 @@ export class PretendDevice {
     } });
   }
 
-  private answer(conn: Conn, ask: { id: number; method: string; params?: { id?: number; on?: boolean; name?: string; do?: string } }) {
+  private answer(conn: Conn, ask: { id: number; method: string; params?: { id?: number; on?: boolean; name?: string; do?: string; level?: number; rgb?: number[] } }) {
     const reply = (body: object) => this.secret(conn, { id: ask.id, ...body });
     if (ask.method === "Zh.GetInfo") return reply({ result: this.info });
     if (ask.method === "Zh.GetStatus") return reply({ result: this.status() });
@@ -236,6 +241,24 @@ export class PretendDevice {
       const on = ask.method === "Relay.Set" ? Boolean(ask.params?.on) : !this.relays.get(id);
       this.relays.set(id, on);
       reply({ result: { on } });
+      this.notify();
+      return;
+    }
+    if (ask.method === "Light.Set") {
+      const l = this.lights.get(Number(ask.params?.id));
+      if (!l) return reply({ error: { code: 400, message: "No light with that id." } });
+      if (typeof ask.params?.on === "boolean") l.on = ask.params.on;
+      if (typeof ask.params?.level === "number") l.level = ask.params.level;
+      if (Array.isArray(ask.params?.rgb) && l.rgb) l.rgb = ask.params.rgb;
+      reply({ result: { ...l } });
+      this.notify();
+      return;
+    }
+    if (ask.method === "Buzzer.Sound") {
+      const id = Number(ask.params?.id);
+      if (!this.buzzers.has(id)) return reply({ error: { code: 400, message: "No buzzer with that id." } });
+      this.buzzers.set(id, ask.params?.on !== false);
+      reply({ result: { on: this.buzzers.get(id) } });
       this.notify();
       return;
     }

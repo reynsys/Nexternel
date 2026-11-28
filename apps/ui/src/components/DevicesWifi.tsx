@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Alert, Button, IconButton, InputAdornment, Stack, TextField, Typography } from "@mui/material";
+import { Alert, Button, IconButton, InputAdornment, Stack, TextField } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { api } from "../api";
@@ -40,7 +40,7 @@ export function DevicesWifiFields(props: {
         onChange={(e) => props.onChange({ ...props.value, password: e.target.value })}
         disabled={props.disabled}
         autoComplete="new-password"
-        helperText={props.passwordSet ? "Saved. Leave empty to keep it, or type a new one." : "The password you use to join this Wi-Fi."}
+        helperText={props.passwordSet ? "Saved. Leave empty to keep it, or type a new one." : undefined}
         fullWidth
         InputProps={{
           endAdornment: (
@@ -117,11 +117,3 @@ export function DevicesWifiForm(props: { idPrefix: string; onSaved?: () => void;
   );
 }
 
-export function DevicesWifiExplainer() {
-  return (
-    <Typography variant="body2" color="text.secondary">
-      The Wi-Fi your boards join. Nexternel puts it into each board's software, so boards work without you typing it on
-      every one. It's kept on your Nexternel only.
-    </Typography>
-  );
-}

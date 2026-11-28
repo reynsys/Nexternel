@@ -84,7 +84,7 @@ export function ReadingSettingsDialog({
             fullWidth
             autoFocus
             inputProps={{ maxLength: 100 }}
-            helperText={`The device calls it “${reading?.originalName ?? ""}”. Your name is kept when the device is updated.`}
+            helperText={`Device's name: ${reading?.originalName ?? ""}`}
           />
           {reading && name.trim() !== reading.originalName && (
             <Button size="small" sx={{ alignSelf: "flex-start" }} onClick={() => setName(reading.originalName)}>
@@ -103,13 +103,10 @@ export function ReadingSettingsDialog({
               Change icon
             </Button>
           </Stack>
-          <Typography variant="caption" color="text.secondary">
-            Used on every dashboard. A panel can still give it its own name or icon in its editor.
-          </Typography>
           {reading && readingCanHaveLight(reading.kind) ? (
             <Stack direction="row" spacing={1.5} alignItems="center">
               <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
-                Status light: when this reading shows green, amber or red, and when the bell rings.
+                Status light
               </Typography>
               <Button size="small" onClick={() => setLimitsOpen(true)} sx={{ flex: "none" }}>
                 Change limits

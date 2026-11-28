@@ -7,7 +7,7 @@ export function ReadableLine({ scheme }: { scheme: Scheme }) {
   return (
     <Typography variant="caption" sx={{ display: "block", mt: 0.75, color: allReadable ? "success.main" : "warning.main" }}>
       {allReadable
-        ? `✓ Every text and control is readable (${scheme.audit.length} checks).`
+        ? "✓ Every text and control is readable."
         : "Some text may be hard to read with these settings."}
     </Typography>
   );

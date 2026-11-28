@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from "@mui/material";
+import { Box, Button, Card, CardContent, Dialog, DialogActions, DialogTitle, Typography } from "@mui/material";
 import { setLeaveGuard } from "../lib/leave-guard";
 import { SidePanelButtons } from "../components/side-panel/SidePanelButtons";
 import { useSkin } from "./SkinProvider";
@@ -66,7 +66,7 @@ export function ThemeOptionsPanel() {
           // A phone keeps its own Appearance (lib/phone-screen.ts).
           <Box sx={{ mb: 2 }}>
             <Typography variant="body2" color="text.secondary">
-              Changes here are for this phone only. Your other screens keep their own Appearance.
+              For this screen only.
             </Typography>
             {phoneOwnLook && !trying ? (
               <Button variant="outlined" size="small" sx={{ mt: 1 }} onClick={dropPhoneLook}>
@@ -86,11 +86,6 @@ export function ThemeOptionsPanel() {
       </CardContent>
       <Dialog open={Boolean(leaveAsk)} onClose={() => setLeaveAsk(null)} maxWidth="xs" fullWidth>
         <DialogTitle>Keep the Appearance changes?</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary">
-            You changed the Appearance but did not apply the changes yet. Apply them before going on, or leave them out.
-          </Typography>
-        </DialogContent>
         <DialogActions>
           <Button variant="outlined" onClick={() => setLeaveAsk(null)}>
             Stay here

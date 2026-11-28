@@ -60,15 +60,14 @@ export function MaintenanceBanner() {
     );
   }
   if (!active) return null;
-  const what =
-    state?.reason === "restore"
-      ? "A backup is being restored"
-      : `Nexternel is being updated${state?.detail ? ` to ${state.detail}` : ""}`;
+  const what = unreachable
+    ? "Updating: Nexternel is restarting."
+    : state?.reason === "restore"
+      ? "Restoring a backup."
+      : `Updating${state?.detail ? ` to ${state.detail}` : ""}.`;
   return (
     <Alert severity="warning" icon={<CircularProgress size={18} color="inherit" />}>
-      <strong>Maintenance:</strong> {unreachable ? "Nexternel is restarting as part of the update" : what}. Settings,
-      dashboards, devices and plugins can't be changed until it finishes, usually a few minutes. Lights and switches keep
-      working.
+      {what} Changes wait until it finishes. Lights and switches keep working.
     </Alert>
   );
 }

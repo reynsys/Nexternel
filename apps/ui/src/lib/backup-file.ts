@@ -18,14 +18,14 @@ export function backupSecretField(fileName: string | null | undefined): { label:
     case "key":
       return {
         label: "Backup key",
-        hint: "This backup was made by a server. It opens with that server's backup key, from its emergency kit (Settings → System → Automatic backups → Download emergency kit).",
+        hint: "From the emergency kit.",
       };
     case "password":
-      return { label: "Backup password", hint: "The password chosen when this backup was made." };
+      return { label: "Backup password", hint: "" };
     default:
       return {
         label: "Backup password or key",
-        hint: "The password chosen when the backup was made — or, for a backup the server made itself, the backup key from its emergency kit.",
+        hint: "",
       };
   }
 }

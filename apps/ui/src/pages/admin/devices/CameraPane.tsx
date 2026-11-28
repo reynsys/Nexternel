@@ -270,7 +270,7 @@ function CamerasPage({ pane }: { pane: CameraPaneProps }) {
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "repeat(2, minmax(0, 1fr))" }, gap: 2 }}>
             <InfoCard title="Live picture">
               <Typography variant="body2" color="text.secondary">
-                {cam.enabled ? "On — shown in camera panels." : "Off — camera panels show nothing until it is switched on (Camera settings)."}
+                {cam.enabled ? "On" : "Off"}
               </Typography>
             </InfoCard>
             <InfoCard title="Technical details">
@@ -285,9 +285,7 @@ function CamerasPage({ pane }: { pane: CameraPaneProps }) {
         </>
       ) : pane.cameraId !== "new" ? (
         <Typography color="text.secondary">This camera no longer exists.</Typography>
-      ) : (
-        <Typography color="text.secondary">Fill in the camera's details to add it.</Typography>
-      )}
+      ) : null}
 
       <Dialog
         open={dialogOpen}
@@ -303,11 +301,6 @@ function CamerasPage({ pane }: { pane: CameraPaneProps }) {
           <DialogTitle>{editing ? "Camera settings" : "Add camera"}</DialogTitle>
           <DialogContent>
             <Stack spacing={2} sx={{ mt: 1 }}>
-              <Typography variant="body2" color="text.secondary">
-                A network camera's live picture. Enter its address, path and login separately — Nexternel builds the stream link, so any
-                characters in the password are fine. For dashboard panels use the camera's smaller stream (often <b>/ch01/1</b>); <b>/0</b> is
-                usually the full-size one.
-              </Typography>
               <TextField
                 label="Name"
                 value={form.name}
@@ -332,7 +325,7 @@ function CamerasPage({ pane }: { pane: CameraPaneProps }) {
                 value={form.streamId}
                 onChange={(e) => setForm((f) => ({ ...f, streamId: e.target.value }))}
                 fullWidth
-                helperText="A short name for the stream (letters, numbers, - and _). Filled in from the name if left empty."
+                helperText="Letters, numbers, - and _"
               />
               <FormControl fullWidth>
                 <InputLabel id="cam-area">{AREA.singular}</InputLabel>
@@ -445,7 +438,7 @@ function CamerasPage({ pane }: { pane: CameraPaneProps }) {
                       ? editing.hasPassword
                         ? "Leave blank to keep the current password"
                         : "No password stored yet"
-                      : "Any characters allowed — not put into a URL field"
+                      : undefined
                   }
                 />
               </Stack>
@@ -515,7 +508,7 @@ function CamerasPage({ pane }: { pane: CameraPaneProps }) {
         <DialogTitle>Delete camera</DialogTitle>
         <DialogContent>
           <Typography>
-            Delete <strong>{deleteTarget?.name}</strong>? Camera panels that show it will be empty until you choose another camera.
+            Delete <strong>{deleteTarget?.name}</strong>?
           </Typography>
         </DialogContent>
         <DialogActions>

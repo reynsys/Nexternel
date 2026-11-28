@@ -113,7 +113,7 @@ async function updateReasonFor(deviceId: string, file: string, board: EsphomeBoa
   if (reasons.length) return reasons.join("; ").replace(/^./, (c) => c.toUpperCase());
   const newerEsphome = board?.deployed_version && board.current_version && board.deployed_version !== board.current_version;
   if (newerEsphome) return null;
-  return "It runs different software from its settings file (installed some other way, or its last update did not finish)";
+  return "It runs different firmware from its settings file";
 }
 
 /**
@@ -206,7 +206,7 @@ const esphomeUpdate: BoardUpdater = async (item, { step, log }) => {
 
   const board = file ? await boardAfterBuild(file, before?.expected_config_hash) : undefined;
   const prefix = await devicePrefix(item.deviceId);
-  if (alreadyRunsIt(board, prefix)) return { step: "done", message: "Already up to date — the board runs exactly this software." };
+  if (alreadyRunsIt(board, prefix)) return { step: "done", message: "Already up to date." };
   const address = board?.ip || board?.ip_addresses?.[0] || null;
   step("sending", "Sending it to the board over Wi-Fi…");
   const sentAt = new Date();
@@ -221,8 +221,8 @@ const esphomeUpdate: BoardUpdater = async (item, { step, log }) => {
   // The board says which software it runs: proof the new one is in (boards updated before this
   // reading existed start reporting it with this update).
   const confirmed = await confirmsNewSoftware(prefix, board?.expected_config_hash);
-  log.push(confirmed ? `== The board reports the new software (${board?.expected_config_hash}) ==` : "== The board did not report its software fingerprint (yet) ==");
-  return { step: "done", message: confirmed ? "Updated — the board is back online and runs the new software." : "Updated — the board is back online." };
+  log.push(confirmed ? `== The board reports the new firmware (${board?.expected_config_hash}) ==` : "== The board did not report its firmware fingerprint (yet) ==");
+  return { step: "done", message: "Updated." };
 };
 
 registerBoardKind("esphome", { list: listEsphomeBoards, update: esphomeUpdate });

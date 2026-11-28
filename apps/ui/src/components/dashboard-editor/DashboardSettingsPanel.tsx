@@ -93,7 +93,6 @@ export function DashboardSettingsPanel(p: Props) {
           </SettingBlock>
           <SettingBlock
             label="Panels across"
-            help="How many standard panels fit side by side in a full-width section. 4 makes every panel bigger."
           >
             <Segmented<DashboardGridCols>
               label="Panels across"
@@ -105,14 +104,14 @@ export function DashboardSettingsPanel(p: Props) {
               ]}
             />
           </SettingBlock>
-          <SettingBlock label="Section shortcuts" help="A row of buttons above the sections; one tap jumps to a section. Handy on long dashboards.">
+          <SettingBlock label="Section shortcuts">
             <FormControlLabel
               control={<Switch checked={p.sectionShortcuts} onChange={(e) => p.onSectionShortcuts(e.target.checked)} />}
               label="Show section shortcuts"
             />
           </SettingBlock>
           {p.onRemove ? (
-            <SettingBlock label="Remove this dashboard" help="Removes the dashboard and its sections and panels. Your devices and their readings stay.">
+            <SettingBlock label="Remove this dashboard">
               <Button variant="outlined" color="error" startIcon={<DeleteOutlineIcon />} onClick={p.onRemove}>
                 Remove this dashboard
               </Button>

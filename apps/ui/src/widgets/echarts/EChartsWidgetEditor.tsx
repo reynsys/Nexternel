@@ -372,11 +372,6 @@ export function EChartsWidgetEditor({
                 placeholder="auto"
               />
             </Stack>
-            <Typography variant="caption" color="text.secondary">
-              {editScope === "gauge"
-                ? "Lowest and highest marks on the dial. Leave blank to use the sensor’s usual range, such as temperature 0–60."
-                : "Min / Max pin the value axis on the dashboard (e.g. 0–100). Leave blank to use sensor defaults (temperature 0–60, humidity 0–100, …)."}
-            </Typography>
 
             <TextField
               label="Colour"
@@ -385,7 +380,6 @@ export function EChartsWidgetEditor({
               value={accent}
               onChange={(e) => setAccent(e.target.value)}
               placeholder="#1A73E8"
-              helperText="A colour such as #1A73E8. Leave blank to use the colour from Settings → Appearance."
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">

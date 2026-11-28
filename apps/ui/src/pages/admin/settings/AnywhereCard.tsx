@@ -87,11 +87,10 @@ function NameChooser({
   const ok = check?.free && clean !== current;
   return (
     <Stack spacing={1.5}>
-      <Typography variant="subtitle2">{current ? "New name" : "Choose your name"}</Typography>
+      <Typography variant="subtitle2">{current ? "New name" : "Name"}</Typography>
       <TextField
         value={name}
         onChange={(e) => setName(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
-        placeholder="smith"
         size="small"
         autoComplete="off"
         inputProps={{ maxLength: 32, "aria-label": "Name for your address" }}
@@ -100,13 +99,13 @@ function NameChooser({
         error={Boolean(check && !check.free)}
         helperText={
           !clean
-            ? "Small letters, digits and dashes. It becomes your address, so choose something you will remember."
+            ? "Small letters, digits and dashes."
             : checking
               ? "Checking…"
               : check?.free
                 ? clean === current
-                  ? "This is your name now."
-                  : `Free. Your address will be https://${clean}${domain}`
+                  ? "Current name."
+                  : `Free: https://${clean}${domain}`
                 : check?.problem ?? " "
         }
       />
@@ -122,7 +121,7 @@ function NameChooser({
       ) : null}
       {current ? (
         <Typography variant="body2" color="text.secondary">
-          Your old address stops working at once, and phones need the new one. GPS trackers keep working without any change.
+          The old address stops working at once.
         </Typography>
       ) : null}
       {err ? <Alert severity="error">{err}</Alert> : null}
@@ -152,10 +151,6 @@ function GpsTarget({ gps }: { gps: NonNullable<AnywhereView["gps"]> }) {
   return (
     <Box>
       <Typography variant="subtitle2">GPS trackers</Typography>
-      <Typography variant="body2" color="text.secondary">
-        Works with most trackers (SinoTrack, Concox, Teltonika, Coban, TK103, GPS watches) and with tracker apps on
-        a phone. Set your tracker to send its positions to:
-      </Typography>
       <Box component="dl" sx={{ display: "grid", gridTemplateColumns: "auto 1fr", columnGap: 2, rowGap: 0.25, my: 1 }}>
         <Typography component="dt" variant="body2" color="text.secondary">
           Server
@@ -169,9 +164,19 @@ function GpsTarget({ gps }: { gps: NonNullable<AnywhereView["gps"]> }) {
         <Typography component="dd" variant="body2" sx={{ m: 0 }}>
           {gps.port}
         </Typography>
+        {gps.ip ? (
+          <>
+            <Typography component="dt" variant="body2" color="text.secondary">
+              Server (numbers)
+            </Typography>
+            <Typography component="dd" variant="body2" sx={{ m: 0 }}>
+              {gps.ip}
+            </Typography>
+          </>
+        ) : null}
       </Box>
       <Typography variant="body2" color="text.secondary">
-        SinoTrack tracker: send this text message to the tracker's phone number.
+        SinoTrack text message:
       </Typography>
       <ButtonRow>
         <Typography variant="body1" sx={{ ...CODE_TEXT, wordBreak: "break-all" }}>
@@ -182,13 +187,8 @@ function GpsTarget({ gps }: { gps: NonNullable<AnywhereView["gps"]> }) {
         </Button>
       </ButtonRow>
       <Typography variant="body2" color="text.secondary">
-        0000 is the tracker's password from the factory. If you changed it, use yours instead of 0000.
+        0000 = factory password.
       </Typography>
-      {gps.ip ? (
-        <Typography variant="body2" color="text.secondary">
-          If your tracker does not accept a name, use {gps.ip} instead of {gps.host}.
-        </Typography>
-      ) : null}
     </Box>
   );
 }
@@ -267,10 +267,6 @@ export function AnywhereCard() {
               />
             ) : null}
           </Stack>
-          <Typography variant="body2" color="text.secondary">
-            Open Nexternel away from home, on mobile data or any Wi-Fi, with the padlock. Nothing changes on your router.
-            Switches and readings at home keep working without it.
-          </Typography>
           {err ? <Alert severity="error">{err}</Alert> : null}
 
           {view ? (
@@ -287,7 +283,7 @@ export function AnywhereCard() {
 
           {view && !view.setUp && !view.licensed ? (
             <Typography variant="body2">
-              Nexternel Anywhere is a paid service. Add its licence key in Extensions → Manage extensions, then choose your home's name here.
+              Needs a licence key: Extensions → Manage extensions.
             </Typography>
           ) : null}
 
@@ -297,7 +293,7 @@ export function AnywhereCard() {
 
           {view?.setUp && view.address ? (
             <Box>
-              <Typography variant="subtitle2">Your address</Typography>
+              <Typography variant="subtitle2">Address</Typography>
               <ButtonRow>
                 <Typography variant="body1" sx={{ wordBreak: "break-all" }}>
                   {ready ? <Link href={view.address}>{view.address}</Link> : view.address}
@@ -326,35 +322,17 @@ export function AnywhereCard() {
             />
           ) : null}
 
-          {ready && view?.qrSvg ? (
-            phone ? (
-              <Typography variant="body2" color="text.secondary">
-                Open the address on this phone, then add a shortcut to your home screen from the browser menu. iPhone:
-                Share → Add to Home Screen. Android: ⋮ → Add to Home screen.
-              </Typography>
-            ) : (
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems={{ xs: "flex-start", sm: "center" }}>
-                <Box
-                  component="img"
-                  alt="QR code of your Nexternel Anywhere address"
-                  src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(view.qrSvg)}`}
-                  sx={{ width: 160, height: 160, bgcolor: "common.white", borderRadius: 2, p: 1, flexShrink: 0 }}
-                />
-                <Typography variant="body2" color="text.secondary">
-                  Point your phone's camera at the code to open your address. Then add a shortcut to your home screen from
-                  the browser menu. iPhone: Share → Add to Home Screen. Android: ⋮ → Add to Home screen.
-                </Typography>
-              </Stack>
-            )
+          {ready && view?.qrSvg && !phone ? (
+            <Box
+              component="img"
+              alt="QR code of your Nexternel Anywhere address"
+              src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(view.qrSvg)}`}
+              sx={{ width: 160, height: 160, bgcolor: "common.white", borderRadius: 2, p: 1 }}
+            />
           ) : null}
 
           {view?.gps ? <GpsTarget gps={view.gps} /> : null}
 
-          {view?.enabled ? (
-            <Typography variant="caption" color="text.secondary">
-              Signing in from outside asks for the second check if it is on in My profile.
-            </Typography>
-          ) : null}
         </Stack>
       </CardContent>
     </Card>

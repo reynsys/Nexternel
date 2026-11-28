@@ -39,10 +39,10 @@ export function ZherodiusSoftware({
   const status = !board
     ? "Checking…"
     : ownPage
-      ? "This version can't be updated from Nexternel yet. Update it once on the device's own page (Firmware); after that Nexternel can update it."
+      ? "Update this version once on the device's page (Firmware)."
       : ready
         ? `An update is ready. ${board.updateReason}.`
-        : "Up to date — no newer version found.";
+        : "Up to date";
 
   const check = () => {
     setNote(null);
@@ -51,14 +51,14 @@ export function ZherodiusSoftware({
       .zherodiusCheckUpdate(device.id)
       .then(async (r) => {
         await refreshBoards();
-        setNote({ tone: "info", text: r.latest ? `Zherodius ${r.latest} is ready.` : `No newer version: Zherodius ${r.version} is the newest.` });
+        setNote({ tone: "info", text: r.latest ? `Zherodius ${r.latest} is ready.` : "Up to date" });
       })
       .catch((err) => setNote({ tone: "error", text: err instanceof Error ? err.message : "Could not check for an update" }))
       .finally(() => setChecking(false));
   };
 
   return (
-    <InfoCard title="Software">
+    <InfoCard title="Firmware">
       <Typography variant="h6">Zherodius {version ?? ""}</Typography>
       {showItem ? (
         <Stack direction="row" spacing={1} alignItems="flex-start">
@@ -81,7 +81,7 @@ export function ZherodiusSoftware({
       ) : null}
       <Box sx={{ mt: 1 }}>
         <Fact label="Serial number" value={zherodius.serial} />
-        <Fact label="IP address" value={zherodius.address} />
+        <Fact label="Network address" value={zherodius.address} />
       </Box>
       <Box sx={{ mt: 1.5 }}>
         <LastBoardUpdates deviceId={device.id} name={device.name} refreshKey={item?.logId ?? ""} max={1} />
@@ -112,7 +112,7 @@ export function ZherodiusSoftware({
         </ButtonRow>
         {canEdit && board && !ownPage && !connected ? (
           <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-            The device is not connected to Nexternel right now, so it can't be updated from here. It can as soon as it is back.
+            Not connected to Nexternel.
           </Typography>
         ) : null}
       </Box>

@@ -170,9 +170,7 @@ function ReplaceOffer({ paired, candidate, onDone }: { paired: Paired; candidate
         Does this replace the earlier {candidate.name} ({kindWord})?
       </Typography>
       <Typography variant="body2" color="text.secondary">
-        Nexternel already has a device called {candidate.name}
-        {candidate.online ? "" : " that is not answering"}. If the new one takes its place,{" "}
-        {moving ? `${keep(moving)} on the new device` : "none of its items match the new device"}, and the earlier one is removed.
+        {moving ? keep(moving) : "None of its items match the new device"}; the earlier {candidate.name} is removed.
       </Typography>
       {candidate.missing.length ? (
         <Typography variant="body2" color="warning.main">

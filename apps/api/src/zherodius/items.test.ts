@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { planItems, readStatus, type ItemMap } from "./items.js";
+import { hsToRgb, planItems, readStatus, rgbToHs, type ItemMap } from "./items.js";
 import type { DeviceInfo } from "./line.js";
 
 const info = (parts: DeviceInfo["parts"]): DeviceInfo => ({ name: "Garden Relays", serial: "ZH-1", board: "b", version: "1.10.2", mac: "", parts });
@@ -98,4 +98,125 @@ test("a CO2 sensor (SCD4x) gives CO2, temperature and humidity", () => {
   );
   const items: ItemMap = new Map([["sensor_2_c", { itemId: "c1", kind: "co2" }]]);
   assert.deepEqual(readStatus({ sensors: [{ id: 2, c: 612, t: 21.4, h: 48 }] }, items), [{ itemId: "c1", value: 612, kind: "co2", slug: "sensor_2_c" }]);
+});
+
+test("Zherodius 2.5.1+ says what each reading is: new kinds need no Nexternel change", () => {
+  const i: DeviceInfo = {
+    ...info([
+      { id: 3, type: "sensor", name: "Dust", model: "PMS5003", reads: ["pm25", "pm10", "pm1"] },
+      { id: 4, type: "sensor", name: "Living room", model: "HLK-LD2410 / LD2410B", reads: ["pres", "dist"] },
+      { id: 5, type: "sensor", name: "Hallway", model: "SCD40 / SCD41", reads: ["c", "t", "h"] },
+      { id: 6, type: "sensor", name: "Odd", model: "X", reads: ["zzz", "bad key!"] },
+    ]),
+    measures: {
+      pm25: { unit: "µg/m³", word: "PM2.5", type: "pm25" },
+      pm10: { unit: "µg/m³", word: "PM10", type: "pm10" },
+      pm1: { unit: "µg/m³", word: "PM1", type: "pm1" },
+      pres: { unit: "", word: "presence", type: "presence", yesNo: true },
+      dist: { unit: "cm", word: "distance", type: "distance" },
+      c: { unit: "ppm", word: "CO2", type: "co2" },
+      t: { unit: "°C", word: "temperature", type: "temperature" },
+      h: { unit: "%", word: "humidity", type: "humidity" },
+    },
+  };
+  const plan = planItems(i);
+  assert.deepEqual(
+    plan.map((p) => [p.slug, p.name, p.kind === "sensor" ? `${p.sensorType} ${p.unit}` : ""]),
+    [
+      ["sensor_3_pm25", "Dust PM2.5", "pm25 µg/m³"],
+      ["sensor_3_pm10", "Dust PM10", "pm10 µg/m³"],
+      ["sensor_3_pm1", "Dust PM1", "pm1 µg/m³"],
+      ["sensor_4_pres", "Living room presence", "presence "],
+      ["sensor_4_dist", "Living room distance", "distance cm"],
+      ["sensor_5_c", "Hallway CO2", "co2 ppm"],
+      ["sensor_5_t", "Hallway temperature", "temperature °C"],
+      ["sensor_5_h", "Hallway humidity", "humidity %"],
+    ]
+  );
+  const items: ItemMap = new Map([
+    ["sensor_3_pm25", { itemId: "a", kind: "pm25" }],
+    ["sensor_4_pres", { itemId: "b", kind: "binary_sensor" }],
+    ["sensor_4_dist", { itemId: "c", kind: "number" }],
+  ]);
+  assert.deepEqual(
+    readStatus({ sensors: [{ id: 3, pm25: 12, pm10: 20 }, { id: 4, pres: false }] }, items).map((r) => [r.itemId, r.value]),
+    [
+      ["a", 12],
+      ["b", false],
+      ["c", "nan"],
+    ]
+  );
+});
+
+test("wired contacts are Contact items (open = true); push buttons are not items", () => {
+  const plan = planItems(
+    info([
+      { id: 2, type: "button", name: "Front door", kind: "contact" },
+      { id: 3, type: "button", name: "Doorbell", kind: "push" },
+      { id: 4, type: "button", name: "Old firmware button" },
+    ])
+  );
+  assert.deepEqual(
+    plan.map((p) => [p.slug, p.name, p.kind === "sensor" ? p.sensorType : ""]),
+    [["contact_2", "Front door", "door"]]
+  );
+  const items: ItemMap = new Map([["contact_2", { itemId: "d", kind: "door" }]]);
+  assert.deepEqual(
+    readStatus({ buttons: [{ id: 2, pressed: true }, { id: 3, pressed: true }] }, items).map((r) => [r.itemId, r.value]),
+    [["d", false]]
+  );
+  assert.deepEqual(
+    readStatus({ buttons: [{ id: 2, pressed: false }] }, items).map((r) => [r.itemId, r.value]),
+    [["d", true]]
+  );
+});
+
+test("lights are light controls (colour only for WS2812B), the status light is not an item, buzzers are switches", () => {
+  const plan = planItems(
+    info([
+      { id: 2, type: "light", name: "Porch", kind: "dimmable" },
+      { id: 3, type: "light", name: "Shelf", kind: "colour" },
+      { id: 4, type: "light", name: "Status", kind: "status" },
+      { id: 5, type: "buzzer", name: "Door", ms: 1500 },
+    ])
+  );
+  assert.deepEqual(
+    plan.map((p) => [p.slug, p.name, p.kind, p.kind === "control" ? JSON.stringify(p.features) : ""]),
+    [
+      ["light_2", "Porch", "control", '{"brightness":true,"color":false}'],
+      ["light_3", "Shelf", "control", '{"brightness":true,"color":true}'],
+      ["buzzer_5", "Door", "relay", ""],
+    ]
+  );
+  const items: ItemMap = new Map([
+    ["light_2", { itemId: "p", kind: "light" }],
+    ["light_3", { itemId: "s", kind: "light" }],
+    ["buzzer_5", { itemId: "z", kind: "switch" }],
+  ]);
+  const r = readStatus(
+    { lights: [{ id: 2, on: true, level: 40 }, { id: 3, on: false, level: 20, rgb: [255, 128, 0] }], buzzers: [{ id: 5, on: true }] },
+    items
+  );
+  assert.deepEqual(
+    r.map((x) => [x.itemId, x.value, x.control ?? false]),
+    [
+      ["p", { on: true, brightness: 40 }, true],
+      ["s", { on: false, brightness: 20, color: { h: 30, s: 1 } }, true],
+      ["z", true, false],
+    ]
+  );
+});
+
+test("colours: Zherodius red, green, blue <-> Nexternel hue and saturation", () => {
+  assert.deepEqual(rgbToHs([255, 0, 0]), { h: 0, s: 1 });
+  assert.deepEqual(rgbToHs([0, 0, 255]), { h: 240, s: 1 });
+  assert.deepEqual(rgbToHs([255, 255, 255]), { h: 0, s: 0 });
+  assert.equal(rgbToHs([1, 2]), undefined);
+  assert.deepEqual(hsToRgb({ h: 30, s: 1 }), [255, 128, 0]);
+  assert.deepEqual(hsToRgb({ h: 120, s: 0.5 }), [128, 255, 128]);
+  assert.deepEqual(hsToRgb({ h: 0, s: 0 }), [255, 255, 255]);
+  for (const c of [[255, 128, 0], [0, 255, 64], [200, 0, 255]] as [number, number, number][]) {
+    const back = hsToRgb(rgbToHs(c)!);
+    assert.ok(back.every((v, i) => Math.abs(v - c[i]!) <= 2), `${c} came back as ${back}`);
+  }
 });

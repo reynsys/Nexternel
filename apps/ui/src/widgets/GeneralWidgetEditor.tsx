@@ -161,7 +161,7 @@ export function GeneralWidgetEditor({ open, widget, onClose, onSave, automatic, 
           <>
             <PlaceSearch value={weatherPlace} onChange={(p) => p && setWeatherPlace(p)} search={api.weatherGeocode} label="Town or postcode" />
             <Typography variant="caption" color="text.secondary">
-              Forecasts come from Open-Meteo (UK Met Office model).
+              Forecast: Open-Meteo
             </Typography>
           </>
         )}
@@ -260,7 +260,7 @@ export function GeneralWidgetEditor({ open, widget, onClose, onSave, automatic, 
                 onChange={(e) => setClockColor(e.target.value as ClockColor)}
               >
                 <MenuItem value="text">Text colour</MenuItem>
-                <MenuItem value="accent">Value colour (like other big values)</MenuItem>
+                <MenuItem value="accent">Value colour</MenuItem>
               </Select>
             </FormControl>
             <FormControlLabel

@@ -94,7 +94,7 @@ export function assertEsphomeBuildPrerequisites(): void {
   if (!check.ready) {
     throw new Error(
       check.wifiConfigured
-        ? `Nexternel can't make board software yet: ${check.missing.join("; ")}. Restart Nexternel (Settings → System) and try again.`
+        ? `Nexternel can't make board firmware yet: ${check.missing.join("; ")}. Restart Nexternel (Settings → System) and try again.`
         : "Nexternel needs your Wi-Fi name and password for boards first: Devices → Wi-Fi for devices."
     );
   }

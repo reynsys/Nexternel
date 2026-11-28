@@ -68,7 +68,7 @@ export function createZherodiusUpdater(d: UpdaterDeps): BoardUpdater {
     const id = item.deviceId;
     const hello = d.conn.isOpen(id) ? d.conn.hello(id) : null;
     if (!hello) {
-      return { step: "failed", message: `${item.name} is not connected to Nexternel right now. Check that it is powered and on the Wi-Fi, then try again.` };
+      return { step: "failed", message: `${item.name} is not connected to Nexternel.` };
     }
     const from = hello.version;
     if (!updatesFromHub(from)) {
@@ -80,14 +80,14 @@ export function createZherodiusUpdater(d: UpdaterDeps): BoardUpdater {
     log.push(`== Runs Zherodius ${from}: asked to check for the newest version ==`);
     await d.conn.askUpdate(id, "check");
     const checked = await waitFor(id, checkMs, (u) => u.state !== "checking");
-    if (!checked) return { step: "failed", message: `${item.name} did not finish looking for an update. Check that it is on the Wi-Fi and can reach the internet, then try again.` };
+    if (!checked) return { step: "failed", message: `${item.name} did not finish looking for an update.` };
     if (checked.state === "failed") {
       log.push(`The check failed: ${checked.message}`);
       return { step: "failed", message: `${item.name} could not look for an update: ${checked.message || "no reason given"}` };
     }
     if (!checked.latest || compareVersions(checked.latest, from) <= 0) {
       log.push("No newer version.");
-      return { step: "done", message: `Already up to date — it runs Zherodius ${from}, the newest version.` };
+      return { step: "done", message: `Already up to date (Zherodius ${from}).` };
     }
     const target = checked.latest;
     log.push(`Newest version: ${target}${checked.notes ? ` (${notesWords(checked.notes)})` : ""}`);
@@ -129,7 +129,7 @@ export function createZherodiusUpdater(d: UpdaterDeps): BoardUpdater {
       log.push(`== Back, but on ${after.version} ==`);
       return {
         step: "failed",
-        message: `Zherodius ${target} did not start properly, so ${item.name} went back to ${after.version} by itself. Nothing was lost; it can be tried again later.`,
+        message: `Zherodius ${target} did not start properly; ${item.name} went back to ${after.version}.`,
       };
     }
 
@@ -139,12 +139,12 @@ export function createZherodiusUpdater(d: UpdaterDeps): BoardUpdater {
     if (!kept) {
       const now = await back(id, backMs);
       if (now && now.version !== target) {
-        return { step: "failed", message: `Zherodius ${target} did not keep running, so ${item.name} went back to ${now.version} by itself. Nothing was lost.` };
+        return { step: "failed", message: `Zherodius ${target} did not keep running; ${item.name} went back to ${now.version}.` };
       }
-      return { step: "done", message: `Updated — ${item.name} is back and runs Zherodius ${target}.` };
+      return { step: "done", message: `Updated to Zherodius ${target}.` };
     }
     log.push("== The device keeps the new version ==");
-    return { step: "done", message: `Updated — ${item.name} is back and runs Zherodius ${target}.` };
+    return { step: "done", message: `Updated to Zherodius ${target}.` };
   };
 }
 

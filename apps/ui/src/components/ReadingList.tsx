@@ -60,7 +60,7 @@ export function ReadingList({ options, value, onChange, mode, heading }: Props) 
       <TextField
         size="small"
         fullWidth
-        placeholder="Search, e.g. temperature"
+        placeholder="Search"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         slotProps={{
@@ -75,7 +75,7 @@ export function ReadingList({ options, value, onChange, mode, heading }: Props) 
       />
       {groups.length === 0 ? (
         <Typography variant="body2" color="text.secondary">
-          {options.length ? "Nothing matches your search." : "There is nothing of this kind yet. Add a device first (Devices)."}
+          {options.length ? "Nothing matches your search." : "Nothing here yet. Add a device first."}
         </Typography>
       ) : null}
       {groups.map((group) => (

@@ -17,6 +17,6 @@ test("the check says what changed, or that nothing did", () => {
 
 test("a feature with a newer version is named, never 'up to date'", () => {
   const r = describeExtensionCheck([hud("1.5.1", "a")], [hud("1.5.1", "b")], [{ name: "AI assistant", version: "1.2.0" }]);
-  assert.equal(r.text, "Ready to update: AI assistant 1.2.0 — press Update next to it.");
+  assert.equal(r.text, "Update ready: AI assistant 1.2.0.");
   assert.deepEqual(describeExtensionCheck([], [], []), { text: "Everything is up to date.", ok: true });
 });

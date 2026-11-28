@@ -76,12 +76,8 @@ export function PanelCameraOrderList({
 
   function removeId(id: string) {
     void (async () => {
-      const cam = byId.get(id);
       const ok = await confirm({
         title: "Remove camera?",
-        message: cam
-          ? `Remove “${cam.name}” from this panel’s camera list?`
-          : "Remove this camera from the list?",
         confirmLabel: "Remove",
       });
       if (ok) onChange(value.filter((v) => v !== id));
@@ -99,7 +95,7 @@ export function PanelCameraOrderList({
       <Typography variant="subtitle2">{heading}</Typography>
       {selected.length === 0 ? (
         <Typography variant="body2" color="text.secondary">
-          No cameras selected yet. Add one below.
+          No cameras.
         </Typography>
       ) : (
         <List dense disablePadding>
@@ -223,8 +219,7 @@ export function PanelCameraOrderList({
 
       {options.length === 0 && (
         <Typography variant="caption" color="text.secondary">
-          No cameras in this scope — register cameras under Admin → Cameras or widen the place
-          filter.
+          No cameras yet.
         </Typography>
       )}
     </ButtonRow>

@@ -149,29 +149,29 @@ export function anywhereLight(
   now = Date.now()
 ): Pick<AnywhereView, "light" | "text"> {
   if (!settings.name || !settings.key) return { light: "off", text: "Not set up yet." };
-  if (!settings.enabled) return { light: "off", text: "Off. Nexternel can only be opened on the same network." };
+  if (!settings.enabled) return { light: "off", text: "Off." };
   const alive = status && typeof status.seen === "number" && now - status.seen < LINK_SILENT_MS;
   if (!alive) {
-    return { light: "red", text: "Nexternel Anywhere is not running on this server. Try Restart under Help & troubleshooting." };
+    return { light: "red", text: "Not running. Settings → System → Help & troubleshooting → Restart Nexternel." };
   }
   // Just switched on or given a new name: the link has not caught up yet.
   if (status.name !== settings.name) return { light: "orange", text: "Connecting…" };
   if (status.state === "refused") {
     return status.error === "licence ended"
-      ? { light: "red", text: "Your Nexternel Anywhere licence has ended. Once it is renewed, it opens again by itself." }
-      : { light: "red", text: "Nexternel Anywhere did not accept this home's key. Nexternel sets it up again by itself within a few minutes." };
+      ? { light: "red", text: "Licence ended." }
+      : { light: "red", text: "Key not accepted. Trying again." };
   }
   if (status.state !== "open") {
     return now - status.since > CONNECT_GRACE_MS
-      ? { light: "red", text: "Cannot reach Nexternel Anywhere. Check that this home's internet is working." }
+      ? { light: "red", text: "Can't reach Nexternel Anywhere. Check the internet connection." }
       : { light: "orange", text: "Connecting…" };
   }
   if (!hasCertificate) {
     return now - status.since > CERT_GRACE_MS
-      ? { light: "red", text: "The padlock for your address could not be got yet. Nexternel keeps trying." }
-      : { light: "orange", text: "Getting the padlock for your address… (about a minute)" };
+      ? { light: "red", text: "No padlock yet. Trying again." }
+      : { light: "orange", text: "Getting the padlock…" };
   }
-  return { light: "green", text: "Open from anywhere." };
+  return { light: "green", text: "Connected." };
 }
 
 /** The door's IPv4 address: many trackers only take a number, not a name. Looked up once an hour. */
@@ -237,7 +237,7 @@ function askDoor(doorDomain: string, msg: Record<string, unknown>): Promise<Reco
     let buf = "";
     const fail = () => {
       sock.destroy();
-      reject(new AnywhereError("Nexternel Anywhere could not be reached. Check this server's internet connection and try again."));
+      reject(new AnywhereError("Can't reach Nexternel Anywhere. Check the internet connection."));
     };
     sock.once("secureConnect", () => sock.write(JSON.stringify(msg) + "\n"));
     sock.on("data", (d) => {
@@ -275,7 +275,7 @@ export async function checkAnywhereName(raw: string): Promise<NameCheck> {
 export async function claimAnywhereName(raw: string): Promise<string> {
   const name = raw.trim().toLowerCase();
   const licence = await licenceTokenFor("anywhere");
-  if (!licence) throw new AnywhereError("This server has no Nexternel Anywhere licence.");
+  if (!licence) throw new AnywhereError("No licence.");
   const settings = await readAnywhereSettings();
   // Ask for this home's old GPS port back, so trackers keep working if the door has to set it up again.
   const status = await readAnywhereStatus();

@@ -45,8 +45,8 @@ export function BoardHealthCard({
       const r = await api.checkDeviceHealth(device.id);
       if (r.report) {
         setReport(r.report);
-        setNote({ ok: true, text: "The board answered straight away." });
-      } else setNote({ ok: false, text: "The board did not answer within 10 seconds. It may be offline, or still on software without the health report (update it once)." });
+        setNote({ ok: true, text: "Answered." });
+      } else setNote({ ok: false, text: "No answer within 10 seconds. If it is online, update it once." });
     } catch (err) {
       setNote({ ok: false, text: err instanceof Error ? err.message : "Could not ask the board" });
     } finally {
@@ -75,9 +75,9 @@ export function BoardHealthCard({
         ...(report.accessPoint
           ? ([["Wi‑Fi access point", `${report.accessPoint}${report.channel != null ? ` · channel ${report.channel}` : ""}`]] as [string, string][])
           : []),
-        ...(report.ip ? ([["Address", report.ip]] as [string, string][]) : []),
+        ...(report.ip ? ([["Network address", report.ip]] as [string, string][]) : []),
         ["Free memory (lowest)", `${kb(report.heap)}${report.heapMin !== null ? ` (${kb(report.heapMin)})` : ""}`],
-        ["Software", report.version ? `ESPHome ${report.version}` : "—"],
+        ["Firmware", report.version ? `ESPHome ${report.version}` : "—"],
       ]
     : [];
 
@@ -98,7 +98,7 @@ export function BoardHealthCard({
       {report ? (
         <>
           <Typography variant="caption" color={Date.now() - Date.parse(report.at) > 3 * 60_000 ? "warning.main" : "text.secondary"}>
-            Last report: {fullDateTime(report.at)} · the board sends one every minute
+            Last report: {fullDateTime(report.at)}
           </Typography>
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" }, gap: 1.5 }}>
             {rows.map(([label, value, warn]) => (
@@ -115,7 +115,7 @@ export function BoardHealthCard({
         </>
       ) : (
         <Typography variant="body2" color="text.secondary">
-          No health report yet. Boards send one every minute once they run the current software (Overview → Update board); Check now asks for one straight away.
+          No health report yet.
         </Typography>
       )}
       {note ? <Alert severity={note.ok ? "success" : "warning"}>{note.text}</Alert> : null}

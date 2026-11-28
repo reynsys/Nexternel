@@ -91,10 +91,10 @@ export function SecondCheckSection() {
     try {
       await api.secondCheckConfirm(code);
       setSetup(null);
-      setMsg("The second check is on. Next time you sign in from outside Nexternel's network, Nexternel asks for the code.");
+      setMsg("Second check is on.");
       await load();
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "That code is not right");
+      setErr(e instanceof Error ? e.message : "Wrong code.");
     } finally {
       setBusy(false);
     }
@@ -158,13 +158,11 @@ export function SecondCheckSection() {
             />
           </Stack>
           <Typography variant="body2" color="text.secondary">
-            When you sign in from outside Nexternel's network, Nexternel also asks for a 6-digit code from the Authenticator app on
-            your phone. Someone who guesses your password still cannot get in. At home nothing changes.
+            From outside Nexternel's network, Nexternel also asks for a 6-digit code from your Authenticator app.
           </Typography>
           {state === "broken" && (
             <Alert severity="warning">
-              Nexternel was moved to another server, so the second check has to be set up again. Until then, signing in from
-              outside is refused.
+              Set it up again (Nexternel moved to another server). Until then, signing in from outside is refused.
             </Alert>
           )}
           {err && <Alert severity="error">{err}</Alert>}
@@ -173,15 +171,12 @@ export function SecondCheckSection() {
           {state !== "on" && !setup && (
             <Stack spacing={1.5}>
               <Typography variant="body2" color="text.secondary">
-                Without it, signing in from outside needs a password of at least {MIN_PASSWORD_LENGTH} characters. Install Google or Microsoft
-                Authenticator on your phone first (free).
+                Without it, signing in from outside needs a password of at least {MIN_PASSWORD_LENGTH} characters. First install an
+                Authenticator app (Google or Microsoft, free).
               </Typography>
               <Button variant="contained" onClick={() => void begin()} disabled={busy} sx={{ alignSelf: "flex-start" }}>
                 Turn on with the Authenticator app
               </Button>
-              <Typography variant="caption" color="text.secondary">
-                A code by email, as a back-up for a lost phone, comes with Nexternel Anywhere.
-              </Typography>
             </Stack>
           )}
 
@@ -192,9 +187,6 @@ export function SecondCheckSection() {
                   <Button variant="contained" component="a" href={setup.link} sx={{ alignSelf: "stretch" }}>
                     Add to my Authenticator app
                   </Button>
-                  <Typography variant="caption" color="text.secondary">
-                    Opens the app with Nexternel already filled in.
-                  </Typography>
                 </Stack>
               ) : (
                 <>
@@ -230,7 +222,7 @@ export function SecondCheckSection() {
               {phone && (
                 <Stack spacing={1}>
                   <Button variant="outlined" size="small" onClick={() => setShowQr((v) => !v)} sx={{ alignSelf: "flex-start" }}>
-                    {showQr ? "Hide QR code" : "Show QR code for another phone"}
+                    {showQr ? "Hide QR code" : "Show QR code for another device"}
                   </Button>
                   <Collapse in={showQr}>{qr}</Collapse>
                 </Stack>
@@ -257,10 +249,10 @@ export function SecondCheckSection() {
 
           {state === "on" && (
             <Stack spacing={1.5}>
-              <Typography variant="subtitle2">Trusted phones</Typography>
+              <Typography variant="subtitle2">Trusted devices</Typography>
               {trusted.length === 0 ? (
                 <Typography variant="body2" color="text.secondary">
-                  None. When you sign in from outside, tick "Trust this phone" to skip the code next time on that phone.
+                  None.
                 </Typography>
               ) : (
                 trusted.map((t) => (
@@ -275,7 +267,7 @@ export function SecondCheckSection() {
                 ))
               )}
               <Typography variant="caption" color="text.secondary">
-                A phone not used for 90 days is forgotten. Sign out everywhere else and a new password forget them all.
+                Forgotten after 90 days unused, a new password, or Sign out everywhere else.
               </Typography>
               {!turningOff ? (
                 <Button variant="outlined" color="error" onClick={() => setTurningOff(true)} sx={{ alignSelf: "flex-start" }}>
@@ -293,7 +285,7 @@ export function SecondCheckSection() {
                     fullWidth
                   />
                   <TextField
-                    label="Code from the app (needed when you are outside Nexternel's network)"
+                    label="Code from the app (from outside Nexternel's network)"
                     value={code}
                     onChange={(e) => setCode(e.target.value.replace(/[^\d ]/g, "").slice(0, 7))}
                     autoComplete="one-time-code"
